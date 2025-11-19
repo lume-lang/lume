@@ -1196,17 +1196,6 @@ impl Builder<'_> {
                 Node::space(),
                 self.build_expression(expr.value),
             ]),
-            Expression::Binary(expr) => Node::nodes(vec![
-                self.build_expression(expr.lhs),
-                Node::space(),
-                match expr.op.kind {
-                    BinaryOperatorKind::And => Node::text_str("&"),
-                    BinaryOperatorKind::Or => Node::text_str("|"),
-                    BinaryOperatorKind::Xor => Node::text_str("^"),
-                },
-                Node::space(),
-                self.build_expression(expr.rhs),
-            ]),
             Expression::Call(expr) => {
                 let mut nodes = Vec::new();
 
@@ -1316,19 +1305,123 @@ impl Builder<'_> {
 
                 Node::group(self.next_group(), cases)
             }
-            Expression::IntrinsicCall(mut expr) => {
-                if let Some(rhs) = expr.arguments.pop() {
-                    Node::nodes(vec![
-                        self.build_expression(expr.callee),
-                        Node::space(),
-                        self.build_path(expr.name),
-                        Node::space(),
-                        self.build_expression(rhs),
-                    ])
-                } else {
-                    Node::nodes(vec![self.build_path(expr.name), self.build_expression(expr.callee)])
+            Expression::IntrinsicCall(expr) => match expr.kind {
+                IntrinsicKind::Add { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("+"),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::Sub { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("-"),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::Mul { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("*"),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::Div { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("/"),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::And { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("&"),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::Or { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("|"),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::Negate { target } => {
+                    Node::nodes(vec![Node::text_str("-"), self.build_expression(*target)])
                 }
-            }
+                IntrinsicKind::Increment { target } => {
+                    Node::nodes(vec![self.build_expression(*target), Node::text_str("++")])
+                }
+                IntrinsicKind::Decrement { target } => {
+                    Node::nodes(vec![self.build_expression(*target), Node::text_str("--")])
+                }
+                IntrinsicKind::BinaryAnd { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("&&"),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::BinaryOr { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("||"),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::BinaryXor { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("^"),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::Not { target } => Node::nodes(vec![Node::text_str("!"), self.build_expression(*target)]),
+                IntrinsicKind::Equal { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("=="),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::NotEqual { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("!="),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::Less { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("<"),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::LessEqual { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str("<="),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::Greater { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str(">"),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+                IntrinsicKind::GreaterEqual { lhs, rhs } => Node::nodes(vec![
+                    self.build_expression(*lhs),
+                    Node::space(),
+                    Node::text_str(">="),
+                    Node::space(),
+                    self.build_expression(*rhs),
+                ]),
+            },
             Expression::Is(expr) => Node::nodes(vec![
                 self.build_expression(expr.target),
                 Node::space(),
@@ -1341,17 +1434,6 @@ impl Builder<'_> {
                 let slice = self.source.content.get(index).unwrap();
 
                 Node::text_str(slice)
-            }
-            Expression::Logical(expr) => {
-                let lhs = self.build_expression(expr.lhs);
-                let rhs = self.build_expression(expr.rhs);
-
-                let op = match expr.op.kind {
-                    LogicalOperatorKind::And => Node::text_str("&&"),
-                    LogicalOperatorKind::Or => Node::text_str("||"),
-                };
-
-                Node::group(self.next_group(), vec![lhs, Node::space(), op, Node::space(), rhs])
             }
             Expression::Member(expr) => Node::nodes(vec![
                 self.build_expression(expr.callee),
