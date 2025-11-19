@@ -1,0 +1,11 @@
+//# test-return = 1
+
+fn main() -> Int8 {
+    let a = 4_i32;
+
+    if a == 4_i32 {
+        return 1;
+    }
+
+    return 0;
+}
