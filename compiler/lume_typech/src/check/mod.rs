@@ -54,8 +54,8 @@ impl TyCheckCtx {
                 return Err(errors::MismatchedTypes {
                     reason_loc: to.location,
                     found_loc: from.location,
-                    expected: self.infer.new_named_type(to, false)?,
-                    found: self.infer.new_named_type(from, false)?,
+                    expected: self.new_named_type(to, true)?,
+                    found: self.new_named_type(from, true)?,
                 }
                 .into());
             }

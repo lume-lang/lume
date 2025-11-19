@@ -89,7 +89,11 @@ impl<'ctx> RootDebugContext<'ctx> {
         for (file, _) in self.ctx.group_by_file() {
             // Define line program
             let line_strings = &mut self.dwarf.line_strings;
-            let file_name = file.name.to_pathbuf().file_name().unwrap();
+
+            let Some(file_name) = file.name.to_pathbuf().file_name() else {
+                libftrace::warning!("skipping source file {}; no file name", file.name);
+                continue;
+            };
 
             let working_dir = LineString::new(self.ctx.package.path.display().to_string(), self.encoding, line_strings);
             let source_file = LineString::new(file_name.to_str().unwrap(), self.encoding, line_strings);
@@ -106,8 +110,6 @@ impl<'ctx> RootDebugContext<'ctx> {
             let unit_id = self.dwarf.units.add(Unit::new(self.encoding, line_program));
             let unit = self.dwarf.units.get_mut(unit_id);
             let entry = unit.get_mut(unit.root());
-
-            let file_name = file.name.to_pathbuf().file_name().unwrap();
 
             // DW_AT_language
             entry.set(gimli::DW_AT_language, AttributeValue::Language(DW_LANG_LUME));
@@ -134,7 +136,10 @@ impl<'ctx> RootDebugContext<'ctx> {
     /// Declares the initial debug information for the given function, so the
     /// layout of the DWARF tag is laid out. Some fields may be unset.
     pub(crate) fn declare_function(&mut self, func: &Function) {
-        let compile_unit_id = *self.file_units.get(&func.location.file.id).unwrap();
+        let Some(compile_unit_id) = self.file_units.get(&func.location.file.id).copied() else {
+            return;
+        };
+
         let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
 
         let entry_id = compile_unit.add(compile_unit.root(), gimli::DW_TAG_subprogram);
@@ -182,7 +187,9 @@ impl<'ctx> RootDebugContext<'ctx> {
         function_metadata: &HashMap<NodeId, FunctionMetadata>,
     ) -> Result<()> {
         for (file, functions) in self.ctx.group_by_file() {
-            let compile_unit_id = *self.file_units.get(&file.id).unwrap();
+            let Some(compile_unit_id) = self.file_units.get(&file.id).copied() else {
+                continue;
+            };
 
             for func in functions {
                 let Some(entry_id) = self.func_entries.get(&func.id).copied() else {
