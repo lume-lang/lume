@@ -1,0 +1,19 @@
+namespace std::ops
+
+/// Trait for performing the logical AND operator, `&&`.
+///
+/// Whenever the `&&` operator is used on a value, the compiler looks to
+/// see if this trait is implemented, given the correct type argument.
+![lang_item(name = "and_trait")]
+pub trait And<T> {
+    fn and(self, other: T) -> T;
+}
+
+/// Trait for performing the logical OR operator, `||`.
+///
+/// Whenever the `||` operator is used on a value, the compiler looks to
+/// see if this trait is implemented, given the correct type argument.
+![lang_item(name = "or_trait")]
+pub trait Or<T> {
+    fn or(self, other: T) -> T;
+}
