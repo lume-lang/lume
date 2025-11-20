@@ -36,13 +36,13 @@ impl TyInferCtx {
     }
 
     /// Returns the [`lume_hir::Node`] with the given ID, if any.
-    #[libftrace::traced(level = Trace, fields(id), ret)]
+    #[libftrace::traced(level = Trace, fields(id))]
     pub fn hir_node(&self, id: NodeId) -> Option<&Node> {
         self.hir.node(id)
     }
 
     /// Returns the [`lume_hir::Node`] with the given ID, if any.
-    #[libftrace::traced(level = Trace, fields(id), ret)]
+    #[libftrace::traced(level = Trace, fields(id))]
     pub fn hir_expect_node(&self, id: NodeId) -> &Node {
         match self.hir_node(id) {
             Some(item) => item,
@@ -51,13 +51,13 @@ impl TyInferCtx {
     }
 
     /// Returns the [`lume_hir::NodeRef`] with the given ID, if any.
-    #[libftrace::traced(level = Trace, fields(id), ret)]
+    #[libftrace::traced(level = Trace, fields(id))]
     pub fn hir_node_ref(&self, id: NodeId) -> Option<NodeRef<'_>> {
         self.hir_node(id).map(|n| n.as_ref())
     }
 
     /// Returns the method with the given ID, if any, boxed as [`NodeRef`].
-    #[libftrace::traced(level = Trace, fields(id), ret)]
+    #[libftrace::traced(level = Trace, fields(id))]
     pub fn hir_method(&self, id: NodeId) -> Option<NodeRef<'_>> {
         self.hir_node(id).and_then(|item| match item {
             lume_hir::Node::Impl(item) => Some(lume_hir::NodeRef::Method(item.methods.get(id.index.as_usize())?)),
