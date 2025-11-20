@@ -13,6 +13,8 @@ static INTRINSIC_METHODS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
     HashSet::from([
         "std::Boolean::eq",
         "std::Boolean::ne",
+        "std::Boolean::and",
+        "std::Boolean::or",
         "std::Boolean::not",
         "std::Int8::eq",
         "std::Int8::ne",

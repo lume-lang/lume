@@ -291,6 +291,8 @@ impl LowerFunction<'_> {
             match &expr.kind {
                 lume_hir::IntrinsicKind::Equal { .. } => Some(lume_tir::IntrinsicKind::BooleanEq),
                 lume_hir::IntrinsicKind::NotEqual { .. } => Some(lume_tir::IntrinsicKind::BooleanNe),
+                lume_hir::IntrinsicKind::And { .. } => Some(lume_tir::IntrinsicKind::BooleanAnd),
+                lume_hir::IntrinsicKind::Or { .. } => Some(lume_tir::IntrinsicKind::BooleanOr),
                 lume_hir::IntrinsicKind::Not { .. } => Some(lume_tir::IntrinsicKind::BooleanNot),
                 _ => None,
             }

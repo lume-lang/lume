@@ -1,12 +1,20 @@
 namespace std
 
-import std::ops (Equal, Not)
+import std::ops (Equal, Not, And, Or)
 
 /// Represents an 1-bit boolean value, which can store either `true` or `false`.
 pub struct builtin Boolean { }
 
 use Equal<Boolean> in Boolean {
     pub fn external eq(self, other: Boolean) -> Boolean
+}
+
+use And<Boolean> in Boolean {
+    pub fn external and(self, other: Boolean) -> Boolean
+}
+
+use Or<Boolean> in Boolean {
+    pub fn external or(self, other: Boolean) -> Boolean
 }
 
 use Not<Boolean> in Boolean {
