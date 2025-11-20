@@ -506,14 +506,6 @@ impl PrettyPrint for IntrinsicKind {
                 .debug_struct("Negate")
                 .field("target", pretty_item!(*target, map))
                 .finish(),
-            Self::Increment { target } => f
-                .debug_struct("Increment")
-                .field("target", pretty_item!(*target, map))
-                .finish(),
-            Self::Decrement { target } => f
-                .debug_struct("Decrement")
-                .field("target", pretty_item!(*target, map))
-                .finish(),
 
             // Logical intrinsics
             Self::BinaryAnd { lhs, rhs } => f
