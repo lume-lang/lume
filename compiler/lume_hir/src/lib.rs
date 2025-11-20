@@ -1486,8 +1486,6 @@ pub enum IntrinsicKind {
     And { lhs: NodeId, rhs: NodeId },
     Or { lhs: NodeId, rhs: NodeId },
     Negate { target: NodeId },
-    Increment { target: NodeId },
-    Decrement { target: NodeId },
 
     // Logical intrinsics
     BinaryAnd { lhs: NodeId, rhs: NodeId },
@@ -1514,8 +1512,6 @@ impl IntrinsicKind {
             Self::And { .. } => "And",
             Self::Or { .. } => "Or",
             Self::Negate { .. } => "Negate",
-            Self::Increment { .. } => "Increment",
-            Self::Decrement { .. } => "Decrement",
             Self::BinaryAnd { .. } => "BinaryAnd",
             Self::BinaryOr { .. } => "BinaryOr",
             Self::BinaryXor { .. } => "BinaryXor",
@@ -1546,10 +1542,7 @@ impl IntrinsicKind {
             | Self::LessEqual { lhs, .. }
             | Self::Greater { lhs, .. }
             | Self::GreaterEqual { lhs, .. } => *lhs,
-            Self::Negate { target }
-            | Self::Increment { target }
-            | Self::Decrement { target }
-            | Self::Not { target } => *target,
+            Self::Negate { target } | Self::Not { target } => *target,
         }
     }
 
@@ -1570,10 +1563,7 @@ impl IntrinsicKind {
             | Self::LessEqual { lhs, rhs }
             | Self::Greater { lhs, rhs }
             | Self::GreaterEqual { lhs, rhs } => vec![*lhs, *rhs],
-            Self::Negate { target }
-            | Self::Increment { target }
-            | Self::Decrement { target }
-            | Self::Not { target } => vec![*target],
+            Self::Negate { target } | Self::Not { target } => vec![*target],
         }
     }
 }

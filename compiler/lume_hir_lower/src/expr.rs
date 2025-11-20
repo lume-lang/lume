@@ -307,12 +307,91 @@ impl LowerModule<'_> {
             lume_ast::IntrinsicKind::Negate { target } => lume_hir::IntrinsicKind::Negate {
                 target: self.expression(*target)?,
             },
-            lume_ast::IntrinsicKind::Increment { target } => lume_hir::IntrinsicKind::Increment {
-                target: self.expression(*target)?,
-            },
-            lume_ast::IntrinsicKind::Decrement { target } => lume_hir::IntrinsicKind::Decrement {
-                target: self.expression(*target)?,
-            },
+
+            lume_ast::IntrinsicKind::Increment { target } => {
+                let dst = self.expression(*target.clone())?;
+                let src = self.expression(*target)?;
+
+                let rhs_id = self.next_node_id();
+                self.map.nodes.insert(
+                    rhs_id,
+                    lume_hir::Node::Expression(lume_hir::Expression::lit(
+                        rhs_id,
+                        lume_hir::LiteralKind::Int(Box::new(lume_hir::IntLiteral {
+                            id: rhs_id,
+                            value: 1,
+                            kind: None,
+                        })),
+                    )),
+                );
+
+                let value_id = self.next_node_id();
+                self.map.nodes.insert(
+                    value_id,
+                    lume_hir::Node::Expression(lume_hir::Expression {
+                        id: value_id,
+                        kind: lume_hir::ExpressionKind::IntrinsicCall(lume_hir::IntrinsicCall {
+                            id: value_id,
+                            kind: lume_hir::IntrinsicKind::Add { lhs: src, rhs: rhs_id },
+                            location,
+                        }),
+                        location,
+                    }),
+                );
+
+                return Ok(lume_hir::Expression {
+                    id,
+                    kind: lume_hir::ExpressionKind::Assignment(lume_hir::Assignment {
+                        id,
+                        target: dst,
+                        value: value_id,
+                        location,
+                    }),
+                    location,
+                });
+            }
+            lume_ast::IntrinsicKind::Decrement { target } => {
+                let dst = self.expression(*target.clone())?;
+                let src = self.expression(*target)?;
+
+                let rhs_id = self.next_node_id();
+                self.map.nodes.insert(
+                    rhs_id,
+                    lume_hir::Node::Expression(lume_hir::Expression::lit(
+                        rhs_id,
+                        lume_hir::LiteralKind::Int(Box::new(lume_hir::IntLiteral {
+                            id: rhs_id,
+                            value: 1,
+                            kind: None,
+                        })),
+                    )),
+                );
+
+                let value_id = self.next_node_id();
+                self.map.nodes.insert(
+                    value_id,
+                    lume_hir::Node::Expression(lume_hir::Expression {
+                        id: value_id,
+                        kind: lume_hir::ExpressionKind::IntrinsicCall(lume_hir::IntrinsicCall {
+                            id: value_id,
+                            kind: lume_hir::IntrinsicKind::Sub { lhs: src, rhs: rhs_id },
+                            location,
+                        }),
+                        location,
+                    }),
+                );
+
+                return Ok(lume_hir::Expression {
+                    id,
+                    kind: lume_hir::ExpressionKind::Assignment(lume_hir::Assignment {
+                        id,
+                        target: dst,
+                        value: value_id,
+                        location,
+                    }),
+                    location,
+                });
+            }
 
             // Logical intrinsics
             lume_ast::IntrinsicKind::BinaryAnd { lhs, rhs } => lume_hir::IntrinsicKind::BinaryAnd {
