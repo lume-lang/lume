@@ -930,4 +930,30 @@ impl TyInferCtx {
 
         false
     }
+
+    /// Gets the trait implementation of `trait_type` on the type `source`.
+    #[libftrace::traced(level = Trace)]
+    pub fn get_trait_impl_of(&self, trait_type: &TypeRef, source: &TypeRef) -> Option<&lume_hir::TraitImplementation> {
+        for trait_use in self.tdb().uses_on(source) {
+            if &trait_use.trait_ == trait_type {
+                let lume_hir::Node::TraitImpl(trait_impl) = self.hir_node(trait_use.id)? else {
+                    panic!("bug!: expected trait impl with ID {}", trait_use.id);
+                };
+
+                return Some(trait_impl);
+            }
+        }
+
+        None
+    }
+
+    /// Gets the trait implementation of `Cast<T>` on the type `source`, where
+    /// `T` is the type `dest`.
+    #[libftrace::traced(level = Trace)]
+    pub fn cast_impl_of(&self, source: &TypeRef, dest: &TypeRef) -> Option<&lume_hir::TraitImplementation> {
+        let mut cast_trait = self.lang_item_type("cast_trait")?;
+        cast_trait.type_arguments.push(dest.clone());
+
+        self.get_trait_impl_of(&cast_trait, source)
+    }
 }

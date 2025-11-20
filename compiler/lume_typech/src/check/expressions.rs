@@ -414,22 +414,20 @@ impl TyCheckCtx {
             );
         }
 
-        let source_named = self.new_named_type(&source_type, false)?;
-        let dest_named = self.new_named_type(&dest_type, false)?;
+        if self.cast_impl_of(&source_type, &dest_type).is_none() {
+            let source_named = self.new_named_type(&source_type, false)?;
+            let dest_named = self.new_named_type(&dest_type, false)?;
 
-        let expr_location = self.hir_expect_expr(expr.id).location;
+            let expr_location = self.hir_expect_expr(expr.id).location;
 
-        // Resolve the `Cast` type from the type context
-        let mut cast_trait = self.lang_item_type("cast_trait").unwrap();
-        cast_trait.type_arguments.push(dest_type);
-
-        if !self.trait_impl_by(&cast_trait, &source_type)? {
-            return Err(UnavailableCast {
-                source: expr_location,
-                from: source_named,
-                to: dest_named,
-            }
-            .into());
+            self.dcx().emit(
+                UnavailableCast {
+                    source: expr_location,
+                    from: source_named,
+                    to: dest_named,
+                }
+                .into(),
+            );
         }
 
         Ok(())
