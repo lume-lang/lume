@@ -1,6 +1,6 @@
 namespace std
 
-import std::ops (Add, Sub, Mul, Div)
+import std::ops (Add, Sub, Mul, Div, BitAnd, BitOr, BitXor)
 import std::ops (Equal, Compare, Negate)
 
 /// Represents an 8-bit signed integer, which can store values from `-128` to `127`.
@@ -20,6 +20,18 @@ use Mul<Int8> in Int8 {
 
 use Div<Int8> in Int8 {
     fn external div(self, other: Int8) -> Int8
+}
+
+use BitAnd<Int8> in Int8 {
+    fn external band(self, other: Int8) -> Int8
+}
+
+use BitOr<Int8> in Int8 {
+    fn external bor(self, other: Int8) -> Int8
+}
+
+use BitXor<Int8> in Int8 {
+    fn external bxor(self, other: Int8) -> Int8
 }
 
 use Equal<Int8> in Int8 {
@@ -57,6 +69,18 @@ use Div<Int16> in Int16 {
     fn external div(self, other: Int16) -> Int16
 }
 
+use BitAnd<Int16> in Int16 {
+    fn external band(self, other: Int16) -> Int16
+}
+
+use BitOr<Int16> in Int16 {
+    fn external bor(self, other: Int16) -> Int16
+}
+
+use BitXor<Int16> in Int16 {
+    fn external bxor(self, other: Int16) -> Int16
+}
+
 use Equal<Int16> in Int16 {
     fn external eq(self, other: Int16) -> Boolean
 }
@@ -90,6 +114,18 @@ use Mul<Int32> in Int32 {
 
 use Div<Int32> in Int32 {
     fn external div(self, other: Int32) -> Int32
+}
+
+use BitAnd<Int32> in Int32 {
+    fn external band(self, other: Int32) -> Int32
+}
+
+use BitOr<Int32> in Int32 {
+    fn external bor(self, other: Int32) -> Int32
+}
+
+use BitXor<Int32> in Int32 {
+    fn external bxor(self, other: Int32) -> Int32
 }
 
 use Equal<Int32> in Int32 {
@@ -127,6 +163,18 @@ use Div<Int64> in Int64 {
     fn external div(self, other: Int64) -> Int64
 }
 
+use BitAnd<Int64> in Int64 {
+    fn external band(self, other: Int64) -> Int64
+}
+
+use BitOr<Int64> in Int64 {
+    fn external bor(self, other: Int64) -> Int64
+}
+
+use BitXor<Int64> in Int64 {
+    fn external bxor(self, other: Int64) -> Int64
+}
+
 use Equal<Int64> in Int64 {
     fn external eq(self, other: Int64) -> Boolean
 }
@@ -160,6 +208,18 @@ use Mul<UInt8> in UInt8 {
 
 use Div<UInt8> in UInt8 {
     fn external div(self, other: UInt8) -> UInt8
+}
+
+use BitAnd<UInt8> in UInt8 {
+    fn external band(self, other: UInt8) -> UInt8
+}
+
+use BitOr<UInt8> in UInt8 {
+    fn external bor(self, other: UInt8) -> UInt8
+}
+
+use BitXor<UInt8> in UInt8 {
+    fn external bxor(self, other: UInt8) -> UInt8
 }
 
 use Equal<UInt8> in UInt8 {
@@ -197,6 +257,18 @@ use Div<UInt16> in UInt16 {
     fn external div(self, other: UInt16) -> UInt16
 }
 
+use BitAnd<UInt16> in UInt16 {
+    fn external band(self, other: UInt16) -> UInt16
+}
+
+use BitOr<UInt16> in UInt16 {
+    fn external bor(self, other: UInt16) -> UInt16
+}
+
+use BitXor<UInt16> in UInt16 {
+    fn external bxor(self, other: UInt16) -> UInt16
+}
+
 use Equal<UInt16> in UInt16 {
     fn external eq(self, other: UInt16) -> Boolean
 }
@@ -232,6 +304,18 @@ use Div<UInt32> in UInt32 {
     fn external div(self, other: UInt32) -> UInt32
 }
 
+use BitAnd<UInt32> in UInt32 {
+    fn external band(self, other: UInt32) -> UInt32
+}
+
+use BitOr<UInt32> in UInt32 {
+    fn external bor(self, other: UInt32) -> UInt32
+}
+
+use BitXor<UInt32> in UInt32 {
+    fn external bxor(self, other: UInt32) -> UInt32
+}
+
 use Equal<UInt32> in UInt32 {
     fn external eq(self, other: UInt32) -> Boolean
 }
@@ -265,6 +349,18 @@ use Mul<UInt64> in UInt64 {
 
 use Div<UInt64> in UInt64 {
     fn external div(self, other: UInt64) -> UInt64
+}
+
+use BitAnd<UInt64> in UInt64 {
+    fn external band(self, other: UInt64) -> UInt64
+}
+
+use BitOr<UInt64> in UInt64 {
+    fn external bor(self, other: UInt64) -> UInt64
+}
+
+use BitXor<UInt64> in UInt64 {
+    fn external bxor(self, other: UInt64) -> UInt64
 }
 
 use Equal<UInt64> in UInt64 {

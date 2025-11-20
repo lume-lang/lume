@@ -150,7 +150,7 @@ impl TyInferCtx {
     /// the current context, such as visibility, arguments or type
     /// arguments. To check whether any given [`Method`] is valid for a
     /// given context, see [`ThirBuildCtx::check_method()`].
-    #[libftrace::traced(level = Trace)]
+    #[libftrace::traced(level = Trace, fields(ty, name = name.as_str()))]
     pub fn lookup_method_on<'a>(&'a self, ty: &lume_types::TypeRef, name: &Identifier) -> Option<&'a Method> {
         // First check whether any method is defined directly on the type
         let methods = self.lookup_methods_on(ty, name, BlanketLookup::Exclude);

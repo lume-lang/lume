@@ -35,3 +35,30 @@ pub trait Mul<T> {
 pub trait Div<T> {
     fn div(self, other: T) -> T;
 }
+
+/// Trait for performing the arithmetic AND operator, `&`.
+///
+/// Whenever the `&` operator is used on a value, the compiler looks to
+/// see if this trait is implemented, given the correct type argument.
+![lang_item(name = "band_trait")]
+pub trait BitAnd<T> {
+    fn band(self, other: T) -> T;
+}
+
+/// Trait for performing the arithmetic OR operator, `|`.
+///
+/// Whenever the `|` operator is used on a value, the compiler looks to
+/// see if this trait is implemented, given the correct type argument.
+![lang_item(name = "bor_trait")]
+pub trait BitOr<T> {
+    fn bor(self, other: T) -> T;
+}
+
+/// Trait for performing the arithmetic XOR operator, `^`.
+///
+/// Whenever the `^` operator is used on a value, the compiler looks to
+/// see if this trait is implemented, given the correct type argument.
+![lang_item(name = "bxor_trait")]
+pub trait BitXor<T> {
+    fn bxor(self, other: T) -> T;
+}
