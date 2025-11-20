@@ -8,7 +8,7 @@ impl FunctionTransformer<'_, '_> {
         let op = match &expr.kind {
             lume_tir::ExpressionKind::Assignment(expr) => self.assignment(expr),
             lume_tir::ExpressionKind::Binary(expr) => self.binary(expr),
-            lume_tir::ExpressionKind::Cast(expr) => self.cast(expr),
+            lume_tir::ExpressionKind::Bitcast(expr) => self.cast(expr),
             lume_tir::ExpressionKind::Construct(expr) => self.construct(expr),
             lume_tir::ExpressionKind::Call(expr) => self.call_expression(expr),
             lume_tir::ExpressionKind::If(cond) => self.if_condition(cond),
@@ -122,7 +122,7 @@ impl FunctionTransformer<'_, '_> {
         }
     }
 
-    fn cast(&mut self, expr: &lume_tir::Cast) -> lume_mir::Operand {
+    fn cast(&mut self, expr: &lume_tir::Bitcast) -> lume_mir::Operand {
         let expr_ty = &expr.source.ty;
         debug_assert!(expr_ty.is_integer());
 
