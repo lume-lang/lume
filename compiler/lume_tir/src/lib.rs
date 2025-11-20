@@ -403,7 +403,7 @@ impl Expression {
         match &self.kind {
             ExpressionKind::Assignment(e) => e.location,
             ExpressionKind::Binary(e) => e.location,
-            ExpressionKind::Cast(e) => e.location,
+            ExpressionKind::Bitcast(e) => e.location,
             ExpressionKind::Construct(e) => e.location,
             ExpressionKind::Call(e) => e.location,
             ExpressionKind::If(e) => e.location,
@@ -433,7 +433,7 @@ impl Expression {
 pub enum ExpressionKind {
     Assignment(Box<Assignment>),
     Binary(Box<Binary>),
-    Cast(Box<Cast>),
+    Bitcast(Box<Bitcast>),
     Construct(Box<Construct>),
     Call(Box<Call>),
     If(If),
@@ -473,7 +473,7 @@ pub struct Binary {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
-pub struct Cast {
+pub struct Bitcast {
     pub id: NodeId,
     pub source: Expression,
     pub target: TypeRef,

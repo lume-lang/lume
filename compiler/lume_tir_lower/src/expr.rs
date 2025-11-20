@@ -59,7 +59,7 @@ impl LowerFunction<'_> {
         let is_float_bitcast = source_type.is_float() && target_type.is_float();
 
         if is_integer_bitcast || is_float_bitcast {
-            return Ok(lume_tir::ExpressionKind::Cast(Box::new(lume_tir::Cast {
+            return Ok(lume_tir::ExpressionKind::Bitcast(Box::new(lume_tir::Bitcast {
                 id: expr.id,
                 source,
                 target: target_type,

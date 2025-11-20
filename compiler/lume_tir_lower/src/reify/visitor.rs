@@ -71,7 +71,7 @@ pub(crate) trait Visitor {
 
                 Ok(())
             }
-            ExpressionKind::Cast(expr) => self.visit_expression(&mut expr.source),
+            ExpressionKind::Bitcast(expr) => self.visit_expression(&mut expr.source),
             ExpressionKind::Construct(expr) => {
                 for field in &mut expr.fields {
                     self.visit_expression(&mut field.value)?;
