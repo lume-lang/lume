@@ -20,6 +20,12 @@ pub use error_snippet_derive::Diagnostic;
 pub struct DiagCtxInner {
     /// Holding block for all the reported diagnostics.
     emitted: Vec<Error>,
+
+    /// Tracks the location of where diagnostics are pushed from.
+    track_diagnostics: bool,
+
+    /// Treat all errors as bugs, causing a `panic!`.
+    panic_on_error: bool,
 }
 
 impl DiagCtxInner {
@@ -51,9 +57,18 @@ impl DiagCtxInner {
     }
 
     /// Pushes the given diagnostic to the context.
+    #[track_caller]
     fn push(&mut self, diag: Error) {
         if diag.message().as_str() == ERROR_GUARANTEED_CODE {
             return;
+        }
+
+        if self.track_diagnostics {
+            eprintln!("[track_diagnostics] pushed from {}", std::panic::Location::caller());
+        }
+
+        if self.panic_on_error {
+            panic!("error emitted with `panic_on_error` enabled: {}", diag.message());
         }
 
         self.emitted.push(diag);
@@ -108,6 +123,26 @@ impl DiagCtx {
     /// thread.
     fn inner(&self) -> MutexGuard<'_, DiagCtxInner> {
         self.inner.lock().unwrap()
+    }
+
+    /// Prints the location of where diagnostics are pushed to the context - the
+    /// error does not have to be emitted.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the handle has already been locked by another thread.
+    pub fn track_diagnostics(&self) {
+        self.inner().track_diagnostics = true;
+    }
+
+    /// Enables panicking whenever an error is pushed to the context - the error
+    /// does not have to be emitted.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the handle has already been locked by another thread.
+    pub fn panic_on_error(&self) {
+        self.inner().panic_on_error = true;
     }
 
     /// Emits the given diagnostic to the context directly, without
