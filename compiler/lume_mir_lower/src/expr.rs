@@ -249,10 +249,7 @@ impl FunctionTransformer<'_, '_> {
 
         let mut ret_ty = self.lower_type(&expr.return_type);
 
-        let hir_call_expr = self.tcx().hir_call_expr(expr.id).unwrap();
-        let hir_callable = self.tcx().lookup_callable(hir_call_expr).unwrap();
-
-        if self.tcx().is_type_parameter(hir_callable.return_type()).unwrap() {
+        if self.tcx().is_type_parameter(&expr.return_type).unwrap() {
             ret_ty = lume_mir::Type::pointer(ret_ty);
         }
 
