@@ -51,12 +51,37 @@ impl LowerFunction<'_> {
     #[libftrace::traced(level = Trace, err)]
     fn cast_expression(&mut self, expr: &lume_hir::Cast) -> Result<lume_tir::ExpressionKind> {
         let source = self.expression(expr.source)?;
-        let target = self.lower.tcx.mk_type_ref_from_expr(&expr.target, expr.id)?;
 
-        Ok(lume_tir::ExpressionKind::Cast(Box::new(lume_tir::Cast {
+        let source_type = self.lower.tcx.type_of(expr.source)?;
+        let target_type = self.lower.tcx.mk_type_ref_from_expr(&expr.target, expr.id)?;
+
+        let is_integer_bitcast = source_type.is_integer() && target_type.is_integer();
+        let is_float_bitcast = source_type.is_float() && target_type.is_float();
+
+        if is_integer_bitcast || is_float_bitcast {
+            return Ok(lume_tir::ExpressionKind::Cast(Box::new(lume_tir::Cast {
+                id: expr.id,
+                source,
+                target: target_type,
+                location: expr.location,
+            })));
+        }
+
+        let Some(trait_impl) = self.lower.tcx.cast_impl_of(&source_type, &target_type) else {
+            panic!("bug!: expected non-primitive Cast to implemented");
+        };
+
+        let method_impl = trait_impl
+            .methods
+            .first()
+            .expect("bug!: expected Cast<T> implementation to have a single method");
+
+        Ok(lume_tir::ExpressionKind::Call(Box::new(lume_tir::Call {
             id: expr.id,
-            source,
-            target,
+            function: method_impl.id,
+            arguments: vec![source],
+            type_arguments: Vec::new(),
+            return_type: target_type,
             location: expr.location,
         })))
     }
