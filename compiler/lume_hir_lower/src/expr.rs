@@ -233,7 +233,12 @@ impl LowerModule<'_> {
         let value = self.expression(value)?;
         let location = self.location(expr.location);
 
-        Ok(lume_hir::ConstructorField { name, value, location })
+        Ok(lume_hir::ConstructorField {
+            name,
+            value,
+            is_default: false,
+            location,
+        })
     }
 
     #[libftrace::traced(level = Debug)]

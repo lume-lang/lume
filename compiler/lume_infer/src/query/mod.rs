@@ -704,6 +704,7 @@ impl TyInferCtx {
             return Some(lume_hir::ConstructorField {
                 name: lume_hir::Identifier::from(prop_name),
                 value: default_value,
+                is_default: true,
                 location: self.hir_span_of_node(default_value),
             });
         }

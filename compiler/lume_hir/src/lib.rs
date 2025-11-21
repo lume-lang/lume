@@ -1424,6 +1424,7 @@ pub struct Construct {
 pub struct ConstructorField {
     pub name: Identifier,
     pub value: NodeId,
+    pub is_default: bool,
     pub location: Location,
 }
 
