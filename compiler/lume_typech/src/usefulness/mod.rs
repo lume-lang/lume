@@ -28,6 +28,10 @@ impl TyCheckCtx {
             return Ok(());
         }
 
+        if ty.is_bool() {
+            return self.do_patterns_exhaust_bool(ty, patterns, parents);
+        }
+
         // If there aren't any fallback patterns, we do not consider any floating-point
         // numbers to be exhausted, since they're generally unstable for comparisons.
         if ty.is_float() {
@@ -121,6 +125,47 @@ impl TyCheckCtx {
 
             for missing_variant in missing_variants {
                 let variant_name = format!("{:+}::{:+}", enum_def.name, enum_def.cases[missing_variant].name);
+                let formatted_lineage = self.format_variant_lineage(variant_name, parents)?;
+
+                unmatched_cases.push(formatted_lineage);
+            }
+
+            return Err(errors::CaseNotCovered::from_cases(matched_type, unmatched_cases, ty.location).into());
+        }
+
+        Ok(())
+    }
+
+    /// Determines whether the given patterns exhaust all the possible values of
+    /// `Boolean`.
+    fn do_patterns_exhaust_bool(
+        &self,
+        ty: &TypeRef,
+        patterns: &[&lume_hir::Pattern],
+        parents: &[(&lume_hir::VariantPattern, usize)],
+    ) -> Result<()> {
+        assert!(ty.is_bool());
+
+        let mut missing_variants: IndexSet<bool> = IndexSet::from_iter([true, false]);
+
+        for pattern in patterns {
+            let lume_hir::PatternKind::Literal(literal_pattern) = &pattern.kind else {
+                continue;
+            };
+
+            let lume_hir::LiteralKind::Boolean(bool_literal) = &literal_pattern.literal.kind else {
+                continue;
+            };
+
+            missing_variants.shift_remove(&bool_literal.value);
+        }
+
+        if !missing_variants.is_empty() {
+            let matched_type = self.new_named_type(ty, false)?;
+            let mut unmatched_cases = Vec::with_capacity(missing_variants.len());
+
+            for missing_variant in missing_variants {
+                let variant_name = missing_variant.to_string();
                 let formatted_lineage = self.format_variant_lineage(variant_name, parents)?;
 
                 unmatched_cases.push(formatted_lineage);

@@ -1,0 +1,8 @@
+× error[LM4343]: non-exhaustive switch expression
+   ╭─[switch_boolean_partial.lm:2:12]
+ 1 │ fn foo(kind: Boolean) -> Int32 {
+ 2 │     switch kind {
+   ∶            ^^^^ unmatched switch case: false
+ 3 │         true => 1_i32,
+   ╰──
+   help: try adding a fallback case to catch unmatched cases
