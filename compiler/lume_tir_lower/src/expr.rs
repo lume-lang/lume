@@ -470,7 +470,8 @@ impl LowerFunction<'_> {
         let operand_var = self.mark_variable(lume_tir::VariableSource::Variable);
         self.variable_mapping.insert(expr.operand, operand_var);
 
-        for case in &expr.cases {
+        for (idx, case) in expr.cases.iter().enumerate() {
+            let is_last_case = idx >= expr.cases.len() - 1;
             let return_type = self.lower.tcx.type_of(case.branch)?;
 
             let pattern = match &case.pattern.kind {
@@ -495,8 +496,10 @@ impl LowerFunction<'_> {
 
             let branch = self.expression(case.branch)?;
 
-            let conditional = lume_tir::Conditional {
-                condition: Some(lume_tir::Expression {
+            let condition = if is_last_case {
+                None
+            } else {
+                Some(lume_tir::Expression {
                     kind: lume_tir::ExpressionKind::Is(Box::new(lume_tir::Is {
                         id: NodeId::empty(case.branch.package),
                         target: operand.clone(),
@@ -504,7 +507,11 @@ impl LowerFunction<'_> {
                         location: case.location,
                     })),
                     ty: TypeRef::bool(),
-                }),
+                })
+            };
+
+            let conditional = lume_tir::Conditional {
+                condition,
                 block: lume_tir::Block {
                     statements: vec![lume_tir::Statement::Expression(branch)],
                     return_type,
