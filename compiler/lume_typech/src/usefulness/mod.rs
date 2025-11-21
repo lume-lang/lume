@@ -57,6 +57,16 @@ impl TyCheckCtx {
 
                 let enum_case_def = self.enum_case_with_name(&variant_pattern.name)?;
                 missing_variants.swap_remove(&enum_case_def.idx);
+
+                for (field_idx, enum_field) in enum_case_def.parameters.iter().enumerate() {
+                    let enum_field_ty = self
+                        .mk_type_ref_from(enum_field, enum_def.id)?
+                        .with_location(ty.location);
+
+                    let subpatterns = column_of_patterns(patterns, field_idx)?;
+
+                    self.do_patterns_exhaust_type(&enum_field_ty, &subpatterns)?;
+                }
             }
         }
 
@@ -75,4 +85,41 @@ impl TyCheckCtx {
 
         Ok(())
     }
+}
+
+/// Given a list of patterns, like the ones within a switch expression,
+/// which are assumed to all be variant patterns, get the (zero-indexed) Nth
+/// column within each of them.
+///
+/// For example, assume a switch expression like this:
+/// ```lm
+/// switch a {
+///     Foo::A(One::A, Two::A, Three::A) => { },
+///     Foo::B(One::B, Two::B, Three::B) => { },
+///     Foo::C(One::C, Two::C, Three::C) => { },
+/// }
+/// ```
+///
+/// when passing the patterns of the `switch` expression and a `column` of
+/// 1, this method returns the patterns `[Two::A, Two::B, Two::C]`.
+fn column_of_patterns<'pat>(
+    patterns: &[&'pat lume_hir::Pattern],
+    column: usize,
+) -> Result<Vec<&'pat lume_hir::Pattern>> {
+    let mut subpatterns = Vec::new();
+
+    for pattern in patterns {
+        let lume_hir::PatternKind::Variant(pattern) = &pattern.kind else {
+            continue;
+        };
+
+        let Some(subpattern) = pattern.fields.get(column) else {
+            libftrace::warning!("variant subpattern `{:+}` did not have column {column}", pattern.name);
+            continue;
+        };
+
+        subpatterns.push(subpattern);
+    }
+
+    Ok(subpatterns)
 }
