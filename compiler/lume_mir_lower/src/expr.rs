@@ -1011,7 +1011,20 @@ impl FunctionTransformer<'_, '_> {
 
         for argument in &expr.arguments {
             let value = self.expression(argument);
-            let operand_size = usize::from(value.bitsize().div_ceil(8));
+
+            let operand_size = match &value.kind {
+                lume_mir::OperandKind::Boolean { .. } => 1_usize,
+                lume_mir::OperandKind::Integer { bits, .. } | lume_mir::OperandKind::Float { bits, .. } => {
+                    usize::from(*bits) * 8
+                }
+                lume_mir::OperandKind::Reference { .. }
+                | lume_mir::OperandKind::SlotAddress { .. }
+                | lume_mir::OperandKind::String { .. } => std::mem::size_of::<*const u32>(),
+                lume_mir::OperandKind::Load { id } => self.func.registers.register_ty(*id).bytesize(),
+                lume_mir::OperandKind::Bitcast { target: ty, .. }
+                | lume_mir::OperandKind::LoadField { field_type: ty, .. }
+                | lume_mir::OperandKind::LoadSlot { loaded_type: ty, .. } => ty.bytesize(),
+            };
 
             self.func
                 .current_block_mut()
