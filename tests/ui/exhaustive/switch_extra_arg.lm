@@ -1,0 +1,9 @@
+enum Foo {
+    A(Int32),
+}
+
+fn foo(f: Foo) -> Int32 {
+    switch f {
+        Foo::A(a, b) => 4_i32,
+    }
+}

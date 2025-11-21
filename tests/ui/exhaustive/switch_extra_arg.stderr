@@ -1,0 +1,7 @@
+× error[LM4116]: argument count mismatch
+   ╭─[switch_extra_arg.lm:7:14]
+ 6 │     switch f {
+ 7 │         Foo::A(a, b) => 4_i32,
+   ∶              ^^^^^^^^^^ expected 1 arguments, but got 2
+ 8 │     }
+   ╰──
