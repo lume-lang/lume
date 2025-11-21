@@ -1,0 +1,20 @@
+enum Foo {
+    A(Bar, Baz),
+}
+
+enum Bar {
+    A,
+    B,
+}
+
+enum Baz {
+    A,
+    B,
+}
+
+fn foo(kind: Foo) -> Int32 {
+    switch kind {
+        Foo::A(Bar::A, Baz::A) => 4_i32,
+        Foo::A(Bar::B, Baz::A) => 3_i32,
+    }
+}

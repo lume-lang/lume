@@ -1,0 +1,18 @@
+enum Foo {
+    A(Single, Single, Multi, Single, Single),
+}
+
+enum Single {
+    A,
+}
+
+enum Multi {
+    A,
+    B,
+}
+
+fn foo(kind: Foo) -> Int32 {
+    switch kind {
+        Foo::A(Single::A, Single::A, Multi::A, Single::A, Single::A) => 4_i32,
+    }
+}
