@@ -1759,6 +1759,14 @@ pub struct Pattern {
     pub location: Location,
 }
 
+impl Pattern {
+    /// Returns `true` if the given pattern is a fallback pattern - i.e. is a
+    /// wilcard or named wildcard pattern.
+    pub fn is_fallback(&self) -> bool {
+        matches!(&self.kind, PatternKind::Identifier(_) | PatternKind::Wildcard(_))
+    }
+}
+
 #[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub enum PatternKind {
     Literal(LiteralPattern),

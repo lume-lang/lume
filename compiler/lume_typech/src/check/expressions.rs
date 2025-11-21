@@ -683,6 +683,8 @@ impl TyCheckCtx {
             }
         }
 
+        self.check_switch_exhaustiveness(expr)?;
+
         Ok(())
     }
 

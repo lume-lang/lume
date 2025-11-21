@@ -9,6 +9,7 @@ pub mod check;
 pub mod query;
 #[cfg(test)]
 mod tests;
+pub mod usefulness;
 
 /// Central data structure for checking compatibility between types within the
 /// source package.
