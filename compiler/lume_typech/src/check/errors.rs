@@ -100,13 +100,6 @@ pub struct TraitMethodSignatureMismatch {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "cannot assign value to literal", code = "LM4375")]
-pub(crate) struct LiteralAssignment {
-    #[label(source, "literal values are constant and cannot be assigned")]
-    pub source: lume_span::Location,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "mismatching types in assignment", code = "LM4376")]
 pub(crate) struct NonMatchingAssignment {
     #[label(source, "cannot assign value of type {value_ty} to {target_ty}")]
