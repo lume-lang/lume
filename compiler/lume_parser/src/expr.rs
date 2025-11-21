@@ -57,8 +57,7 @@ impl Parser<'_> {
             TokenKind::LeftCurly => self.parse_scope_expression(),
             TokenKind::If => self.parse_if_conditional(),
             TokenKind::Switch => self.parse_switch_expression(),
-            TokenKind::SelfRef => self.parse_self_reference(),
-            TokenKind::Identifier(_) => self.parse_named_expression(),
+            TokenKind::Identifier(_) | TokenKind::SelfRef => self.parse_named_expression(),
 
             k if k.is_literal() => self.parse_literal(),
             k if k.is_unary() => self.parse_unary(),
@@ -335,22 +334,6 @@ impl Parser<'_> {
         Ok(Expression::Range(Box::new(range)))
     }
 
-    /// Parses a `self` reference expression on the current cursor position.
-    #[libftrace::traced(level = Trace, err)]
-    fn parse_self_reference(&mut self) -> Result<Expression> {
-        let location = self.consume(TokenType::SelfRef)?.index;
-        let identifier = Identifier {
-            name: "self".to_string(),
-            location: location.into(),
-        };
-
-        if self.peek(TokenType::PathSeparator) {
-            return self.parse_path_expression(identifier);
-        }
-
-        Ok(Expression::Variable(Box::new(Variable { name: identifier })))
-    }
-
     /// Parses an expression on the current cursor position, which is preceded
     /// by some identifier.
     #[libftrace::traced(level = Trace, err)]
@@ -546,8 +529,18 @@ impl Parser<'_> {
 
         let name = self.parse_callable_name()?;
 
+        let is_method_call = self.peek(TokenType::LeftParen);
+        let is_generic_method_call = if self.peek(TokenType::Less)
+            && let TokenKind::Identifier(ident) = self.next_token().kind
+            && ident.starts_with(|c: char| c.is_ascii_uppercase())
+        {
+            true
+        } else {
+            false
+        };
+
         // If the next token is an opening parenthesis, it's a method invocation
-        if self.peek(TokenType::LeftParen) || self.peek(TokenType::Less) {
+        if is_method_call || is_generic_method_call {
             libftrace::trace!("member expr is method invocation");
 
             let identifier = Identifier {

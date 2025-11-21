@@ -164,6 +164,13 @@ impl<'src> Parser<'src> {
         self.token_at(self.index - 1)
     }
 
+    /// Parses the next token from the lexer.
+    ///
+    /// Returns the parsed token or a parsing error.
+    fn next_token(&self) -> Token<'src> {
+        self.token_at(self.index + 1)
+    }
+
     /// Peeks the token from the lexer at some offset and returns it if it
     /// matches the expected kind.
     ///
