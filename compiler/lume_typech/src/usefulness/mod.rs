@@ -54,6 +54,17 @@ impl TyCheckCtx {
             .into());
         }
 
+        // Strings can't really be exhausted, since they effectively can have any
+        // length.
+        if ty.instance_of == self.tdb().find_type(&lume_hir::Path::string()).unwrap().id {
+            return Err(errors::CaseNotCoveredString {
+                location: ty.location,
+                unmatched_case: String::from(".."),
+                matched_type: self.new_named_type(ty, true)?,
+            }
+            .into());
+        }
+
         let Ok(enum_def) = self.enum_def_type(ty.instance_of) else {
             panic!("bug!: expected to find `EnumDefinition` because of exhausted pattern types");
         };
