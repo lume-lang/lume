@@ -70,3 +70,17 @@ pub struct CaseNotCoveredFloat {
     pub unmatched_case: String,
     pub matched_type: NamedTypeRef,
 }
+
+#[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]
+#[diagnostic(
+    message = "non-exhaustive switch expression",
+    code = "LM4343",
+    help = "strings must have a fallback to be exhausted"
+)]
+pub struct CaseNotCoveredString {
+    #[label(source, "switch case `{unmatched_case}` is unmatched")]
+    pub location: Location,
+
+    pub unmatched_case: String,
+    pub matched_type: NamedTypeRef,
+}
