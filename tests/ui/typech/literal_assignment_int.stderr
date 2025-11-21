@@ -1,7 +1,7 @@
-× error[LM4375]: cannot assign value to literal
+× error[LM4155]: cannot assign expression
    ╭─[literal_assignment_int.lm:2:5]
  1 │ fn foo() {
  2 │     1 = false;
-   ∶     ^^^^^^^^^ literal values are constant and cannot be assigned
+   ∶     ^ invalid expression on left-hand side of assignment
  3 │ }
    ╰──

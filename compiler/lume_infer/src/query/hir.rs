@@ -452,6 +452,15 @@ impl TyInferCtx {
     pub fn parent_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         for parent in self.hir_parent_iter(id) {
             match parent {
+                Node::Type(lume_hir::TypeDefinition::Struct(struct_def)) => {
+                    let struct_type = lume_hir::Type {
+                        id: struct_def.id,
+                        name: struct_def.name.clone(),
+                        location: struct_def.location,
+                    };
+
+                    return self.mk_type_ref_from(&struct_type, id).map(Some);
+                }
                 Node::Impl(impl_def) => {
                     return self.mk_type_ref_from(&impl_def.target, id).map(Some);
                 }
