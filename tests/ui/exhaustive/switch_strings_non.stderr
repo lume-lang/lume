@@ -1,0 +1,8 @@
+× error[LM4343]: non-exhaustive switch expression
+   ╭─[switch_strings_non.lm:2:12]
+ 1 │ fn foo(kind: String) -> Int32 {
+ 2 │     switch kind {
+   ∶            ^^^^ switch case `..` is unmatched
+ 3 │         "A" => 1_i32,
+   ╰──
+   help: strings must have a fallback to be exhausted

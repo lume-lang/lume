@@ -1,0 +1,6 @@
+fn foo(kind: String) -> Int32 {
+    switch kind {
+        "A" => 1_i32,
+        "B" => 2_i32,
+    }
+}
