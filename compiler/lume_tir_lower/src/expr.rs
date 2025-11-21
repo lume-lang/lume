@@ -423,8 +423,14 @@ impl LowerFunction<'_> {
         let operand_var = self.mark_variable(lume_tir::VariableSource::Variable);
         self.variable_mapping.insert(expr.operand, operand_var);
 
-        for case in &expr.cases {
+        for (idx, case) in expr.cases.iter().enumerate() {
+            let is_last_case = idx >= expr.cases.len() - 1;
             let branch = self.expression(case.branch)?;
+
+            if is_last_case && fallback.is_none() {
+                fallback = Some(branch);
+                break;
+            }
 
             let pattern = match &case.pattern.kind {
                 lume_hir::PatternKind::Literal(literal) => {

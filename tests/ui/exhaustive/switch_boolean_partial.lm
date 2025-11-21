@@ -1,0 +1,5 @@
+fn foo(kind: Boolean) -> Int32 {
+    switch kind {
+        true => 1_i32,
+    }
+}
