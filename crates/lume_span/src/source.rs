@@ -332,4 +332,9 @@ impl SourceMap {
     pub fn insert(&mut self, file: Arc<SourceFile>) {
         self.files.insert(file.id, file);
     }
+
+    /// Iterates all the files within the map.
+    pub fn iter(&self) -> impl Iterator<Item = &Arc<SourceFile>> {
+        self.files.values()
+    }
 }
