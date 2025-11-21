@@ -1,0 +1,17 @@
+//# test-return = 6
+
+enum IpKind {
+    V4,
+    V6,
+}
+
+fn foo(kind: IpKind) -> Int32 {
+    switch kind {
+        IpKind::V4 => 4_i32,
+        IpKind::V6 => 6_i32,
+    }
+}
+
+fn main() -> Int32 {
+    foo(IpKind::V6)
+}
