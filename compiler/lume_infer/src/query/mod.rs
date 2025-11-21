@@ -106,7 +106,16 @@ impl TyInferCtx {
     #[libftrace::traced(level = Trace, err)]
     pub fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
         let ty = match &expr.kind {
-            lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value)?,
+            lume_hir::ExpressionKind::Assignment(e) => {
+                if !self.can_assign_value(e.target) {
+                    return Err(diagnostics::CannotAssignExpression {
+                        source: self.hir_span_of_node(e.target),
+                    }
+                    .into());
+                }
+
+                TypeRef::void()
+            }
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target)?,
             lume_hir::ExpressionKind::Construct(e) => {
                 let Some(ty_opt) = self.find_type_ref_from(&e.path, e.id)? else {
@@ -700,6 +709,33 @@ impl TyInferCtx {
         }
 
         None
+    }
+
+    /// Determines whether the given can actually be assigned a value.
+    ///
+    /// For example, the given value would never be able to be assigned:
+    /// ```lm
+    /// let a = 0_i32;
+    /// a + 1 = 3;
+    /// ```
+    #[cached_query]
+    #[libftrace::traced(level = Trace, ret)]
+    pub fn can_assign_value(&self, id: NodeId) -> bool {
+        match &self.hir_expect_expr(id).kind {
+            lume_hir::ExpressionKind::Assignment(_)
+            | lume_hir::ExpressionKind::Scope(_)
+            | lume_hir::ExpressionKind::Cast(_)
+            | lume_hir::ExpressionKind::Construct(_)
+            | lume_hir::ExpressionKind::InstanceCall(_)
+            | lume_hir::ExpressionKind::IntrinsicCall(_)
+            | lume_hir::ExpressionKind::StaticCall(_)
+            | lume_hir::ExpressionKind::If(_)
+            | lume_hir::ExpressionKind::Is(_)
+            | lume_hir::ExpressionKind::Literal(_)
+            | lume_hir::ExpressionKind::Switch(_)
+            | lume_hir::ExpressionKind::Variant(_) => false,
+            lume_hir::ExpressionKind::Member(_) | lume_hir::ExpressionKind::Variable(_) => true,
+        }
     }
 
     /// Determines whether a value is expected from the given expression.

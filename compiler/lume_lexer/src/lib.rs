@@ -36,6 +36,7 @@ pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::Sub, 7),
     (TokenKind::Mul, 8),
     (TokenKind::Div, 8),
+    (TokenKind::Exclamation, 9),
     (TokenKind::Increment, 9),
     (TokenKind::Decrement, 9),
     (TokenKind::Dot, 10),

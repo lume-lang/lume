@@ -92,3 +92,10 @@ pub struct NoParentStruct {
     #[label(source, "expected `struct` block ancestor, found None")]
     pub source: Location,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "cannot assign expression", code = "LM4155")]
+pub struct CannotAssignExpression {
+    #[label(source, "invalid expression on left-hand side of assignment")]
+    pub source: Location,
+}

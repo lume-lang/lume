@@ -605,8 +605,6 @@ impl TyInferCtx {
             }
         }
 
-        debug_assert_eq!(signature.type_params.len(), type_args.len());
-
         for (idx, param) in signature.params.inner().iter().enumerate() {
             let param_ty = self.instantiate_type_from(&param.ty, signature.type_params, &type_args);
 
