@@ -523,7 +523,7 @@ impl TyCheckCtx {
                 continue;
             };
 
-            if !self.is_visible_to(expr.id, field.id)? {
+            if !constructor_field.is_default && !self.is_visible_to(expr.id, field.id)? {
                 let hir_field = self.hir_field(field.id).expect("expected HIR field with same ID");
 
                 self.dcx().emit(
