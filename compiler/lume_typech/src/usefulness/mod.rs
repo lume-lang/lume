@@ -63,15 +63,54 @@ impl TyCheckCtx {
                 let enum_case_def = self.enum_case_with_name(&variant_pattern.name)?;
                 missing_variants.swap_remove(&enum_case_def.idx);
 
+                // Only test the patterns which match the name of the current pattern, since
+                // we can otherwise situtations where all technically all variants are present,
+                // but not in all possible configurations.
+                //
+                // For example, given variants like this:
+                // ```lm
+                // enum Foo {
+                //     A(Bar),
+                //     B(Bar),
+                // }
+                //
+                // enum Bar {
+                //     A,
+                //     B,
+                // }
+                //
+                // fn foo(kind: Foo) -> Int32 {
+                //     switch kind {
+                //         Foo::A(Bar::A) => 4_i32,
+                //         Foo::B(Bar::A) => 5_i32,
+                //         Foo::B(Bar::B) => 6_i32,
+                //     }
+                // }
+                // ```
+                // would not raise any error since all variants are present, even though
+                // `Foo::A(Bar::B)` isn't in the matrix.
+                //
+                // If we limit to only matching expressions, we essentially get this, where we
+                // only check for `Foo::A`:
+                // ```lm
+                // fn foo(kind: Foo) -> Int32 {
+                //     switch kind {
+                //         Foo::A(Bar::A) => 4_i32,
+                //     }
+                // }
+                // ```
+                // which would raise the correct error.
+                let matching_patterns = matching_variant_patterns(variant_pattern, patterns);
+
                 for (field_idx, enum_field) in enum_case_def.parameters.iter().enumerate() {
                     let enum_field_ty = self
                         .mk_type_ref_from(enum_field, enum_def.id)?
                         .with_location(ty.location);
 
-                    let subpatterns = column_of_patterns(patterns, field_idx)?;
+                    let subpatterns = column_of_patterns(&matching_patterns, field_idx)?;
                     let parents = &[parents, &[(variant_pattern, field_idx)][..]].concat();
 
-                    self.do_patterns_exhaust_type(&enum_field_ty, &subpatterns, parents.as_slice())?;
+                    self.do_patterns_exhaust_type(&enum_field_ty, &subpatterns, &parents)?;
                 }
             }
         }
@@ -118,6 +157,27 @@ impl TyCheckCtx {
 
         Ok(fmt)
     }
+}
+
+/// Filters out all patterns from `patterns` which are a name match of `primary`
+/// and returns them.
+fn matching_variant_patterns<'pat>(
+    primary: &'pat lume_hir::VariantPattern,
+    patterns: &[&'pat lume_hir::Pattern],
+) -> Vec<&'pat lume_hir::Pattern> {
+    let mut matching = Vec::new();
+
+    for pattern in patterns {
+        let lume_hir::PatternKind::Variant(variant_pattern) = &pattern.kind else {
+            continue;
+        };
+
+        if variant_pattern.name.is_name_match(&primary.name) {
+            matching.push(*pattern);
+        }
+    }
+
+    matching
 }
 
 /// Given a list of patterns, like the ones within a switch expression,
