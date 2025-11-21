@@ -12,12 +12,17 @@ impl TyCheckCtx {
         let operand_type = self.type_of(expr.operand)?;
         let patterns = expr.cases.iter().map(|case| &case.pattern).collect::<Vec<_>>();
 
-        self.do_patterns_exhaust_type(&operand_type, &patterns)
+        self.do_patterns_exhaust_type(&operand_type, &patterns, &[])
     }
 
     /// Determines whether the given patterns exhaust all the possible values of
     /// the given type.
-    fn do_patterns_exhaust_type(&self, ty: &TypeRef, patterns: &[&lume_hir::Pattern]) -> Result<()> {
+    fn do_patterns_exhaust_type(
+        &self,
+        ty: &TypeRef,
+        patterns: &[&lume_hir::Pattern],
+        parents: &[(&lume_hir::VariantPattern, usize)],
+    ) -> Result<()> {
         // If the patterns have any fallback patterns, it is always exhausted.
         if patterns.iter().any(|pat| pat.is_fallback()) {
             return Ok(());
@@ -64,8 +69,9 @@ impl TyCheckCtx {
                         .with_location(ty.location);
 
                     let subpatterns = column_of_patterns(patterns, field_idx)?;
+                    let parents = &[parents, &[(variant_pattern, field_idx)][..]].concat();
 
-                    self.do_patterns_exhaust_type(&enum_field_ty, &subpatterns)?;
+                    self.do_patterns_exhaust_type(&enum_field_ty, &subpatterns, parents.as_slice())?;
                 }
             }
         }
@@ -76,14 +82,41 @@ impl TyCheckCtx {
 
             for missing_variant in missing_variants {
                 let variant_name = format!("{:+}::{:+}", enum_def.name, enum_def.cases[missing_variant].name);
+                let formatted_lineage = self.format_variant_lineage(variant_name, parents)?;
 
-                unmatched_cases.push(variant_name);
+                unmatched_cases.push(formatted_lineage);
             }
 
             return Err(errors::CaseNotCovered::from_cases(matched_type, unmatched_cases, ty.location).into());
         }
 
         Ok(())
+    }
+
+    /// Formats the given "lineage" of variant patterns into a single string,
+    /// which can be rendered within an error message to the user.
+    ///
+    /// For example, given a `variant_name` of `Bar::B` which is nested within
+    /// a parent chain of `(Foo::A, 1)` where `Foo::A` has 3 fields, this method
+    /// would return `Foo::A(.., Bar::B, ..)`.
+    fn format_variant_lineage(
+        &self,
+        variant_name: String,
+        parents: &[(&lume_hir::VariantPattern, usize)],
+    ) -> Result<String> {
+        let mut fmt = variant_name;
+
+        for (parent, field_idx) in parents {
+            let enum_case_def = self.enum_case_with_name(&parent.name)?;
+            let field_len = enum_case_def.parameters.len();
+
+            let placeholders_before = ".., ".repeat(*field_idx);
+            let placeholders_after = ", ..".repeat(field_len - *field_idx - 1);
+
+            fmt = format!("{:+}({placeholders_before}{fmt}{placeholders_after})", parent.name);
+        }
+
+        Ok(fmt)
     }
 }
 

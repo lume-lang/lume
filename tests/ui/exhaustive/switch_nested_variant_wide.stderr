@@ -1,0 +1,8 @@
+× error[LM4343]: non-exhaustive switch expression
+    ╭─[switch_nested_variant_wide.lm:16:12]
+ 15 │ fn foo(kind: Foo) -> Int32 {
+ 16 │     switch kind {
+    ∶            ^^^^ unmatched switch case: Foo::A(.., Baz::B)
+ 17 │         Foo::A(Bar::A, Baz::A) => 4_i32,
+    ╰──
+   help: try adding a fallback case to catch unmatched cases
