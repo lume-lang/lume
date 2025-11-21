@@ -1,4 +1,5 @@
 use error_snippet::Result;
+use indexmap::IndexMap;
 use lume_span::{Internable, NodeId};
 use lume_tir::VariableId;
 use lume_types::TypeRef;
@@ -90,19 +91,28 @@ impl LowerFunction<'_> {
     fn construct_expression(&mut self, expr: &lume_hir::Construct) -> Result<lume_tir::ExpressionKind> {
         let constructed_type = self.lower.tcx.find_type_ref_from(&expr.path, expr.id)?.unwrap();
 
-        let mut constructed = expr.fields.clone();
+        let mut constructed = expr
+            .fields
+            .iter()
+            .map(|field| (field.name.name.clone(), field.clone()))
+            .collect::<IndexMap<_, _>>();
+
         let fields = self.lower.tcx.tdb().find_fields(constructed_type.instance_of);
 
         for field in fields {
+            if constructed.contains_key(&field.name) {
+                continue;
+            }
+
             if let Some(default_field) = self.lower.tcx.constructer_default_field_of(expr, &field.name) {
-                constructed.push(default_field);
+                constructed.insert(field.name.clone(), default_field);
             }
         }
 
         let constructed = constructed
             .into_iter()
-            .map(|field| {
-                let name = field.name.to_string().intern();
+            .map(|(name, field)| {
+                let name = name.intern();
                 let value = self.expression(field.value)?;
 
                 Ok(lume_tir::ConstructorField {
