@@ -1,0 +1,10 @@
+enum IpKind {
+    V4,
+    V6,
+}
+
+fn foo(kind: IpKind) -> Int32 {
+    switch kind {
+        IpKind::V4 => 4_i32,
+    }
+}

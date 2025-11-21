@@ -1,0 +1,19 @@
+enum Instruction {
+    Add,
+    AddImmediate,
+    Sub,
+    SubImmediate,
+    Mul,
+    MulImmediate,
+    Div,
+    DivImmediate,
+}
+
+fn foo(inst: Instruction) -> Int32 {
+    switch inst {
+        Instruction::Add => 1_i32,
+        Instruction::Sub => 2_i32,
+        Instruction::Mul => 3_i32,
+        Instruction::Div => 4_i32,
+    }
+}
