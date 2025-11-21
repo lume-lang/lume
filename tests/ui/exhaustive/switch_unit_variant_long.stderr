@@ -1,0 +1,8 @@
+× error[LM4343]: non-exhaustive switch expression
+    ╭─[switch_unit_variant_long.lm:13:12]
+ 12 │ fn foo(inst: Instruction) -> Int32 {
+ 13 │     switch inst {
+    ∶            ^^^^ unmatched switch case: Instruction::DivImmediate, and 4 more
+ 14 │         Instruction::Add => 1_i32,
+    ╰──
+   help: try adding a fallback case to catch unmatched cases

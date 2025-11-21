@@ -1,0 +1,8 @@
+× error[LM4343]: non-exhaustive switch expression
+    ╭─[switch_unit_variant.lm:7:12]
+ 6  │ fn foo(kind: IpKind) -> Int32 {
+ 7  │     switch kind {
+    ∶            ^^^^ unmatched switch case: IpKind::V6
+ 8  │         IpKind::V4 => 4_i32,
+    ╰──
+   help: try adding a fallback case to catch unmatched cases
