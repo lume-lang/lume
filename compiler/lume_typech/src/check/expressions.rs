@@ -659,6 +659,8 @@ impl TyCheckCtx {
             let case_branch_ty = self.type_of(case.branch)?;
             let case_pattern_ty = self.type_of_pattern(&case.pattern)?;
 
+            self.pattern(&case.pattern)?;
+
             if matches!(case.pattern.kind, lume_hir::PatternKind::Variant(_))
                 && !self.is_type_visible_to(&case_pattern_ty, expr.id)?
             {
@@ -722,6 +724,35 @@ impl TyCheckCtx {
             if let Err(err) = self.ensure_type_compatibility(&arg_type, &param_ty) {
                 self.dcx().emit(err);
             }
+        }
+
+        Ok(())
+    }
+
+    /// Asserts that the fields defined within the pattern is valid for the
+    /// corresponding type.
+    #[libftrace::traced(level = Trace, err)]
+    fn pattern(&self, pattern: &lume_hir::Pattern) -> Result<()> {
+        let lume_hir::PatternKind::Variant(pattern) = &pattern.kind else {
+            return Ok(());
+        };
+
+        self.variant_pattern(pattern)
+    }
+
+    /// Asserts that the fields defined within the given variant pattern is
+    /// valid for the corresponding variant.
+    #[libftrace::traced(level = Trace, err)]
+    fn variant_pattern(&self, pattern: &lume_hir::VariantPattern) -> Result<()> {
+        let enum_case_def = self.enum_case_with_name(&pattern.name)?;
+
+        if pattern.fields.len() != enum_case_def.parameters.len() {
+            return Err(crate::query::diagnostics::ArgumentCountMismatch {
+                source: pattern.location,
+                expected: enum_case_def.parameters.len(),
+                actual: pattern.fields.len(),
+            }
+            .into());
         }
 
         Ok(())
