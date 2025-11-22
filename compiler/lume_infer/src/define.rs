@@ -156,15 +156,17 @@ static INTRINSIC_METHODS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
 impl TyInferCtx {
     #[libftrace::traced(level = Debug)]
     pub(crate) fn define_types(&mut self) {
-        let mut hir = std::mem::take(&mut self.hir);
+        let mut nodes = std::mem::take(&mut self.hir.nodes);
 
-        for (_, symbol) in &mut hir.nodes {
+        for (_, symbol) in &mut nodes {
             if let lume_hir::Node::Type(ty) = symbol {
                 self.define_type(ty);
             }
         }
 
-        self.hir = hir;
+        for (_, symbol) in nodes {
+            self.hir.nodes.insert(symbol.id(), symbol);
+        }
     }
 
     fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) {

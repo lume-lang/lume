@@ -11,6 +11,7 @@ use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
 use lume_types::TyCtx;
 
+#[cfg(feature = "codegen")]
 pub(crate) mod incremental;
 
 #[cfg(feature = "codegen")]
