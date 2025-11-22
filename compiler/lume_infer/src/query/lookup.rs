@@ -954,4 +954,19 @@ impl TyInferCtx {
 
         self.get_trait_impl_of(&cast_trait, source)
     }
+
+    /// Gets the documentation for the given node as a string.
+    pub fn documentation_string_of(&self, id: NodeId) -> Option<&String> {
+        match self.hir_node(id)? {
+            lume_hir::Node::Function(func) => func.doc_comment.as_ref(),
+            lume_hir::Node::Type(ty) => match ty {
+                lume_hir::TypeDefinition::Struct(def) => def.doc_comment.as_ref(),
+                lume_hir::TypeDefinition::Trait(def) => def.doc_comment.as_ref(),
+                lume_hir::TypeDefinition::Enum(def) => def.doc_comment.as_ref(),
+            },
+            lume_hir::Node::Method(method) => method.doc_comment.as_ref(),
+            lume_hir::Node::TraitMethodDef(method) => method.doc_comment.as_ref(),
+            _ => None,
+        }
+    }
 }

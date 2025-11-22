@@ -726,6 +726,10 @@ impl std::fmt::Display for Visibility {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
     pub id: NodeId,
+
+    #[serde(skip)]
+    pub doc_comment: Option<String>,
+
     pub visibility: Visibility,
     pub name: Path,
     pub parameters: Vec<Parameter>,
@@ -827,6 +831,10 @@ impl TypeDefinition {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
     pub id: NodeId,
+
+    #[serde(skip)]
+    pub doc_comment: Option<String>,
+
     pub name: Path,
     pub type_parameters: TypeParameters,
     pub visibility: Visibility,
@@ -843,6 +851,10 @@ impl EnumDefinition {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct EnumDefinitionCase {
     pub idx: usize,
+
+    #[serde(skip)]
+    pub doc_comment: Option<String>,
+
     pub name: Path,
     pub parameters: Vec<Type>,
     pub location: Location,
@@ -851,6 +863,10 @@ pub struct EnumDefinitionCase {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct StructDefinition {
     pub id: NodeId,
+
+    #[serde(skip)]
+    pub doc_comment: Option<String>,
+
     pub name: Path,
     pub visibility: Visibility,
     pub builtin: bool,
@@ -894,15 +910,13 @@ impl WithTypeParameters for Implementation {
     }
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
-pub enum StructMember {
-    Field(Box<Field>),
-    Method(Box<MethodDefinition>),
-}
-
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct Field {
     pub id: NodeId,
+
+    #[serde(skip)]
+    pub doc_comment: Option<String>,
+
     pub visibility: Visibility,
     pub name: Identifier,
     pub field_type: Type,
@@ -913,6 +927,10 @@ pub struct Field {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
     pub id: NodeId,
+
+    #[serde(skip)]
+    pub doc_comment: Option<String>,
+
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
@@ -933,6 +951,10 @@ impl WithTypeParameters for MethodDefinition {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitDefinition {
     pub id: NodeId,
+
+    #[serde(skip)]
+    pub doc_comment: Option<String>,
+
     pub name: Path,
     pub visibility: Visibility,
     pub type_parameters: TypeParameters,
@@ -955,6 +977,10 @@ impl WithTypeParameters for TraitDefinition {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
     pub id: NodeId,
+
+    #[serde(skip)]
+    pub doc_comment: Option<String>,
+
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,

@@ -40,6 +40,7 @@ impl LowerModule<'_> {
         Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(Box::new(
             lume_hir::StructDefinition {
                 id,
+                doc_comment: expr.documentation,
                 name,
                 visibility,
                 builtin: expr.builtin,
@@ -67,6 +68,7 @@ impl LowerModule<'_> {
 
         let field = lume_hir::Field {
             id,
+            doc_comment: expr.documentation,
             name,
             visibility,
             field_type,
@@ -123,6 +125,7 @@ impl LowerModule<'_> {
 
         Ok(lume_hir::MethodDefinition {
             id,
+            doc_comment: expr.documentation,
             name,
             visibility,
             type_parameters,
@@ -160,6 +163,7 @@ impl LowerModule<'_> {
         Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(Box::new(
             lume_hir::TraitDefinition {
                 id,
+                doc_comment: expr.documentation,
                 name,
                 visibility,
                 type_parameters,
@@ -185,6 +189,7 @@ impl LowerModule<'_> {
 
         Ok(lume_hir::TraitMethodDefinition {
             id,
+            doc_comment: expr.documentation,
             name,
             type_parameters,
             parameters,
@@ -212,6 +217,7 @@ impl LowerModule<'_> {
         Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(Box::new(
             lume_hir::EnumDefinition {
                 id,
+                doc_comment: expr.documentation,
                 name,
                 type_parameters,
                 visibility,
@@ -233,6 +239,7 @@ impl LowerModule<'_> {
 
         let symbol = lume_hir::EnumDefinitionCase {
             idx,
+            doc_comment: expr.documentation,
             name,
             parameters,
             location,
@@ -258,6 +265,7 @@ impl LowerModule<'_> {
 
         Ok(lume_hir::Node::Function(lume_hir::FunctionDefinition {
             id,
+            doc_comment: expr.documentation,
             visibility,
             name,
             type_parameters,
