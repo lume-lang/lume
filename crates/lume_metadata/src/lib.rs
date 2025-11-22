@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::time::SystemTime;
 
 use lume_hir::map::Map;
 use lume_session::Package;
@@ -9,8 +10,8 @@ use serde::{Deserialize, Serialize};
 pub const METADATA_FILE_EXTENSION: &str = "mlib";
 
 /// Gets the metadata file-name which corresponds to the given package name.
-pub fn metadata_filename_of(hdr: &PackageHeader) -> PathBuf {
-    let name = format!("{}.{METADATA_FILE_EXTENSION}", hdr.name);
+pub fn metadata_filename_of(package_name: &str) -> PathBuf {
+    let name = format!("{package_name}.{METADATA_FILE_EXTENSION}");
 
     PathBuf::from(name)
 }
@@ -23,11 +24,20 @@ pub fn metadata_filename_of(hdr: &PackageHeader) -> PathBuf {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct PackageHeader {
     pub name: String,
+    pub build_time: SystemTime,
 }
 
 impl PackageHeader {
     pub fn create_from(pkg: &Package) -> Self {
-        Self { name: pkg.name.clone() }
+        let build_time = match std::fs::metadata(pkg.root()).and_then(|attr| attr.modified()) {
+            Ok(time) => time,
+            Err(_) => SystemTime::now(),
+        };
+
+        Self {
+            name: pkg.name.clone(),
+            build_time,
+        }
     }
 }
 
