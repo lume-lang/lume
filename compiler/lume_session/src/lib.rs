@@ -187,6 +187,10 @@ impl GlobalCtx {
         self.obj_path().join("bc")
     }
 
+    pub fn obj_bc_path_of(&self, file: &str) -> PathBuf {
+        self.obj_bc_path().join(format!("{file}.o"))
+    }
+
     /// Defines the absolute path of the directory to place final
     /// intermediary metadata object files within.
     ///

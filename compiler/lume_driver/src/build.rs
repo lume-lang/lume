@@ -1,4 +1,3 @@
-use lume_errors::{MapDiagnostic, SimpleDiagnostic};
 use lume_metadata::PackageMetadata;
 
 use crate::*;
@@ -50,6 +49,22 @@ impl Driver {
         let mut dependency_hir = lume_hir::map::Map::empty(PackageId::empty());
 
         for dependency in dependencies {
+            if !crate::incremental::needs_compilation(&gcx, &dependency)? {
+                objects.push(lume_linker::ObjectSource::Cache {
+                    name: dependency.name.clone(),
+                    path: gcx.obj_bc_path_of(&dependency.name),
+                });
+
+                continue;
+            }
+
+            libftrace::info!(
+                "compiling {} v{} ({})",
+                dependency.name,
+                dependency.version,
+                dependency.path.display()
+            );
+
             let compiled = Compiler::build_package(dependency, gcx.clone(), &dependency_hir)?;
             let metadata = compiled_pkg_metadata(&compiled);
 
@@ -57,10 +72,13 @@ impl Driver {
                 dependency_hir.nodes.insert(*node_id, node.clone());
             }
 
-            write_metadata_object(&gcx, &metadata)?;
+            crate::incremental::write_metadata_object(&gcx, &metadata)?;
 
             let object = lume_codegen::generate(compiled.mir)?;
-            objects.push((metadata.header.name.clone(), object));
+            objects.push(lume_linker::ObjectSource::Compiled {
+                name: metadata.header.name.clone(),
+                data: object,
+            });
         }
 
         let output_file_path = gcx.binary_output_path(&self.package.name);
@@ -72,35 +90,6 @@ impl Driver {
             binary: output_file_path,
         })
     }
-}
-
-/// Writes the serialized representation of `metadata` to disk within the
-/// metadata directory defined by `gcx` (via
-/// [`GlobalCtx::obj_metadata_path()`]).
-fn write_metadata_object(gcx: &Arc<GlobalCtx>, metadata: &PackageMetadata) -> Result<()> {
-    // Ensure the parent directory exists first.
-    let metadata_directory = gcx.obj_metadata_path();
-
-    std::fs::create_dir_all(&metadata_directory).map_err(|err| {
-        Box::new(
-            SimpleDiagnostic::new(format!(
-                "failed to create metadata directory ({})",
-                metadata_directory.display()
-            ))
-            .add_cause(err),
-        ) as lume_errors::Error
-    })?;
-
-    let metadata_filename = lume_metadata::metadata_filename_of(&metadata.header);
-    let metadata_path = metadata_directory.join(metadata_filename);
-
-    let serialized = postcard::to_allocvec(metadata).map_diagnostic()?;
-
-    std::fs::write(metadata_path, serialized).map_err(|err| {
-        Box::new(SimpleDiagnostic::new("failed to write metadata").add_cause(err)) as lume_errors::Error
-    })?;
-
-    Ok(())
 }
 
 pub struct CompiledPackage {

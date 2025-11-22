@@ -6,6 +6,15 @@ use error_snippet::SimpleDiagnostic;
 use lume_errors::{MapDiagnostic, Result};
 use lume_session::{GlobalCtx, LinkerPreference, Options};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ObjectSource {
+    /// The object has just been compiled, but does not yet exist on the disk.
+    Compiled { name: String, data: Vec<u8> },
+
+    /// The object file already exists on the disk from a previous compilation.
+    Cache { name: String, path: PathBuf },
+}
+
 #[derive(Debug, Clone)]
 pub struct ObjectLocation {
     pub name: String,
@@ -14,24 +23,29 @@ pub struct ObjectLocation {
 
 /// Writes the object files of the given codegen result to disk in
 /// the current workspace directory.
-pub fn write_object_files(gcx: &Arc<GlobalCtx>, objects: Vec<(String, Vec<u8>)>) -> Result<Vec<ObjectLocation>> {
+pub fn write_object_files(gcx: &Arc<GlobalCtx>, objects: Vec<ObjectSource>) -> Result<Vec<ObjectLocation>> {
     std::fs::create_dir_all(gcx.obj_path()).map_diagnostic()?;
     std::fs::create_dir_all(gcx.obj_bc_path()).map_diagnostic()?;
 
     objects
         .into_iter()
-        .map(|(name, bytecode)| {
+        .map(|source| {
             use std::io::Write;
 
-            let output_file_path = gcx.obj_bc_path().join(format!("{name}.o"));
-            let mut output_file = std::fs::File::create(&output_file_path).map_diagnostic()?;
+            match source {
+                ObjectSource::Compiled { name, data } => {
+                    let output_file_path = gcx.obj_bc_path_of(&name);
+                    let mut output_file = std::fs::File::create(&output_file_path).map_diagnostic()?;
 
-            output_file.write_all(&bytecode).map_diagnostic()?;
+                    output_file.write_all(&data).map_diagnostic()?;
 
-            Ok(ObjectLocation {
-                name,
-                path: output_file_path,
-            })
+                    Ok(ObjectLocation {
+                        name,
+                        path: output_file_path,
+                    })
+                }
+                ObjectSource::Cache { name, path } => Ok(ObjectLocation { name, path }),
+            }
         })
         .collect::<Result<Vec<ObjectLocation>>>()
 }
