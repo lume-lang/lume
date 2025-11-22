@@ -378,14 +378,14 @@ impl LowerFunction<'_> {
     #[libftrace::traced(level = Trace, err)]
     fn member_expression(&mut self, expr: &lume_hir::Member) -> Result<lume_tir::ExpressionKind> {
         let callee = self.expression(expr.callee)?;
-        let name = expr.name.intern();
+        let name = expr.name.name.intern();
 
         let callee_ty = self.lower.tcx.type_of(expr.callee)?;
         let field = self
             .lower
             .tcx
             .tdb()
-            .find_field(callee_ty.instance_of, &expr.name)
+            .find_field(callee_ty.instance_of, &expr.name.name)
             .unwrap()
             .clone();
 

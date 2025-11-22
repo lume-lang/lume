@@ -18,7 +18,12 @@ expression: "parse_expr(\"foo.bar = a;\")"
                                 },
                             },
                         ),
-                        name: "bar",
+                        name: Identifier {
+                            name: "bar",
+                            location: Location(
+                                4..7,
+                            ),
+                        },
                         location: Location(
                             0..7,
                         ),

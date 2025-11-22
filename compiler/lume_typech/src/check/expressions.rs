@@ -612,12 +612,15 @@ impl TyCheckCtx {
             );
         }
 
-        let Some(field) = callee_def.fields().find(|field| field.name.as_str() == expr.name) else {
+        let Some(field) = callee_def
+            .fields()
+            .find(|field| field.name.as_str() == expr.name.as_str())
+        else {
             self.dcx().emit(
                 UnknownField {
                     source: expr.location,
                     ty: self.new_named_type(&callee_ty, true)?,
-                    field: expr.name.clone(),
+                    field: expr.name.name.clone(),
                 }
                 .into(),
             );

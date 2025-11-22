@@ -484,6 +484,7 @@ impl LowerModule<'_> {
         let id = self.next_node_id();
         let location = self.location(expr.location);
         let callee = self.expression(expr.callee)?;
+        let name = self.identifier(expr.name);
 
         Ok(lume_hir::Expression {
             id,
@@ -491,7 +492,7 @@ impl LowerModule<'_> {
             kind: lume_hir::ExpressionKind::Member(lume_hir::Member {
                 id,
                 callee,
-                name: expr.name,
+                name,
                 location,
             }),
         })

@@ -1438,7 +1438,7 @@ impl Builder<'_> {
             Expression::Member(expr) => Node::nodes(vec![
                 self.build_expression(expr.callee),
                 Node::text_str("."),
-                Node::text(expr.name),
+                Node::text(expr.name.name),
             ]),
             Expression::Range(expr) => {
                 if expr.inclusive {

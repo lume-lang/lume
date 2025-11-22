@@ -556,7 +556,7 @@ impl Parser<'_> {
 
         let expression = Expression::Member(Box::new(Member {
             callee: target,
-            name: name.name,
+            name,
             location: (start..end).into(),
         }));
 

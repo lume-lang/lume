@@ -1139,7 +1139,7 @@ node_location!(BooleanLiteral);
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Member {
     pub callee: Expression,
-    pub name: String,
+    pub name: Identifier,
     pub location: Location,
 }
 

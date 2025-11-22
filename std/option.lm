@@ -18,7 +18,7 @@ impl<T> Optional<T> {
     pub fn force(self) -> T {
         switch self {
             Optional<T>::Some(inner) => inner,
-            .. => std::process::bail("attempted to force `None` value"),
+            Optional<T>::None => std::process::bail("attempted to force `None` value"),
         }
     }
 }

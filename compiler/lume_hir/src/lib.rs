@@ -441,6 +441,21 @@ impl Path {
         root
     }
 
+    pub fn location(&self) -> Location {
+        let start = self
+            .root
+            .first()
+            .map_or(self.name().location.start(), |segment| segment.name().location.start());
+
+        let end = self.name.location().end();
+
+        lume_span::source::Location {
+            file: self.name().location.file.clone(),
+            index: start..end,
+        }
+        .intern()
+    }
+
     pub fn void() -> Self {
         Self::rooted(PathSegment::ty("Void"))
     }
@@ -1686,7 +1701,7 @@ pub struct BooleanLiteral {
 pub struct Member {
     pub id: NodeId,
     pub callee: NodeId,
-    pub name: String,
+    pub name: Identifier,
     pub location: Location,
 }
 

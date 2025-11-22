@@ -1,6 +1,6 @@
 use error_snippet::Result;
 use lume_architect::cached_query;
-use lume_hir::{CallExpression, Identifier, Node, Path, Visibility};
+use lume_hir::{CallExpression, Node, Path, Visibility};
 use lume_span::NodeId;
 use lume_types::{Function, Method, Trait, TypeRef};
 
@@ -147,17 +147,14 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(expr.callee)?;
 
-                let Some(field) = self.tdb().find_field(callee_type.instance_of, &expr.name) else {
+                let Some(field) = self.tdb().find_field(callee_type.instance_of, &expr.name.name) else {
                     let ty = self.tdb().type_(callee_type.instance_of).unwrap();
 
                     return Err(crate::errors::MissingField {
                         source: expr.location.file.clone(),
                         range: expr.location.index.clone(),
                         type_name: ty.name.clone(),
-                        field_name: Identifier {
-                            name: expr.name.clone(),
-                            location: expr.location,
-                        },
+                        field_name: expr.name.clone(),
                     }
                     .into());
                 };
