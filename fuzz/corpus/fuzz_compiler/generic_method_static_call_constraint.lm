@@ -1,5 +1,3 @@
-//# test-outcome=success
-
 trait A {}
 
 use A in Boolean { }

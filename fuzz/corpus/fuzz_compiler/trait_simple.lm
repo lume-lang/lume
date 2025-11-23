@@ -1,5 +1,3 @@
-//# test-outcome=success
-
 struct A { }
 
 trait Foo {}

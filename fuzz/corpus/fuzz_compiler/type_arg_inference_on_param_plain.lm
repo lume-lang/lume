@@ -1,5 +1,3 @@
-//# test-outcome=success
-
 fn foo<T>(val: T) { }
 
 fn main() {

@@ -1,5 +1,3 @@
-//# test-outcome=success
-
 trait Test {}
 
 use Test in Int32 { }

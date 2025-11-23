@@ -1,5 +1,3 @@
-//# test-outcome=success
-
 trait B {
     fn value(self) -> Int32 {
         return 0;

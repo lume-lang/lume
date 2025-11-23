@@ -1,5 +1,3 @@
-//# test-outcome=success
-
 trait Foo {
     pub fn foo(self);
 }
