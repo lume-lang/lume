@@ -1,0 +1,15 @@
+//# test-return = 0
+
+struct A {}
+
+impl A {
+    pub fn bar<T>(val: T) -> T {
+        return val;
+    }
+}
+
+fn main() -> Int8 {
+    let _ = A::bar<Boolean>(false);
+
+    0
+}
