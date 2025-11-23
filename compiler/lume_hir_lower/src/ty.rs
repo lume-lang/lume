@@ -7,7 +7,7 @@ use crate::{ARRAY_STD_TYPE, LowerModule};
 
 impl LowerModule<'_> {
     #[libftrace::traced(level = Debug)]
-    pub(super) fn type_ref(&self, expr: lume_ast::Type) -> Result<lume_hir::Type> {
+    pub(super) fn type_ref(&mut self, expr: lume_ast::Type) -> Result<lume_hir::Type> {
         match expr {
             lume_ast::Type::Named(t) => self.type_named(*t),
             lume_ast::Type::Array(t) => self.type_array(*t),
@@ -16,7 +16,7 @@ impl LowerModule<'_> {
     }
 
     #[libftrace::traced(level = Debug)]
-    pub(super) fn opt_type_ref(&self, expr: Option<lume_ast::Type>) -> Result<lume_hir::Type> {
+    pub(super) fn opt_type_ref(&mut self, expr: Option<lume_ast::Type>) -> Result<lume_hir::Type> {
         match expr {
             Some(e) => Ok(self.type_ref(e)?),
             None => Ok(lume_hir::Type::void()),
@@ -24,17 +24,20 @@ impl LowerModule<'_> {
     }
 
     #[libftrace::traced(level = Debug)]
-    fn type_named(&self, expr: lume_ast::NamedType) -> Result<lume_hir::Type> {
+    fn type_named(&mut self, expr: lume_ast::NamedType) -> Result<lume_hir::Type> {
+        let id = self.next_node_id();
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location().clone());
 
-        let id = lume_span::NodeId::from_name(self.current_node.package, &name);
-
-        Ok(lume_hir::Type { id, name, location })
+        Ok(lume_hir::Type {
+            id: lume_hir::TypeId::from(id),
+            name,
+            location,
+        })
     }
 
     #[libftrace::traced(level = Debug)]
-    fn type_array(&self, expr: lume_ast::ArrayType) -> Result<lume_hir::Type> {
+    fn type_array(&mut self, expr: lume_ast::ArrayType) -> Result<lume_hir::Type> {
         self.type_std(lume_ast::PathSegment::Type {
             name: ARRAY_STD_TYPE.into(),
             type_arguments: vec![*expr.element_type],
@@ -43,7 +46,8 @@ impl LowerModule<'_> {
     }
 
     #[libftrace::traced(level = Debug)]
-    fn type_self(&self, expr: lume_ast::SelfType) -> Result<lume_hir::Type> {
+    fn type_self(&mut self, expr: lume_ast::SelfType) -> Result<lume_hir::Type> {
+        let id = self.next_node_id();
         let location = self.location(expr.location);
         let name = match &self.self_type {
             Some(ty) => ty.clone(),
@@ -57,21 +61,23 @@ impl LowerModule<'_> {
             }
         };
 
-        let id = lume_span::NodeId::from_name(self.current_node.package, &name);
-
-        Ok(lume_hir::Type { id, name, location })
+        Ok(lume_hir::Type {
+            id: lume_hir::TypeId::from(id),
+            name,
+            location,
+        })
     }
 
     #[libftrace::traced(level = Debug)]
-    fn type_std(&self, name: lume_ast::PathSegment) -> Result<lume_hir::Type> {
-        let id = lume_span::NodeId::from_name(lume_span::PackageId::empty(), &name);
+    fn type_std(&mut self, name: lume_ast::PathSegment) -> Result<lume_hir::Type> {
+        let id = self.next_node_id();
         let location = self.location(name.location().clone());
 
         let name = self.path_segment(name)?;
         let path = lume_hir::Path::from_parts(Some(vec![lume_hir::PathSegment::namespace("std")]), name);
 
         Ok(lume_hir::Type {
-            id,
+            id: lume_hir::TypeId::from(id),
             name: path,
             location,
         })

@@ -256,7 +256,11 @@ impl LowerModule<'_> {
     }
 
     #[libftrace::traced(level = Debug)]
-    fn def_enum_case(&self, idx: usize, expr: lume_ast::EnumDefinitionCase) -> Result<lume_hir::EnumDefinitionCase> {
+    fn def_enum_case(
+        &mut self,
+        idx: usize,
+        expr: lume_ast::EnumDefinitionCase,
+    ) -> Result<lume_hir::EnumDefinitionCase> {
         let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
         let location = self.location(expr.location);
 
@@ -460,7 +464,7 @@ impl LowerModule<'_> {
     }
 
     fn expand_self_name(
-        &self,
+        &mut self,
         name: lume_ast::Identifier,
         type_params: &[lume_ast::TypeParameter],
     ) -> Result<lume_hir::Path> {

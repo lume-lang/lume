@@ -454,7 +454,7 @@ impl TyInferCtx {
             match parent {
                 Node::Type(lume_hir::TypeDefinition::Struct(struct_def)) => {
                     let struct_type = lume_hir::Type {
-                        id: struct_def.id,
+                        id: lume_hir::TypeId::from(struct_def.id),
                         name: struct_def.name.clone(),
                         location: struct_def.location,
                     };

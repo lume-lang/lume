@@ -1938,9 +1938,19 @@ impl From<Vec<TypeParameter>> for TypeParameters {
     }
 }
 
+/// Uniquely identifiers a single HIR type.
+#[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+pub struct TypeId(NodeId);
+
+impl From<NodeId> for TypeId {
+    fn from(value: NodeId) -> Self {
+        Self(value)
+    }
+}
+
 #[derive(Serialize, Deserialize, Location, Debug, Clone, Eq)]
 pub struct Type {
-    pub id: NodeId,
+    pub id: TypeId,
     pub name: Path,
     pub location: Location,
 }
@@ -1948,7 +1958,7 @@ pub struct Type {
 impl Type {
     pub fn void() -> Type {
         Self {
-            id: NodeId::empty(PackageId::empty()),
+            id: TypeId(NodeId::empty(PackageId::empty())),
             name: Path::void(),
             location: Location::empty(),
         }
