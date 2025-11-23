@@ -10,6 +10,11 @@ use lume_session::{GlobalCtx, Package};
 /// as if anything has changed within it' source code.
 #[libftrace::traced(level = Debug, fields(name = package.name), err, ret)]
 pub fn needs_compilation(gcx: &Arc<GlobalCtx>, package: &Package) -> Result<bool> {
+    // If incremental compilation is disabled, we should alwas re-compile.
+    if !gcx.session.options.enable_incremental {
+        return Ok(true);
+    }
+
     // If no metadata file could be found, the package has likely not been built
     // yet - in which case it obviously needs to be built.
     let Ok(Some(metadata)) = read_metadata_object(gcx, package) else {

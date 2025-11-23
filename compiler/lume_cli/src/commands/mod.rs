@@ -63,6 +63,10 @@ pub struct BuildOptions {
     #[arg(long, value_name = "LIB", value_hint = ValueHint::FilePath)]
     pub runtime_path: Option<PathBuf>,
 
+    /// Whether to disable incremental compilation.
+    #[arg(long)]
+    pub no_incremental: bool,
+
     /// Optimization level
     #[arg(
         short = 'O',
@@ -131,6 +135,7 @@ impl BuildOptions {
         lume_session::Options {
             print_type_context: self.print_type_ctx,
             dump_mir: self.dump_mir.clone(),
+            enable_incremental: !self.no_incremental,
             optimize: match self.optimize.as_str() {
                 "0" => OptimizationLevel::O0,
                 "1" => OptimizationLevel::O1,
