@@ -146,6 +146,21 @@ pub struct DuplicateParameter {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "duplicate method", code = "LM3032")]
+pub struct DuplicateMethod {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("method {name} is already defined")]
+    pub duplicate_range: Range<usize>,
+
+    #[label(note, "original method found here")]
+    pub original_range: Range<usize>,
+
+    pub name: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "no `name` argument in `lang_item` attribute", code = "LM3061")]
 pub struct LangItemMissingName {
     #[span]
