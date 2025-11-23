@@ -296,7 +296,7 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Gets the [`lume_hir::Path`] for the item with the given name.
-    fn resolve_symbol_name(&self, path: &lume_ast::Path) -> Result<Path> {
+    fn resolve_symbol_name(&mut self, path: &lume_ast::Path) -> Result<Path> {
         if let Some(symbol) = self.resolve_imported_symbol(path)? {
             return Ok(symbol.clone());
         }
@@ -326,7 +326,7 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Gets the [`lume_hir::Path`] for the item with the given variant path.
-    fn resolve_variant_name(&self, path: &lume_ast::Path) -> Result<Path> {
+    fn resolve_variant_name(&mut self, path: &lume_ast::Path) -> Result<Path> {
         debug_assert!(path.is_variant(), "expected path to be variant");
 
         let mut root = if let Some(namespace) = &self.namespace {
@@ -345,7 +345,7 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Attemps to resolve a [`lume_hir::Path`] for an imported symbol.
-    fn resolve_imported_symbol(&self, path: &lume_ast::Path) -> Result<Option<Path>> {
+    fn resolve_imported_symbol(&mut self, path: &lume_ast::Path) -> Result<Option<Path>> {
         for (import, symbol) in &self.imports {
             // Match against imported paths, which match the first segment of the imported
             // path.
@@ -433,7 +433,7 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn expand_name(&self, name: lume_ast::PathSegment) -> Result<Path> {
+    fn expand_name(&mut self, name: lume_ast::PathSegment) -> Result<Path> {
         if let Some(ns) = &self.namespace {
             Ok(Path::with_root(ns.clone(), self.path_segment(name)?))
         } else {
@@ -441,13 +441,13 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn path_root(&self, expr: Vec<lume_ast::PathSegment>) -> Result<Vec<PathSegment>> {
+    fn path_root(&mut self, expr: Vec<lume_ast::PathSegment>) -> Result<Vec<PathSegment>> {
         expr.into_iter()
             .map(|seg| self.path_segment(seg))
             .collect::<Result<Vec<_>>>()
     }
 
-    fn path_segment(&self, expr: lume_ast::PathSegment) -> Result<PathSegment> {
+    fn path_segment(&mut self, expr: lume_ast::PathSegment) -> Result<PathSegment> {
         match expr {
             lume_ast::PathSegment::Namespace { name } => Ok(PathSegment::namespace(self.identifier(name))),
             lume_ast::PathSegment::Type {

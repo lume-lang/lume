@@ -476,11 +476,14 @@ impl TyInferCtx {
     /// Lifts the given [`TypeRef`] into a HIR [`lume_hir::Type`] instance.
     #[libftrace::traced(level = Trace, err)]
     pub fn hir_lift_type(&self, ty: &TypeRef) -> Result<lume_hir::Type> {
-        let id = NodeId::from_name(ty.instance_of.package, ty);
         let name = self.type_ref_name(ty)?.to_owned();
         let location = ty.location;
 
-        Ok(lume_hir::Type { id, name, location })
+        Ok(lume_hir::Type {
+            id: lume_hir::TypeId::from(ty.instance_of),
+            name,
+            location,
+        })
     }
 
     /// Creates a new [`TypeRef`] which refers to the `std::Type` type.

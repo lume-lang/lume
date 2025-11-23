@@ -120,7 +120,7 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Construct(e) => {
                 let Some(ty_opt) = self.find_type_ref_from(&e.path, e.id)? else {
                     return Err(self.missing_type_err(&lume_hir::Type {
-                        id: lume_span::NodeId::empty(expr.id.package),
+                        id: lume_hir::TypeId::from(lume_span::NodeId::empty(expr.id.package)),
                         name: e.path.clone(),
                         location: e.path.location,
                     }));
@@ -180,7 +180,7 @@ impl TyInferCtx {
 
                 enum_ty.ok_or_else(|| {
                     self.missing_type_err(&lume_hir::Type {
-                        id: lume_span::NodeId::empty(expr.id.package),
+                        id: lume_hir::TypeId::from(lume_span::NodeId::empty(expr.id.package)),
                         name: enum_segment.clone(),
                         location: enum_segment.location,
                     })
@@ -428,7 +428,7 @@ impl TyInferCtx {
                     },
                     None => {
                         return Err(self.missing_type_err(&lume_hir::Type {
-                            id: lume_span::NodeId::empty(pat.id.package),
+                            id: lume_hir::TypeId::from(lume_span::NodeId::empty(pat.id.package)),
                             name: var.name.clone(),
                             location: var.name.location,
                         }));
