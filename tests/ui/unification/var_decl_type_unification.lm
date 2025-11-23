@@ -1,0 +1,5 @@
+//# test-outcome=success
+
+fn foo() {
+    let arr: std::Array<Int32> = std::Array::new();
+}

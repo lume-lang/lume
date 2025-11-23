@@ -2,14 +2,16 @@ Map {
     items: [
         Implementation {
             target: Type {
-                id: NodeId {
-                    package: PackageId(
-                        1881,
-                    ),
-                    index: Idx(
-                        5175167619020667705,
-                    ),
-                },
+                id: TypeId(
+                    NodeId {
+                        package: PackageId(
+                            1881,
+                        ),
+                        index: Idx(
+                            2,
+                        ),
+                    },
+                ),
                 name: Path {
                     root: [],
                     name: Type {
@@ -38,14 +40,16 @@ Map {
                                 location: using_self_as_parameter_valid.lm:26:30,
                             },
                             param_type: Type {
-                                id: NodeId {
-                                    package: PackageId(
-                                        1881,
-                                    ),
-                                    index: Idx(
-                                        5175167619020667705,
-                                    ),
-                                },
+                                id: TypeId(
+                                    NodeId {
+                                        package: PackageId(
+                                            1881,
+                                        ),
+                                        index: Idx(
+                                            4,
+                                        ),
+                                    },
+                                ),
                                 name: Path {
                                     root: [],
                                     name: Type {
@@ -69,14 +73,16 @@ Map {
                                 location: using_self_as_parameter_valid.lm:32:33,
                             },
                             param_type: Type {
-                                id: NodeId {
-                                    package: PackageId(
-                                        1881,
-                                    ),
-                                    index: Idx(
-                                        6143724420395906933,
-                                    ),
-                                },
+                                id: TypeId(
+                                    NodeId {
+                                        package: PackageId(
+                                            1881,
+                                        ),
+                                        index: Idx(
+                                            5,
+                                        ),
+                                    },
+                                ),
                                 name: Path {
                                     root: [
                                         Namespace {

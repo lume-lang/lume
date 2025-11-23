@@ -1,0 +1,11 @@
+//# test-outcome=success
+
+struct Foo<T> {}
+
+fn func<T>(val: Foo<T>) { }
+
+fn main() {
+    let foo = Foo<Int32> { };
+
+    func(foo);
+}

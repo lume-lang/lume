@@ -1,0 +1,8 @@
+//# test-outcome=success
+
+fn foo() {
+    let arr = std::Array::new();
+    arr.push(1);
+    arr.push(2);
+    arr.push(3);
+}

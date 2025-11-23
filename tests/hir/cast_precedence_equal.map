@@ -44,14 +44,16 @@ Map {
                                     location: cast_precedence_equal.lm:12:13,
                                 },
                                 target: Type {
-                                    id: NodeId {
-                                        package: PackageId(
-                                            1881,
-                                        ),
-                                        index: Idx(
-                                            13902787388289951280,
-                                        ),
-                                    },
+                                    id: TypeId(
+                                        NodeId {
+                                            package: PackageId(
+                                                1881,
+                                            ),
+                                            index: Idx(
+                                                7,
+                                            ),
+                                        },
+                                    ),
                                     name: Path {
                                         root: [],
                                         name: Namespace {

@@ -11,14 +11,16 @@ Map {
                     },
                     type_arguments: [
                         Type {
-                            id: NodeId {
-                                package: PackageId(
-                                    1881,
-                                ),
-                                index: Idx(
-                                    16354669630239520454,
-                                ),
-                            },
+                            id: TypeId(
+                                NodeId {
+                                    package: PackageId(
+                                        1881,
+                                    ),
+                                    index: Idx(
+                                        2,
+                                    ),
+                                },
+                            ),
                             name: Path {
                                 root: [],
                                 name: Type {
@@ -34,14 +36,16 @@ Map {
                             location: trait_constrained_generics.lm:0:0,
                         },
                         Type {
-                            id: NodeId {
-                                package: PackageId(
-                                    1881,
-                                ),
-                                index: Idx(
-                                    3439629086382124550,
-                                ),
-                            },
+                            id: TypeId(
+                                NodeId {
+                                    package: PackageId(
+                                        1881,
+                                    ),
+                                    index: Idx(
+                                        3,
+                                    ),
+                                },
+                            ),
                             name: Path {
                                 root: [],
                                 name: Type {

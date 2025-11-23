@@ -23,14 +23,16 @@ Map {
                         location: doc_comments_field.lm:51:54,
                     },
                     field_type: Type {
-                        id: NodeId {
-                            package: PackageId(
-                                1881,
-                            ),
-                            index: Idx(
-                                6143724420395906933,
-                            ),
-                        },
+                        id: TypeId(
+                            NodeId {
+                                package: PackageId(
+                                    1881,
+                                ),
+                                index: Idx(
+                                    3,
+                                ),
+                            },
+                        ),
                         name: Path {
                             root: [
                                 Namespace {
