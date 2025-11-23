@@ -874,7 +874,9 @@ impl TyInferCtx {
 
                     let enum_def = self.enum_def_of_name(&enum_name)?;
                     let enum_case_def = self.enum_case_with_name(&variant.name)?;
-                    let enum_field_type = enum_case_def.parameters.get(idx).unwrap();
+                    let Some(enum_field_type) = enum_case_def.parameters.get(idx) else {
+                        return Ok(None);
+                    };
 
                     self.mk_type_ref_from(enum_field_type, enum_def.id).map(Some)
                 }
