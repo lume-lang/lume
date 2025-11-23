@@ -72,13 +72,13 @@ impl Driver {
                 dependency_hir.nodes.insert(*node_id, node.clone());
             }
 
-            crate::incremental::write_metadata_object(&gcx, &metadata)?;
-
             let object = lume_codegen::generate(compiled.mir)?;
             objects.push(lume_linker::ObjectSource::Compiled {
                 name: metadata.header.name.clone(),
                 data: object,
             });
+
+            crate::incremental::write_metadata_object(&gcx, &metadata)?;
         }
 
         let output_file_path = gcx.binary_output_path(&self.package.name);
