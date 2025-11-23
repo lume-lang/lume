@@ -33,6 +33,9 @@ pub struct Options {
     /// Defines the amount of debug information to preserve in the binary.
     pub debug_info: DebugInfo,
 
+    /// Defines whether incremental compilation is enabled.
+    pub enable_incremental: bool,
+
     /// Defines the absolute path to the runtime library.
     pub runtime_path: Option<PathBuf>,
 
