@@ -970,7 +970,10 @@ impl TyInferCtx {
                 argument_idx += 1;
             }
 
-            let parameter = &callable.signature().params.inner()[argument_idx];
+            let Some(parameter) = &callable.signature().params.inner().get(argument_idx) else {
+                return Ok(None);
+            };
+
             if self.is_type_generic(&parameter.ty)? {
                 return Ok(None);
             }
