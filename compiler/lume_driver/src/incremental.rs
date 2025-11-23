@@ -12,32 +12,32 @@ use lume_session::{GlobalCtx, Package};
 pub fn needs_compilation(gcx: &Arc<GlobalCtx>, package: &Package) -> Result<bool> {
     // If incremental compilation is disabled, we should alwas re-compile.
     if !gcx.session.options.enable_incremental {
+        libftrace::debug!("re-compilation required: incremental compilation disabled");
         return Ok(true);
     }
 
     // If no metadata file could be found, the package has likely not been built
     // yet - in which case it obviously needs to be built.
     let Ok(Some(metadata)) = read_metadata_object(gcx, package) else {
-        libftrace::trace!("re-compilation required: could not read metadata object");
+        libftrace::debug!("re-compilation required: could not read metadata object");
         return Ok(true);
     };
 
-    let last_modified = match std::fs::metadata(package.root()).and_then(|attr| attr.modified()) {
-        Ok(time) => time,
-        Err(_) => {
-            libftrace::trace!("re-compilation required: could not read current modification date");
-            return Ok(true);
-        }
-    };
+    let current_hash = package.package_hash();
 
-    let Ok(duration_since_build) = last_modified.duration_since(metadata.header.build_time) else {
-        libftrace::trace!("re-compilation required: could not get difference in build time");
-        return Ok(true);
-    };
+    if metadata.header.hash != current_hash {
+        libftrace::debug!(
+            "hash mismatch between packages",
+            current = current_hash,
+            build = metadata.header.hash
+        );
 
-    libftrace::trace!("duration since build: {duration_since_build:?}");
+        Ok(true)
+    } else {
+        libftrace::debug!("hash matched, compilation not required");
 
-    Ok(!duration_since_build.is_zero())
+        Ok(false)
+    }
 }
 
 /// Reads the serialized representation of the metadata from the given package

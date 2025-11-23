@@ -15,6 +15,7 @@ lume_span = { path = "../../crates/lume_span" }
 clap = { workspace = true, optional = true }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
+fxhash = "^0.2"
 glob = "^0"
 indexmap = { workspace = true }
 lume_architect = { workspace = true }

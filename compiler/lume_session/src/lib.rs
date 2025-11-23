@@ -2,6 +2,7 @@ pub mod deps;
 mod errors;
 pub mod stdlib;
 
+use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -400,6 +401,39 @@ impl Default for Package {
             files: IndexMap::new(),
             dependencies: Dependencies::default(),
         }
+    }
+}
+
+/// Represents a unique hash for a given iteration of a package, including
+/// source file content, package metadata, etc..
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct PackageHash(usize);
+
+impl Display for PackageHash {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "%{:X}", self.0)
+    }
+}
+
+impl Package {
+    /// Generates a hash for the current package iteration.
+    pub fn package_hash(&self) -> PackageHash {
+        use std::hash::{Hash, Hasher};
+        let mut state = fxhash::FxHasher::default();
+
+        self.id.hash(&mut state);
+        self.name.hash(&mut state);
+        self.version.hash(&mut state);
+
+        for (file_name, source_file) in &self.files {
+            file_name.hash(&mut state);
+            source_file.content.hash(&mut state);
+        }
+
+        self.dependencies.graph.hash(&mut state);
+        self.dependencies.no_std.hash(&mut state);
+
+        PackageHash(state.finish() as usize)
     }
 }
 

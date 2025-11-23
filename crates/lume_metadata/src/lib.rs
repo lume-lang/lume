@@ -1,8 +1,7 @@
 use std::path::PathBuf;
-use std::time::SystemTime;
 
 use lume_hir::map::Map;
-use lume_session::Package;
+use lume_session::{Package, PackageHash};
 use lume_typech::TyCheckCtx;
 use serde::{Deserialize, Serialize};
 
@@ -24,19 +23,14 @@ pub fn metadata_filename_of(package_name: &str) -> PathBuf {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct PackageHeader {
     pub name: String,
-    pub build_time: SystemTime,
+    pub hash: PackageHash,
 }
 
 impl PackageHeader {
     pub fn create_from(pkg: &Package) -> Self {
-        let build_time = match std::fs::metadata(pkg.root()).and_then(|attr| attr.modified()) {
-            Ok(time) => time,
-            Err(_) => SystemTime::now(),
-        };
-
         Self {
             name: pkg.name.clone(),
-            build_time,
+            hash: pkg.package_hash(),
         }
     }
 }
