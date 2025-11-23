@@ -92,7 +92,21 @@ impl LowerModule<'_> {
         self.self_type = Some(target.name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
+        let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
+
         for method in expr.methods {
+            if let Some(existing) = method_names.get(&method.name) {
+                return Err(crate::errors::DuplicateMethod {
+                    source: self.file.clone(),
+                    duplicate_range: method.name.location.0.clone(),
+                    original_range: existing.location.0.clone(),
+                    name: method.name.to_string(),
+                }
+                .into());
+            }
+
+            method_names.insert(method.name.clone());
+
             let method = self.def_impl_method(method)?;
             self.map.nodes.insert(method.id, Node::Method(method.clone()));
 
@@ -151,7 +165,21 @@ impl LowerModule<'_> {
         self.self_type = Some(name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
+        let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
+
         for method in expr.methods {
+            if let Some(existing) = method_names.get(&method.name) {
+                return Err(crate::errors::DuplicateMethod {
+                    source: self.file.clone(),
+                    duplicate_range: method.name.location.0.clone(),
+                    original_range: existing.location.0.clone(),
+                    name: method.name.to_string(),
+                }
+                .into());
+            }
+
+            method_names.insert(method.name.clone());
+
             let method = self.def_trait_method_def(method)?;
             self.map.nodes.insert(method.id, Node::TraitMethodDef(method.clone()));
 
@@ -370,7 +398,21 @@ impl LowerModule<'_> {
         self.self_type = Some(target.name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
+        let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
+
         for method in expr.methods {
+            if let Some(existing) = method_names.get(&method.name) {
+                return Err(crate::errors::DuplicateMethod {
+                    source: self.file.clone(),
+                    duplicate_range: method.name.location.0.clone(),
+                    original_range: existing.location.0.clone(),
+                    name: method.name.to_string(),
+                }
+                .into());
+            }
+
+            method_names.insert(method.name.clone());
+
             let method = self.def_use_method(method)?;
             self.map.nodes.insert(method.id, Node::TraitMethodImpl(method.clone()));
 
