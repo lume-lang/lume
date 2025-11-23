@@ -21,14 +21,16 @@ Map {
                         location: function_definition_parameter.lm:8:12,
                     },
                     param_type: Type {
-                        id: NodeId {
-                            package: PackageId(
-                                1881,
-                            ),
-                            index: Idx(
-                                16901111566601906630,
-                            ),
-                        },
+                        id: TypeId(
+                            NodeId {
+                                package: PackageId(
+                                    1881,
+                                ),
+                                index: Idx(
+                                    2,
+                                ),
+                            },
+                        ),
                         name: Path {
                             root: [],
                             name: Namespace {

@@ -1,0 +1,8 @@
+× error[LM4145]: could not infer type argument on callable
+   ╭─[type_arg_inference_invalid.lm:4:5]
+ 3 │ fn main() {
+ 4 │     foo();
+   ∶     ^^^^^^ could not infer type argument T on callable foo
+ 5 │ }
+   ╰──
+   help: try specifying the type arguments explicitly

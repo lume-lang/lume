@@ -42,14 +42,16 @@ Map {
                             location: cast_literal_single.lm:12:13,
                         },
                         target: Type {
-                            id: NodeId {
-                                package: PackageId(
-                                    1881,
-                                ),
-                                index: Idx(
-                                    13902787388289951280,
-                                ),
-                            },
+                            id: TypeId(
+                                NodeId {
+                                    package: PackageId(
+                                        1881,
+                                    ),
+                                    index: Idx(
+                                        6,
+                                    ),
+                                },
+                            ),
                             name: Path {
                                 root: [],
                                 name: Namespace {

@@ -48,6 +48,18 @@ impl TyInferCtx {
         }
     }
 
+    /// Gets the [`Callable`] with the given name, if any.
+    #[libftrace::traced(level = Trace, err, ret)]
+    pub fn callable_with_name(&self, name: &Path) -> Option<Callable<'_>> {
+        if let Some(method) = self.tdb().find_method(name) {
+            Some(Callable::Method(method))
+        } else if let Some(func) = self.tdb().find_function(name) {
+            Some(Callable::Function(func))
+        } else {
+            None
+        }
+    }
+
     /// Looks up all [`Method`]s on the given [`TypeRef`] of name `name`, which
     /// are implemented via an `impl` tag on the type.
     ///

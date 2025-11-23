@@ -52,14 +52,16 @@ Map {
                                         },
                                         type_arguments: [
                                             Type {
-                                                id: NodeId {
-                                                    package: PackageId(
-                                                        1881,
-                                                    ),
-                                                    index: Idx(
-                                                        8901637729188007634,
-                                                    ),
-                                                },
+                                                id: TypeId(
+                                                    NodeId {
+                                                        package: PackageId(
+                                                            1881,
+                                                        ),
+                                                        index: Idx(
+                                                            5,
+                                                        ),
+                                                    },
+                                                ),
                                                 name: Path {
                                                     root: [],
                                                     name: Type {

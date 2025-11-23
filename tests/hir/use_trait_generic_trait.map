@@ -2,14 +2,16 @@ Map {
     items: [
         TraitImplementation {
             name: Type {
-                id: NodeId {
-                    package: PackageId(
-                        1881,
-                    ),
-                    index: Idx(
-                        13380267704548414892,
-                    ),
-                },
+                id: TypeId(
+                    NodeId {
+                        package: PackageId(
+                            1881,
+                        ),
+                        index: Idx(
+                            3,
+                        ),
+                    },
+                ),
                 name: Path {
                     root: [],
                     name: Type {
@@ -19,14 +21,16 @@ Map {
                         },
                         type_arguments: [
                             Type {
-                                id: NodeId {
-                                    package: PackageId(
-                                        1881,
-                                    ),
-                                    index: Idx(
-                                        8901637729188007634,
-                                    ),
-                                },
+                                id: TypeId(
+                                    NodeId {
+                                        package: PackageId(
+                                            1881,
+                                        ),
+                                        index: Idx(
+                                            4,
+                                        ),
+                                    },
+                                ),
                                 name: Path {
                                     root: [],
                                     name: Type {
@@ -49,14 +53,16 @@ Map {
                 location: use_trait_generic_trait.lm:7:20,
             },
             target: Type {
-                id: NodeId {
-                    package: PackageId(
-                        1881,
-                    ),
-                    index: Idx(
-                        7484320765453361402,
-                    ),
-                },
+                id: TypeId(
+                    NodeId {
+                        package: PackageId(
+                            1881,
+                        ),
+                        index: Idx(
+                            5,
+                        ),
+                    },
+                ),
                 name: Path {
                     root: [],
                     name: Type {
@@ -66,14 +72,16 @@ Map {
                         },
                         type_arguments: [
                             Type {
-                                id: NodeId {
-                                    package: PackageId(
-                                        1881,
-                                    ),
-                                    index: Idx(
-                                        8901637729188007634,
-                                    ),
-                                },
+                                id: TypeId(
+                                    NodeId {
+                                        package: PackageId(
+                                            1881,
+                                        ),
+                                        index: Idx(
+                                            6,
+                                        ),
+                                    },
+                                ),
                                 name: Path {
                                     root: [],
                                     name: Type {

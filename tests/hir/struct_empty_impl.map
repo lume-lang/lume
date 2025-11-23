@@ -2,14 +2,16 @@ Map {
     items: [
         Implementation {
             target: Type {
-                id: NodeId {
-                    package: PackageId(
-                        1881,
-                    ),
-                    index: Idx(
-                        6143724420395906933,
-                    ),
-                },
+                id: TypeId(
+                    NodeId {
+                        package: PackageId(
+                            1881,
+                        ),
+                        index: Idx(
+                            2,
+                        ),
+                    },
+                ),
                 name: Path {
                     root: [
                         Namespace {

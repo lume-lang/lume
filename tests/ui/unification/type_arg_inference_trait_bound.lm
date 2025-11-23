@@ -1,0 +1,11 @@
+//# test-outcome=success
+
+trait Foo {}
+
+use Foo in Int32 {}
+
+fn foo<T: Foo>(val: T) { }
+
+fn main() {
+    foo(6_i32);
+}

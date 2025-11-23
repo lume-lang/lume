@@ -27,14 +27,16 @@ Map {
                                 location: trait_method.lm:19:24,
                             },
                             param_type: Type {
-                                id: NodeId {
-                                    package: PackageId(
-                                        1881,
-                                    ),
-                                    index: Idx(
-                                        7468397361300629741,
-                                    ),
-                                },
+                                id: TypeId(
+                                    NodeId {
+                                        package: PackageId(
+                                            1881,
+                                        ),
+                                        index: Idx(
+                                            3,
+                                        ),
+                                    },
+                                ),
                                 name: Path {
                                     root: [],
                                     name: Namespace {
