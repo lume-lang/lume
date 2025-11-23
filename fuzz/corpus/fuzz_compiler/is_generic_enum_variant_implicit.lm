@@ -1,5 +1,3 @@
-//# test-outcome=success
-
 import std (Optional)
 
 fn main() {

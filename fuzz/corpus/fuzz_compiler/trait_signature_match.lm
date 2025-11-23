@@ -1,5 +1,3 @@
-//# test-outcome=success
-
 trait Default<T> {
     pub fn default() -> T;
 }
