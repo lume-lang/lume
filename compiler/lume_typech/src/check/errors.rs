@@ -35,16 +35,6 @@ pub struct MismatchedTypesBoolean {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "trait is not implemented", code = "LM4002")]
-pub struct TraitNotImplemented {
-    #[label(source, "the trait {trait_name} is not implemented for the type {type_name}")]
-    pub location: Location,
-
-    pub trait_name: NamedTypeRef,
-    pub type_name: NamedTypeRef,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(
     message = "unavailable cast",
     code = "LM4004",

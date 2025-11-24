@@ -1,11 +1,10 @@
 use error_snippet::Result;
-use lume_types::{FunctionSig, TypeRef};
+use lume_types::FunctionSig;
 
 use crate::TyCheckCtx;
 
 pub(crate) mod errors;
 pub(crate) mod expressions;
-pub(crate) mod lookup;
 pub(crate) mod traits;
 
 impl TyCheckCtx {
@@ -25,135 +24,6 @@ impl TyCheckCtx {
         self.dcx().ensure_untainted()?;
 
         Ok(())
-    }
-
-    /// Ensures that the given type references are compatible.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` when the given types are incompatible or
-    /// if expected items cannot be found within the context.
-    #[libftrace::traced(level = Trace, err, ret)]
-    pub(crate) fn ensure_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<()> {
-        // If the two given types are exactly the same, both underlying instance and
-        // type arguments, we can be sure they're compatible.
-        if from == to {
-            return Ok(());
-        }
-
-        // The `Never` type is inherently compatible with everything.
-        if self.is_type_never(from) {
-            return Ok(());
-        }
-
-        // Special case for `void` types, since they are always identical, no matter
-        // whether they have different underlying IDs.
-        match (from.is_void(), to.is_void()) {
-            // void => value OR value => void
-            (false, true) | (true, false) => {
-                return Err(errors::MismatchedTypes {
-                    reason_loc: to.location,
-                    found_loc: from.location,
-                    expected: self.new_named_type(to, true)?,
-                    found: self.new_named_type(from, true)?,
-                }
-                .into());
-            }
-
-            // void == void
-            (true, true) => return Ok(()),
-
-            // value => value
-            (false, false) => (),
-        }
-
-        // If `to` refers to a trait where `from` implements `to`, they can
-        // be downcast correctly.
-        if self.is_trait(to)? {
-            if self.trait_impl_by(to, from)? {
-                return Ok(());
-            }
-
-            libftrace::debug!("trait not implemented: {:?} => {:?}", from, to);
-
-            return Err(errors::TraitNotImplemented {
-                location: from.location,
-                trait_name: self.new_named_type(to, false)?,
-                type_name: self.new_named_type(from, false)?,
-            }
-            .into());
-        }
-
-        // If `to` refers to a type parameter, check if `from` satisfies the
-        // constraints.
-        if let Some(to_arg) = self.as_type_parameter(to)? {
-            libftrace::debug!("checking type parameter constraints: {from:?} => {to:?}");
-
-            for constraint in &to_arg.constraints {
-                if !self.check_type_compatibility(from, constraint)? {
-                    return Err(crate::query::diagnostics::TypeParameterConstraintUnsatisfied {
-                        source: from.location,
-                        constraint_loc: constraint.location,
-                        param_name: to_arg.name.clone(),
-                        type_name: self.new_named_type(from, false)?,
-                        constraint_name: self.new_named_type(constraint, false)?,
-                    }
-                    .into());
-                }
-            }
-
-            libftrace::debug!("type parameter constraints valid");
-            return Ok(());
-        }
-
-        // If the two types share the same elemental type, the type arguments
-        // may be compatible.
-        if from.instance_of == to.instance_of && from.bound_types.len() == to.bound_types.len() {
-            libftrace::debug!("checking type argument downcast: {from:?} => {to:?}");
-
-            for (from_arg, to_arg) in from.bound_types.iter().zip(to.bound_types.iter()) {
-                self.ensure_type_compatibility(from_arg, to_arg)?;
-            }
-
-            libftrace::debug!("type downcast to type parameter");
-            return Ok(());
-        }
-
-        #[cfg(debug_assertions)]
-        {
-            libftrace::debug!(
-                "type-checking failed, {} => {}",
-                self.new_named_type(from, false).unwrap(),
-                self.new_named_type(to, false).unwrap()
-            );
-        }
-
-        Err(errors::MismatchedTypes {
-            reason_loc: to.location,
-            found_loc: from.location,
-            expected: self.infer.new_named_type(to, false)?,
-            found: self.infer.new_named_type(from, false)?,
-        }
-        .into())
-    }
-
-    /// Checks whether the given type references are compatible.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` when expected items cannot be found within the context.
-    #[libftrace::traced(level = Trace, err, ret)]
-    pub(crate) fn check_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<bool> {
-        if let Err(err) = self.ensure_type_compatibility(from, to) {
-            // Type errors will have a code attached - compiler errors will not.
-            if err.code().is_none() {
-                return Err(err);
-            }
-
-            Ok(false)
-        } else {
-            Ok(true)
-        }
     }
 
     /// Checks whether the given signatures are compatible. This method

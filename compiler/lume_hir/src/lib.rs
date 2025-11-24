@@ -326,6 +326,20 @@ impl PathSegment {
         }
     }
 
+    /// Replaces a single bound type in the path segment.
+    pub fn put_bound_type(&mut self, idx: usize, ty: Type) {
+        match self {
+            Self::Namespace { .. } | Self::Variant { .. } => {}
+            Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => {
+                if bound_types.len() >= idx {
+                    bound_types.push(ty);
+                } else {
+                    bound_types[idx] = ty;
+                }
+            }
+        }
+    }
+
     /// Replaces the bound types in the path segment.
     pub fn place_bound_types(&mut self, types: Vec<Type>) -> Vec<Type> {
         match self {
@@ -528,6 +542,24 @@ impl Path {
     /// Gets the name of the path segment.
     pub fn name(&self) -> &Identifier {
         self.name.name()
+    }
+
+    /// Gets all the path segments within the [`Path`].
+    pub fn segments(&self) -> Vec<&PathSegment> {
+        let mut root = Vec::with_capacity(self.root.len() + 1);
+        root.extend(self.root.iter());
+        root.push(&self.name);
+
+        root
+    }
+
+    /// Gets all the path segments within the [`Path`].
+    pub fn segments_mut(&mut self) -> Vec<&mut PathSegment> {
+        let mut root = Vec::with_capacity(self.root.len() + 1);
+        root.extend(self.root.iter_mut());
+        root.push(&mut self.name);
+
+        root
     }
 
     /// Gets the bound types of the path segment.
@@ -1936,6 +1968,12 @@ impl From<Vec<TypeParameter>> for TypeParameters {
 /// Uniquely identifiers a single HIR type.
 #[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub struct TypeId(NodeId);
+
+impl TypeId {
+    pub fn as_node_id(self) -> NodeId {
+        self.0
+    }
+}
 
 impl From<NodeId> for TypeId {
     fn from(value: NodeId) -> Self {
