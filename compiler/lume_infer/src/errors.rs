@@ -4,6 +4,34 @@ use std::sync::Arc;
 use error_snippet_derive::Diagnostic;
 use lume_hir::{Identifier, Path};
 use lume_span::{Location, SourceFile};
+use lume_types::NamedTypeRef;
+
+#[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]
+#[diagnostic(
+    message = "mismatched types",
+    code = "LM4001",
+    help = "expected type {expected}\n   found type {found}"
+)]
+pub struct MismatchedTypes {
+    #[label(source, "expected type {expected}, but found type {found}...")]
+    pub found_loc: Location,
+
+    #[label(source, note, "...because of type defined here")]
+    pub reason_loc: Location,
+
+    pub expected: NamedTypeRef,
+    pub found: NamedTypeRef,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "trait is not implemented", code = "LM4002")]
+pub struct TraitNotImplemented {
+    #[label(source, "the trait {trait_name} is not implemented for the type {type_name}")]
+    pub location: Location,
+
+    pub trait_name: NamedTypeRef,
+    pub type_name: NamedTypeRef,
+}
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "could not find type {name} in this scope", code = "LM4100")]
@@ -71,6 +99,20 @@ pub struct MissingField {
 
     pub type_name: Path,
     pub field_name: Identifier,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "type constraint not satisfied", code = "LM4120")]
+pub(crate) struct TypeParameterConstraintUnsatisfied {
+    #[label(source, "type {type_name} does not implement {constraint_name}...")]
+    pub source: Location,
+
+    #[label(source, help, "...which is required by the type parameter {param_name}")]
+    pub constraint_loc: Location,
+
+    pub param_name: String,
+    pub type_name: NamedTypeRef,
+    pub constraint_name: NamedTypeRef,
 }
 
 #[derive(Diagnostic, Debug)]
