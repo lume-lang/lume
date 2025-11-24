@@ -263,22 +263,15 @@ impl UnificationPass {
             lume_hir::PathSegment::Namespace { .. } => {}
         }
 
+        if let Some(expected_type) = tcx.expected_type_of(expr)? {
+            constraints.push(Constraint::Equal {
+                lhs: tcx.type_of(expr)?,
+                rhs: expected_type,
+            });
+        };
+
         Ok(constraints)
     }
-}
-
-fn is_type_contained_within(target: NodeId, ty: &TypeRef) -> bool {
-    if target == ty.instance_of {
-        return true;
-    }
-
-    for bound_type in &ty.bound_types {
-        if is_type_contained_within(target, bound_type) {
-            return true;
-        }
-    }
-
-    false
 }
 
 impl UnificationPass {
@@ -303,36 +296,7 @@ impl UnificationPass {
                 continue;
             }
 
-            let Constraint::Equal { lhs: expected_type, .. } = eq_constraints.first().unwrap() else {
-                unreachable!();
-            };
-
-            // If there's more than a single equality constraint, we are not able to
-            // satisfy all the requirements. We must raise errors.
-            if eq_constraints.len() > 1 {
-                // Raise an error for each constraint which is in conflict within the "primary"
-                // constraint.
-                for conflicting_constraint in eq_constraints.iter().skip(1) {
-                    let Constraint::Equal {
-                        lhs: conflicting_type, ..
-                    } = conflicting_constraint
-                    else {
-                        unreachable!();
-                    };
-
-                    tcx.dcx().emit(
-                        crate::errors::MismatchedTypes {
-                            reason_loc: expected_type.location,
-                            found_loc: conflicting_type.location,
-                            expected: tcx.new_named_type(expected_type, true)?,
-                            found: tcx.new_named_type(conflicting_type, true)?,
-                        }
-                        .into(),
-                    );
-                }
-
-                continue 'type_var;
-            }
+            let expected_type = normalize_equality_constraints(tcx, type_variable_id, eq_constraints)?;
 
             for constraint in constraints {
                 match constraint {
@@ -340,7 +304,7 @@ impl UnificationPass {
                     Constraint::Subtype { of, param } => {
                         debug_assert!(tcx.is_trait(&of)?, "expected subtype-constraint to reference trait");
 
-                        if !tcx.trait_impl_by(&of, expected_type)? {
+                        if !tcx.trait_impl_by(&of, &expected_type)? {
                             let type_param = tcx.tdb().type_parameter(param).unwrap();
                             let type_param_constraint = type_param.constraints.iter().find(|c| *c == &of).unwrap();
 
@@ -349,7 +313,7 @@ impl UnificationPass {
                                     source: tcx.hir_span_of_node(type_variable_id.0),
                                     constraint_loc: type_param_constraint.location,
                                     param_name: type_param.name.clone(),
-                                    type_name: tcx.new_named_type(expected_type, true)?,
+                                    type_name: tcx.new_named_type(&expected_type, true)?,
                                     constraint_name: tcx.new_named_type(&of, true)?,
                                 }
                                 .into(),
@@ -366,6 +330,135 @@ impl UnificationPass {
 
         Ok(())
     }
+}
+
+#[libftrace::traced(level = Trace, err)]
+fn normalize_equality_constraints<'tcx>(
+    tcx: &'tcx TyInferCtx,
+    type_variable: TypeVariableId,
+    constraints: Vec<Constraint>,
+) -> Result<TypeRef> {
+    debug_assert!(!constraints.is_empty(), "equality constraint list must not be empty");
+    debug_assert!(constraints.iter().all(|c| matches!(c, Constraint::Equal { .. })));
+
+    let mut normalized_types: Option<(TypeRef, TypeRef)> = None;
+
+    for constraint in constraints {
+        let Constraint::Equal { lhs, rhs } = constraint else {
+            unreachable!();
+        };
+
+        let (normalized_lhs, normalized_rhs) = normalize_constraint_types(tcx, type_variable, &lhs, &rhs)?;
+
+        match normalized_types.as_ref() {
+            None => {
+                // Define a "primary" set of normalized types, which will be compared against
+                // if multiple equality sets exist within the constraint list.
+                normalized_types = Some((normalized_lhs, normalized_rhs));
+            }
+            Some((expected_lhs, expected_rhs)) => {
+                // If there's more than a single equality constraint, we have to check
+                // whether they resolve to the same type. Otherwise, we must raise errors.
+
+                if &normalized_lhs != expected_lhs {
+                    tcx.dcx().emit(
+                        crate::errors::MismatchedTypes {
+                            reason_loc: expected_lhs.location,
+                            found_loc: normalized_lhs.location,
+                            expected: tcx.new_named_type(expected_lhs, true)?,
+                            found: tcx.new_named_type(&normalized_lhs, true)?,
+                        }
+                        .into(),
+                    );
+                }
+
+                if &normalized_rhs != expected_rhs {
+                    tcx.dcx().emit(
+                        crate::errors::MismatchedTypes {
+                            reason_loc: expected_rhs.location,
+                            found_loc: normalized_rhs.location,
+                            expected: tcx.new_named_type(expected_rhs, true)?,
+                            found: tcx.new_named_type(&normalized_rhs, true)?,
+                        }
+                        .into(),
+                    );
+                }
+            }
+        }
+    }
+
+    let type_variable_target = type_variable.1.as_node_id();
+    let (normalized_lhs, normalized_rhs) = normalized_types.expect("expected constraints to be normalized and exist");
+
+    // Return the normalized type which does *not* contain the type variable itself,
+    // since that wouldn't be very useful to the type checker.
+    if normalized_lhs.instance_of == type_variable_target {
+        Ok(normalized_rhs)
+    } else {
+        Ok(normalized_lhs)
+    }
+}
+
+#[libftrace::traced(level = Trace, err)]
+fn normalize_constraint_types<'tcx>(
+    tcx: &'tcx TyInferCtx,
+    type_variable: TypeVariableId,
+    lhs: &TypeRef,
+    rhs: &TypeRef,
+) -> Result<(TypeRef, TypeRef)> {
+    let type_variable_target = type_variable.1.as_node_id();
+
+    // If either of the items in the set are the target, we send them back.
+    if type_variable_target == lhs.instance_of || type_variable_target == rhs.instance_of {
+        return Ok((lhs.to_owned(), rhs.to_owned()));
+    }
+
+    // If the two types being normalized don't refer to the type parent type, we
+    // cannot normalize them. For example, image a set of constraints like this:
+    // ```
+    // U = [Option<?T> = Option<String>]
+    // ```
+    // can be normalized, since they both refer to the same containing type,
+    // `Option`.
+    //
+    // Contrarily, this example cannot be normalized since they do not
+    // refer to the same containing type:
+    // ```
+    // U = [Array<?T> = Option<String>]
+    // ```
+    if lhs.instance_of == rhs.instance_of {
+        for (bound_lhs, bound_rhs) in lhs.bound_types.iter().zip(rhs.bound_types.iter()) {
+            if !is_type_contained_within(type_variable_target, bound_lhs)
+                && !is_type_contained_within(type_variable_target, bound_rhs)
+            {
+                continue;
+            }
+
+            return normalize_constraint_types(tcx, type_variable, bound_lhs, bound_rhs);
+        }
+    }
+
+    Err(crate::errors::MismatchedTypes {
+        reason_loc: lhs.location,
+        found_loc: rhs.location,
+        expected: tcx.new_named_type(lhs, true)?,
+        found: tcx.new_named_type(rhs, true)?,
+    }
+    .into())
+}
+
+fn is_type_contained_within(target: NodeId, ty: &TypeRef) -> bool {
+    if target == ty.instance_of {
+        return true;
+    }
+
+    for bound_type in &ty.bound_types {
+        if is_type_contained_within(target, bound_type) {
+            return true;
+        }
+    }
+
+    false
 }
 
 impl UnificationPass {
