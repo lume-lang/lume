@@ -33,6 +33,8 @@ impl LowerModule<'_> {
                 constraints.push(self.type_ref(*constraint)?);
             }
 
+            self.add_type_param(name.name.clone(), lume_hir::TypeId::from(id));
+
             type_params.push(lume_hir::TypeParameter {
                 id,
                 name,

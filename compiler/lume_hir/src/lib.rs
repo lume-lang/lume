@@ -1943,6 +1943,12 @@ impl From<NodeId> for TypeId {
     }
 }
 
+impl PartialEq<NodeId> for TypeId {
+    fn eq(&self, other: &NodeId) -> bool {
+        self.0 == *other
+    }
+}
+
 #[derive(Serialize, Deserialize, Location, Debug, Clone, Eq)]
 pub struct Type {
     pub id: TypeId,
