@@ -25,15 +25,21 @@ impl LowerModule<'_> {
 
     #[libftrace::traced(level = Debug)]
     fn type_named(&mut self, expr: lume_ast::NamedType) -> Result<lume_hir::Type> {
-        let id = self.next_node_id();
+        // If there is currently a visible type parameter with the same name, attempt to
+        // use it's ID...
+        let id = if expr.name.root.is_empty()
+            && let Some(id) = self.id_of_type_param(&expr.name.name.name().as_str())
+        {
+            id
+        } else {
+            // ...otherwise, just generate a new ID.
+            lume_hir::TypeId::from(self.next_node_id())
+        };
+
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location().clone());
 
-        Ok(lume_hir::Type {
-            id: lume_hir::TypeId::from(id),
-            name,
-            location,
-        })
+        Ok(lume_hir::Type { id, name, location })
     }
 
     #[libftrace::traced(level = Debug)]

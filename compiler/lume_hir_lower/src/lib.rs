@@ -195,6 +195,9 @@ pub struct LowerModule<'a> {
     /// Defines the currently containing class expressions exist within, if any.
     self_type: Option<Path>,
 
+    /// Defines the currently visible type parameters.
+    type_parameters: Vec<HashMap<String, lume_hir::TypeId>>,
+
     /// Defines the ID of the current item being lowered, if any.
     current_node: NodeId,
 }
@@ -211,6 +214,7 @@ impl<'a> LowerModule<'a> {
             imports: HashMap::new(),
             namespace: None,
             self_type: None,
+            type_parameters: Vec::new(),
             current_node: item_idx,
         }
     }
@@ -293,6 +297,27 @@ impl<'a> LowerModule<'a> {
         self.defined.insert(item);
 
         Ok(())
+    }
+
+    /// Gets the [`lume_hir::TypeId`] if the currently visible type parameter
+    /// with the name of `name`, if any.
+    fn id_of_type_param(&self, name: &str) -> Option<lume_hir::TypeId> {
+        for layer in self.type_parameters.iter().rev() {
+            if let Some(id) = layer.get(name) {
+                return Some(*id);
+            }
+        }
+
+        None
+    }
+
+    /// Adds a new type parameter, which is currently visible.
+    fn add_type_param(&mut self, name: String, id: lume_hir::TypeId) {
+        if self.type_parameters.is_empty() {
+            self.type_parameters.push(HashMap::new());
+        }
+
+        self.type_parameters.last_mut().unwrap().insert(name, id);
     }
 
     /// Gets the [`lume_hir::Path`] for the item with the given name.
@@ -452,37 +477,37 @@ impl<'a> LowerModule<'a> {
             lume_ast::PathSegment::Namespace { name } => Ok(PathSegment::namespace(self.identifier(name))),
             lume_ast::PathSegment::Type {
                 name,
-                bound_types: type_arguments,
+                bound_types,
                 location,
             } => {
                 let name = self.identifier(name);
                 let location = self.location(location);
-                let type_arguments = type_arguments
+                let bound_types = bound_types
                     .into_iter()
                     .map(|arg| self.type_ref(arg))
                     .collect::<Result<Vec<_>>>()?;
 
                 Ok(PathSegment::Type {
                     name,
-                    bound_types: type_arguments,
+                    bound_types,
                     location,
                 })
             }
             lume_ast::PathSegment::Callable {
                 name,
-                bound_types: type_arguments,
+                bound_types,
                 location,
             } => {
                 let name = self.identifier(name);
                 let location = self.location(location);
-                let type_arguments = type_arguments
+                let bound_types = bound_types
                     .into_iter()
                     .map(|arg| self.type_ref(arg))
                     .collect::<Result<Vec<_>>>()?;
 
                 Ok(PathSegment::Callable {
                     name,
-                    bound_types: type_arguments,
+                    bound_types,
                     location,
                 })
             }
