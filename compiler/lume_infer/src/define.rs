@@ -1193,7 +1193,7 @@ impl TyInferCtx {
                         TypeArgumentInference::Replace { replacement } => replacement,
                     };
 
-                    call.name.place_type_arguments(replacement);
+                    call.name.place_bound_types(replacement);
                 }
                 lume_hir::ExpressionKind::IntrinsicCall(call) => {
                     self.probe_callable_intrinsic(call)?;
@@ -1204,7 +1204,7 @@ impl TyInferCtx {
                     match self.infer_type_arguments_callable(lume_hir::CallExpression::Static(call), callable)? {
                         TypeArgumentInference::Fulfilled => (),
                         TypeArgumentInference::Replace { replacement } => {
-                            call.name.place_type_arguments(replacement);
+                            call.name.place_bound_types(replacement);
                         }
                     }
                 }
@@ -1321,11 +1321,11 @@ impl TyInferCtx {
             return Ok(Some(arg_ty.to_owned()));
         }
 
-        if param_ty.type_arguments.len() != arg_ty.type_arguments.len() {
+        if param_ty.bound_types.len() != arg_ty.bound_types.len() {
             return Ok(None);
         }
 
-        for (type_param, type_arg) in param_ty.type_arguments.iter().zip(arg_ty.type_arguments.iter()) {
+        for (type_param, type_arg) in param_ty.bound_types.iter().zip(arg_ty.bound_types.iter()) {
             if let Some(inferred_type) = self.infer_type_arg_param_nested(target_param_id, type_param, type_arg)? {
                 return Ok(Some(inferred_type));
             }

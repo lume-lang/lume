@@ -129,7 +129,7 @@ impl TyInferCtx {
                 let type_parameters = self.hir_avail_type_params(e.id);
                 let type_parameters_id: Vec<NodeId> = type_parameters.iter().map(|p| p.id).collect();
 
-                let type_args = self.mk_type_refs_from(e.path.type_arguments(), e.id)?;
+                let type_args = self.mk_type_refs_from(e.path.bound_types(), e.id)?;
                 let instantiated = self.instantiate_type_from(&ty_opt, &type_parameters_id, &type_args);
 
                 instantiated.clone()
@@ -162,7 +162,7 @@ impl TyInferCtx {
                 let field_type = &field.field_type;
                 let type_params = self.hir_avail_type_params(callee_type.instance_of).as_id_refs();
 
-                self.instantiate_type_from(field_type, &type_params, &callee_type.type_arguments)
+                self.instantiate_type_from(field_type, &type_params, &callee_type.bound_types)
             }
             lume_hir::ExpressionKind::Scope(scope) => self.type_of_scope(scope)?,
             lume_hir::ExpressionKind::Switch(switch) => match switch.cases.first() {
@@ -418,12 +418,12 @@ impl TyInferCtx {
             lume_hir::PatternKind::Literal(lit) => self.type_of_lit(&lit.literal)?,
             lume_hir::PatternKind::Variant(var) => {
                 let enum_name = var.name.clone().parent().unwrap();
-                let type_args = self.mk_type_refs_from(enum_name.type_arguments(), pat.id)?;
+                let type_args = self.mk_type_refs_from(enum_name.bound_types(), pat.id)?;
 
                 match self.tdb().find_type(&enum_name) {
                     Some(ty) => TypeRef {
                         instance_of: ty.id,
-                        type_arguments: type_args,
+                        bound_types: type_args,
                         location: pat.location,
                     },
                     None => {
@@ -491,7 +491,7 @@ impl TyInferCtx {
 
         let field_type = self.mk_type_ref_from(enum_field, enum_def.id)?;
 
-        let type_args = self.mk_type_refs_from(&variant_name.all_type_arguments(), enum_def.id)?;
+        let type_args = self.mk_type_refs_from(&variant_name.all_bound_types(), enum_def.id)?;
         let type_params = enum_def.type_parameters.as_id_refs();
         let instantiated_field_type = self.instantiate_type_from(&field_type, &type_params, &type_args);
 

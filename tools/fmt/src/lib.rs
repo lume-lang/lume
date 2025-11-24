@@ -962,17 +962,12 @@ impl Builder<'_> {
     fn build_path_segment(&mut self, item: PathSegment) -> Node {
         match item {
             PathSegment::Namespace { name } | PathSegment::Variant { name, .. } => Node::text(name.name),
-            PathSegment::Type {
-                name, type_arguments, ..
-            }
-            | PathSegment::Callable {
-                name, type_arguments, ..
-            } => {
-                if type_arguments.is_empty() {
+            PathSegment::Type { name, bound_types, .. } | PathSegment::Callable { name, bound_types, .. } => {
+                if bound_types.is_empty() {
                     Node::text(name.name)
                 } else {
                     let mut nodes = vec![Node::text(name.name)];
-                    nodes.extend(self.build_type_arguments(type_arguments));
+                    nodes.extend(self.build_type_arguments(bound_types));
 
                     Node::nodes(nodes)
                 }
@@ -1024,11 +1019,11 @@ impl Builder<'_> {
     fn build_type(&mut self, ty: Type) -> Node {
         match ty {
             Type::Named(mut ty) => {
-                if ty.name.type_arguments().is_empty() {
+                if ty.name.bound_types().is_empty() {
                     return Node::text(format!("{}", ty.name));
                 }
 
-                let type_args = ty.name.take_type_arguments();
+                let type_args = ty.name.take_bound_types();
 
                 let mut nodes = vec![Node::text(format!("{}", ty.name))];
                 nodes.extend(self.build_type_arguments(type_args));

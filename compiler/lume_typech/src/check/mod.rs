@@ -108,10 +108,10 @@ impl TyCheckCtx {
 
         // If the two types share the same elemental type, the type arguments
         // may be compatible.
-        if from.instance_of == to.instance_of && from.type_arguments.len() == to.type_arguments.len() {
+        if from.instance_of == to.instance_of && from.bound_types.len() == to.bound_types.len() {
             libftrace::debug!("checking type argument downcast: {from:?} => {to:?}");
 
-            for (from_arg, to_arg) in from.type_arguments.iter().zip(to.type_arguments.iter()) {
+            for (from_arg, to_arg) in from.bound_types.iter().zip(to.bound_types.iter()) {
                 self.ensure_type_compatibility(from_arg, to_arg)?;
             }
 

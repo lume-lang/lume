@@ -262,7 +262,7 @@ pub enum PathSegment {
     /// ```
     Type {
         name: Identifier,
-        type_arguments: Vec<Type>,
+        bound_types: Vec<Type>,
         location: Location,
     },
 
@@ -278,7 +278,7 @@ pub enum PathSegment {
     /// ```
     Callable {
         name: Identifier,
-        type_arguments: Vec<Type>,
+        bound_types: Vec<Type>,
         location: Location,
     },
 
@@ -310,7 +310,7 @@ impl PathSegment {
         Self::Type {
             location: identifier.location.clone(),
             name: identifier,
-            type_arguments: Vec::new(),
+            bound_types: Vec::new(),
         }
     }
 
@@ -321,7 +321,7 @@ impl PathSegment {
         Self::Callable {
             location: identifier.location.clone(),
             name: identifier,
-            type_arguments: Vec::new(),
+            bound_types: Vec::new(),
         }
     }
 
@@ -335,19 +335,19 @@ impl PathSegment {
         }
     }
 
-    /// Gets the type arguments of the path segment.
-    pub fn type_arguments(&self) -> &[Type] {
+    /// Gets the bound types of the path segment.
+    pub fn bound_types(&self) -> &[Type] {
         match self {
             Self::Namespace { .. } | Self::Variant { .. } => &[],
-            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments.as_slice(),
+            Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => bound_types.as_slice(),
         }
     }
 
-    /// Takes the type arguments from the path segment.
-    pub fn take_type_arguments(&mut self) -> Vec<Type> {
+    /// Takes the bound types from the path segment.
+    pub fn take_bound_types(&mut self) -> Vec<Type> {
         match self {
             Self::Namespace { .. } | Self::Variant { .. } => Vec::new(),
-            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => std::mem::take(type_arguments),
+            Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => std::mem::take(bound_types),
         }
     }
 }
@@ -356,19 +356,14 @@ impl std::fmt::Display for PathSegment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Namespace { name } => f.write_str(name.as_str()),
-            Self::Type {
-                name, type_arguments, ..
-            }
-            | Self::Callable {
-                name, type_arguments, ..
-            } => {
+            Self::Type { name, bound_types, .. } | Self::Callable { name, bound_types, .. } => {
                 f.write_fmt(format_args!("{name}"))?;
 
-                if !type_arguments.is_empty() {
+                if !bound_types.is_empty() {
                     write!(
                         f,
                         "<{}>",
-                        type_arguments
+                        bound_types
                             .iter()
                             .map(std::string::ToString::to_string)
                             .collect::<Vec<String>>()
@@ -435,12 +430,12 @@ impl Path {
         self.location = (other.location.start()..self.location.end()).into();
     }
 
-    pub fn type_arguments(&self) -> &[Type] {
-        self.name.type_arguments()
+    pub fn bound_types(&self) -> &[Type] {
+        self.name.bound_types()
     }
 
-    pub fn take_type_arguments(&mut self) -> Vec<Type> {
-        self.name.take_type_arguments()
+    pub fn take_bound_types(&mut self) -> Vec<Type> {
+        self.name.take_bound_types()
     }
 
     pub fn is_variant(&self) -> bool {
@@ -1301,10 +1296,10 @@ impl std::fmt::Display for NamedType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{}", self.name))?;
 
-        if !self.name.name.type_arguments().is_empty() {
+        if !self.name.name.bound_types().is_empty() {
             f.write_str("<")?;
 
-            for type_param in self.name.name.type_arguments() {
+            for type_param in self.name.name.bound_types() {
                 f.write_fmt(format_args!("{type_param}"))?;
             }
 

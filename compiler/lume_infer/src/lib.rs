@@ -174,9 +174,9 @@ impl TyInferCtx {
 
         let mut type_ref = TypeRef::new(found_type, ty.location);
 
-        for type_param in ty.type_arguments() {
+        for type_param in ty.bound_types() {
             let type_param_ref = self.mk_type_ref_generic(type_param, type_params)?;
-            type_ref.type_arguments.push(type_param_ref);
+            type_ref.bound_types.push(type_param_ref);
         }
 
         Ok(type_ref)
@@ -248,15 +248,15 @@ impl TyInferCtx {
 
         let location = name.location;
 
-        let args = name
-            .type_arguments()
+        let bound_types = name
+            .bound_types()
             .iter()
             .map(|arg| self.mk_type_ref(arg))
             .collect::<Result<Vec<_>>>()?;
 
         Ok(Some(TypeRef {
             instance_of: ty.id,
-            type_arguments: args,
+            bound_types,
             location,
         }))
     }
@@ -289,15 +289,15 @@ impl TyInferCtx {
 
         let location = name.location;
 
-        let args = name
-            .type_arguments()
+        let bound_types = name
+            .bound_types()
             .iter()
             .map(|arg| self.mk_type_ref_generic(arg, ty_params))
             .collect::<Result<Vec<_>>>()?;
 
         Ok(Some(TypeRef {
             instance_of: ty.id,
-            type_arguments: args,
+            bound_types,
             location,
         }))
     }
@@ -387,13 +387,13 @@ impl TyInferCtx {
         let path = self.type_ref_name(type_ref)?;
         let name = if expand { format!("{path:+}") } else { format!("{path}") };
 
-        let type_arguments = type_ref
-            .type_arguments
+        let bound_types = type_ref
+            .bound_types
             .iter()
             .map(|arg| self.new_named_type(arg, expand))
             .collect::<Result<Vec<_>>>()?;
 
-        Ok(NamedTypeRef { name, type_arguments })
+        Ok(NamedTypeRef { name, bound_types })
     }
 
     /// Creates a human-readable version of the given signature.
@@ -530,7 +530,7 @@ impl TyInferCtx {
     /// Panics if the type is not found within the database.
     pub fn std_ref_array(&self, elemental: TypeRef) -> TypeRef {
         let mut ty = self.std_type_ref("Array");
-        ty.type_arguments.push(elemental);
+        ty.bound_types.push(elemental);
 
         ty
     }
@@ -542,7 +542,7 @@ impl TyInferCtx {
     /// Panics if the type is not found within the database.
     pub fn std_ref_pointer(&self, elemental: TypeRef) -> TypeRef {
         let mut ty = self.std_type_ref("Pointer");
-        ty.type_arguments.push(elemental);
+        ty.bound_types.push(elemental);
 
         ty
     }

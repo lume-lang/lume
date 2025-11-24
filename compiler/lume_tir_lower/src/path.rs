@@ -35,20 +35,16 @@ impl LowerFunction<'_> {
             lume_hir::PathSegment::Namespace { name } => {
                 Ok(lume_tir::PathSegment::Namespace { name: name.to_string() })
             }
-            lume_hir::PathSegment::Type {
-                name, type_arguments, ..
-            } => {
-                let type_arguments = self.lower.tcx.mk_type_refs_generic(type_arguments, type_params)?;
+            lume_hir::PathSegment::Type { name, bound_types, .. } => {
+                let type_arguments = self.lower.tcx.mk_type_refs_generic(bound_types, type_params)?;
 
                 Ok(lume_tir::PathSegment::Type {
                     name: name.to_string(),
                     type_arguments,
                 })
             }
-            lume_hir::PathSegment::Callable {
-                name, type_arguments, ..
-            } => {
-                let type_arguments = self.lower.tcx.mk_type_refs_generic(type_arguments, type_params)?;
+            lume_hir::PathSegment::Callable { name, bound_types, .. } => {
+                let type_arguments = self.lower.tcx.mk_type_refs_generic(bound_types, type_params)?;
 
                 Ok(lume_tir::PathSegment::Callable {
                     name: name.to_string(),

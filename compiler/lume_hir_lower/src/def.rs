@@ -480,7 +480,7 @@ impl LowerModule<'_> {
         let self_name = lume_ast::PathSegment::Type {
             location: name.location.clone(),
             name,
-            type_arguments: self_type_args,
+            bound_types: self_type_args,
         };
 
         self.expand_name(self_name)

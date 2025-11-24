@@ -45,12 +45,12 @@ impl Parser<'_> {
             // If we spot a `<` token, we know it's the start of a type argument list,
             // which can only be defined on function calls.
             if self.peek(TokenType::Less) || self.peek(TokenType::LeftParen) {
-                let type_arguments = self.parse_type_arguments()?;
+                let bound_types = self.parse_type_arguments()?;
                 let end = self.previous_token().end();
 
                 return Ok(PathSegment::Callable {
                     name,
-                    type_arguments,
+                    bound_types,
                     location: (start..end).into(),
                 });
             }
@@ -73,12 +73,12 @@ impl Parser<'_> {
                 });
             }
 
-            let type_arguments = self.parse_type_arguments()?;
+            let bound_types = self.parse_type_arguments()?;
             let end = self.previous_token().end();
 
             Ok(PathSegment::Type {
                 name,
-                type_arguments,
+                bound_types,
                 location: (start..end).into(),
             })
         }

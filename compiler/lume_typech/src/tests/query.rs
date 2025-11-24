@@ -112,7 +112,7 @@ fn query_function_check_type_arg_type_match() -> Result<()> {
         id: lume_span::NodeId::default(),
         name: Path::rooted(PathSegment::Callable {
             name: "foo".into(),
-            type_arguments: vec![lume_hir::Type::void()],
+            bound_types: vec![lume_hir::Type::void()],
             location: Location::empty(),
         }),
         arguments: Vec::new(),
@@ -349,7 +349,7 @@ fn query_check_method_type_arg_valid() -> Result<()> {
         id: lume_span::NodeId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::Callable {
             name: "foo".into(),
-            type_arguments: vec![lume_hir::Type::void()],
+            bound_types: vec![lume_hir::Type::void()],
             location: Location::empty(),
         }),
         arguments: Vec::new(),
