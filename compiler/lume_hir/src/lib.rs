@@ -237,7 +237,7 @@ pub enum PathSegment {
     /// ```
     Type {
         name: Identifier,
-        type_arguments: Vec<Type>,
+        bound_types: Vec<Type>,
         location: Location,
     },
 
@@ -253,7 +253,7 @@ pub enum PathSegment {
     /// ```
     Callable {
         name: Identifier,
-        type_arguments: Vec<Type>,
+        bound_types: Vec<Type>,
         location: Location,
     },
 
@@ -285,7 +285,7 @@ impl PathSegment {
         Self::Type {
             location: identifier.location,
             name: identifier,
-            type_arguments: Vec::new(),
+            bound_types: Vec::new(),
         }
     }
 
@@ -296,7 +296,7 @@ impl PathSegment {
         Self::Callable {
             location: identifier.location,
             name: identifier,
-            type_arguments: Vec::new(),
+            bound_types: Vec::new(),
         }
     }
 
@@ -310,28 +310,28 @@ impl PathSegment {
         }
     }
 
-    /// Gets the type arguments of the path segment.
-    pub fn type_arguments(&self) -> &[Type] {
+    /// Gets the bound types of the path segment.
+    pub fn bound_types(&self) -> &[Type] {
         match self {
             Self::Namespace { .. } | Self::Variant { .. } => &[],
-            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments.as_slice(),
+            Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => bound_types.as_slice(),
         }
     }
 
-    /// Takes the type arguments from the path segment.
-    pub fn take_type_arguments(self) -> Vec<Type> {
+    /// Takes the bound types from the path segment.
+    pub fn take_bound_types(self) -> Vec<Type> {
         match self {
             Self::Namespace { .. } | Self::Variant { .. } => Vec::new(),
-            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments,
+            Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => bound_types,
         }
     }
 
-    /// Replaces the type arguments in the path segment.
-    pub fn place_type_arguments(&mut self, types: Vec<Type>) -> Vec<Type> {
+    /// Replaces the bound types in the path segment.
+    pub fn place_bound_types(&mut self, types: Vec<Type>) -> Vec<Type> {
         match self {
             Self::Namespace { .. } | Self::Variant { .. } => Vec::new(),
-            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => {
-                std::mem::replace(type_arguments, types)
+            Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => {
+                std::mem::replace(bound_types, types)
             }
         }
     }
@@ -341,19 +341,14 @@ impl std::fmt::Display for PathSegment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Namespace { name } => f.write_str(name.as_str()),
-            Self::Type {
-                name, type_arguments, ..
-            }
-            | Self::Callable {
-                name, type_arguments, ..
-            } => {
+            Self::Type { name, bound_types, .. } | Self::Callable { name, bound_types, .. } => {
                 write!(f, "{name}",)?;
 
-                if !type_arguments.is_empty() {
+                if !bound_types.is_empty() {
                     write!(
                         f,
                         "<{}>",
-                        type_arguments
+                        bound_types
                             .iter()
                             .map(std::string::ToString::to_string)
                             .collect::<Vec<_>>()
@@ -389,7 +384,7 @@ impl PartialEq for PathSegment {
 impl std::hash::Hash for PathSegment {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name().hash(state);
-        self.type_arguments().hash(state);
+        self.bound_types().hash(state);
     }
 }
 
@@ -535,31 +530,31 @@ impl Path {
         self.name.name()
     }
 
-    /// Gets the type arguments of the path segment.
-    pub fn type_arguments(&self) -> &[Type] {
-        self.name.type_arguments()
+    /// Gets the bound types of the path segment.
+    pub fn bound_types(&self) -> &[Type] {
+        self.name.bound_types()
     }
 
-    /// Replaces the type arguments in the top-level path segment.
-    pub fn place_type_arguments(&mut self, types: Vec<Type>) -> Vec<Type> {
-        self.name.place_type_arguments(types)
+    /// Replaces the bound types in the top-level path segment.
+    pub fn place_bound_types(&mut self, types: Vec<Type>) -> Vec<Type> {
+        self.name.place_bound_types(types)
     }
 
-    /// Gets the all type arguments of all the path segments.
-    pub fn all_type_arguments(&self) -> Vec<Type> {
-        let mut args = self.type_arguments().to_vec();
+    /// Gets the all bound types of all the path segments.
+    pub fn all_bound_types(&self) -> Vec<Type> {
+        let mut args = self.bound_types().to_vec();
         for segment in &self.root {
-            args.extend_from_slice(segment.type_arguments());
+            args.extend_from_slice(segment.bound_types());
         }
 
         args
     }
 
-    /// Gets the all type arguments of all the root path segments.
-    pub fn all_root_type_arguments(&self) -> Vec<Type> {
+    /// Gets the all bound types of all the root path segments.
+    pub fn all_root_bound_types(&self) -> Vec<Type> {
         let mut args = Vec::new();
         for segment in &self.root {
-            args.extend_from_slice(segment.type_arguments());
+            args.extend_from_slice(segment.bound_types());
         }
 
         args
@@ -572,7 +567,7 @@ impl Path {
 
     /// Determines whether the given [`Path`]s match in terms of name.
     ///
-    /// Type arguments are not test for a match.
+    /// Any bound types are not tested for a match.
     pub fn is_name_match(&self, other: &Self) -> bool {
         if self.root.len() != other.root.len() {
             return false;
@@ -1024,7 +1019,7 @@ impl TraitImplementation {
     }
 
     pub fn type_args(&self) -> &[Type] {
-        self.name.type_arguments()
+        self.name.bound_types()
     }
 }
 
@@ -1479,11 +1474,11 @@ pub struct StaticCall {
 
 impl StaticCall {
     pub fn type_arguments(&self) -> &[Type] {
-        self.name.type_arguments()
+        self.name.bound_types()
     }
 
     pub fn all_type_arguments(&self) -> Vec<Type> {
-        self.name.all_type_arguments()
+        self.name.all_bound_types()
     }
 }
 
@@ -1498,7 +1493,7 @@ pub struct InstanceCall {
 
 impl InstanceCall {
     pub fn type_arguments(&self) -> &[Type] {
-        self.name.type_arguments()
+        self.name.bound_types()
     }
 }
 
@@ -1968,9 +1963,9 @@ impl Type {
         &self.name.name
     }
 
-    /// Gets the type arguments of the path segment.
-    pub fn type_arguments(&self) -> &[Type] {
-        self.name.type_arguments()
+    /// Gets the bound types of the path segment.
+    pub fn bound_types(&self) -> &[Type] {
+        self.name.bound_types()
     }
 }
 

@@ -580,7 +580,7 @@ impl Type {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TypeRef {
     pub instance_of: NodeId,
-    pub type_arguments: Vec<TypeRef>,
+    pub bound_types: Vec<TypeRef>,
 
     #[serde(skip)]
     pub location: Location,
@@ -591,7 +591,7 @@ impl TypeRef {
     pub fn new(instance: NodeId, location: Location) -> Self {
         Self {
             instance_of: instance,
-            type_arguments: vec![],
+            bound_types: vec![],
             location,
         }
     }
@@ -608,7 +608,7 @@ impl TypeRef {
     pub fn void() -> Self {
         Self {
             instance_of: TYPEREF_VOID_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -617,7 +617,7 @@ impl TypeRef {
     pub fn bool() -> Self {
         Self {
             instance_of: TYPEREF_BOOL_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -626,7 +626,7 @@ impl TypeRef {
     pub fn i8() -> Self {
         Self {
             instance_of: TYPEREF_INT8_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -635,7 +635,7 @@ impl TypeRef {
     pub fn i16() -> Self {
         Self {
             instance_of: TYPEREF_INT16_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -644,7 +644,7 @@ impl TypeRef {
     pub fn i32() -> Self {
         Self {
             instance_of: TYPEREF_INT32_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -653,7 +653,7 @@ impl TypeRef {
     pub fn i64() -> Self {
         Self {
             instance_of: TYPEREF_INT64_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -662,7 +662,7 @@ impl TypeRef {
     pub fn u8() -> Self {
         Self {
             instance_of: TYPEREF_UINT8_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -671,7 +671,7 @@ impl TypeRef {
     pub fn u16() -> Self {
         Self {
             instance_of: TYPEREF_UINT16_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -680,7 +680,7 @@ impl TypeRef {
     pub fn u32() -> Self {
         Self {
             instance_of: TYPEREF_UINT32_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -689,7 +689,7 @@ impl TypeRef {
     pub fn u64() -> Self {
         Self {
             instance_of: TYPEREF_UINT64_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -698,7 +698,7 @@ impl TypeRef {
     pub fn f32() -> Self {
         Self {
             instance_of: TYPEREF_FLOAT32_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -707,7 +707,7 @@ impl TypeRef {
     pub fn f64() -> Self {
         Self {
             instance_of: TYPEREF_FLOAT64_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -717,7 +717,7 @@ impl TypeRef {
     pub fn unknown() -> Self {
         Self {
             instance_of: TYPEREF_UNKNOWN_ID,
-            type_arguments: vec![],
+            bound_types: vec![],
             location: Location::empty(),
         }
     }
@@ -843,7 +843,7 @@ impl TypeRef {
 
 impl PartialEq for TypeRef {
     fn eq(&self, other: &Self) -> bool {
-        self.instance_of == other.instance_of && self.type_arguments == other.type_arguments
+        self.instance_of == other.instance_of && self.bound_types == other.bound_types
     }
 }
 
@@ -852,7 +852,7 @@ impl Eq for TypeRef {}
 impl std::hash::Hash for TypeRef {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.instance_of.hash(state);
-        self.type_arguments.hash(state);
+        self.bound_types.hash(state);
     }
 }
 
@@ -860,11 +860,11 @@ impl std::fmt::Display for TypeRef {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.instance_of)?;
 
-        if !self.type_arguments.is_empty() {
+        if !self.bound_types.is_empty() {
             write!(
                 f,
                 "<{}>",
-                self.type_arguments
+                self.bound_types
                     .iter()
                     .map(std::string::ToString::to_string)
                     .collect::<Vec<_>>()
@@ -879,7 +879,7 @@ impl std::fmt::Display for TypeRef {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NamedTypeRef {
     pub name: String,
-    pub type_arguments: Vec<NamedTypeRef>,
+    pub bound_types: Vec<NamedTypeRef>,
 }
 
 impl NamedTypeRef {
@@ -887,7 +887,7 @@ impl NamedTypeRef {
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             name: name.into(),
-            type_arguments: vec![],
+            bound_types: vec![],
         }
     }
 }
@@ -896,13 +896,13 @@ impl std::fmt::Display for NamedTypeRef {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.name)?;
 
-        if !self.type_arguments.is_empty() {
+        if !self.bound_types.is_empty() {
             f.write_char('<')?;
 
-            for (index, type_arg) in self.type_arguments.iter().enumerate() {
+            for (index, type_arg) in self.bound_types.iter().enumerate() {
                 type_arg.fmt(f)?;
 
-                if index < self.type_arguments.len() - 1 {
+                if index < self.bound_types.len() - 1 {
                     f.write_str(", ")?;
                 }
             }

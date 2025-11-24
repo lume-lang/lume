@@ -41,7 +41,7 @@ impl ReificationPass<'_> {
             .collect::<Result<Vec<_>>>()?;
 
         let type_arguments = type_ref
-            .type_arguments
+            .bound_types
             .iter()
             .filter(|arg| self.tcx.is_type_parameter(arg).unwrap_or(false))
             .map(|arg| self.build_type_metadata_of(arg))
@@ -131,7 +131,7 @@ impl ReificationPass<'_> {
             lume_types::TypeKind::User(lume_types::UserType::Struct(_)) => {
                 // Arrays are aligned to their elemental type alignment
                 if self.tcx.is_std_array(type_ref) {
-                    let Some(elemental_type) = type_ref.type_arguments.first() else {
+                    let Some(elemental_type) = type_ref.bound_types.first() else {
                         return Ok(PTR_SIZE);
                     };
 

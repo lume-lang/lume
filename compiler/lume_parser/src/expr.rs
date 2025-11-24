@@ -401,8 +401,8 @@ impl Parser<'_> {
     /// Parses a call expression on the current cursor position.
     #[libftrace::traced(level = Trace, err)]
     fn parse_call(&mut self, callee: Option<Expression>, name: Identifier) -> Result<Expression> {
-        let type_arguments = self.parse_type_arguments()?;
-        let type_arguments_end = self.token().end();
+        let bound_types = self.parse_type_arguments()?;
+        let bound_types_end = self.token().end();
 
         let arguments = self.parse_call_arguments()?;
 
@@ -413,8 +413,8 @@ impl Parser<'_> {
             callee,
             name: Path::rooted(PathSegment::Callable {
                 name,
-                type_arguments,
-                location: (start..type_arguments_end).into(),
+                bound_types,
+                location: (start..bound_types_end).into(),
             }),
             arguments,
             location: (start..end).into(),

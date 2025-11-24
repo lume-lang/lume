@@ -452,7 +452,7 @@ impl<'a> LowerModule<'a> {
             lume_ast::PathSegment::Namespace { name } => Ok(PathSegment::namespace(self.identifier(name))),
             lume_ast::PathSegment::Type {
                 name,
-                type_arguments,
+                bound_types: type_arguments,
                 location,
             } => {
                 let name = self.identifier(name);
@@ -464,13 +464,13 @@ impl<'a> LowerModule<'a> {
 
                 Ok(PathSegment::Type {
                     name,
-                    type_arguments,
+                    bound_types: type_arguments,
                     location,
                 })
             }
             lume_ast::PathSegment::Callable {
                 name,
-                type_arguments,
+                bound_types: type_arguments,
                 location,
             } => {
                 let name = self.identifier(name);
@@ -482,7 +482,7 @@ impl<'a> LowerModule<'a> {
 
                 Ok(PathSegment::Callable {
                     name,
-                    type_arguments,
+                    bound_types: type_arguments,
                     location,
                 })
             }

@@ -161,10 +161,10 @@ impl LowerFunction<'_> {
             lume_hir::CallExpression::Instanced(call) => {
                 let callee = self.expression(call.callee)?;
 
-                type_arguments.extend(callee.ty.type_arguments);
+                type_arguments.extend(callee.ty.bound_types);
             }
             lume_hir::CallExpression::Static(call) => {
-                for type_arg in call.name.all_root_type_arguments() {
+                for type_arg in call.name.all_root_bound_types() {
                     let tir_type_arg = self.lower.tcx.mk_type_ref_from_expr(&type_arg, expr.id())?;
 
                     type_arguments.push(tir_type_arg);

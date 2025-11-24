@@ -682,13 +682,13 @@ impl TyInferCtx {
     ) -> lume_types::TypeRef {
         let mut inst_ty = self.instantiate_flat_type_from(ty, type_params, type_args).to_owned();
 
-        inst_ty.type_arguments.clear();
-        inst_ty.type_arguments.reserve_exact(ty.type_arguments.len());
+        inst_ty.bound_types.clear();
+        inst_ty.bound_types.reserve_exact(ty.bound_types.len());
 
-        for type_arg in &ty.type_arguments {
+        for type_arg in &ty.bound_types {
             let inst_type_arg = self.instantiate_type_from(type_arg, type_params, type_args);
 
-            inst_ty.type_arguments.push(inst_type_arg);
+            inst_ty.bound_types.push(inst_type_arg);
         }
 
         inst_ty
@@ -742,7 +742,7 @@ impl TyInferCtx {
                 let mut type_args = self.mk_type_refs_generic(hir_type_args, &type_parameters)?;
 
                 let callee_type = self.type_of(callee)?;
-                type_args.extend(callee_type.type_arguments.into_iter());
+                type_args.extend(callee_type.bound_types.into_iter());
 
                 Ok(type_args)
             }
@@ -764,7 +764,7 @@ impl TyInferCtx {
             return Ok(Some(arg_type.to_owned()));
         }
 
-        for (param_type_arg, arg_type_arg) in param_type.type_arguments.iter().zip(arg_type.type_arguments.iter()) {
+        for (param_type_arg, arg_type_arg) in param_type.bound_types.iter().zip(arg_type.bound_types.iter()) {
             if let Some(type_param_ref) = self.as_type_parameter(param_type_arg)?
                 && type_param_ref.id == type_param_id
             {
@@ -878,7 +878,7 @@ impl TyInferCtx {
             return Ok(true);
         }
 
-        for type_arg in &ty.type_arguments {
+        for type_arg in &ty.bound_types {
             if self.is_type_parameter(type_arg)? {
                 return Ok(true);
             }
@@ -962,7 +962,7 @@ impl TyInferCtx {
     #[libftrace::traced(level = Trace)]
     pub fn cast_impl_of(&self, source: &TypeRef, dest: &TypeRef) -> Option<&lume_hir::TraitImplementation> {
         let mut cast_trait = self.lang_item_type("cast_trait")?;
-        cast_trait.type_arguments.push(dest.clone());
+        cast_trait.bound_types.push(dest.clone());
 
         self.get_trait_impl_of(&cast_trait, source)
     }

@@ -19,7 +19,7 @@ impl FunctionTransformer<'_, '_> {
             lume_types::TypeKind::String => lume_mir::Type::string(),
             lume_types::TypeKind::User(lume_types::UserType::Struct(def)) => {
                 if self.tcx().is_std_pointer(type_ref) {
-                    let elemental_type = self.lower_type(&type_ref.type_arguments[0]);
+                    let elemental_type = self.lower_type(&type_ref.bound_types[0]);
 
                     return lume_mir::Type::pointer(elemental_type);
                 }

@@ -583,7 +583,7 @@ impl TyCheckCtx {
             return Ok(false);
         }
 
-        for type_arg in &ty.type_arguments {
+        for type_arg in &ty.bound_types {
             if !self.is_type_visible_to(type_arg, from)? {
                 return Ok(false);
             }

@@ -289,7 +289,7 @@ impl UnificationPass {
         };
 
         let expected_arg_count = matching_type.kind.type_parameters().len();
-        let declared_arg_count = type_path.type_arguments().len();
+        let declared_arg_count = type_path.bound_types().len();
 
         if expected_arg_count != declared_arg_count {
             tcx.dcx().emit(
@@ -313,7 +313,7 @@ impl UnificationPass {
         expr: NodeId,
         path: &lume_hir::Path,
     ) -> Result<()> {
-        let expected_type_args = path.all_type_arguments().len();
+        let expected_type_args = path.all_bound_types().len();
 
         match &path.name {
             lume_hir::PathSegment::Type { .. } => {
@@ -352,7 +352,7 @@ impl UnificationPass {
                     .into());
                 };
 
-                let type_args = callable.name().all_root_type_arguments().len();
+                let type_args = callable.name().all_root_bound_types().len();
                 let method_args = callable.signature().type_params.len();
 
                 if expected_type_args == type_args + method_args {
@@ -361,10 +361,10 @@ impl UnificationPass {
 
                 for (idx, type_param) in callable
                     .name()
-                    .all_root_type_arguments()
+                    .all_root_bound_types()
                     .iter()
                     .enumerate()
-                    .skip(path.all_root_type_arguments().len())
+                    .skip(path.all_root_bound_types().len())
                 {
                     let type_param_ref = tcx.mk_type_ref_from(type_param, callable.id())?;
                     let Some(type_param) = tcx.as_type_parameter(&type_param_ref)? else {
@@ -379,7 +379,7 @@ impl UnificationPass {
                     .type_params
                     .iter()
                     .enumerate()
-                    .skip(path.type_arguments().len())
+                    .skip(path.bound_types().len())
                 {
                     self.resolve_type_param(tcx, idx, expr, *type_param)?;
                 }
@@ -430,7 +430,7 @@ impl UnificationPass {
             return Ok(());
         };
 
-        let Some(expected_type_of_param) = expected_type_of_expr.type_arguments.get(idx) else {
+        let Some(expected_type_of_param) = expected_type_of_expr.bound_types.get(idx) else {
             let span = tcx.hir_span_of_node(expr);
             let type_param = tcx.tdb().type_parameter(type_param).unwrap();
 
@@ -518,11 +518,7 @@ impl UnificationPass {
             return Ok(true);
         }
 
-        for (expected_type_arg, found_type_arg) in expected_type
-            .type_arguments
-            .iter()
-            .zip(found_type.type_arguments.iter())
-        {
+        for (expected_type_arg, found_type_arg) in expected_type.bound_types.iter().zip(found_type.bound_types.iter()) {
             if self.resolve_variant_type_param_nested(
                 tcx,
                 work_key,
@@ -559,10 +555,10 @@ impl UnificationPass {
                         kind => unreachable!("bug!: unimplemented expression substitute: {kind:#?}"),
                     };
 
-                    let mut existing_type_args = segment.type_arguments().to_vec();
+                    let mut existing_type_args = segment.bound_types().to_vec();
                     existing_type_args.insert(*idx, hir_ty);
 
-                    segment.place_type_arguments(existing_type_args);
+                    segment.place_bound_types(existing_type_args);
                 }
                 _ => todo!(),
             }

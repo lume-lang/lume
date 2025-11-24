@@ -40,7 +40,7 @@ impl LowerModule<'_> {
     fn type_array(&mut self, expr: lume_ast::ArrayType) -> Result<lume_hir::Type> {
         self.type_std(lume_ast::PathSegment::Type {
             name: ARRAY_STD_TYPE.into(),
-            type_arguments: vec![*expr.element_type],
+            bound_types: vec![*expr.element_type],
             location: expr.location,
         })
     }
