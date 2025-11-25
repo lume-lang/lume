@@ -294,7 +294,7 @@ impl TyInferCtx {
             }
         }
 
-        Result::Ok(TypeRef::void())
+        Ok(TypeRef::void())
     }
 
     /// Returns the *type* of the given [`lume_hir::Statement`].
@@ -400,7 +400,7 @@ impl TyInferCtx {
         let callable = self.probe_callable(expr)?;
         let signature = self.signature_of_instantiated(callable, expr)?;
 
-        Result::Ok(signature.ret_ty)
+        Ok(signature.ret_ty)
     }
 
     /// Returns the *type* of the given [`Pattern`].
@@ -852,11 +852,24 @@ impl TyInferCtx {
                 lume_hir::ExpressionKind::StaticCall(call) => {
                     self.expected_type_of_call(id, CallExpression::Static(call))
                 }
-                lume_hir::ExpressionKind::If(_) | lume_hir::ExpressionKind::Is(_) => Ok(Some(TypeRef::bool())),
+                lume_hir::ExpressionKind::If(_) => Ok(Some(TypeRef::bool())),
+                lume_hir::ExpressionKind::Is(expr) => {
+                    if id == expr.pattern.id
+                        && let Some(lume_hir::Node::Pattern(_)) = self.hir_node(id)
+                    {
+                        return self.type_of(expr.target).map(Some);
+                    }
+
+                    Ok(Some(TypeRef::bool()))
+                }
                 lume_hir::ExpressionKind::Literal(_) => unreachable!("literals cannot have sub expressions"),
                 lume_hir::ExpressionKind::Switch(switch) => {
                     if switch.operand == id {
                         return Ok(None);
+                    }
+
+                    if let Some(lume_hir::Node::Pattern(_)) = self.hir_node(id) {
+                        return self.type_of(switch.operand).map(Some);
                     }
 
                     return self.expected_type_of(switch.id);

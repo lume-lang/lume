@@ -24,7 +24,7 @@ expression: "parse_expr(\"let _ = call<T>(a, b);\")"
                                     8..12,
                                 ),
                             },
-                            type_arguments: [
+                            bound_types: [
                                 Named(
                                     NamedType {
                                         name: Path {
@@ -36,7 +36,7 @@ expression: "parse_expr(\"let _ = call<T>(a, b);\")"
                                                         13..14,
                                                     ),
                                                 },
-                                                type_arguments: [],
+                                                bound_types: [],
                                                 location: Location(
                                                     13..14,
                                                 ),
@@ -49,11 +49,11 @@ expression: "parse_expr(\"let _ = call<T>(a, b);\")"
                                 ),
                             ],
                             location: Location(
-                                8..16,
+                                8..15,
                             ),
                         },
                         location: Location(
-                            8..16,
+                            8..15,
                         ),
                     },
                     arguments: [
@@ -79,7 +79,7 @@ expression: "parse_expr(\"let _ = call<T>(a, b);\")"
                         ),
                     ],
                     location: Location(
-                        8..22,
+                        8..21,
                     ),
                 },
             ),

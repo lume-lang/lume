@@ -311,7 +311,7 @@ impl<'src> Parser<'src> {
 
         let result = f(self)?;
 
-        let end = self.token_at(self.index - 1).end();
+        let end = self.previous_token().end();
 
         Ok((result, (start..end).into()))
     }

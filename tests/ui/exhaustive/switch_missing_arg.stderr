@@ -2,6 +2,6 @@
    ╭─[switch_missing_arg.lm:7:14]
  6 │     switch f {
  7 │         Foo::A(a) => 4_i32,
-   ∶              ^^^^^^^ expected 2 arguments, but got 1
+   ∶              ^^^^ expected 2 arguments, but got 1
  8 │     }
    ╰──

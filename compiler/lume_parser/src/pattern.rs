@@ -44,7 +44,7 @@ impl Parser<'_> {
             };
 
             let start = path.location.start();
-            let end = self.token().end();
+            let end = self.previous_token().end();
 
             Ok(Pattern::Variant(VariantPattern {
                 name: path,

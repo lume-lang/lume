@@ -28,7 +28,7 @@ expression: "parse_expr(\"0 is Foo::A(a, b);\")"
                                             5..8,
                                         ),
                                     },
-                                    type_arguments: [],
+                                    bound_types: [],
                                     location: Location(
                                         5..8,
                                     ),
@@ -68,7 +68,7 @@ expression: "parse_expr(\"0 is Foo::A(a, b);\")"
                             ),
                         ],
                         location: Location(
-                            10..18,
+                            10..17,
                         ),
                     },
                 ),

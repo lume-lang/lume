@@ -18,18 +18,18 @@ expression: "parse_expr(\"a() as u64;\")"
                                         0..1,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
-                                    0..2,
+                                    0..1,
                                 ),
                             },
                             location: Location(
-                                0..2,
+                                0..1,
                             ),
                         },
                         arguments: [],
                         location: Location(
-                            0..6,
+                            0..3,
                         ),
                     },
                 ),

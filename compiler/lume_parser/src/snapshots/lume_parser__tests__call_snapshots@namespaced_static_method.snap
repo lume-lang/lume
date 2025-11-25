@@ -40,7 +40,7 @@ expression: "parse_expr(\"let _ = std::io::Buffer::call(a, b);\")"
                                         17..23,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
                                     17..23,
                                 ),
@@ -53,7 +53,7 @@ expression: "parse_expr(\"let _ = std::io::Buffer::call(a, b);\")"
                                     25..29,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 25..29,
                             ),

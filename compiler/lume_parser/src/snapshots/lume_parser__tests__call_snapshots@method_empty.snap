@@ -35,18 +35,18 @@ expression: "parse_expr(\"let _ = a.call();\")"
                                     10..14,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
-                                10..15,
+                                10..14,
                             ),
                         },
                         location: Location(
-                            10..15,
+                            10..14,
                         ),
                     },
                     arguments: [],
                     location: Location(
-                        10..17,
+                        10..16,
                     ),
                 },
             ),

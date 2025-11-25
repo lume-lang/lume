@@ -27,7 +27,7 @@ expression: "parse(\"fn external main() -> void\")"
                                         22..26,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
                                     22..26,
                                 ),

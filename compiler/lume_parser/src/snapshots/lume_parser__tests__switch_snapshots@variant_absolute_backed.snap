@@ -37,7 +37,7 @@ expression: "parse_expr(\"switch a { std::Optional::Some(a) => a, std::Optional:
                                                     16..24,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 16..24,
                                             ),
@@ -69,7 +69,7 @@ expression: "parse_expr(\"switch a { std::Optional::Some(a) => a, std::Optional:
                                     ),
                                 ],
                                 location: Location(
-                                    26..36,
+                                    26..33,
                                 ),
                             },
                         ),
@@ -107,7 +107,7 @@ expression: "parse_expr(\"switch a { std::Optional::Some(a) => a, std::Optional:
                                                     45..53,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 45..53,
                                             ),
@@ -130,7 +130,7 @@ expression: "parse_expr(\"switch a { std::Optional::Some(a) => a, std::Optional:
                                 },
                                 fields: [],
                                 location: Location(
-                                    55..62,
+                                    55..59,
                                 ),
                             },
                         ),

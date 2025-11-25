@@ -43,12 +43,12 @@ Map {
                                         location: cast_invocation.lm:12:16,
                                     },
                                     bound_types: [],
-                                    location: cast_invocation.lm:12:17,
+                                    location: cast_invocation.lm:12:16,
                                 },
-                                location: cast_invocation.lm:12:17,
+                                location: cast_invocation.lm:12:16,
                             },
                             arguments: [],
-                            location: cast_invocation.lm:12:21,
+                            location: cast_invocation.lm:12:18,
                         },
                         target: Type {
                             id: TypeId(

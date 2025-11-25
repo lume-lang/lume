@@ -117,9 +117,9 @@ Map {
                                                     location: switch_variant_absolute.lm:61:62,
                                                 },
                                             ],
-                                            location: switch_variant_absolute.lm:56:66,
+                                            location: switch_variant_absolute.lm:56:63,
                                         },
-                                        location: switch_variant_absolute.lm:56:66,
+                                        location: switch_variant_absolute.lm:56:63,
                                     },
                                     branch: Variable {
                                         name: Identifier {
@@ -203,9 +203,9 @@ Map {
                                                 location: switch_variant_absolute.lm:100:104,
                                             },
                                             fields: [],
-                                            location: switch_variant_absolute.lm:100:107,
+                                            location: switch_variant_absolute.lm:100:104,
                                         },
-                                        location: switch_variant_absolute.lm:100:107,
+                                        location: switch_variant_absolute.lm:100:104,
                                     },
                                     branch: Literal {
                                         kind: IntLiteral {

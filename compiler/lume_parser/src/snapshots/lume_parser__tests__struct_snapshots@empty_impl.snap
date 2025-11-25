@@ -16,7 +16,7 @@ expression: "parse(\"impl Int32 {}\")"
                                     5..10,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 5..10,
                             ),

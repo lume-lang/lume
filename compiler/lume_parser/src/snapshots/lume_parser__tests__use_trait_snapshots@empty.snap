@@ -16,7 +16,7 @@ expression: "parse(\"use Add in Int32 {}\")"
                                     4..7,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 4..7,
                             ),
@@ -38,7 +38,7 @@ expression: "parse(\"use Add in Int32 {}\")"
                                     11..16,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 11..16,
                             ),

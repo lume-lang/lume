@@ -36,7 +36,7 @@ expression: "parse(\"fn main() -> std::Int32 {}\")"
                                         18..23,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
                                     18..23,
                                 ),

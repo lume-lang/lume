@@ -16,7 +16,7 @@ expression: "parse(\"impl Test { fn test<T>() -> void {} }\")"
                                     5..9,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 5..9,
                             ),
@@ -61,7 +61,7 @@ expression: "parse(\"impl Test { fn test<T>() -> void {} }\")"
                                                 28..32,
                                             ),
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: Location(
                                             28..32,
                                         ),

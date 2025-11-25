@@ -24,18 +24,18 @@ expression: "parse_expr(\"let _ = call?();\")"
                                     8..13,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
-                                8..14,
+                                8..13,
                             ),
                         },
                         location: Location(
-                            8..14,
+                            8..13,
                         ),
                     },
                     arguments: [],
                     location: Location(
-                        8..16,
+                        8..15,
                     ),
                 },
             ),

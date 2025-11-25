@@ -46,7 +46,7 @@ expression: "parse(\"fn test<T1, T2>() -> void {}\")"
                                         21..25,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
                                     21..25,
                                 ),

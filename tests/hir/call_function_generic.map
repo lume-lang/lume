@@ -71,9 +71,9 @@ Map {
                                             location: call_function_generic.lm:25:26,
                                         },
                                     ],
-                                    location: call_function_generic.lm:20:28,
+                                    location: call_function_generic.lm:20:27,
                                 },
-                                location: call_function_generic.lm:20:28,
+                                location: call_function_generic.lm:20:27,
                             },
                             arguments: [
                                 Literal {
@@ -91,7 +91,7 @@ Map {
                                     location: call_function_generic.lm:31:32,
                                 },
                             ],
-                            location: call_function_generic.lm:20:34,
+                            location: call_function_generic.lm:20:33,
                         },
                         location: call_function_generic.lm:12:34,
                     },

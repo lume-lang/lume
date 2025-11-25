@@ -2,7 +2,7 @@
     ╭─[generic_method_instance_call_returned_type_incomp.lm:12:22]
  11 │
  12 │     let _: Int32 = a.bar<Boolean>(false);
-    ∶                      ^^^^^^^^^^^^^^^^^^^^ expected type Int32, but found type Boolean...
+    ∶                      ^^^^^^^^^^^^^^^^^^^ expected type Int32, but found type Boolean...
  13 │ }
     ∶
  11 │

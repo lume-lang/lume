@@ -69,7 +69,7 @@ Map {
                                         location: call_method_generic.lm:27:28,
                                     },
                                 ],
-                                location: call_method_generic.lm:22:30,
+                                location: call_method_generic.lm:22:29,
                             },
                             callee: Literal {
                                 kind: IntLiteral {
@@ -94,7 +94,7 @@ Map {
                                     location: call_method_generic.lm:33:34,
                                 },
                             ],
-                            location: call_method_generic.lm:22:36,
+                            location: call_method_generic.lm:22:35,
                         },
                         location: call_method_generic.lm:12:36,
                     },

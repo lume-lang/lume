@@ -34,7 +34,7 @@ expression: "parse(\"\n        enum Foo {\n            Bar(Int32)\n        }\")"
                                                     36..41,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 36..41,
                                             ),

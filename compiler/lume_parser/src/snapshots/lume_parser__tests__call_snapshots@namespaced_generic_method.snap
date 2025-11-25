@@ -32,7 +32,7 @@ expression: "parse_expr(\"let _ = std::Buffer::call<T>(a, b);\")"
                                         13..19,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
                                     13..19,
                                 ),
@@ -45,7 +45,7 @@ expression: "parse_expr(\"let _ = std::Buffer::call<T>(a, b);\")"
                                     21..25,
                                 ),
                             },
-                            type_arguments: [
+                            bound_types: [
                                 Named(
                                     NamedType {
                                         name: Path {
@@ -57,7 +57,7 @@ expression: "parse_expr(\"let _ = std::Buffer::call<T>(a, b);\")"
                                                         26..27,
                                                     ),
                                                 },
-                                                type_arguments: [],
+                                                bound_types: [],
                                                 location: Location(
                                                     26..27,
                                                 ),

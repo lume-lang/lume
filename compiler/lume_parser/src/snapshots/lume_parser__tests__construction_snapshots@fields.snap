@@ -15,7 +15,7 @@ expression: "parse_expr(\"Foo { bar: 0, baz: 1 };\")"
                                 0..3,
                             ),
                         },
-                        type_arguments: [],
+                        bound_types: [],
                         location: Location(
                             0..3,
                         ),

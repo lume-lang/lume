@@ -42,7 +42,7 @@ expression: "parse(\"trait Add {fn add(other: Int32) -> Int32 { return self + ot
                                                         25..30,
                                                     ),
                                                 },
-                                                type_arguments: [],
+                                                bound_types: [],
                                                 location: Location(
                                                     25..30,
                                                 ),
@@ -72,7 +72,7 @@ expression: "parse(\"trait Add {fn add(other: Int32) -> Int32 { return self + ot
                                                     35..40,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 35..40,
                                             ),

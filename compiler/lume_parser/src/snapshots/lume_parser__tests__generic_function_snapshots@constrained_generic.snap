@@ -34,7 +34,7 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
                                                 11..18,
                                             ),
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: Location(
                                             11..18,
                                         ),
@@ -60,7 +60,7 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
                                         25..29,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
                                     25..29,
                                 ),

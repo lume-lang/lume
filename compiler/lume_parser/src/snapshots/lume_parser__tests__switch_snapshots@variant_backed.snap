@@ -29,7 +29,7 @@ expression: "parse_expr(\"switch a { Optional::Some(a) => a, Optional::None => 0
                                                     11..19,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 11..19,
                                             ),
@@ -61,7 +61,7 @@ expression: "parse_expr(\"switch a { Optional::Some(a) => a, Optional::None => 0
                                     ),
                                 ],
                                 location: Location(
-                                    21..31,
+                                    21..28,
                                 ),
                             },
                         ),
@@ -91,7 +91,7 @@ expression: "parse_expr(\"switch a { Optional::Some(a) => a, Optional::None => 0
                                                     35..43,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 35..43,
                                             ),
@@ -114,7 +114,7 @@ expression: "parse_expr(\"switch a { Optional::Some(a) => a, Optional::None => 0
                                 },
                                 fields: [],
                                 location: Location(
-                                    45..52,
+                                    45..49,
                                 ),
                             },
                         ),

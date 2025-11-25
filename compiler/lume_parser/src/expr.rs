@@ -283,8 +283,12 @@ impl Parser<'_> {
     pub(super) fn parse_switch_expression(&mut self) -> Result<Expression> {
         let start = self.consume(TokenType::Switch)?.start();
         let operand = self.parse_expression()?;
-        let cases = self.consume_comma_seq(TokenType::LeftCurly, TokenType::RightCurly, Parser::parse_switch_case)?;
-        let end = self.previous_token().end();
+
+        let (cases, loc) = self.consume_with_loc(|p| {
+            p.consume_comma_seq(TokenType::LeftCurly, TokenType::RightCurly, Parser::parse_switch_case)
+        })?;
+
+        let end = loc.end();
 
         Ok(Expression::Switch(Box::new(Switch {
             operand,
@@ -402,12 +406,12 @@ impl Parser<'_> {
     #[libftrace::traced(level = Trace, err)]
     fn parse_call(&mut self, callee: Option<Expression>, name: Identifier) -> Result<Expression> {
         let bound_types = self.parse_type_arguments()?;
-        let bound_types_end = self.token().end();
+        let bound_types_end = self.previous_token().end();
 
         let arguments = self.parse_call_arguments()?;
 
         let start = name.location.start();
-        let end = self.token().end();
+        let end = self.previous_token().end();
 
         let call = Call {
             callee,

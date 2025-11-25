@@ -36,7 +36,7 @@ expression: "parse(\"struct Test<T: Numeric> {}\")"
                                                     15..22,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 15..22,
                                             ),

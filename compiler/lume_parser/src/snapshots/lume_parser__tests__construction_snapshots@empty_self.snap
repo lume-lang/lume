@@ -15,7 +15,7 @@ expression: "parse_expr(\"Self { };\")"
                                 0..4,
                             ),
                         },
-                        type_arguments: [],
+                        bound_types: [],
                         location: Location(
                             0..4,
                         ),
