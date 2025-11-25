@@ -548,7 +548,7 @@ impl TyInferCtx {
 
     /// Attempt to instantiate the given callable purely from the arguments
     /// passed to the callable.
-    #[libftrace::traced(level = Trace)]
+    #[libftrace::traced(level = Trace, err)]
     pub fn instantiate_signature_from_args<'a>(
         &self,
         callable: Callable<'a>,
@@ -561,7 +561,7 @@ impl TyInferCtx {
 
     /// Attempt to instantiate the given signature purely from the arguments
     /// passed to the callable.
-    #[libftrace::traced(level = Trace)]
+    #[libftrace::traced(level = Trace, err)]
     pub fn instantiate_function_from_args<'a>(
         &self,
         signature: lume_types::FunctionSig<'a>,
@@ -593,7 +593,7 @@ impl TyInferCtx {
 
         let mut type_args = Vec::new();
 
-        for type_param in signature.type_params {
+        for &type_param in signature.type_params {
             for (param, arg) in params.inner().iter().zip(args.iter()) {
                 let param_ty = &param.ty;
                 let arg_ty = self.type_of(*arg)?;
@@ -610,7 +610,7 @@ impl TyInferCtx {
                     continue;
                 }
 
-                if let Some(type_arg) = self.instantiate_argument_type(*type_param, param_ty, &arg_ty)? {
+                if let Some(type_arg) = self.instantiate_argument_type(type_param, param_ty, &arg_ty)? {
                     type_args.push(type_arg);
                     break;
                 }
@@ -723,7 +723,7 @@ impl TyInferCtx {
     #[libftrace::traced(level = Trace)]
     pub fn type_args_in_call(&self, expr: lume_hir::CallExpression) -> Result<Vec<TypeRef>> {
         let type_parameters_hir = self.hir_avail_type_params(expr.id());
-        let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+        let type_parameters = type_parameters_hir.as_refs();
 
         match &expr {
             lume_hir::CallExpression::Static(call) => {

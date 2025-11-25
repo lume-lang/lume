@@ -4,6 +4,7 @@ use std::ops::Deref;
 use std::sync::RwLock;
 
 use error_snippet::Result;
+use indexmap::IndexMap;
 use lume_architect::DatabaseContext;
 use lume_errors::DiagCtx;
 use lume_hir::{Path, TypeParameter};
@@ -53,6 +54,8 @@ pub struct TyInferCtx {
     ancestry: BTreeMap<NodeId, NodeId>,
 
     nested_inference_lock: RwLock<()>,
+
+    type_vars: RwLock<IndexMap<unify::TypeVariableId, unify::TypeVariable>>,
 }
 
 impl TyInferCtx {
@@ -63,6 +66,7 @@ impl TyInferCtx {
             hir,
             ancestry: BTreeMap::new(),
             nested_inference_lock: RwLock::new(()),
+            type_vars: RwLock::new(IndexMap::new()),
         }
     }
 
@@ -123,9 +127,7 @@ impl TyInferCtx {
         libftrace::debug!("finished inference");
 
         unify::verify_type_names(self)?;
-
-        let pass = unify::UnificationPass::default();
-        pass.invoke(self)?;
+        self.unify_ctx()?;
 
         // We need to invalidate the global cache for method calls, since the
         // unification pass has altered some items in the HIR, making those
