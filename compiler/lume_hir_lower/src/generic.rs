@@ -10,6 +10,8 @@ impl LowerModule<'_> {
         let mut names: HashSet<lume_hir::Identifier> = HashSet::with_capacity(params.len());
         let mut type_params = Vec::with_capacity(params.len());
 
+        self.add_type_param_scope();
+
         for param in params {
             let id = self.next_node_id();
 

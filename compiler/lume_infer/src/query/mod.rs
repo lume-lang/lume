@@ -781,10 +781,11 @@ impl TyInferCtx {
 
     /// Attempts to get the expected type of the [`Expression`] with the given
     /// ID, in the context in which it is defined. For example, given an
-    /// expression like this: ```lm
+    /// expression like this:
+    /// ```lm
     /// let _: std::Array<Int32> = std::Array::new();
     /// ```
-    /// 
+    ///
     /// We can infer the expected type of the expression `std::Array::new()`
     /// since it is explicitly declared on the variable declaration. In
     /// another instances it might not be as explicit, which may cause the
@@ -792,7 +793,7 @@ impl TyInferCtx {
     /// ```lm
     /// let _ = std::Array::new();
     /// ```
-    /// 
+    ///
     /// would be impossible to solve, since no explicit type is declared.
     ///
     /// If a type could not be determined, [`guess_type_of_ctx`] is invoked to
@@ -810,10 +811,11 @@ impl TyInferCtx {
 
     /// Attempts to get the expected type of the [`Expression`] with the given
     /// ID, in the context in which it is defined. For example, given an
-    /// expression like this: ```lm
+    /// expression like this:
+    /// ```lm
     /// let _: std::Array<Int32> = std::Array::new();
     /// ```
-    /// 
+    ///
     /// We can infer the expected type of the expression `std::Array::new()`
     /// since it is explicitly declared on the variable declaration. In
     /// another instances it might not be as explicit, which may cause the
@@ -821,7 +823,7 @@ impl TyInferCtx {
     /// ```lm
     /// let _ = std::Array::new();
     /// ```
-    /// 
+    ///
     /// would be impossible to solve, since no explicit type is declared.
     #[cached_query(result)]
     #[libftrace::traced(level = Trace, err)]
