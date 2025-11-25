@@ -23,6 +23,9 @@ impl UnificationPass {
         for node in tcx.hir.nodes().values() {
             match node {
                 lume_hir::Node::Pattern(pattern) => match &pattern.kind {
+                    lume_hir::PatternKind::Variant(variant) => {
+                        self.create_type_constraints(tcx, pattern.id, &variant.name)?;
+                    }
                     _ => {}
                 },
                 lume_hir::Node::Statement(stmt) => match &stmt.kind {
@@ -202,24 +205,44 @@ impl UnificationPass {
                 let enum_def = tcx.enum_def_of_name(&parent_path)?;
                 let enum_case_def = tcx.enum_case_with_name(path)?;
 
-                let lume_hir::ExpressionKind::Variant(variant) = &tcx.hir_expect_expr(expr).kind else {
-                    return Ok(Vec::new());
+                let arguments = match &tcx.hir_expect_node(expr) {
+                    lume_hir::Node::Expression(expr) => {
+                        if let lume_hir::ExpressionKind::Variant(variant) = &expr.kind {
+                            let argument_ids = &variant.arguments;
+
+                            argument_ids
+                                .iter()
+                                .map(|id| tcx.type_of(*id))
+                                .collect::<Result<Vec<_>>>()?
+                        } else {
+                            return Ok(());
+                        }
+                    }
+                    lume_hir::Node::Pattern(pattern) => {
+                        if let lume_hir::PatternKind::Variant(pattern) = &pattern.kind {
+                            let field_ids = &pattern.fields;
+
+                            field_ids
+                                .iter()
+                                .map(|subpattern| tcx.type_of_pattern(subpattern))
+                                .collect::<Result<Vec<_>>>()?
+                        } else {
+                            return Ok(());
+                        }
+                    }
+                    _ => return Ok(()),
                 };
 
-                let args = &variant.arguments;
                 let params = &enum_case_def.parameters;
 
-                for (param, arg) in params.into_iter().zip(args) {
+                for (param, arg) in params.into_iter().zip(arguments) {
                     let param_ty = tcx.mk_type_ref_from(param, enum_def.id)?;
 
                     if !is_type_contained_within(type_variable.1.as_node_id(), &param_ty) {
                         continue;
                     }
 
-                    constraints.push(Constraint::Equal {
-                        lhs: tcx.type_of(*arg)?,
-                        rhs: param_ty,
-                    });
+                    self.eq(type_variable, arg, param_ty);
                 }
 
                 for bound_type in enum_def.name().all_bound_types() {
@@ -230,21 +253,18 @@ impl UnificationPass {
                     let type_param = tcx.tdb().type_parameter(bound_type.id.as_node_id()).unwrap();
 
                     for type_param_constraint in &type_param.constraints {
-                        constraints.push(Constraint::Subtype {
-                            of: type_param_constraint.clone(),
-                            param: type_param.id,
-                        });
+                        self.sub(type_variable, type_param_constraint.clone(), type_param.id);
                     }
                 }
             }
             lume_hir::PathSegment::Namespace { .. } => {}
         }
 
-        if let Some(expected_type) = tcx.expected_type_of(expr)? {
-            constraints.push(Constraint::Equal {
-                lhs: tcx.type_of(expr)?,
-                rhs: expected_type,
-            });
+        if tcx.hir_expr(expr).is_some()
+            && !path.is_variant()
+            && let Some(expected_type) = tcx.expected_type_of(expr)?
+        {
+            self.eq(type_variable, tcx.type_of(expr)?, expected_type);
         };
 
         Ok(())
@@ -491,7 +511,11 @@ impl UnificationPass {
                 lume_hir::ExpressionKind::Variant(expr) => {
                     let parent_path = expr.name.clone().parent().unwrap();
                     let enum_def = tcx.enum_def_of_name(&parent_path)?;
-                    let enum_case_name = lume_hir::Path::with_root(enum_def.name.clone(), expr.name.name.clone());
+
+                    let mut enum_name = enum_def.name.clone();
+                    enum_name.place_bound_types(enum_def.type_parameters.as_types());
+
+                    let enum_case_name = lume_hir::Path::with_root(enum_name, expr.name.name.clone());
 
                     (expr.name.clone(), enum_case_name)
                 }

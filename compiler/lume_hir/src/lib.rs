@@ -331,7 +331,7 @@ impl PathSegment {
         match self {
             Self::Namespace { .. } | Self::Variant { .. } => {}
             Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => {
-                if bound_types.len() >= idx {
+                if bound_types.len() <= idx {
                     bound_types.push(ty);
                 } else {
                     bound_types[idx] = ty;
@@ -595,6 +595,11 @@ impl Path {
     /// Determines whether the path refers to a type.
     pub fn is_type(&self) -> bool {
         matches!(self.name, PathSegment::Type { .. })
+    }
+
+    /// Determines whether the path refers to a variant.
+    pub fn is_variant(&self) -> bool {
+        matches!(self.name, PathSegment::Variant { .. })
     }
 
     /// Determines whether the given [`Path`]s match in terms of name.
@@ -1956,6 +1961,17 @@ impl TypeParameters {
 
     pub fn as_id_refs(&self) -> Vec<NodeId> {
         self.iter().map(|param| param.id).collect::<Vec<_>>()
+    }
+
+    pub fn as_types(&self) -> Vec<Type> {
+        self.as_refs()
+            .into_iter()
+            .map(|type_param| Type {
+                id: TypeId::from(type_param.id),
+                name: Path::rooted(PathSegment::ty(type_param.name.clone())),
+                location: type_param.location,
+            })
+            .collect()
     }
 }
 
