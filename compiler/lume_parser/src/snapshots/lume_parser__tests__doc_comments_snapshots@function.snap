@@ -27,7 +27,7 @@ expression: "parse(\"/// This is a doc comment\n        fn foo() -> void { }\")"
                                         46..50,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
                                     46..50,
                                 ),

@@ -111,9 +111,9 @@ Map {
                                                     location: switch_variant.lm:56:57,
                                                 },
                                             ],
-                                            location: switch_variant.lm:51:61,
+                                            location: switch_variant.lm:51:58,
                                         },
-                                        location: switch_variant.lm:51:61,
+                                        location: switch_variant.lm:51:58,
                                     },
                                     branch: Variable {
                                         name: Identifier {
@@ -191,9 +191,9 @@ Map {
                                                 location: switch_variant.lm:90:94,
                                             },
                                             fields: [],
-                                            location: switch_variant.lm:90:97,
+                                            location: switch_variant.lm:90:94,
                                         },
-                                        location: switch_variant.lm:90:97,
+                                        location: switch_variant.lm:90:94,
                                     },
                                     branch: Literal {
                                         kind: IntLiteral {

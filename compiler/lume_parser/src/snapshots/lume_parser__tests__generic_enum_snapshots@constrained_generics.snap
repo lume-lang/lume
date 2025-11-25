@@ -33,7 +33,7 @@ expression: "parse(\"enum Test<T1: Numeric, T2: Numeric> {}\")"
                                                     14..21,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 14..21,
                                             ),
@@ -65,7 +65,7 @@ expression: "parse(\"enum Test<T1: Numeric, T2: Numeric> {}\")"
                                                     27..34,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 27..34,
                                             ),

@@ -34,7 +34,7 @@ expression: "parse(\"trait Add<T: Numeric> {}\")"
                                                     13..20,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 13..20,
                                             ),

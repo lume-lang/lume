@@ -16,7 +16,7 @@ expression: "parse_expr(\"self::invoke();\")"
                                     0..4,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 0..4,
                             ),
@@ -29,7 +29,7 @@ expression: "parse_expr(\"self::invoke();\")"
                                 6..12,
                             ),
                         },
-                        type_arguments: [],
+                        bound_types: [],
                         location: Location(
                             6..12,
                         ),

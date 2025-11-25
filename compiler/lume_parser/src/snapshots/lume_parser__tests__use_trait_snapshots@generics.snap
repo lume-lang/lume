@@ -16,7 +16,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                                     13..16,
                                 ),
                             },
-                            type_arguments: [
+                            bound_types: [
                                 Named(
                                     NamedType {
                                         name: Path {
@@ -28,7 +28,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                                                         17..22,
                                                     ),
                                                 },
-                                                type_arguments: [],
+                                                bound_types: [],
                                                 location: Location(
                                                     17..22,
                                                 ),
@@ -50,7 +50,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                                                         24..29,
                                                     ),
                                                 },
-                                                type_arguments: [],
+                                                bound_types: [],
                                                 location: Location(
                                                     24..29,
                                                 ),
@@ -83,7 +83,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                                     34..39,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 34..39,
                             ),
@@ -122,7 +122,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                                                     68..73,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 68..73,
                                             ),
@@ -152,7 +152,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                                                 78..83,
                                             ),
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: Location(
                                             78..83,
                                         ),

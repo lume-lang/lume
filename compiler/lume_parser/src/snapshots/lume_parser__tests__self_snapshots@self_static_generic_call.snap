@@ -16,7 +16,7 @@ expression: "parse_expr(\"self::invoke<T>();\")"
                                     0..4,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 0..4,
                             ),
@@ -29,7 +29,7 @@ expression: "parse_expr(\"self::invoke<T>();\")"
                                 6..12,
                             ),
                         },
-                        type_arguments: [
+                        bound_types: [
                             Named(
                                 NamedType {
                                     name: Path {
@@ -41,7 +41,7 @@ expression: "parse_expr(\"self::invoke<T>();\")"
                                                     13..14,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 13..14,
                                             ),

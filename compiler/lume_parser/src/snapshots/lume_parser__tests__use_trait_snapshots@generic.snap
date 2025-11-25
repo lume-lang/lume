@@ -16,7 +16,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            fn add(oth
                                     13..16,
                                 ),
                             },
-                            type_arguments: [
+                            bound_types: [
                                 Named(
                                     NamedType {
                                         name: Path {
@@ -28,7 +28,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            fn add(oth
                                                         17..22,
                                                     ),
                                                 },
-                                                type_arguments: [],
+                                                bound_types: [],
                                                 location: Location(
                                                     17..22,
                                                 ),
@@ -61,7 +61,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            fn add(oth
                                     27..32,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 27..32,
                             ),
@@ -100,7 +100,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            fn add(oth
                                                     61..66,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 61..66,
                                             ),
@@ -130,7 +130,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            fn add(oth
                                                 71..76,
                                             ),
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: Location(
                                             71..76,
                                         ),

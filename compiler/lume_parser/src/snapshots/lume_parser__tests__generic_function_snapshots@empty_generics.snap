@@ -27,7 +27,7 @@ expression: "parse(\"fn test<>() -> void {}\")"
                                         15..19,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
                                     15..19,
                                 ),

@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use indexmap::IndexMap;
 use lume_errors::Result;
 use lume_hir::TypeId;
@@ -298,7 +300,11 @@ impl TyInferCtx {
             lume_hir::PathSegment::Namespace { .. } => {}
         }
 
-        if self.hir_expr(expr).is_some()
+        if let Some(lume_hir::Node::Pattern(pattern)) = self.hir_node(expr)
+            && let Some(expected_type) = self.expected_type_of(expr)?
+        {
+            self.eq(type_variable, self.type_of_pattern(pattern)?, expected_type);
+        } else if self.hir_expr(expr).is_some()
             && !path.is_variant()
             && let Some(expected_type) = self.expected_type_of(expr)?
         {
@@ -312,6 +318,7 @@ impl TyInferCtx {
 impl TyInferCtx {
     #[libftrace::traced(level = Trace, err)]
     fn create_type_substitutions(&self) -> Result<()> {
+        let mut removals = HashSet::new();
         let mut substitution_map = IndexMap::<TypeVariableId, TypeRef>::new();
         let tcx_constraints = self.type_vars.try_read().unwrap();
 
@@ -333,6 +340,7 @@ impl TyInferCtx {
                     .into(),
                 );
 
+                removals.insert(type_variable_id);
                 continue;
             }
 
@@ -370,6 +378,13 @@ impl TyInferCtx {
 
         // Force the read-lock to drop.
         drop(tcx_constraints);
+
+        if !removals.is_empty() {
+            let mut tcx_constraints = self.type_vars.try_write().unwrap();
+            for removal in removals {
+                tcx_constraints.shift_remove(&removal);
+            }
+        }
 
         for (type_variable, substitution) in substitution_map {
             self.subst(type_variable, substitution);

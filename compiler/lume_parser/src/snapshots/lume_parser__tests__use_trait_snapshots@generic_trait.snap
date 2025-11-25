@@ -16,7 +16,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                     16..26,
                                 ),
                             },
-                            type_arguments: [
+                            bound_types: [
                                 Named(
                                     NamedType {
                                         name: Path {
@@ -28,7 +28,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                                         27..28,
                                                     ),
                                                 },
-                                                type_arguments: [],
+                                                bound_types: [],
                                                 location: Location(
                                                     27..28,
                                                 ),
@@ -61,7 +61,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                     33..39,
                                 ),
                             },
-                            type_arguments: [
+                            bound_types: [
                                 Named(
                                     NamedType {
                                         name: Path {
@@ -73,7 +73,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                                         40..41,
                                                     ),
                                                 },
-                                                type_arguments: [],
+                                                bound_types: [],
                                                 location: Location(
                                                     40..41,
                                                 ),
@@ -118,7 +118,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                                 70..71,
                                             ),
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: Location(
                                             70..71,
                                         ),

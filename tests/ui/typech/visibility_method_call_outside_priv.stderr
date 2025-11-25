@@ -2,7 +2,7 @@
     ╭─[visibility_method_call_outside_priv.lm:9:9]
  8  │     let foo = Foo { };
  9  │     foo.bar();
-    ∶         ^^^^^^ method Foo::bar is inaccessible, because of it's visibility
+    ∶         ^^^^^ method Foo::bar is inaccessible, because of it's visibility
  10 │ }
     ∶
  3  │ impl Foo {

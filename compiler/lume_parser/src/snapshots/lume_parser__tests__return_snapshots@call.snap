@@ -29,13 +29,13 @@ expression: "parse_expr(\"return a.b(c);\")"
                                         9..10,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
-                                    9..11,
+                                    9..10,
                                 ),
                             },
                             location: Location(
-                                9..11,
+                                9..10,
                             ),
                         },
                         arguments: [
@@ -51,7 +51,7 @@ expression: "parse_expr(\"return a.b(c);\")"
                             ),
                         ],
                         location: Location(
-                            9..14,
+                            9..13,
                         ),
                     },
                 ),

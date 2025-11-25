@@ -16,7 +16,7 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() { }\n        }\"
                                     14..17,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 14..17,
                             ),

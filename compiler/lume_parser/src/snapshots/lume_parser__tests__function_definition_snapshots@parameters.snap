@@ -32,7 +32,7 @@ expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
                                             14..19,
                                         ),
                                     },
-                                    type_arguments: [],
+                                    bound_types: [],
                                     location: Location(
                                         14..19,
                                     ),
@@ -68,7 +68,7 @@ expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
                                                     28..34,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 28..34,
                                             ),
@@ -103,7 +103,7 @@ expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
                                         40..44,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
                                     40..44,
                                 ),

@@ -16,7 +16,7 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() -> Int32 {\n    
                                     14..17,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 14..17,
                             ),
@@ -51,7 +51,7 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() -> Int32 {\n    
                                                 44..49,
                                             ),
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: Location(
                                             44..49,
                                         ),

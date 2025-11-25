@@ -27,18 +27,18 @@ expression: "parse_expr(\"self.invoke();\")"
                                 5..11,
                             ),
                         },
-                        type_arguments: [],
+                        bound_types: [],
                         location: Location(
-                            5..12,
+                            5..11,
                         ),
                     },
                     location: Location(
-                        5..12,
+                        5..11,
                     ),
                 },
                 arguments: [],
                 location: Location(
-                    5..14,
+                    5..13,
                 ),
             },
         ),

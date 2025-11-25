@@ -24,7 +24,7 @@ expression: "parse_expr(\"let _ = Foo<T>::call(a, b);\")"
                                         8..11,
                                     ),
                                 },
-                                type_arguments: [
+                                bound_types: [
                                     Named(
                                         NamedType {
                                             name: Path {
@@ -36,7 +36,7 @@ expression: "parse_expr(\"let _ = Foo<T>::call(a, b);\")"
                                                             12..13,
                                                         ),
                                                     },
-                                                    type_arguments: [],
+                                                    bound_types: [],
                                                     location: Location(
                                                         12..13,
                                                     ),
@@ -60,7 +60,7 @@ expression: "parse_expr(\"let _ = Foo<T>::call(a, b);\")"
                                     16..20,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 16..20,
                             ),

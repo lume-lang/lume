@@ -45,9 +45,9 @@ Map {
                                         location: call_function_param_1.lm:20:24,
                                     },
                                     bound_types: [],
-                                    location: call_function_param_1.lm:20:25,
+                                    location: call_function_param_1.lm:20:24,
                                 },
-                                location: call_function_param_1.lm:20:25,
+                                location: call_function_param_1.lm:20:24,
                             },
                             arguments: [
                                 Literal {
@@ -58,7 +58,7 @@ Map {
                                     location: call_function_param_1.lm:25:26,
                                 },
                             ],
-                            location: call_function_param_1.lm:20:28,
+                            location: call_function_param_1.lm:20:27,
                         },
                         location: call_function_param_1.lm:12:28,
                     },

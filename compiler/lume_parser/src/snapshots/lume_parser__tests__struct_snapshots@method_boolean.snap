@@ -16,7 +16,7 @@ expression: "parse(\"\n        impl Foo {\n            fn empty?() -> Boolean { 
                                     14..17,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 14..17,
                             ),
@@ -51,7 +51,7 @@ expression: "parse(\"\n        impl Foo {\n            fn empty?() -> Boolean { 
                                                 47..54,
                                             ),
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: Location(
                                             47..54,
                                         ),

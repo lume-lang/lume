@@ -33,7 +33,7 @@ expression: "parse(\"pub fn main() -> void {}\")"
                                         17..21,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
                                     17..21,
                                 ),

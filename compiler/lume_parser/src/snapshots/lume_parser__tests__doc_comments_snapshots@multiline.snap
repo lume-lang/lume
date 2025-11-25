@@ -27,7 +27,7 @@ expression: "parse(\"/// This is a doc comment\n        ///\n        /// Another
                                         102..106,
                                     ),
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: Location(
                                     102..106,
                                 ),

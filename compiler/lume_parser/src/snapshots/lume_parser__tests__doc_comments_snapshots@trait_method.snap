@@ -37,7 +37,7 @@ expression: "parse(\"trait Foo {\n            /// This is a doc comment\n       
                                                     74..78,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 74..78,
                                             ),

@@ -29,7 +29,7 @@ expression: "parse_expr(\"switch a { Address::V4 => 4, Address::V6 => 6 }\")"
                                                     11..18,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 11..18,
                                             ),
@@ -52,7 +52,7 @@ expression: "parse_expr(\"switch a { Address::V4 => 4, Address::V6 => 6 }\")"
                                 },
                                 fields: [],
                                 location: Location(
-                                    20..25,
+                                    20..22,
                                 ),
                             },
                         ),
@@ -83,7 +83,7 @@ expression: "parse_expr(\"switch a { Address::V4 => 4, Address::V6 => 6 }\")"
                                                     29..36,
                                                 ),
                                             },
-                                            type_arguments: [],
+                                            bound_types: [],
                                             location: Location(
                                                 29..36,
                                             ),
@@ -106,7 +106,7 @@ expression: "parse_expr(\"switch a { Address::V4 => 4, Address::V6 => 6 }\")"
                                 },
                                 fields: [],
                                 location: Location(
-                                    38..43,
+                                    38..40,
                                 ),
                             },
                         ),

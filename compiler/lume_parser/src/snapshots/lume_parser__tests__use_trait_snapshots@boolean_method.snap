@@ -16,7 +16,7 @@ expression: "parse(\"\n        use Zero in Int32 {\n            fn zero?() -> Bo
                                     13..17,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 13..17,
                             ),
@@ -38,7 +38,7 @@ expression: "parse(\"\n        use Zero in Int32 {\n            fn zero?() -> Bo
                                     21..26,
                                 ),
                             },
-                            type_arguments: [],
+                            bound_types: [],
                             location: Location(
                                 21..26,
                             ),
@@ -72,7 +72,7 @@ expression: "parse(\"\n        use Zero in Int32 {\n            fn zero?() -> Bo
                                                 55..62,
                                             ),
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: Location(
                                             55..62,
                                         ),
