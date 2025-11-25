@@ -9,7 +9,7 @@ Map {
                         name: "Test",
                         location: generic_struct_multiple_generics.lm:7:11,
                     },
-                    type_arguments: [],
+                    bound_types: [],
                     location: generic_struct_multiple_generics.lm:7:11,
                 },
                 location: generic_struct_multiple_generics.lm:7:11,

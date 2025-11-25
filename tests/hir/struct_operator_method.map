@@ -19,7 +19,7 @@ Map {
                             name: "Foo",
                             location: struct_operator_method.lm:5:8,
                         },
-                        type_arguments: [],
+                        bound_types: [],
                         location: struct_operator_method.lm:5:8,
                     },
                     location: struct_operator_method.lm:5:8,

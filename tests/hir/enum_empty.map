@@ -9,7 +9,7 @@ Map {
                         name: "Foo",
                         location: enum_empty.lm:5:8,
                     },
-                    type_arguments: [],
+                    bound_types: [],
                     location: enum_empty.lm:5:8,
                 },
                 location: enum_empty.lm:5:8,

@@ -19,7 +19,7 @@ Map {
                             name: "Enumerable",
                             location: use_trait_generic_type.lm:4:14,
                         },
-                        type_arguments: [
+                        bound_types: [
                             Type {
                                 id: TypeId(
                                     NodeId {
@@ -38,7 +38,7 @@ Map {
                                             name: "T",
                                             location: use_trait_generic_type.lm:15:16,
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: use_trait_generic_type.lm:15:16,
                                     },
                                     location: use_trait_generic_type.lm:15:16,
@@ -70,7 +70,7 @@ Map {
                             name: "Vector",
                             location: use_trait_generic_type.lm:21:27,
                         },
-                        type_arguments: [
+                        bound_types: [
                             Type {
                                 id: TypeId(
                                     NodeId {
@@ -89,7 +89,7 @@ Map {
                                             name: "T",
                                             location: use_trait_generic_type.lm:28:29,
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: use_trait_generic_type.lm:28:29,
                                     },
                                     location: use_trait_generic_type.lm:28:29,
@@ -119,7 +119,7 @@ Map {
                                     name: "T",
                                     location: use_trait_generic_type.lm:50:51,
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: use_trait_generic_type.lm:50:51,
                             },
                             location: use_trait_generic_type.lm:50:51,

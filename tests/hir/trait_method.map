@@ -9,7 +9,7 @@ Map {
                         name: "Add",
                         location: trait_method.lm:6:9,
                     },
-                    type_arguments: [],
+                    bound_types: [],
                     location: trait_method.lm:6:9,
                 },
                 location: trait_method.lm:6:9,

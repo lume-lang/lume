@@ -9,7 +9,7 @@ Map {
                         name: "Foo",
                         location: doc_comments_trait.lm:32:35,
                     },
-                    type_arguments: [],
+                    bound_types: [],
                     location: doc_comments_trait.lm:32:35,
                 },
                 location: doc_comments_trait.lm:32:35,

@@ -19,7 +19,7 @@ Map {
                             name: "Add",
                             location: use_trait_generic.lm:4:7,
                         },
-                        type_arguments: [
+                        bound_types: [
                             Type {
                                 id: TypeId(
                                     NodeId {
@@ -45,7 +45,7 @@ Map {
                                             name: "Int32",
                                             location: use_trait_generic.lm:8:13,
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: use_trait_generic.lm:8:13,
                                     },
                                     location: use_trait_generic.lm:8:13,
@@ -84,7 +84,7 @@ Map {
                             name: "Int32",
                             location: use_trait_generic.lm:18:23,
                         },
-                        type_arguments: [],
+                        bound_types: [],
                         location: use_trait_generic.lm:18:23,
                     },
                     location: use_trait_generic.lm:18:23,
@@ -128,7 +128,7 @@ Map {
                                             name: "Int32",
                                             location: use_trait_generic.lm:44:49,
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: use_trait_generic.lm:44:49,
                                     },
                                     location: use_trait_generic.lm:44:49,
@@ -155,7 +155,7 @@ Map {
                                     name: "Int32",
                                     location: use_trait_generic.lm:54:59,
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: use_trait_generic.lm:54:59,
                             },
                             location: use_trait_generic.lm:54:59,

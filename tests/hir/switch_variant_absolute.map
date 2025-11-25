@@ -9,7 +9,7 @@ Map {
                         name: "foo",
                         location: switch_variant_absolute.lm:3:6,
                     },
-                    type_arguments: [],
+                    bound_types: [],
                     location: switch_variant_absolute.lm:3:6,
                 },
                 location: switch_variant_absolute.lm:3:6,
@@ -24,7 +24,7 @@ Map {
                             name: "Void",
                             location: <internal>:0:0,
                         },
-                        type_arguments: [],
+                        bound_types: [],
                         location: <internal>:0:0,
                     },
                     location: <internal>:0:0,
@@ -59,7 +59,7 @@ Map {
                                                             name: "Optional",
                                                             location: switch_variant_absolute.lm:39:47,
                                                         },
-                                                        type_arguments: [
+                                                        bound_types: [
                                                             Type {
                                                                 id: TypeId(
                                                                     NodeId {
@@ -85,7 +85,7 @@ Map {
                                                                             name: "Int32",
                                                                             location: switch_variant_absolute.lm:48:53,
                                                                         },
-                                                                        type_arguments: [],
+                                                                        bound_types: [],
                                                                         location: switch_variant_absolute.lm:48:53,
                                                                     },
                                                                     location: switch_variant_absolute.lm:48:53,
@@ -156,7 +156,7 @@ Map {
                                                             name: "Optional",
                                                             location: switch_variant_absolute.lm:83:91,
                                                         },
-                                                        type_arguments: [
+                                                        bound_types: [
                                                             Type {
                                                                 id: TypeId(
                                                                     NodeId {
@@ -182,7 +182,7 @@ Map {
                                                                             name: "Int32",
                                                                             location: switch_variant_absolute.lm:92:97,
                                                                         },
-                                                                        type_arguments: [],
+                                                                        bound_types: [],
                                                                         location: switch_variant_absolute.lm:92:97,
                                                                     },
                                                                     location: switch_variant_absolute.lm:92:97,
