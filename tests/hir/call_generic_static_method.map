@@ -9,7 +9,7 @@ Map {
                         name: "foo",
                         location: call_generic_static_method.lm:3:6,
                     },
-                    type_arguments: [],
+                    bound_types: [],
                     location: call_generic_static_method.lm:3:6,
                 },
                 location: call_generic_static_method.lm:3:6,
@@ -24,7 +24,7 @@ Map {
                             name: "Void",
                             location: <internal>:0:0,
                         },
-                        type_arguments: [],
+                        bound_types: [],
                         location: <internal>:0:0,
                     },
                     location: <internal>:0:0,
@@ -50,7 +50,7 @@ Map {
                                             name: "Int32",
                                             location: call_generic_static_method.lm:20:25,
                                         },
-                                        type_arguments: [
+                                        bound_types: [
                                             Type {
                                                 id: TypeId(
                                                     NodeId {
@@ -69,7 +69,7 @@ Map {
                                                             name: "T",
                                                             location: call_generic_static_method.lm:26:27,
                                                         },
-                                                        type_arguments: [],
+                                                        bound_types: [],
                                                         location: call_generic_static_method.lm:26:27,
                                                     },
                                                     location: call_generic_static_method.lm:26:27,
@@ -85,7 +85,7 @@ Map {
                                         name: "call",
                                         location: call_generic_static_method.lm:30:34,
                                     },
-                                    type_arguments: [],
+                                    bound_types: [],
                                     location: call_generic_static_method.lm:30:34,
                                 },
                                 location: call_generic_static_method.lm:30:34,

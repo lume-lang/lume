@@ -9,7 +9,7 @@ Map {
                         name: "foo",
                         location: implicit_import_range_inc.lm:3:6,
                     },
-                    type_arguments: [],
+                    bound_types: [],
                     location: implicit_import_range_inc.lm:3:6,
                 },
                 location: implicit_import_range_inc.lm:3:6,
@@ -31,7 +31,7 @@ Map {
                             name: "RangeInclusive",
                             location: implicit_import_range_inc.lm:12:26,
                         },
-                        type_arguments: [
+                        bound_types: [
                             Type {
                                 id: TypeId(
                                     NodeId {
@@ -57,7 +57,7 @@ Map {
                                             name: "Int32",
                                             location: implicit_import_range_inc.lm:27:32,
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: implicit_import_range_inc.lm:27:32,
                                     },
                                     location: implicit_import_range_inc.lm:27:32,

@@ -9,7 +9,7 @@ Map {
                         name: "Add",
                         location: trait_generics.lm:6:9,
                     },
-                    type_arguments: [
+                    bound_types: [
                         Type {
                             id: TypeId(
                                 NodeId {
@@ -28,7 +28,7 @@ Map {
                                         name: "T1",
                                         location: trait_generics.lm:0:0,
                                     },
-                                    type_arguments: [],
+                                    bound_types: [],
                                     location: trait_generics.lm:0:0,
                                 },
                                 location: trait_generics.lm:0:0,
@@ -53,7 +53,7 @@ Map {
                                         name: "T2",
                                         location: trait_generics.lm:0:0,
                                     },
-                                    type_arguments: [],
+                                    bound_types: [],
                                     location: trait_generics.lm:0:0,
                                 },
                                 location: trait_generics.lm:0:0,

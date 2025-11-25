@@ -9,7 +9,7 @@ Map {
                         name: "main",
                         location: function_definition_parameters.lm:3:7,
                     },
-                    type_arguments: [],
+                    bound_types: [],
                     location: function_definition_parameters.lm:3:7,
                 },
                 location: function_definition_parameters.lm:3:7,
@@ -76,7 +76,7 @@ Map {
                                     name: "Array",
                                     location: function_definition_parameters.lm:0:0,
                                 },
-                                type_arguments: [
+                                bound_types: [
                                     Type {
                                         id: TypeId(
                                             NodeId {
@@ -102,7 +102,7 @@ Map {
                                                     name: "String",
                                                     location: function_definition_parameters.lm:25:31,
                                                 },
-                                                type_arguments: [],
+                                                bound_types: [],
                                                 location: function_definition_parameters.lm:25:31,
                                             },
                                             location: function_definition_parameters.lm:25:31,
@@ -129,7 +129,7 @@ Map {
                             name: "void",
                             location: function_definition_parameters.lm:37:41,
                         },
-                        type_arguments: [],
+                        bound_types: [],
                         location: function_definition_parameters.lm:37:41,
                     },
                     location: function_definition_parameters.lm:37:41,

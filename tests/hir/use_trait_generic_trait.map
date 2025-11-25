@@ -19,7 +19,7 @@ Map {
                             name: "Enumerable",
                             location: use_trait_generic_trait.lm:7:17,
                         },
-                        type_arguments: [
+                        bound_types: [
                             Type {
                                 id: TypeId(
                                     NodeId {
@@ -27,7 +27,7 @@ Map {
                                             1881,
                                         ),
                                         index: Idx(
-                                            4,
+                                            2,
                                         ),
                                     },
                                 ),
@@ -38,7 +38,7 @@ Map {
                                             name: "T",
                                             location: use_trait_generic_trait.lm:18:19,
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: use_trait_generic_trait.lm:18:19,
                                     },
                                     location: use_trait_generic_trait.lm:18:19,
@@ -59,7 +59,7 @@ Map {
                             1881,
                         ),
                         index: Idx(
-                            5,
+                            4,
                         ),
                     },
                 ),
@@ -70,7 +70,7 @@ Map {
                             name: "Vector",
                             location: use_trait_generic_trait.lm:24:30,
                         },
-                        type_arguments: [
+                        bound_types: [
                             Type {
                                 id: TypeId(
                                     NodeId {
@@ -78,7 +78,7 @@ Map {
                                             1881,
                                         ),
                                         index: Idx(
-                                            6,
+                                            2,
                                         ),
                                     },
                                 ),
@@ -89,7 +89,7 @@ Map {
                                             name: "T",
                                             location: use_trait_generic_trait.lm:31:32,
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: use_trait_generic_trait.lm:31:32,
                                     },
                                     location: use_trait_generic_trait.lm:31:32,
@@ -119,7 +119,7 @@ Map {
                                     name: "T",
                                     location: use_trait_generic_trait.lm:53:54,
                                 },
-                                type_arguments: [],
+                                bound_types: [],
                                 location: use_trait_generic_trait.lm:53:54,
                             },
                             location: use_trait_generic_trait.lm:53:54,

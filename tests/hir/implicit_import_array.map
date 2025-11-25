@@ -9,7 +9,7 @@ Map {
                         name: "foo",
                         location: implicit_import_array.lm:3:6,
                     },
-                    type_arguments: [],
+                    bound_types: [],
                     location: implicit_import_array.lm:3:6,
                 },
                 location: implicit_import_array.lm:3:6,
@@ -31,7 +31,7 @@ Map {
                             name: "Array",
                             location: implicit_import_array.lm:12:17,
                         },
-                        type_arguments: [
+                        bound_types: [
                             Type {
                                 id: TypeId(
                                     NodeId {
@@ -57,7 +57,7 @@ Map {
                                             name: "Int32",
                                             location: implicit_import_array.lm:18:23,
                                         },
-                                        type_arguments: [],
+                                        bound_types: [],
                                         location: implicit_import_array.lm:18:23,
                                     },
                                     location: implicit_import_array.lm:18:23,

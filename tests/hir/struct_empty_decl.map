@@ -9,7 +9,7 @@ Map {
                         name: "Int32",
                         location: struct_empty_decl.lm:7:12,
                     },
-                    type_arguments: [],
+                    bound_types: [],
                     location: struct_empty_decl.lm:7:12,
                 },
                 location: struct_empty_decl.lm:7:12,
