@@ -311,12 +311,13 @@ impl<'a> LowerModule<'a> {
         None
     }
 
+    /// Adds a new type parameter scope, which can be popped later.
+    fn add_type_param_scope(&mut self) {
+        self.type_parameters.push(HashMap::new());
+    }
+
     /// Adds a new type parameter, which is currently visible.
     fn add_type_param(&mut self, name: String, id: lume_hir::TypeId) {
-        if self.type_parameters.is_empty() {
-            self.type_parameters.push(HashMap::new());
-        }
-
         self.type_parameters.last_mut().unwrap().insert(name, id);
     }
 

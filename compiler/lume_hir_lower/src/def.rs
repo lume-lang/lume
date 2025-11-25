@@ -35,7 +35,7 @@ impl LowerModule<'_> {
             fields.push(self.def_field(field)?);
         }
 
-        self.type_parameters.pop();
+        self.type_parameters.pop().unwrap();
         self.self_type = None;
 
         Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(Box::new(
@@ -114,7 +114,7 @@ impl LowerModule<'_> {
             methods.push(method);
         }
 
-        self.type_parameters.pop();
+        self.type_parameters.pop().unwrap();
         self.self_type = None;
 
         Ok(lume_hir::Node::Impl(lume_hir::Implementation {
@@ -139,7 +139,7 @@ impl LowerModule<'_> {
 
         let block = expr.block.map(|block| self.isolated_block(block, &parameters));
 
-        self.type_parameters.pop();
+        self.type_parameters.pop().unwrap();
 
         Ok(lume_hir::MethodDefinition {
             id,
@@ -190,7 +190,7 @@ impl LowerModule<'_> {
             methods.push(method);
         }
 
-        self.type_parameters.pop();
+        self.type_parameters.pop().unwrap();
         self.self_type = None;
 
         Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(Box::new(
@@ -220,7 +220,7 @@ impl LowerModule<'_> {
         let location = self.location(expr.location);
         let block = expr.block.map(|b| self.isolated_block(b, &parameters));
 
-        self.type_parameters.pop();
+        self.type_parameters.pop().unwrap();
 
         Ok(lume_hir::TraitMethodDefinition {
             id,
@@ -249,7 +249,7 @@ impl LowerModule<'_> {
             cases.push(self.def_enum_case(idx, case)?);
         }
 
-        self.type_parameters.pop();
+        self.type_parameters.pop().unwrap();
 
         Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(Box::new(
             lume_hir::EnumDefinition {
@@ -304,7 +304,7 @@ impl LowerModule<'_> {
 
         let block = expr.block.map(|block| self.isolated_block(block, &parameters));
 
-        self.type_parameters.pop();
+        self.type_parameters.pop().unwrap();
 
         Ok(lume_hir::Node::Function(lume_hir::FunctionDefinition {
             id,
@@ -436,7 +436,7 @@ impl LowerModule<'_> {
 
         let location = self.location(expr.location);
 
-        self.type_parameters.pop();
+        self.type_parameters.pop().unwrap();
         self.self_type = None;
 
         Ok(lume_hir::Node::TraitImpl(lume_hir::TraitImplementation {
@@ -464,7 +464,7 @@ impl LowerModule<'_> {
 
         let block = expr.block.map(|block| self.isolated_block(block, &parameters));
 
-        self.type_parameters.pop();
+        self.type_parameters.pop().unwrap();
 
         Ok(lume_hir::TraitMethodImplementation {
             id,
