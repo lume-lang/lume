@@ -11,43 +11,99 @@ pub mod verify;
 
 pub(crate) use verify::verify_type_names;
 
-#[derive(Default)]
-pub(crate) struct UnificationPass {
-    constraints: IndexMap<TypeVariableId, Vec<Constraint>>,
-    substitution_map: IndexMap<TypeVariableId, TypeRef>,
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct TypeVariableId(NodeId, TypeId);
+
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub(crate) struct TypeVariable {
+    pub constraints: Vec<Constraint>,
+    pub substitute: Option<TypeRef>,
 }
 
-impl UnificationPass {
+impl TyInferCtx {
+    /// Ensure there is an entry for constraints for the given type variable.
+    ///
+    /// So, even if no constraints could be generated, we would still notice
+    /// and empty constraint list and throw an error.
+    #[libftrace::traced(level = Trace)]
+    fn ensure_entry_for(&self, type_variable: TypeVariableId) {
+        self.type_vars.try_write().unwrap().entry(type_variable).or_default();
+    }
+
+    #[libftrace::traced(level = Trace)]
+    pub(crate) fn eq(&self, type_variable: TypeVariableId, lhs: TypeRef, rhs: TypeRef) {
+        if lhs == rhs {
+            return;
+        }
+
+        let mut type_vars = self.type_vars.try_write().unwrap();
+
+        type_vars
+            .entry(type_variable)
+            .or_default()
+            .constraints
+            .push(Constraint::Equal { lhs, rhs });
+    }
+
+    #[libftrace::traced(level = Trace)]
+    pub(crate) fn sub(&self, type_variable: TypeVariableId, of: TypeRef, param: NodeId) {
+        let mut type_vars = self.type_vars.try_write().unwrap();
+
+        type_vars
+            .entry(type_variable)
+            .or_default()
+            .constraints
+            .push(Constraint::Subtype { of, param });
+    }
+
+    #[libftrace::traced(level = Trace)]
+    pub(crate) fn subst(&self, type_variable: TypeVariableId, with: TypeRef) {
+        let mut type_vars = self.type_vars.try_write().unwrap();
+        let existing = type_vars.entry(type_variable).or_default().substitute.replace(with);
+
+        if existing.is_some() {
+            panic!("bug!: replaced existing substitution of {type_variable:?}");
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum Constraint {
+    Equal { lhs: TypeRef, rhs: TypeRef },
+    Subtype { of: TypeRef, param: NodeId },
+}
+
+impl TyInferCtx {
     #[libftrace::traced(level = Info, err)]
-    pub(crate) fn invoke<'tcx>(mut self, tcx: &'tcx mut TyInferCtx) -> Result<()> {
-        for node in tcx.hir.nodes().values() {
+    pub(crate) fn unify_ctx(&mut self) -> Result<()> {
+        for node in self.hir.nodes().values() {
             match node {
                 lume_hir::Node::Pattern(pattern) => match &pattern.kind {
                     lume_hir::PatternKind::Variant(variant) => {
-                        self.create_type_constraints(tcx, pattern.id, &variant.name)?;
+                        self.create_type_constraints(pattern.id, &variant.name)?;
                     }
                     _ => {}
                 },
                 lume_hir::Node::Statement(stmt) => match &stmt.kind {
                     lume_hir::StatementKind::Variable(decl) => {
                         if let Some(declared_type) = &decl.declared_type {
-                            verify::verify_type_name(tcx, &declared_type.name)?;
+                            verify::verify_type_name(self, &declared_type.name)?;
                         }
                     }
                     _ => {}
                 },
                 lume_hir::Node::Expression(expr) => match &expr.kind {
                     lume_hir::ExpressionKind::Cast(cast) => {
-                        self.create_type_constraints(tcx, expr.id, &cast.target.name)?;
+                        self.create_type_constraints(expr.id, &cast.target.name)?;
                     }
                     lume_hir::ExpressionKind::Construct(construct) => {
-                        self.create_type_constraints(tcx, expr.id, &construct.path)?;
+                        self.create_type_constraints(expr.id, &construct.path)?;
                     }
                     lume_hir::ExpressionKind::StaticCall(call) => {
-                        self.create_type_constraints(tcx, expr.id, &call.name)?;
+                        self.create_type_constraints(expr.id, &call.name)?;
                     }
                     lume_hir::ExpressionKind::Variant(variant) => {
-                        self.create_type_constraints(tcx, expr.id, &variant.name)?;
+                        self.create_type_constraints(expr.id, &variant.name)?;
                     }
                     _ => {}
                 },
@@ -55,27 +111,19 @@ impl UnificationPass {
             }
         }
 
-        self.update_substitution_map(tcx)?;
-        self.apply_substitutions(tcx)?;
+        self.create_type_substitutions()?;
+        self.apply_substitutions()?;
 
         Ok(())
     }
 }
 
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
-struct TypeVariableId(NodeId, TypeId);
-
-impl UnificationPass {
+impl TyInferCtx {
     #[libftrace::traced(level = Trace, err)]
-    fn create_type_constraints<'tcx>(
-        &mut self,
-        tcx: &'tcx TyInferCtx,
-        expr: NodeId,
-        path: &lume_hir::Path,
-    ) -> Result<()> {
+    fn create_type_constraints<'tcx>(&self, expr: NodeId, path: &lume_hir::Path) -> Result<()> {
         match &path.name {
             lume_hir::PathSegment::Type { .. } => {
-                let Some(type_def) = tcx.tdb().find_type(path) else {
+                let Some(type_def) = self.tdb().find_type(path) else {
                     return Ok(());
                 };
 
@@ -84,11 +132,11 @@ impl UnificationPass {
                 for type_param in type_def.name.bound_types().iter().skip(declared_type_args) {
                     let type_var_id = TypeVariableId(expr, type_param.id);
 
-                    self.create_constraints_of(tcx, expr, path, type_var_id)?;
+                    self.create_constraints_of(expr, path, type_var_id)?;
                 }
             }
             lume_hir::PathSegment::Callable { .. } => {
-                let Some(callable) = tcx.callable_with_name(path) else {
+                let Some(callable) = self.callable_with_name(path) else {
                     return Ok(());
                 };
 
@@ -100,7 +148,7 @@ impl UnificationPass {
                     for type_param in callable_segment.bound_types().iter().skip(declared_type_args) {
                         let type_var_id = TypeVariableId(expr, type_param.id);
 
-                        self.create_constraints_of(tcx, expr, path, type_var_id)?;
+                        self.create_constraints_of(expr, path, type_var_id)?;
                     }
                 }
             }
@@ -110,13 +158,13 @@ impl UnificationPass {
                     .parent()
                     .expect("expected Variant path segment to have Type parent");
 
-                let enum_def = tcx.enum_def_of_name(&parent_path)?;
+                let enum_def = self.enum_def_of_name(&parent_path)?;
                 let declared_type_args = path.all_bound_types().len();
 
                 for type_param in enum_def.type_parameters.iter().skip(declared_type_args) {
                     let type_var_id = TypeVariableId(expr, lume_hir::TypeId::from(type_param.id));
 
-                    self.create_constraints_of(tcx, expr, path, type_var_id)?;
+                    self.create_constraints_of(expr, path, type_var_id)?;
                 }
             }
             lume_hir::PathSegment::Namespace { .. } => {}
@@ -126,29 +174,19 @@ impl UnificationPass {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-enum Constraint {
-    Equal { lhs: TypeRef, rhs: TypeRef },
-    Subtype { of: TypeRef, param: NodeId },
-}
-
-impl UnificationPass {
+impl TyInferCtx {
     #[libftrace::traced(level = Trace, err)]
     fn create_constraints_of<'tcx>(
-        &mut self,
-        tcx: &'tcx TyInferCtx,
+        &self,
         expr: NodeId,
         path: &lume_hir::Path,
         type_variable: TypeVariableId,
     ) -> Result<()> {
-        // Ensure there is an entry for constraints for the given type variable. So,
-        // even if no constraints could be generated, we would still notice and
-        // empty constraint list and throw an error.
-        self.constraints.entry(type_variable).or_default();
+        self.ensure_entry_for(type_variable);
 
         match &path.name {
             lume_hir::PathSegment::Type { .. } => {
-                let Some(type_def) = tcx.tdb().find_type(path) else {
+                let Some(type_def) = self.tdb().find_type(path) else {
                     return Ok(());
                 };
 
@@ -157,7 +195,7 @@ impl UnificationPass {
                         continue;
                     }
 
-                    let type_param = tcx.tdb().type_parameter(bound_type.id.as_node_id()).unwrap();
+                    let type_param = self.tdb().type_parameter(bound_type.id.as_node_id()).unwrap();
 
                     for type_param_constraint in &type_param.constraints {
                         self.sub(type_variable, type_param_constraint.clone(), type_param.id);
@@ -165,11 +203,11 @@ impl UnificationPass {
                 }
             }
             lume_hir::PathSegment::Callable { .. } => {
-                let Some(callable) = tcx.callable_with_name(path) else {
+                let Some(callable) = self.callable_with_name(path) else {
                     return Ok(());
                 };
 
-                let Some(call_expr) = tcx.hir_call_expr(expr) else {
+                let Some(call_expr) = self.hir_call_expr(expr) else {
                     return Ok(());
                 };
 
@@ -181,7 +219,7 @@ impl UnificationPass {
                         continue;
                     }
 
-                    self.eq(type_variable, tcx.type_of(arg)?, param.ty.clone());
+                    self.eq(type_variable, self.type_of(arg)?, param.ty.clone());
                 }
 
                 for bound_type in callable.name().all_bound_types() {
@@ -189,7 +227,7 @@ impl UnificationPass {
                         continue;
                     }
 
-                    let type_param = tcx.tdb().type_parameter(bound_type.id.as_node_id()).unwrap();
+                    let type_param = self.tdb().type_parameter(bound_type.id.as_node_id()).unwrap();
 
                     for type_param_constraint in &type_param.constraints {
                         self.sub(type_variable, type_param_constraint.clone(), type_param.id);
@@ -202,17 +240,17 @@ impl UnificationPass {
                     .parent()
                     .expect("expected Variant path segment to have Type parent");
 
-                let enum_def = tcx.enum_def_of_name(&parent_path)?;
-                let enum_case_def = tcx.enum_case_with_name(path)?;
+                let enum_def = self.enum_def_of_name(&parent_path)?;
+                let enum_case_def = self.enum_case_with_name(path)?;
 
-                let arguments = match &tcx.hir_expect_node(expr) {
+                let arguments = match &self.hir_expect_node(expr) {
                     lume_hir::Node::Expression(expr) => {
                         if let lume_hir::ExpressionKind::Variant(variant) = &expr.kind {
                             let argument_ids = &variant.arguments;
 
                             argument_ids
                                 .iter()
-                                .map(|id| tcx.type_of(*id))
+                                .map(|id| self.type_of(*id))
                                 .collect::<Result<Vec<_>>>()?
                         } else {
                             return Ok(());
@@ -224,7 +262,7 @@ impl UnificationPass {
 
                             field_ids
                                 .iter()
-                                .map(|subpattern| tcx.type_of_pattern(subpattern))
+                                .map(|subpattern| self.type_of_pattern(subpattern))
                                 .collect::<Result<Vec<_>>>()?
                         } else {
                             return Ok(());
@@ -236,7 +274,7 @@ impl UnificationPass {
                 let params = &enum_case_def.parameters;
 
                 for (param, arg) in params.into_iter().zip(arguments) {
-                    let param_ty = tcx.mk_type_ref_from(param, enum_def.id)?;
+                    let param_ty = self.mk_type_ref_from(param, enum_def.id)?;
 
                     if !is_type_contained_within(type_variable.1.as_node_id(), &param_ty) {
                         continue;
@@ -250,7 +288,7 @@ impl UnificationPass {
                         continue;
                     }
 
-                    let type_param = tcx.tdb().type_parameter(bound_type.id.as_node_id()).unwrap();
+                    let type_param = self.tdb().type_parameter(bound_type.id.as_node_id()).unwrap();
 
                     for type_param_constraint in &type_param.constraints {
                         self.sub(type_variable, type_param_constraint.clone(), type_param.id);
@@ -260,51 +298,36 @@ impl UnificationPass {
             lume_hir::PathSegment::Namespace { .. } => {}
         }
 
-        if tcx.hir_expr(expr).is_some()
+        if self.hir_expr(expr).is_some()
             && !path.is_variant()
-            && let Some(expected_type) = tcx.expected_type_of(expr)?
+            && let Some(expected_type) = self.expected_type_of(expr)?
         {
-            self.eq(type_variable, tcx.type_of(expr)?, expected_type);
+            self.eq(type_variable, self.type_of(expr)?, expected_type);
         };
 
         Ok(())
     }
-
-    #[libftrace::traced(level = Trace)]
-    fn eq(&mut self, type_variable: TypeVariableId, lhs: TypeRef, rhs: TypeRef) {
-        if lhs == rhs {
-            return;
-        }
-
-        self.constraints
-            .entry(type_variable)
-            .or_default()
-            .push(Constraint::Equal { lhs, rhs });
-    }
-
-    #[libftrace::traced(level = Trace)]
-    fn sub(&mut self, type_variable: TypeVariableId, of: TypeRef, param: NodeId) {
-        self.constraints
-            .entry(type_variable)
-            .or_default()
-            .push(Constraint::Subtype { of, param });
-    }
 }
 
-impl UnificationPass {
+impl TyInferCtx {
     #[libftrace::traced(level = Trace, err)]
-    fn update_substitution_map<'tcx>(&mut self, tcx: &'tcx TyInferCtx) -> Result<()> {
-        'type_var: for (type_variable_id, mut constraints) in std::mem::take(&mut self.constraints) {
+    fn create_type_substitutions(&self) -> Result<()> {
+        let mut substitution_map = IndexMap::<TypeVariableId, TypeRef>::new();
+        let tcx_constraints = self.type_vars.try_read().unwrap();
+
+        'type_var: for (&type_variable_id, type_variable) in tcx_constraints.iter() {
+            let mut constraints = type_variable.constraints.clone();
+
             let eq_constraints = constraints
                 .extract_if(.., |c| matches!(c, Constraint::Equal { .. }))
                 .collect::<Vec<_>>();
 
             if eq_constraints.is_empty() {
-                let type_param = tcx.tdb().type_parameter(type_variable_id.1.as_node_id()).unwrap();
+                let type_param = self.tdb().type_parameter(type_variable_id.1.as_node_id()).unwrap();
 
-                tcx.dcx().emit(
+                self.dcx().emit(
                     crate::errors::TypeArgumentInferenceFailed {
-                        source: tcx.hir_span_of_node(type_variable_id.0),
+                        source: self.hir_span_of_node(type_variable_id.0),
                         type_param_name: type_param.name.clone(),
                     }
                     .into(),
@@ -313,25 +336,25 @@ impl UnificationPass {
                 continue;
             }
 
-            let expected_type = normalize_equality_constraints(tcx, type_variable_id, eq_constraints)?;
+            let expected_type = normalize_equality_constraints(self, type_variable_id, eq_constraints)?;
 
             for constraint in constraints {
                 match constraint {
                     Constraint::Equal { .. } => unreachable!(),
                     Constraint::Subtype { of, param } => {
-                        debug_assert!(tcx.is_trait(&of)?, "expected subtype-constraint to reference trait");
+                        debug_assert!(self.is_trait(&of)?, "expected subtype-constraint to reference trait");
 
-                        if !tcx.trait_impl_by(&of, &expected_type)? {
-                            let type_param = tcx.tdb().type_parameter(param).unwrap();
+                        if !self.trait_impl_by(&of, &expected_type)? {
+                            let type_param = self.tdb().type_parameter(param).unwrap();
                             let type_param_constraint = type_param.constraints.iter().find(|c| *c == &of).unwrap();
 
-                            tcx.dcx().emit(
+                            self.dcx().emit(
                                 crate::errors::TypeParameterConstraintUnsatisfied {
-                                    source: tcx.hir_span_of_node(type_variable_id.0),
+                                    source: self.hir_span_of_node(type_variable_id.0),
                                     constraint_loc: type_param_constraint.location,
                                     param_name: type_param.name.clone(),
-                                    type_name: tcx.new_named_type(&expected_type, true)?,
-                                    constraint_name: tcx.new_named_type(&of, true)?,
+                                    type_name: self.new_named_type(&expected_type, true)?,
+                                    constraint_name: self.new_named_type(&of, true)?,
                                 }
                                 .into(),
                             );
@@ -342,7 +365,14 @@ impl UnificationPass {
                 }
             }
 
-            self.substitution_map.insert(type_variable_id, expected_type.clone());
+            substitution_map.insert(type_variable_id, expected_type.clone());
+        }
+
+        // Force the read-lock to drop.
+        drop(tcx_constraints);
+
+        for (type_variable, substitution) in substitution_map {
+            self.subst(type_variable, substitution);
         }
 
         Ok(())
@@ -478,31 +508,50 @@ fn is_type_contained_within(target: NodeId, ty: &TypeRef) -> bool {
     false
 }
 
-impl UnificationPass {
+impl TyInferCtx {
     #[libftrace::traced(level = Trace, err)]
-    fn apply_substitutions<'tcx>(&mut self, tcx: &'tcx mut TyInferCtx) -> Result<()> {
-        for (type_variable_id, substitution) in std::mem::take(&mut self.substitution_map) {
-            let Some(expr) = tcx.hir.expression(type_variable_id.0) else {
+    fn apply_substitutions(&mut self) -> Result<()> {
+        let tcx_constraints = self.type_vars.try_read().unwrap();
+
+        for (&type_variable_id, TypeVariable { substitute, .. }) in tcx_constraints.iter() {
+            let Some(substitute) = substitute else {
+                let type_param = self
+                    .tdb()
+                    .type_parameter(type_variable_id.1.as_node_id())
+                    .expect("expected type variable to reference valid type parameter");
+
+                self.dcx().emit(
+                    crate::errors::TypeArgumentInferenceFailed {
+                        source: self.hir_span_of_node(type_variable_id.0),
+                        type_param_name: type_param.name.clone(),
+                    }
+                    .into(),
+                );
+
+                continue;
+            };
+
+            let Some(expr) = self.hir.expression(type_variable_id.0) else {
                 panic!("bug!: expected ID in type variable to reference Expression");
             };
 
             let (mut replacement_path, target_path) = match &expr.kind {
                 lume_hir::ExpressionKind::Cast(expr) => {
-                    let Some(type_def) = tcx.tdb().find_type(&expr.target.name) else {
+                    let Some(type_def) = self.tdb().find_type(&expr.target.name) else {
                         return Ok(());
                     };
 
                     (expr.target.name.clone(), type_def.name.clone())
                 }
                 lume_hir::ExpressionKind::Construct(expr) => {
-                    let Some(type_def) = tcx.tdb().find_type(&expr.path) else {
+                    let Some(type_def) = self.tdb().find_type(&expr.path) else {
                         return Ok(());
                     };
 
                     (expr.path.clone(), type_def.name.clone())
                 }
                 lume_hir::ExpressionKind::StaticCall(call) => {
-                    let Some(callable) = tcx.callable_with_name(&call.name) else {
+                    let Some(callable) = self.callable_with_name(&call.name) else {
                         unreachable!()
                     };
 
@@ -510,7 +559,7 @@ impl UnificationPass {
                 }
                 lume_hir::ExpressionKind::Variant(expr) => {
                     let parent_path = expr.name.clone().parent().unwrap();
-                    let enum_def = tcx.enum_def_of_name(&parent_path)?;
+                    let enum_def = self.enum_def_of_name(&parent_path)?;
 
                     let mut enum_name = enum_def.name.clone();
                     enum_name.place_bound_types(enum_def.type_parameters.as_types());
@@ -531,7 +580,7 @@ impl UnificationPass {
                                 continue;
                             }
 
-                            let replacement_ty = tcx.hir_lift_type(&substitution)?;
+                            let replacement_ty = self.hir_lift_type(substitute)?;
                             replacement_path.segments_mut()[num_segment].put_bound_type(num_type, replacement_ty);
                         }
                     }
@@ -539,7 +588,7 @@ impl UnificationPass {
                 }
             }
 
-            let Some(expr) = tcx.hir.expression_mut(type_variable_id.0) else {
+            let Some(expr) = self.hir.expression_mut(type_variable_id.0) else {
                 panic!("bug!: expected ID in type variable to reference Expression");
             };
 
