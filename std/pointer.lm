@@ -2,6 +2,14 @@ namespace std
 
 import std::mem (ptr_ref, ptr_read, ptr_write)
 
+/// The `void` type.
+///
+/// The `Void` type is only ever used when a function or method returns nothing - absolutely nothing.
+/// Most often, you'd never seen it being written out, since functions implicitly add ` -> Void` as their
+/// return type, if nothing else is defined.
+pub struct builtin Void
+{ }
+
 /// Defines a raw pointer, which can be used to access memory directly.
 ///
 /// Pointers cannot be created manually - they can only be created by the compiler itself, as a result
