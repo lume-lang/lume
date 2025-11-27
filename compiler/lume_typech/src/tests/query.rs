@@ -12,10 +12,11 @@ fn query_function_name_rooted() -> Result<()> {
     assert_eq!(funcs.len(), 1);
 
     let func = funcs.first().unwrap();
-
     assert_eq!(func.name, Path::rooted(PathSegment::callable("foo")));
-    assert_eq!(func.parameters.len(), 0);
-    assert_eq!(func.return_type, TypeRef::void());
+
+    let func = tcx.signature_of(lume_infer::query::Callable::Function(func)).unwrap();
+    assert_eq!(func.params.len(), 0);
+    assert_eq!(func.ret_ty, TypeRef::void());
 
     Ok(())
 }
@@ -131,9 +132,7 @@ fn query_methods_on_type_empty() -> Result<()> {
     let tcx = type_infer("struct A {} impl A {}")?;
 
     let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
-    let methods = tcx
-        .methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()))
-        .collect::<Vec<_>>();
+    let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 0);
 
@@ -145,9 +144,7 @@ fn query_methods_on_type_single() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } }")?;
 
     let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
-    let methods = tcx
-        .methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()))
-        .collect::<Vec<_>>();
+    let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 1);
 
@@ -157,8 +154,10 @@ fn query_methods_on_type_single() -> Result<()> {
         method.name,
         Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo"))
     );
-    assert_eq!(method.parameters.len(), 0);
-    assert_eq!(method.return_type, TypeRef::void());
+
+    let method = tcx.signature_of(lume_infer::query::Callable::Method(method)).unwrap();
+    assert_eq!(method.params.len(), 0);
+    assert_eq!(method.ret_ty, TypeRef::void());
 
     Ok(())
 }
@@ -168,9 +167,7 @@ fn query_methods_on_type_single_impl() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } pub fn bar() { } }")?;
 
     let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
-    let methods = tcx
-        .methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()))
-        .collect::<Vec<_>>();
+    let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 2);
 
@@ -178,15 +175,25 @@ fn query_methods_on_type_single_impl() -> Result<()> {
         methods[0].name,
         Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo"))
     );
-    assert_eq!(methods[0].parameters.len(), 0);
-    assert_eq!(methods[0].return_type, TypeRef::void());
+
+    let method = tcx
+        .signature_of(lume_infer::query::Callable::Method(methods[0]))
+        .unwrap();
+
+    assert_eq!(method.params.len(), 0);
+    assert_eq!(method.ret_ty, TypeRef::void());
 
     assert_eq!(
         methods[1].name,
         Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("bar"))
     );
-    assert_eq!(methods[1].parameters.len(), 0);
-    assert_eq!(methods[1].return_type, TypeRef::void());
+
+    let method = tcx
+        .signature_of(lume_infer::query::Callable::Method(methods[1]))
+        .unwrap();
+
+    assert_eq!(method.params.len(), 0);
+    assert_eq!(method.ret_ty, TypeRef::void());
 
     Ok(())
 }
@@ -196,9 +203,7 @@ fn query_methods_on_type_multiple_impl() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } } impl A { pub fn bar() { } }")?;
 
     let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
-    let methods = tcx
-        .methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()))
-        .collect::<Vec<_>>();
+    let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 2);
 
@@ -206,15 +211,25 @@ fn query_methods_on_type_multiple_impl() -> Result<()> {
         methods[0].name,
         Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo"))
     );
-    assert_eq!(methods[0].parameters.len(), 0);
-    assert_eq!(methods[0].return_type, TypeRef::void());
+
+    let method = tcx
+        .signature_of(lume_infer::query::Callable::Method(methods[0]))
+        .unwrap();
+
+    assert_eq!(method.params.len(), 0);
+    assert_eq!(method.ret_ty, TypeRef::void());
 
     assert_eq!(
         methods[1].name,
         Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("bar"))
     );
-    assert_eq!(methods[1].parameters.len(), 0);
-    assert_eq!(methods[1].return_type, TypeRef::void());
+
+    let method = tcx
+        .signature_of(lume_infer::query::Callable::Method(methods[1]))
+        .unwrap();
+
+    assert_eq!(method.params.len(), 0);
+    assert_eq!(method.ret_ty, TypeRef::void());
 
     Ok(())
 }
@@ -377,9 +392,11 @@ fn query_lookup_functions_single() -> Result<()> {
 
     let func = func.unwrap();
     assert_eq!(func.name, Path::rooted(PathSegment::callable("foo")));
-    assert_eq!(func.parameters.len(), 0);
-    assert_eq!(func.type_parameters.len(), 0);
-    assert_eq!(func.return_type, TypeRef::void());
+
+    let func = tcx.signature_of(lume_infer::query::Callable::Function(func)).unwrap();
+    assert_eq!(func.params.len(), 0);
+    assert_eq!(func.type_params.len(), 0);
+    assert_eq!(func.ret_ty, TypeRef::void());
 
     Ok(())
 }

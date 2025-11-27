@@ -160,6 +160,7 @@ impl CraneliftBackend {
     #[libftrace::traced(level = Trace, fields(name = param.name, method = method.full_name))]
     fn metadata_name_of_param(&self, param: &ParameterMetadata, method: &MethodMetadata) -> String {
         let mut metadata_name = method.full_name.clone();
+        metadata_name.push_str("_");
         metadata_name.push_str(&param.name);
 
         metadata_name

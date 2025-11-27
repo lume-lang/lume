@@ -36,6 +36,7 @@ pub(crate) fn verify_type_names<'tcx>(tcx: &'tcx TyInferCtx) -> Result<()> {
                         }
                     }
                 }
+                lume_hir::TypeDefinition::TypeParameter(_) => {}
             },
             lume_hir::Node::Impl(impl_block) => {
                 verify_type_name(tcx, &impl_block.target.name)?;
@@ -91,7 +92,7 @@ pub(crate) fn verify_type_name<'tcx>(tcx: &'tcx TyInferCtx, path: &lume_hir::Pat
         return Ok(());
     };
 
-    let expected_arg_count = matching_type.kind.type_parameters().len();
+    let expected_arg_count = tcx.type_params_of(matching_type.id).unwrap_or(&[]).len();
     let declared_arg_count = type_path.bound_types().len();
 
     if expected_arg_count != declared_arg_count {

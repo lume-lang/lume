@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use error_snippet_derive::Diagnostic;
 use lume_hir::{Identifier, Path, PathSegment};
-use lume_span::{Location, SourceFile};
-use lume_types::NamedTypeRef;
+use lume_span::{Location, NodeId, SourceFile};
+use lume_types::{NamedTypeRef, TypeKind};
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "could not find method", code = "LM4113")]
@@ -73,6 +73,12 @@ pub struct MissingVariant {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "node cannot hold type parameters: {id}", code = "LM4215")]
+pub struct CannotHoldTypeParams {
+    pub id: NodeId,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "could not find returning ancestor", code = "LM4216")]
 pub struct NoReturningAncestor {
     #[label(source, "expected returning ancestor, found None")]
@@ -98,4 +104,32 @@ pub struct NoParentStruct {
 pub struct CannotAssignExpression {
     #[label(source, "invalid expression on left-hand side of assignment")]
     pub source: Location,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find node {id:?} in context")]
+pub struct NodeNotFound {
+    pub id: NodeId,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find item")]
+pub struct TypeNameNotFound {
+    pub name: Path,
+
+    #[label(source, "could not find {name:+} in context")]
+    pub location: Location,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "expected path {path:+} to have a parent")]
+pub struct PathWithoutParent {
+    pub path: Path,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "expected type to be kind of {expected:?}, found {found:?}")]
+pub struct UnexpectedTypeKind {
+    pub expected: TypeKind,
+    pub found: TypeKind,
 }

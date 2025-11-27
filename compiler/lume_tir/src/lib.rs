@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 use lume_span::{Interned, Location, NodeId};
 use lume_type_metadata::{StaticMetadata, TypeMetadataId};
-use lume_types::{Field, TypeRef};
+use lume_types::TypeRef;
 
 #[derive(Debug, Default)]
 pub struct TypedIR {
@@ -182,7 +182,7 @@ pub struct Function {
     pub name: Path,
     pub kind: FunctionKind,
     pub parameters: Vec<Parameter>,
-    pub type_params: TypeParameters,
+    pub type_params: Vec<TypeParameter>,
     pub return_type: TypeRef,
     pub block: Option<Block>,
     pub location: Location,
@@ -217,33 +217,6 @@ impl std::hash::Hash for Parameter {
 impl PartialEq for Parameter {
     fn eq(&self, other: &Self) -> bool {
         self.ty == other.ty
-    }
-}
-
-#[derive(Clone, Default, Debug, PartialEq, Eq)]
-pub struct TypeParameters {
-    pub inner: Vec<TypeParameter>,
-}
-
-impl TypeParameters {
-    pub const fn new() -> Self {
-        Self { inner: Vec::new() }
-    }
-
-    pub fn len(&self) -> usize {
-        self.inner.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &TypeParameter> {
-        self.inner.iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut TypeParameter> {
-        self.inner.iter_mut()
     }
 }
 
@@ -502,6 +475,7 @@ pub struct Call {
     pub arguments: Vec<Expression>,
     pub type_arguments: Vec<TypeRef>,
     pub return_type: TypeRef,
+    pub uninst_return_type: Option<TypeRef>,
     pub location: Location,
 }
 
@@ -739,7 +713,7 @@ impl std::hash::Hash for SwitchConstantLiteral {
 pub struct Member {
     pub id: NodeId,
     pub callee: Expression,
-    pub field: Field,
+    pub field: NodeId,
     pub name: Interned<String>,
     pub location: Location,
 }

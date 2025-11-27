@@ -1,9 +1,10 @@
 use lume_span::NodeId;
+use lume_types::TypeRef;
 
 use crate::FunctionTransformer;
 
 impl FunctionTransformer<'_, '_> {
-    pub(super) fn lower_type(&self, type_ref: &lume_types::TypeRef) -> lume_mir::Type {
+    pub(super) fn lower_type(&self, type_ref: &TypeRef) -> lume_mir::Type {
         if self.tcx().is_type_never(type_ref) {
             return lume_mir::Type::never();
         }
@@ -17,30 +18,40 @@ impl FunctionTransformer<'_, '_> {
             lume_types::TypeKind::UInt(n) => lume_mir::Type::integer(*n, false),
             lume_types::TypeKind::Float(n) => lume_mir::Type::float(*n),
             lume_types::TypeKind::String => lume_mir::Type::string(),
-            lume_types::TypeKind::User(lume_types::UserType::Struct(def)) => {
+            lume_types::TypeKind::Struct => {
                 if self.tcx().is_std_pointer(type_ref) {
                     let elemental_type = self.lower_type(&type_ref.bound_types[0]);
 
                     return lume_mir::Type::pointer(elemental_type);
                 }
 
-                let name = format!("{:+}", def.name);
-                let ty_props = self.tcx().db().find_fields(type_ref.instance_of);
-                let props = ty_props.map(|p| self.lower_type(&p.field_type)).collect::<Vec<_>>();
+                let struct_def = self.tcx().hir_expect_struct(type_ref.instance_of);
+                let name = format!("{:+}", struct_def.name);
+
+                let ty_props = self.tcx().fields_on(type_ref.instance_of).unwrap();
+                let props = ty_props
+                    .iter()
+                    .map(|prop| {
+                        let field_type = self
+                            .tcx()
+                            .mk_type_ref_from(&prop.field_type, type_ref.instance_of)
+                            .unwrap();
+
+                        self.lower_type(&field_type)
+                    })
+                    .collect::<Vec<_>>();
 
                 let struct_ty = lume_mir::Type::structure(name, props);
 
                 lume_mir::Type::pointer(struct_ty)
             }
-            lume_types::TypeKind::User(lume_types::UserType::Enum(_)) => {
+            lume_types::TypeKind::Enum => {
                 let enum_ty = lume_mir::Type::union(Vec::new());
 
                 lume_mir::Type::pointer(enum_ty)
             }
-            lume_types::TypeKind::User(lume_types::UserType::Trait(_)) => {
-                lume_mir::Type::pointer(lume_mir::Type::void())
-            }
-            lume_types::TypeKind::TypeParameter(_) => lume_mir::Type::type_param(),
+            lume_types::TypeKind::Trait => lume_mir::Type::pointer(lume_mir::Type::void()),
+            lume_types::TypeKind::TypeParameter => lume_mir::Type::type_param(),
         }
     }
 

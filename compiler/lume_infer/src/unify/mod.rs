@@ -164,7 +164,7 @@ impl TyInferCtx {
                 let declared_type_args = path.all_bound_types().len();
 
                 for type_param in enum_def.type_parameters.iter().skip(declared_type_args) {
-                    let type_var_id = TypeVariableId(expr, lume_hir::TypeId::from(type_param.id));
+                    let type_var_id = TypeVariableId(expr, lume_hir::TypeId::from(*type_param));
 
                     self.create_constraints_of(expr, path, type_var_id)?;
                 }
@@ -197,10 +197,13 @@ impl TyInferCtx {
                         continue;
                     }
 
-                    let type_param = self.tdb().type_parameter(bound_type.id.as_node_id()).unwrap();
+                    let type_param_id = bound_type.id.as_node_id();
+                    let type_param = self.hir_expect_type_parameter(type_param_id);
 
                     for type_param_constraint in &type_param.constraints {
-                        self.sub(type_variable, type_param_constraint.clone(), type_param.id);
+                        let constraint_type = self.mk_type_ref_from(type_param_constraint, type_param.id)?;
+
+                        self.sub(type_variable, constraint_type, type_param.id);
                     }
                 }
             }
@@ -214,7 +217,7 @@ impl TyInferCtx {
                 };
 
                 let args = call_expr.arguments();
-                let params = callable.signature().params.inner();
+                let params = self.signature_of(callable)?.params;
 
                 for (param, arg) in params.into_iter().zip(args) {
                     if !is_type_contained_within(type_variable.1.as_node_id(), &param.ty) {
@@ -229,10 +232,13 @@ impl TyInferCtx {
                         continue;
                     }
 
-                    let type_param = self.tdb().type_parameter(bound_type.id.as_node_id()).unwrap();
+                    let type_param_id = bound_type.id.as_node_id();
+                    let type_param = self.hir_expect_type_parameter(type_param_id);
 
                     for type_param_constraint in &type_param.constraints {
-                        self.sub(type_variable, type_param_constraint.clone(), type_param.id);
+                        let constraint_type = self.mk_type_ref_from(type_param_constraint, type_param.id)?;
+
+                        self.sub(type_variable, constraint_type, type_param.id);
                     }
                 }
             }
@@ -290,10 +296,13 @@ impl TyInferCtx {
                         continue;
                     }
 
-                    let type_param = self.tdb().type_parameter(bound_type.id.as_node_id()).unwrap();
+                    let type_param_id = bound_type.id.as_node_id();
+                    let type_param = self.hir_expect_type_parameter(type_param_id);
 
                     for type_param_constraint in &type_param.constraints {
-                        self.sub(type_variable, type_param_constraint.clone(), type_param.id);
+                        let constraint_type = self.mk_type_ref_from(type_param_constraint, type_param.id)?;
+
+                        self.sub(type_variable, constraint_type, type_param.id);
                     }
                 }
             }
@@ -304,7 +313,9 @@ impl TyInferCtx {
             && let Some(expected_type) = self.expected_type_of(expr)?
         {
             self.eq(type_variable, self.type_of_pattern(pattern)?, expected_type);
-        } else if self.hir_expr(expr).is_some()
+        }
+
+        if self.hir_expr(expr).is_some()
             && !path.is_variant()
             && let Some(expected_type) = self.expected_type_of(expr)?
         {
@@ -330,12 +341,12 @@ impl TyInferCtx {
                 .collect::<Vec<_>>();
 
             if eq_constraints.is_empty() {
-                let type_param = self.tdb().type_parameter(type_variable_id.1.as_node_id()).unwrap();
+                let type_param = self.hir_expect_type_parameter(type_variable_id.1.as_node_id());
 
                 self.dcx().emit(
                     crate::errors::TypeArgumentInferenceFailed {
                         source: self.hir_span_of_node(type_variable_id.0),
-                        type_param_name: type_param.name.clone(),
+                        type_param_name: type_param.name.to_string(),
                     }
                     .into(),
                 );
@@ -353,14 +364,18 @@ impl TyInferCtx {
                         debug_assert!(self.is_trait(&of)?, "expected subtype-constraint to reference trait");
 
                         if !self.trait_impl_by(&of, &expected_type)? {
-                            let type_param = self.tdb().type_parameter(param).unwrap();
-                            let type_param_constraint = type_param.constraints.iter().find(|c| *c == &of).unwrap();
+                            let type_param = self.hir_expect_type_parameter(param);
+                            let type_param_constraint = type_param
+                                .constraints
+                                .iter()
+                                .find(|c| c.id.as_node_id() == of.instance_of)
+                                .unwrap();
 
                             self.dcx().emit(
                                 crate::errors::TypeParameterConstraintUnsatisfied {
                                     source: self.hir_span_of_node(type_variable_id.0),
                                     constraint_loc: type_param_constraint.location,
-                                    param_name: type_param.name.clone(),
+                                    param_name: type_param.name.to_string(),
                                     type_name: self.new_named_type(&expected_type, true)?,
                                     constraint_name: self.new_named_type(&of, true)?,
                                 }
@@ -530,15 +545,12 @@ impl TyInferCtx {
 
         for (&type_variable_id, TypeVariable { substitute, .. }) in tcx_constraints.iter() {
             let Some(substitute) = substitute else {
-                let type_param = self
-                    .tdb()
-                    .type_parameter(type_variable_id.1.as_node_id())
-                    .expect("expected type variable to reference valid type parameter");
+                let type_param = self.hir_expect_type_parameter(type_variable_id.1.as_node_id());
 
                 self.dcx().emit(
                     crate::errors::TypeArgumentInferenceFailed {
                         source: self.hir_span_of_node(type_variable_id.0),
-                        type_param_name: type_param.name.clone(),
+                        type_param_name: type_param.name.to_string(),
                     }
                     .into(),
                 );
@@ -577,7 +589,7 @@ impl TyInferCtx {
                     let enum_def = self.enum_def_of_name(&parent_path)?;
 
                     let mut enum_name = enum_def.name.clone();
-                    enum_name.place_bound_types(enum_def.type_parameters.as_types());
+                    enum_name.place_bound_types(self.type_params_as_types(&enum_def.type_parameters)?);
 
                     let enum_case_name = lume_hir::Path::with_root(enum_name, expr.name.name.clone());
 

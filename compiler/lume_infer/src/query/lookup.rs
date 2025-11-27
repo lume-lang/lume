@@ -1,7 +1,7 @@
 use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
 use lume_architect::cached_query;
-use lume_hir::{Identifier, Path, WithLocation};
+use lume_hir::{Identifier, Node, Path, WithLocation};
 use lume_span::{Location, NodeId};
 use lume_types::{Function, FunctionSigOwned, Method, MethodKind, TypeKind, TypeRef};
 
@@ -33,7 +33,7 @@ impl TyInferCtx {
                 let method = self
                     .tdb()
                     .method(id)
-                    .ok_or_else(|| lume_types::errors::NodeNotFound { id }.into_diagnostic())?;
+                    .ok_or_else(|| crate::query::diagnostics::NodeNotFound { id }.into_diagnostic())?;
 
                 Ok(Callable::Method(method))
             }
@@ -41,7 +41,7 @@ impl TyInferCtx {
                 let func = self
                     .tdb()
                     .function(id)
-                    .ok_or_else(|| lume_types::errors::NodeNotFound { id }.into_diagnostic())?;
+                    .ok_or_else(|| crate::query::diagnostics::NodeNotFound { id }.into_diagnostic())?;
 
                 Ok(Callable::Function(func))
             }
@@ -49,7 +49,7 @@ impl TyInferCtx {
     }
 
     /// Gets the [`Callable`] with the given name, if any.
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[libftrace::traced(level = Trace, ret)]
     pub fn callable_with_name(&self, name: &Path) -> Option<Callable<'_>> {
         if let Some(method) = self.tdb().find_method(name) {
             Some(Callable::Method(method))
@@ -73,6 +73,7 @@ impl TyInferCtx {
         name: &'_ Identifier,
     ) -> impl Iterator<Item = &'_ Method> {
         self.methods_defined_on(ty)
+            .into_iter()
             .filter(move |method| method.name.name() == name)
     }
 
@@ -93,10 +94,11 @@ impl TyInferCtx {
         match blanket_lookup {
             BlanketLookup::Exclude => self
                 .tdb()
-                .uses_on(ty)
-                .filter_map(|trait_impl| {
-                    for method_id in &trait_impl.methods {
-                        let method = self.tdb().method(*method_id).unwrap();
+                .traits
+                .implementations_on(ty)
+                .filter_map(|trait_def| {
+                    for &method_id in self.tdb().traits.implemented_methods_in(trait_def, ty) {
+                        let method = self.tdb().method(method_id).unwrap();
 
                         if method.name.name() == name {
                             return Some(method);
@@ -205,7 +207,7 @@ impl TyInferCtx {
         // Methods which are visible outside of their owning package
         if let Some(idx) = methods
             .iter()
-            .position(|m| m.visibility == Some(lume_hir::Visibility::Public))
+            .position(|m| self.visibility_of(m.id) == Some(lume_hir::Visibility::Public))
         {
             return Some(idx);
         }
@@ -241,6 +243,7 @@ impl TyInferCtx {
     #[libftrace::traced(level = Trace)]
     pub fn lookup_method_suggestions(&self, ty: &lume_types::TypeRef, name: &Identifier) -> Vec<&'_ Method> {
         self.methods_defined_on(ty)
+            .into_iter()
             .filter(|method| {
                 let expected = &name.name;
                 let actual = &method.name.name.name().name;
@@ -477,7 +480,10 @@ impl TyInferCtx {
         }
 
         // Functions which are visible outside of their owning package
-        if let Some(idx) = funcs.iter().position(|c| c.visibility == lume_hir::Visibility::Public) {
+        if let Some(idx) = funcs
+            .iter()
+            .position(|c| self.visibility_of(c.id) == Some(lume_hir::Visibility::Public))
+        {
             return Some(idx);
         }
 
@@ -554,7 +560,7 @@ impl TyInferCtx {
         callable: Callable<'a>,
         expr: lume_hir::CallExpression<'a>,
     ) -> Result<lume_types::FunctionSigOwned> {
-        let signature = self.signature_of(callable)?;
+        let signature = self.expanded_signature_of(callable)?;
 
         self.instantiate_function_from_args(signature.as_ref(), expr)
     }
@@ -568,15 +574,15 @@ impl TyInferCtx {
         expr: lume_hir::CallExpression<'a>,
     ) -> Result<lume_types::FunctionSigOwned> {
         let mut inst = lume_types::FunctionSigOwned {
-            params: signature.params.clone(),
+            params: signature.params.to_vec(),
             ret_ty: TypeRef::unknown(),
             type_params: Vec::new(),
         };
 
         let callable = self.probe_callable(expr)?;
-        let params = &callable.signature().params;
+        let params = &signature.params;
 
-        let args = match (expr, callable.is_instance()) {
+        let args = match (expr, signature.is_instanced()) {
             (lume_hir::CallExpression::Instanced(call), true) => vec![&[call.callee][..], &call.arguments[..]].concat(),
             (lume_hir::CallExpression::Intrinsic(call), true) => call.kind.arguments(),
             (lume_hir::CallExpression::Static(call), _) => call.arguments.clone(),
@@ -594,13 +600,13 @@ impl TyInferCtx {
         let mut type_args = Vec::new();
 
         for &type_param in signature.type_params {
-            for (param, arg) in params.inner().iter().zip(args.iter()) {
+            for (param, arg) in params.iter().zip(args.iter()) {
                 let param_ty = &param.ty;
                 let arg_ty = self.type_of(*arg)?;
 
                 // We skip the `self` parameter since it would likely just resolve to the
                 // same type parameter as the one we're trying to resolve.
-                if callable.is_instance() && param.is_self() {
+                if signature.is_instanced() && param.is_self() {
                     continue;
                 }
 
@@ -617,13 +623,13 @@ impl TyInferCtx {
             }
         }
 
-        for (idx, param) in signature.params.inner().iter().enumerate() {
-            let param_ty = self.instantiate_type_from(&param.ty, signature.type_params, &type_args);
+        for (idx, param) in signature.params.iter().enumerate() {
+            let param_ty = self.instantiate_type_from(&param.ty, &signature.type_params, &type_args);
 
-            param_ty.clone_into(&mut inst.params.params[idx].ty);
+            param_ty.clone_into(&mut inst.params[idx].ty);
         }
 
-        self.instantiate_type_from(signature.ret_ty, signature.type_params, &type_args)
+        self.instantiate_type_from(&signature.ret_ty, &signature.type_params, &type_args)
             .clone_into(&mut inst.ret_ty);
 
         Ok(inst)
@@ -650,15 +656,15 @@ impl TyInferCtx {
         type_args: &[TypeRef],
     ) -> lume_types::FunctionSigOwned {
         let mut inst = lume_types::FunctionSigOwned {
-            params: lume_types::Parameters::new(),
+            params: Vec::new(),
             ret_ty: TypeRef::unknown(),
             type_params: Vec::new(),
         };
 
-        for param in sig.params.inner() {
+        for param in sig.params {
             let param_ty = self.instantiate_type_from(&param.ty, type_params, type_args);
 
-            inst.params.params.push(lume_types::Parameter {
+            inst.params.push(lume_types::Parameter {
                 idx: param.idx,
                 name: param.name.clone(),
                 ty: param_ty,
@@ -703,12 +709,14 @@ impl TyInferCtx {
         type_params: &[NodeId],
         type_args: &'a [TypeRef],
     ) -> &'a lume_types::TypeRef {
-        let Some(ty_as_param) = self.db().type_as_param(ty.instance_of) else {
+        let Some(lume_hir::Node::Type(lume_hir::TypeDefinition::TypeParameter(ty_as_type_param))) =
+            self.hir_node(ty.instance_of)
+        else {
             return ty;
         };
 
         for (type_param, type_arg) in type_params.iter().zip(type_args.iter()) {
-            if *type_param == ty_as_param.id {
+            if *type_param == ty_as_type_param.id {
                 return type_arg;
             }
         }
@@ -722,8 +730,8 @@ impl TyInferCtx {
     /// arguments defined on the callee of the exprssion, if any.
     #[libftrace::traced(level = Trace)]
     pub fn type_args_in_call(&self, expr: lume_hir::CallExpression) -> Result<Vec<TypeRef>> {
-        let type_parameters_hir = self.hir_avail_type_params(expr.id());
-        let type_parameters = type_parameters_hir.as_refs();
+        let type_parameters_id = self.hir_avail_type_params(expr.id());
+        let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         match &expr {
             lume_hir::CallExpression::Static(call) => {
@@ -775,29 +783,87 @@ impl TyInferCtx {
         Ok(None)
     }
 
+    /// Gets the signature of the given [`Callable`].
+    #[libftrace::traced(level = Trace, err, ret)]
+    pub fn signature_of(&self, callable: Callable) -> Result<FunctionSigOwned> {
+        match callable {
+            Callable::Method(method) => match self.hir_expect_node(method.id) {
+                lume_hir::Node::Method(method) => Ok(FunctionSigOwned {
+                    params: params_of(self, method.id, &method.parameters)?,
+                    type_params: method.type_parameters.clone(),
+                    ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                }),
+                lume_hir::Node::TraitMethodDef(method) => Ok(FunctionSigOwned {
+                    params: params_of(self, method.id, &method.parameters)?,
+                    type_params: method.type_parameters.clone(),
+                    ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                }),
+                lume_hir::Node::TraitMethodImpl(method) => Ok(FunctionSigOwned {
+                    params: params_of(self, method.id, &method.parameters)?,
+                    type_params: method.type_parameters.clone(),
+                    ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                }),
+                _ => panic!("bug!: invalid Callable::Method reference node"),
+            },
+            Callable::Function(function) => {
+                let lume_hir::Node::Function(func) = self.hir_expect_node(function.id) else {
+                    panic!("bug!: invalid Callable::Function reference node")
+                };
+
+                Ok(FunctionSigOwned {
+                    params: params_of(self, func.id, &func.parameters)?,
+                    type_params: func.type_parameters.clone(),
+                    ret_ty: self.mk_type_ref_from(&func.return_type, func.id)?,
+                })
+            }
+        }
+    }
+
     /// Gets the expanded signature of the given [`Callable`].
     ///
     /// The expanded signature of a [`Callable`] will include all the type
     /// parameters defined on parent definitions, such as on implementation
     /// blocks.
     #[libftrace::traced(level = Trace, err, ret)]
-    pub fn signature_of(&self, callable: Callable) -> Result<FunctionSigOwned> {
+    pub fn expanded_signature_of(&self, callable: Callable) -> Result<FunctionSigOwned> {
         match callable {
             Callable::Method(method) => {
-                let mut signature = method.sig().to_owned();
+                let mut signature = match self.hir_expect_node(method.id) {
+                    lume_hir::Node::Method(method) => FunctionSigOwned {
+                        params: params_of(self, method.id, &method.parameters)?,
+                        type_params: method.type_parameters.clone(),
+                        ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                    },
+                    lume_hir::Node::TraitMethodDef(method) => FunctionSigOwned {
+                        params: params_of(self, method.id, &method.parameters)?,
+                        type_params: method.type_parameters.clone(),
+                        ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                    },
+                    lume_hir::Node::TraitMethodImpl(method) => FunctionSigOwned {
+                        params: params_of(self, method.id, &method.parameters)?,
+                        type_params: method.type_parameters.clone(),
+                        ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                    },
+                    _ => panic!("bug!: invalid Callable::Method reference node"),
+                };
 
                 // Append all the type parameters which are available on the method,
                 // such as the type parameters on the implementation.
-                signature.type_params.extend(
-                    self.hir_avail_type_params(method.id)
-                        .inner
-                        .into_iter()
-                        .map(|param| param.id),
-                );
+                signature.type_params.extend(self.hir_avail_type_params(method.id));
 
                 Ok(signature)
             }
-            Callable::Function(function) => Ok(function.sig().to_owned()),
+            Callable::Function(function) => {
+                let lume_hir::Node::Function(func) = self.hir_expect_node(function.id) else {
+                    panic!("bug!: invalid Callable::Function reference node")
+                };
+
+                Ok(FunctionSigOwned {
+                    params: params_of(self, func.id, &func.parameters)?,
+                    type_params: func.type_parameters.clone(),
+                    ret_ty: self.mk_type_ref_from(&func.return_type, func.id)?,
+                })
+            }
         }
     }
 
@@ -836,7 +902,7 @@ impl TyInferCtx {
         callable: Callable,
         expr: lume_hir::CallExpression,
     ) -> Result<FunctionSigOwned> {
-        let full_signature = self.signature_of(callable)?;
+        let full_signature = self.expanded_signature_of(callable)?;
 
         self.instantiate_call_expression(full_signature.as_ref(), expr)
     }
@@ -847,16 +913,53 @@ impl TyInferCtx {
     /// current context, such as visibility, arguments or type arguments. To
     /// check whether any given [`Method`] is valid for a given context, see
     /// [`ThirBuildCtx::check_method()`].
-    pub fn methods_defined_on(&self, self_ty: &lume_types::TypeRef) -> impl Iterator<Item = &'_ Method> {
-        self.tdb().methods_on(self_ty.instance_of)
+    pub fn methods_defined_on(&self, self_ty: &TypeRef) -> Vec<&'_ Method> {
+        let mut methods: Vec<_> = self
+            .tdb()
+            .methods()
+            .filter(move |m| m.callee.instance_of == self_ty.instance_of)
+            .collect();
+
+        if let Some(type_param) = self.as_type_param(self_ty.instance_of) {
+            for constraint in &type_param.constraints {
+                let Ok(constraint_ty) = self.mk_type_ref_from(constraint, self_ty.instance_of) else {
+                    continue;
+                };
+
+                methods.extend(self.methods_defined_on(&constraint_ty));
+            }
+        }
+
+        methods
+    }
+
+    /// Determines whether the method with the given ID is an instance method.
+    #[cached_query]
+    #[libftrace::traced(level = Trace)]
+    pub fn is_instanced_method(&self, id: NodeId) -> bool {
+        let Some(node) = self.hir.node(id) else { return false };
+
+        match node {
+            Node::Method(method) => method.parameters.iter().any(|param| param.is_self()),
+            Node::TraitMethodDef(method) => method.parameters.iter().any(|param| param.is_self()),
+            Node::TraitMethodImpl(method) => method.parameters.iter().any(|param| param.is_self()),
+            _ => false,
+        }
+    }
+
+    /// Determines whether the method with the given ID is a static method.
+    #[inline]
+    #[libftrace::traced(level = Trace)]
+    pub fn is_static_method(&self, id: NodeId) -> bool {
+        !self.is_instanced_method(id)
     }
 
     /// Determines whether the given [`TypeRef`] is a kind of
     /// [`TypeKindRef::Struct`].
     #[libftrace::traced(level = Trace, err, ret)]
     pub fn is_struct(&self, ty: &TypeRef) -> Result<bool> {
-        match self.tdb().ty_expect(ty.instance_of)?.kind {
-            TypeKind::User(lume_types::UserType::Struct(_)) => Ok(true),
+        match self.tdb().expect_type(ty.instance_of).map(|ty| &ty.kind) {
+            Ok(TypeKind::Struct) => Ok(true),
             _ => Ok(false),
         }
     }
@@ -865,8 +968,8 @@ impl TyInferCtx {
     /// [`TypeKindRef::Trait`].
     #[libftrace::traced(level = Trace, err, ret)]
     pub fn is_trait(&self, ty: &TypeRef) -> Result<bool> {
-        match self.tdb().ty_expect(ty.instance_of)?.kind {
-            TypeKind::User(lume_types::UserType::Trait(_)) => Ok(true),
+        match self.tdb().expect_type(ty.instance_of).map(|ty| &ty.kind) {
+            Ok(TypeKind::Trait) => Ok(true),
             _ => Ok(false),
         }
     }
@@ -876,32 +979,34 @@ impl TyInferCtx {
     #[libftrace::traced(level = Trace, err, ret)]
     pub fn trait_impl_by(&self, trait_id: &TypeRef, ty: &TypeRef) -> Result<bool> {
         #[cfg(debug_assertions)]
-        self.tdb().ty_expect_trait(trait_id.instance_of)?;
+        self.hir_expect_trait(trait_id.instance_of);
 
-        if let Some(type_param) = self.tdb().type_as_param(ty.instance_of) {
+        if let Some(type_param) = self.as_type_parameter(ty)? {
             for constraint in &type_param.constraints {
-                if self.check_type_compatibility(constraint, trait_id)? {
+                let constraint_type = self.mk_type_ref_from(constraint, trait_id.instance_of)?;
+
+                if self.check_type_compatibility(&constraint_type, trait_id)? {
                     return Ok(true);
                 }
             }
         }
 
         // Check for direct trait implementations on the target type.
-        for use_ in self.tdb().uses_on(ty) {
-            if use_.trait_.instance_of != trait_id.instance_of {
+        for trait_impl in self.tdb().traits.implementations_on(ty) {
+            if trait_impl.instance_of != trait_id.instance_of {
                 continue;
             }
 
             // Make sure the given "trait" is actually a trait.
-            self.tdb().ty_expect_trait(use_.trait_.instance_of)?;
+            self.hir_expect_trait(trait_impl.instance_of);
 
             return Ok(true);
         }
 
         // If no direct implementations exist, attempt to find any blanket
         // implementations which might encapsulate the target type.
-        for blanket_impl in self.trait_blanket_impls(trait_id) {
-            if self.check_type_compatibility(ty, &blanket_impl.target)? {
+        for blanket_impl_target in self.trait_blanket_impls(trait_id) {
+            if self.check_type_compatibility(ty, blanket_impl_target)? {
                 return Ok(true);
             }
         }
@@ -913,8 +1018,8 @@ impl TyInferCtx {
     /// implemented anywhere.
     #[libftrace::traced(level = Trace, err, ret)]
     pub fn is_trait_blanket_impl(&self, trait_type: &TypeRef) -> Result<bool> {
-        for trait_impl in self.tdb().uses_of(trait_type) {
-            if self.is_type_parameter(&trait_impl.target)? {
+        for target_type in self.tdb().traits.implementations_of(trait_type) {
+            if self.is_type_parameter(target_type)? {
                 return Ok(true);
             }
         }
@@ -924,18 +1029,19 @@ impl TyInferCtx {
 
     /// Returns an iterator of all trait implementations of the given trait
     /// [`TypeRef`], which are blanket implementations.
-    pub fn trait_blanket_impls(&self, trait_type: &TypeRef) -> impl Iterator<Item = &lume_types::Use> {
+    pub fn trait_blanket_impls(&self, trait_type: &TypeRef) -> impl Iterator<Item = &TypeRef> {
         self.tdb()
-            .uses_of(trait_type)
-            .filter(|trait_impl| self.is_type_parameter(&trait_impl.target).unwrap_or(false))
+            .traits
+            .implementations_of(trait_type)
+            .filter(|target_type| self.is_type_parameter(target_type).unwrap_or(false))
     }
 
     /// Determines whether the given [`TypeRef`] is a kind of
     /// [`TypeKindRef::TypeParameter`].
     #[libftrace::traced(level = Trace, err, ret)]
     pub fn is_type_parameter(&self, ty: &TypeRef) -> Result<bool> {
-        match self.tdb().ty_expect(ty.instance_of)?.kind {
-            TypeKind::TypeParameter(_) => Ok(true),
+        match self.tdb().type_(ty.instance_of).map(|t| t.kind) {
+            Some(TypeKind::TypeParameter) => Ok(true),
             _ => Ok(false),
         }
     }
@@ -943,9 +1049,9 @@ impl TyInferCtx {
     /// Determines whether the given [`TypeRef`] is a kind of
     /// [`TypeKindRef::TypeParameter`].
     #[libftrace::traced(level = Trace, err, ret)]
-    pub fn as_type_parameter(&self, ty: &TypeRef) -> Result<Option<&lume_types::TypeParameter>> {
-        match self.tdb().ty_expect(ty.instance_of)?.kind {
-            TypeKind::TypeParameter(id) => Ok(self.tdb().type_parameter(id)),
+    pub fn as_type_parameter(&self, ty: &TypeRef) -> Result<Option<&lume_hir::TypeParameter>> {
+        match self.hir_expect_type(ty.instance_of) {
+            lume_hir::TypeDefinition::TypeParameter(type_param) => Ok(Some(type_param.as_ref())),
             _ => Ok(None),
         }
     }
@@ -1023,14 +1129,12 @@ impl TyInferCtx {
     /// Gets the trait implementation of `trait_type` on the type `source`.
     #[libftrace::traced(level = Trace)]
     pub fn get_trait_impl_of(&self, trait_type: &TypeRef, source: &TypeRef) -> Option<&lume_hir::TraitImplementation> {
-        for trait_use in self.tdb().uses_on(source) {
-            if &trait_use.trait_ == trait_type {
-                let lume_hir::Node::TraitImpl(trait_impl) = self.hir_node(trait_use.id)? else {
-                    panic!("bug!: expected trait impl with ID {}", trait_use.id);
-                };
+        if let Some(trait_impl_id) = self.tdb().traits.trait_impl_id(trait_type, source) {
+            let lume_hir::Node::TraitImpl(trait_impl) = self.hir_node(trait_impl_id)? else {
+                panic!("bug!: expected trait impl with ID {trait_impl_id}");
+            };
 
-                return Some(trait_impl);
-            }
+            return Some(trait_impl);
         }
 
         None
@@ -1054,10 +1158,27 @@ impl TyInferCtx {
                 lume_hir::TypeDefinition::Struct(def) => def.doc_comment.as_ref(),
                 lume_hir::TypeDefinition::Trait(def) => def.doc_comment.as_ref(),
                 lume_hir::TypeDefinition::Enum(def) => def.doc_comment.as_ref(),
+                _ => None,
             },
             lume_hir::Node::Method(method) => method.doc_comment.as_ref(),
             lume_hir::Node::TraitMethodDef(method) => method.doc_comment.as_ref(),
             _ => None,
         }
     }
+}
+
+fn param_of(tcx: &TyInferCtx, parent: NodeId, param: &lume_hir::Parameter) -> Result<lume_types::Parameter> {
+    let param_ty = tcx.mk_type_ref_from(&param.param_type, parent).unwrap();
+
+    Ok(lume_types::Parameter {
+        idx: param.index,
+        name: param.name.to_string(),
+        ty: param_ty,
+        vararg: param.vararg,
+        location: param.location,
+    })
+}
+
+fn params_of(tcx: &TyInferCtx, parent: NodeId, params: &[lume_hir::Parameter]) -> Result<Vec<lume_types::Parameter>> {
+    params.into_iter().map(|param| param_of(tcx, parent, param)).collect()
 }

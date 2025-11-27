@@ -48,21 +48,6 @@ impl Node {
         }
     }
 
-    pub fn type_parameters(&self) -> &TypeParameters {
-        static EMPTY: TypeParameters = TypeParameters::new();
-
-        match self {
-            Self::Function(def) => &def.type_parameters,
-            Self::Type(def) => def.type_parameters(),
-            Self::TraitImpl(def) => &def.type_parameters,
-            Self::Impl(def) => &def.type_parameters,
-            Self::Method(def) => &def.type_parameters,
-            Self::TraitMethodDef(def) => &def.type_parameters,
-            Self::TraitMethodImpl(def) => &def.type_parameters,
-            Self::Field(_) | Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => &EMPTY,
-        }
-    }
-
     pub fn location(&self) -> Location {
         match self {
             Self::Function(n) => n.location,
@@ -97,8 +82,12 @@ impl Node {
 
     pub fn is_item(&self) -> bool {
         match self {
-            Self::Function(_) | Self::Type(_) | Self::TraitImpl(_) | Self::Impl(_) => true,
+            Self::Function(_)
+            | Self::Type(TypeDefinition::Struct(_) | TypeDefinition::Trait(_) | TypeDefinition::Enum(_))
+            | Self::TraitImpl(_)
+            | Self::Impl(_) => true,
             Self::Field(_)
+            | Self::Type(TypeDefinition::TypeParameter(_))
             | Self::Method(_)
             | Self::TraitMethodDef(_)
             | Self::TraitMethodImpl(_)
@@ -107,6 +96,23 @@ impl Node {
             | Self::Expression(_) => false,
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NodeType {
+    Function,
+    StructDef,
+    EnumDef,
+    TraitDef,
+    TraitImpl,
+    Impl,
+    Field,
+    Method,
+    TraitMethodDef,
+    TraitMethodImpl,
+    Pattern,
+    Statement,
+    Expression,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -141,9 +147,7 @@ impl NodeRef<'_> {
         }
     }
 
-    pub fn type_parameters(&self) -> &TypeParameters {
-        static EMPTY: TypeParameters = TypeParameters::new();
-
+    pub fn type_parameters(&self) -> &[NodeId] {
         match self {
             Self::Function(def) => &def.type_parameters,
             Self::Type(def) => def.type_parameters(),
@@ -152,7 +156,7 @@ impl NodeRef<'_> {
             Self::Method(def) => &def.type_parameters,
             Self::TraitMethodDef(def) => &def.type_parameters,
             Self::TraitMethodImpl(def) => &def.type_parameters,
-            Self::Field(_) | Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => &EMPTY,
+            Self::Field(_) | Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => &[],
         }
     }
 
@@ -466,7 +470,7 @@ impl Path {
     }
 
     pub fn void() -> Self {
-        Self::rooted(PathSegment::ty("Void"))
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Void"))
     }
 
     pub fn i8() -> Self {
@@ -663,16 +667,10 @@ impl From<Vec<PathSegment>> for Path {
     }
 }
 
-/// Trait for HIR nodes which can contain some amount of type parameters.
-pub trait WithTypeParameters {
-    /// Gets all the type parameters of this node.
-    fn type_params(&self) -> &TypeParameters;
-}
-
 #[derive(Debug, PartialEq, Eq)]
 pub struct Signature<'a> {
     pub name: &'a Identifier,
-    pub type_parameters: &'a [TypeParameter],
+    pub type_parameters: &'a [NodeId],
     pub parameters: &'a [Parameter],
     pub return_type: &'a Type,
 }
@@ -681,7 +679,7 @@ impl Signature<'_> {
     pub fn to_owned(&self) -> SignatureOwned {
         SignatureOwned {
             name: self.name.clone(),
-            type_parameters: self.type_parameters.to_vec().into(),
+            type_parameters: self.type_parameters.to_vec(),
             parameters: self.parameters.to_vec(),
             return_type: self.return_type.clone(),
         }
@@ -695,7 +693,7 @@ impl Signature<'_> {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SignatureOwned {
     pub name: Identifier,
-    pub type_parameters: TypeParameters,
+    pub type_parameters: Vec<NodeId>,
     pub parameters: Vec<Parameter>,
     pub return_type: Type,
 }
@@ -710,7 +708,7 @@ impl std::fmt::Display for SignatureOwned {
                 "<{}>",
                 self.type_parameters
                     .iter()
-                    .map(|t| t.name.to_string())
+                    .map(|t| t.index.as_usize().to_string())
                     .collect::<Vec<_>>()
                     .join(", ")
             )?;
@@ -765,7 +763,7 @@ pub struct FunctionDefinition {
     pub visibility: Visibility,
     pub name: Path,
     pub parameters: Vec<Parameter>,
-    pub type_parameters: TypeParameters,
+    pub type_parameters: Vec<NodeId>,
     pub return_type: Type,
 
     #[serde(skip)]
@@ -776,12 +774,6 @@ pub struct FunctionDefinition {
 impl FunctionDefinition {
     pub fn ident(&self) -> &PathSegment {
         &self.name.name
-    }
-}
-
-impl WithTypeParameters for FunctionDefinition {
-    fn type_params(&self) -> &TypeParameters {
-        &self.type_parameters
     }
 }
 
@@ -824,6 +816,7 @@ pub enum TypeDefinition {
     Enum(Box<EnumDefinition>),
     Struct(Box<StructDefinition>),
     Trait(Box<TraitDefinition>),
+    TypeParameter(Box<TypeParameter>),
 }
 
 impl TypeDefinition {
@@ -832,22 +825,16 @@ impl TypeDefinition {
             TypeDefinition::Enum(def) => def.id,
             TypeDefinition::Struct(def) => def.id,
             TypeDefinition::Trait(def) => def.id,
+            TypeDefinition::TypeParameter(def) => def.id,
         }
     }
 
-    pub fn name(&self) -> &Path {
-        match self {
-            TypeDefinition::Enum(def) => def.name(),
-            TypeDefinition::Struct(def) => def.name(),
-            TypeDefinition::Trait(def) => def.name(),
-        }
-    }
-
-    pub fn type_parameters(&self) -> &TypeParameters {
+    pub fn type_parameters(&self) -> &[NodeId] {
         match self {
             Self::Enum(def) => &def.type_parameters,
             Self::Struct(def) => &def.type_parameters,
             Self::Trait(def) => &def.type_parameters,
+            Self::TypeParameter(_) => &[],
         }
     }
 
@@ -856,6 +843,7 @@ impl TypeDefinition {
             Self::Enum(def) => def.visibility == Visibility::Public,
             Self::Struct(def) => def.visibility == Visibility::Public,
             Self::Trait(def) => def.visibility == Visibility::Public,
+            Self::TypeParameter(_) => false,
         }
     }
 }
@@ -868,7 +856,7 @@ pub struct EnumDefinition {
     pub doc_comment: Option<String>,
 
     pub name: Path,
-    pub type_parameters: TypeParameters,
+    pub type_parameters: Vec<NodeId>,
     pub visibility: Visibility,
     pub cases: Vec<EnumDefinitionCase>,
     pub location: Location,
@@ -903,7 +891,7 @@ pub struct StructDefinition {
     pub visibility: Visibility,
     pub builtin: bool,
     pub fields: Vec<Field>,
-    pub type_parameters: TypeParameters,
+    pub type_parameters: Vec<NodeId>,
     pub location: Location,
 }
 
@@ -921,30 +909,21 @@ impl StructDefinition {
     }
 }
 
-impl WithTypeParameters for StructDefinition {
-    fn type_params(&self) -> &TypeParameters {
-        &self.type_parameters
-    }
-}
-
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct Implementation {
     pub id: NodeId,
     pub target: Box<Type>,
     pub methods: Vec<MethodDefinition>,
-    pub type_parameters: TypeParameters,
+    pub type_parameters: Vec<NodeId>,
     pub location: Location,
-}
-
-impl WithTypeParameters for Implementation {
-    fn type_params(&self) -> &TypeParameters {
-        &self.type_parameters
-    }
 }
 
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct Field {
     pub id: NodeId,
+
+    #[serde(skip)]
+    pub index: usize,
 
     #[serde(skip)]
     pub doc_comment: Option<String>,
@@ -966,18 +945,12 @@ pub struct MethodDefinition {
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
-    pub type_parameters: TypeParameters,
+    pub type_parameters: Vec<NodeId>,
     pub return_type: Type,
 
     #[serde(skip)]
     pub block: Option<Block>,
     pub location: Location,
-}
-
-impl WithTypeParameters for MethodDefinition {
-    fn type_params(&self) -> &TypeParameters {
-        &self.type_parameters
-    }
 }
 
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
@@ -989,7 +962,7 @@ pub struct TraitDefinition {
 
     pub name: Path,
     pub visibility: Visibility,
-    pub type_parameters: TypeParameters,
+    pub type_parameters: Vec<NodeId>,
     pub methods: Vec<TraitMethodDefinition>,
     pub location: Location,
 }
@@ -997,12 +970,6 @@ pub struct TraitDefinition {
 impl TraitDefinition {
     pub fn name(&self) -> &Path {
         &self.name
-    }
-}
-
-impl WithTypeParameters for TraitDefinition {
-    fn type_params(&self) -> &TypeParameters {
-        &self.type_parameters
     }
 }
 
@@ -1015,7 +982,7 @@ pub struct TraitMethodDefinition {
 
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
-    pub type_parameters: TypeParameters,
+    pub type_parameters: Vec<NodeId>,
     pub return_type: Type,
 
     #[serde(skip)]
@@ -1027,16 +994,10 @@ impl TraitMethodDefinition {
     pub fn signature(&'_ self) -> Signature<'_> {
         Signature {
             name: &self.name,
-            type_parameters: &self.type_parameters.inner,
+            type_parameters: &self.type_parameters,
             parameters: &self.parameters,
             return_type: &self.return_type,
         }
-    }
-}
-
-impl WithTypeParameters for TraitMethodDefinition {
-    fn type_params(&self) -> &TypeParameters {
-        &self.type_parameters
     }
 }
 
@@ -1046,7 +1007,7 @@ pub struct TraitImplementation {
     pub name: Box<Type>,
     pub target: Box<Type>,
     pub methods: Vec<TraitMethodImplementation>,
-    pub type_parameters: TypeParameters,
+    pub type_parameters: Vec<NodeId>,
     pub location: Location,
 }
 
@@ -1060,18 +1021,12 @@ impl TraitImplementation {
     }
 }
 
-impl WithTypeParameters for TraitImplementation {
-    fn type_params(&self) -> &TypeParameters {
-        &self.type_parameters
-    }
-}
-
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
     pub id: NodeId,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
-    pub type_parameters: TypeParameters,
+    pub type_parameters: Vec<NodeId>,
     pub return_type: Type,
 
     #[serde(skip)]
@@ -1083,16 +1038,10 @@ impl TraitMethodImplementation {
     pub fn signature(&'_ self) -> Signature<'_> {
         Signature {
             name: &self.name,
-            type_parameters: &self.type_parameters.inner,
+            type_parameters: &self.type_parameters,
             parameters: &self.parameters,
             return_type: &self.return_type,
         }
-    }
-}
-
-impl WithTypeParameters for TraitMethodImplementation {
-    fn type_params(&self) -> &TypeParameters {
-        &self.type_parameters
     }
 }
 
@@ -1929,6 +1878,7 @@ impl AsRef<TypeParameter> for TypeParameter {
     }
 }
 
+/*
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub struct TypeParameters {
     pub inner: Vec<TypeParameter>,
@@ -1980,6 +1930,7 @@ impl From<Vec<TypeParameter>> for TypeParameters {
         Self { inner: value }
     }
 }
+*/
 
 /// Uniquely identifiers a single HIR type.
 #[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
