@@ -35,7 +35,14 @@ Map {
             ],
             return_type: Type {
                 name: Path {
-                    root: [],
+                    root: [
+                        Namespace {
+                            name: Identifier {
+                                name: "std",
+                                location: <internal>:0:0,
+                            },
+                        },
+                    ],
                     name: Type {
                         name: Identifier {
                             name: "Void",
