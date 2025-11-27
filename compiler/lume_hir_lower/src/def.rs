@@ -31,8 +31,8 @@ impl LowerModule<'_> {
         self.self_type = Some(name.clone());
 
         let mut fields = Vec::with_capacity(expr.fields.len());
-        for field in expr.fields {
-            fields.push(self.def_field(field)?);
+        for (idx, field) in expr.fields.into_iter().enumerate() {
+            fields.push(self.def_field(idx, field)?);
         }
 
         self.type_parameters.pop().unwrap();
@@ -53,7 +53,7 @@ impl LowerModule<'_> {
     }
 
     #[libftrace::traced(level = Debug)]
-    fn def_field(&mut self, expr: lume_ast::Field) -> Result<lume_hir::Field> {
+    fn def_field(&mut self, index: usize, expr: lume_ast::Field) -> Result<lume_hir::Field> {
         let id = self.next_node_id();
 
         let visibility = lower_visibility(expr.visibility.as_ref());
@@ -69,6 +69,7 @@ impl LowerModule<'_> {
 
         let field = lume_hir::Field {
             id,
+            index,
             doc_comment: expr.documentation,
             name,
             visibility,

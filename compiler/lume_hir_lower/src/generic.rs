@@ -1,12 +1,13 @@
 use std::collections::HashSet;
 
 use error_snippet::Result;
+use lume_span::NodeId;
 
 use crate::LowerModule;
 
 impl LowerModule<'_> {
     #[libftrace::traced(level = Debug)]
-    pub(crate) fn type_parameters(&mut self, params: Vec<lume_ast::TypeParameter>) -> Result<lume_hir::TypeParameters> {
+    pub(crate) fn type_parameters(&mut self, params: Vec<lume_ast::TypeParameter>) -> Result<Vec<NodeId>> {
         let mut names: HashSet<lume_hir::Identifier> = HashSet::with_capacity(params.len());
         let mut type_params = Vec::with_capacity(params.len());
 
@@ -35,16 +36,16 @@ impl LowerModule<'_> {
                 constraints.push(self.type_ref(*constraint)?);
             }
 
-            self.add_type_param(name.name.clone(), lume_hir::TypeId::from(id));
-
-            type_params.push(lume_hir::TypeParameter {
+            let id = self.add_type_param(lume_hir::TypeParameter {
                 id,
                 name,
                 constraints,
                 location,
             });
+
+            type_params.push(id);
         }
 
-        Ok(lume_hir::TypeParameters { inner: type_params })
+        Ok(type_params)
     }
 }

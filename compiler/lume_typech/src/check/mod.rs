@@ -48,15 +48,18 @@ impl TyCheckCtx {
         }
 
         for (from_param_id, to_param_id) in from.type_params.iter().zip(to.type_params.iter()) {
-            let from_param = self.tdb().type_parameter(*from_param_id).unwrap();
-            let to_param = self.tdb().type_parameter(*to_param_id).unwrap();
+            let from_param = self.hir_expect_type_parameter(*from_param_id);
+            let to_param = self.hir_expect_type_parameter(*to_param_id);
 
             if from_param.constraints.len() != to_param.constraints.len() {
                 return Ok(false);
             }
 
             for (from_constraint, to_constraint) in from_param.constraints.iter().zip(to_param.constraints.iter()) {
-                if !self.check_type_compatibility(from_constraint, to_constraint)? {
+                let from_constraint = self.mk_type_ref_from(from_constraint, from_param.id)?;
+                let to_constraint = self.mk_type_ref_from(to_constraint, to_param.id)?;
+
+                if !self.check_type_compatibility(&from_constraint, &to_constraint)? {
                     return Ok(false);
                 }
             }
@@ -66,7 +69,7 @@ impl TyCheckCtx {
             return Ok(false);
         }
 
-        for (from_param, to_param) in from.params.inner().iter().zip(to.params.inner().iter()) {
+        for (from_param, to_param) in from.params.iter().zip(to.params.iter()) {
             if from_param.name == "self" && to_param.name == "self" {
                 continue;
             }

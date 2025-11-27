@@ -1,6 +1,6 @@
 use error_snippet::Result;
 use lume_architect::cached_query;
-use lume_hir::{Node, NodeRef};
+use lume_hir::{Node, NodeRef, Path};
 use lume_span::*;
 use lume_types::TypeRef;
 
@@ -54,21 +54,6 @@ impl TyInferCtx {
     #[libftrace::traced(level = Trace, fields(id))]
     pub fn hir_node_ref(&self, id: NodeId) -> Option<NodeRef<'_>> {
         self.hir_node(id).map(|n| n.as_ref())
-    }
-
-    /// Returns the method with the given ID, if any, boxed as [`NodeRef`].
-    #[libftrace::traced(level = Trace, fields(id))]
-    pub fn hir_method(&self, id: NodeId) -> Option<NodeRef<'_>> {
-        self.hir_node(id).and_then(|item| match item {
-            lume_hir::Node::Impl(item) => Some(lume_hir::NodeRef::Method(item.methods.get(id.index.as_usize())?)),
-            lume_hir::Node::TraitImpl(item) => Some(lume_hir::NodeRef::TraitMethodImpl(
-                item.methods.get(id.index.as_usize())?,
-            )),
-            lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(item)) => Some(lume_hir::NodeRef::TraitMethodDef(
-                item.methods.get(id.index.as_usize())?,
-            )),
-            _ => None,
-        })
     }
 
     /// Returns the [`lume_hir::Statement`] with the given ID, if any.
@@ -183,6 +168,21 @@ impl TyInferCtx {
         };
 
         ty
+    }
+
+    /// Returns the [`lume_hir::TypeParameter`] with the given ID, if any.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no [`lume_hir::TypeParameter`] with the given ID was found.
+    #[track_caller]
+    #[libftrace::traced(level = Trace)]
+    pub fn hir_expect_type_parameter(&self, id: NodeId) -> &lume_hir::TypeParameter {
+        let lume_hir::TypeDefinition::TypeParameter(type_param) = self.hir_expect_type(id) else {
+            panic!("expected HIR type parameter with ID of {id:?}")
+        };
+
+        type_param
     }
 
     /// Returns the [`lume_hir::StructDefinition`] with the given ID, if any.
@@ -321,24 +321,28 @@ impl TyInferCtx {
     /// Returns all the type parameters available for the [`lume_hir::Def`] with
     /// the given ID.
     #[libftrace::traced(level = Trace)]
-    pub fn hir_avail_type_params(&self, def: NodeId) -> lume_hir::TypeParameters {
+    pub fn hir_avail_type_params(&self, def: NodeId) -> Vec<NodeId> {
         let mut acc = Vec::new();
 
         for parent in self.hir_parent_iter(def) {
-            acc.extend_from_slice(&parent.type_parameters().inner);
+            let Ok(type_params) = self.type_params_of(parent.id()) else {
+                continue;
+            };
+
+            acc.extend_from_slice(type_params);
         }
 
-        lume_hir::TypeParameters { inner: acc }
+        acc
     }
 
     /// Gets the return type of the [`lume_hir::Node`] with the given ID.
     #[libftrace::traced(level = Trace)]
-    pub fn hir_node_return_type<'a>(&self, item: &'a lume_hir::Node) -> Option<&'a lume_hir::Type> {
-        match item {
-            lume_hir::Node::Function(func) => Some(&func.return_type),
-            lume_hir::Node::Method(method) => Some(&method.return_type),
-            lume_hir::Node::TraitMethodDef(method) => Some(&method.return_type),
-            lume_hir::Node::TraitMethodImpl(method) => Some(&method.return_type),
+    pub fn hir_node_return_type<'a>(&'a self, id: NodeId) -> Option<&'a lume_hir::Type> {
+        match self.hir_node(id)? {
+            Node::Function(method) => Some(&method.return_type),
+            Node::Method(method) => Some(&method.return_type),
+            Node::TraitMethodDef(method) => Some(&method.return_type),
+            Node::TraitMethodImpl(method) => Some(&method.return_type),
             _ => None,
         }
     }
@@ -352,15 +356,15 @@ impl TyInferCtx {
     /// If no matching ancestor is found, returns [`Err`].
     #[libftrace::traced(level = Trace, err)]
     pub fn hir_ctx_return_type(&self, def: NodeId) -> Result<lume_types::TypeRef> {
-        let type_params_hir = self.hir_avail_type_params(def);
-        let type_params = type_params_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+        let type_parameters_id = self.hir_avail_type_params(def);
+        let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         for parent in self.hir_parent_iter(def) {
-            let Some(return_type) = self.hir_node_return_type(parent) else {
+            let Some(return_type) = self.hir_node_return_type(parent.id()) else {
                 continue;
             };
 
-            return self.mk_type_ref_generic(return_type, &type_params);
+            return self.mk_type_ref_generic(return_type, &type_parameters);
         }
 
         let location = self.hir_expect_node(def).location();
@@ -387,16 +391,14 @@ impl TyInferCtx {
         &self,
         trait_impl: &lume_hir::TraitImplementation,
     ) -> Result<&lume_hir::TraitDefinition> {
+        let tdb = self.tdb();
         let trait_name = &trait_impl.name.name;
-        let Some(trait_def_ty) = self.tdb().find_type(trait_name) else {
+
+        let Some(type_def) = tdb.find_type(trait_name) else {
             panic!("bug!: trait definition with name `{trait_name:+}` does not exist");
         };
 
-        let lume_types::TypeKind::User(lume_types::UserType::Trait(trait_kind)) = &trait_def_ty.kind else {
-            panic!("bug!: expected trait definition type to be trait");
-        };
-
-        Ok(self.hir_expect_trait(trait_kind.id))
+        Ok(self.hir_expect_trait(type_def.id))
     }
 
     #[libftrace::traced(level = Trace)]
@@ -487,6 +489,57 @@ impl TyInferCtx {
             source: self.hir_span_of_node(field_id),
         }
         .into())
+    }
+
+    /// Returns the path of the HIR definition with the given ID.
+    #[libftrace::traced(level = Trace)]
+    pub fn hir_path_of_node(&self, def: NodeId) -> Path {
+        match self.hir_expect_node(def) {
+            Node::Type(type_def) => match type_def {
+                lume_hir::TypeDefinition::Struct(def) => def.name().clone(),
+                lume_hir::TypeDefinition::Trait(def) => def.name().clone(),
+                lume_hir::TypeDefinition::Enum(def) => def.name().clone(),
+                lume_hir::TypeDefinition::TypeParameter(def) => match self.hir_parent_of(def.id) {
+                    Some(parent) => {
+                        let parent_name = self.hir_path_of_node(parent);
+                        Path::with_root(parent_name, lume_hir::PathSegment::ty(def.name.clone()))
+                    }
+                    None => Path::rooted(lume_hir::PathSegment::ty(def.name.clone())),
+                },
+            },
+            Node::Impl(implementation) => implementation.target.name.clone(),
+            Node::TraitImpl(trait_impl) => {
+                let target_name = trait_impl.target.name.clone();
+
+                Path::with_root(target_name, trait_impl.name.name.name.clone())
+            }
+            Node::Function(func) => func.name.clone(),
+            Node::Method(method) => {
+                let parent = self
+                    .hir_parent_of(method.id)
+                    .expect("expected parent of method definition");
+
+                let parent_name = self.hir_path_of_node(parent);
+                Path::with_root(parent_name, lume_hir::PathSegment::callable(method.name.clone()))
+            }
+            Node::TraitMethodDef(method) => {
+                let parent = self
+                    .hir_parent_of(method.id)
+                    .expect("expected parent of method definition");
+
+                let parent_name = self.hir_path_of_node(parent);
+                Path::with_root(parent_name, lume_hir::PathSegment::callable(method.name.clone()))
+            }
+            Node::TraitMethodImpl(method) => {
+                let parent = self
+                    .hir_parent_of(method.id)
+                    .expect("expected parent of method definition");
+
+                let parent_name = self.hir_path_of_node(parent);
+                Path::with_root(parent_name, lume_hir::PathSegment::callable(method.name.clone()))
+            }
+            _ => panic!("bug!: cannot get path name of node"),
+        }
     }
 
     /// Returns the span of the HIR definition with the given ID.

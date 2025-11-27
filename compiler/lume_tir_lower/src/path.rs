@@ -21,7 +21,7 @@ impl LowerFunction<'_> {
 
     pub(crate) fn path_hir(&self, path: &lume_hir::Path, hir_id: lume_span::NodeId) -> Result<lume_tir::Path> {
         let type_params = self.lower.tcx.hir_avail_type_params(hir_id);
-        let type_params = type_params.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+        let type_params = self.lower.tcx.as_type_params(&type_params)?;
 
         self.path(path, &type_params)
     }

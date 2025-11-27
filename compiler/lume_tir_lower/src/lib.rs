@@ -13,6 +13,7 @@ use lume_span::{Internable, Location, NodeId};
 use lume_tir::{TypedIR, VariableId, VariableSource};
 pub use lume_type_metadata::StaticMetadata;
 use lume_typech::TyCheckCtx;
+use lume_typech::query::Callable;
 
 pub struct Lower<'tcx> {
     /// Defines the type context which will be lowering into `TypedIR`.
@@ -37,6 +38,7 @@ impl<'tcx> Lower<'tcx> {
     ///
     /// Returns `Err` if a definition within the context is invalid or if the
     /// type context returned an error.
+    #[libftrace::traced(level = Debug, err)]
     pub fn lower(mut self) -> Result<TypedIR> {
         self.define_callables()?;
         self.lower_callables()?;
@@ -44,7 +46,7 @@ impl<'tcx> Lower<'tcx> {
         let mut reification_pass = reify::ReificationPass::new(self.tcx);
 
         for ty in self.tcx.db().types() {
-            let type_ref = lume_types::TypeRef::new(ty.id, Location::empty());
+            let type_ref = lume_types::TypeRef::new(ty.id, ty.name.location);
             reification_pass.build_type_metadata_of(&type_ref)?;
         }
 
@@ -69,6 +71,7 @@ impl<'tcx> Lower<'tcx> {
         lower.lower()
     }
 
+    #[libftrace::traced(level = Debug, err)]
     fn define_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
             if method.is_intrinsic() {
@@ -77,11 +80,12 @@ impl<'tcx> Lower<'tcx> {
 
             libftrace::debug!("defining method {:+}", method.name);
 
+            let signature = self.tcx.signature_of(Callable::Method(method))?;
             let location = self.tcx.hir_span_of_node(method.id);
             let kind = self.determine_method_kind(method, self.tcx.hir_body_of_node(method.id).is_some());
 
             let mut func_lower = LowerFunction::new(self);
-            let func = func_lower.define(method.id, &method.name, method.sig(), kind, location)?;
+            let func = func_lower.define(method.id, &method.name, signature.as_ref(), kind, location)?;
 
             self.ir.functions.insert(func.id, func);
         }
@@ -89,13 +93,14 @@ impl<'tcx> Lower<'tcx> {
         for func in self.tcx.tdb().functions() {
             libftrace::debug!("defining function {:+}", func.name);
 
+            let signature = self.tcx.signature_of(Callable::Function(func))?;
             let location = self.tcx.hir_span_of_node(func.id);
 
             let mut func_lower = LowerFunction::new(self);
             let func = func_lower.define(
                 func.id,
                 &func.name,
-                func.sig(),
+                signature.as_ref(),
                 lume_tir::FunctionKind::Static,
                 location,
             )?;
@@ -106,6 +111,7 @@ impl<'tcx> Lower<'tcx> {
         Ok(())
     }
 
+    #[libftrace::traced(level = Debug, err)]
     fn lower_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
             if !self.tcx.hir_is_local_node(method.id) || !self.should_lower_method(method) {
@@ -130,6 +136,7 @@ impl<'tcx> Lower<'tcx> {
         Ok(())
     }
 
+    #[libftrace::traced(level = Debug, fields(id), err)]
     fn lower_block(&mut self, id: NodeId) -> Result<()> {
         let block = if let Some(body) = self.tcx.hir_body_of_node(id) {
             let mut func_lower = LowerFunction::new(self);
@@ -160,13 +167,13 @@ impl<'tcx> Lower<'tcx> {
 
         // Trait method definitions without any default implementation have no reason to
         // be in the binary, since they have no body to codegen from.
-        if is_dynamic_dispatch(method, has_body) {
+        if self.is_dynamic_dispatch(method, has_body) {
             return lume_tir::FunctionKind::Dynamic;
         }
 
         // Static trait method definitions cannot be called, if they do not have a
         // default body to be invoked.
-        if method.is_static() && method.is_trait_definition() && !has_body {
+        if self.tcx.is_static_method(method.id) && method.is_trait_definition() && !has_body {
             return lume_tir::FunctionKind::Unreachable;
         }
 
@@ -186,7 +193,7 @@ impl<'tcx> Lower<'tcx> {
 
         // Trait method definitions without any default implementation have no reason to
         // be in the binary, since they have no body to codegen from.
-        if is_dynamic_dispatch(method, has_body) {
+        if self.is_dynamic_dispatch(method, has_body) {
             return false;
         }
 
@@ -200,14 +207,14 @@ impl<'tcx> Lower<'tcx> {
 
         true
     }
-}
 
-/// Determines whether the given method is meant to be invoked dynamically via
-/// dynamic dispatch.
-#[inline]
-#[must_use]
-pub(crate) fn is_dynamic_dispatch(method: &lume_types::Method, has_body: bool) -> bool {
-    method.kind == lume_types::MethodKind::TraitDefinition && method.parameters.is_instanced() && !has_body
+    /// Determines whether the given method is meant to be invoked dynamically
+    /// via dynamic dispatch.
+    #[inline]
+    #[must_use]
+    pub(crate) fn is_dynamic_dispatch(&self, method: &lume_types::Method, has_body: bool) -> bool {
+        method.kind == lume_types::MethodKind::TraitDefinition && self.tcx.is_instanced_method(method.id) && !has_body
+    }
 }
 
 struct LowerFunction<'tcx> {
@@ -236,13 +243,7 @@ impl<'tcx> LowerFunction<'tcx> {
         location: Location,
     ) -> Result<lume_tir::Function> {
         let name = self.path_hir(name, id)?;
-        let hir_type_params = self
-            .lower
-            .tcx
-            .hir_avail_type_params(id)
-            .iter()
-            .map(|param| param.id)
-            .collect::<Vec<_>>();
+        let hir_type_params = self.lower.tcx.hir_avail_type_params(id);
 
         let parameters = self.parameters(signature.params);
         let type_params = self.type_parameters(&hir_type_params);
@@ -283,9 +284,8 @@ impl<'tcx> LowerFunction<'tcx> {
         id
     }
 
-    fn parameters(&mut self, params: &lume_types::Parameters) -> Vec<lume_tir::Parameter> {
+    fn parameters(&mut self, params: &[lume_types::Parameter]) -> Vec<lume_tir::Parameter> {
         params
-            .params
             .iter()
             .map(|param| {
                 let var = self.mark_variable(VariableSource::Parameter);

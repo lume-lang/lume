@@ -88,18 +88,17 @@ impl TyCheckCtx {
         method_def: &'a lume_hir::TraitMethodDefinition,
         method_impl: &'a lume_hir::TraitMethodImplementation,
     ) -> Result<()> {
-        let mut type_params = trait_def.type_parameters.as_id_refs();
-        type_params.extend(method_def.type_parameters.as_id_refs());
+        let type_params = [&trait_def.type_parameters[..], &method_def.type_parameters[..]].concat();
 
         let type_args = self.mk_type_refs_from(trait_impl.type_args(), trait_impl.id)?;
 
         let def_sig = self.signature_of_call_ref(CallReference::Method(method_def.id))?;
         let mut inst_def_sig = self.instantiate_signature_isolate(def_sig.as_ref(), &type_params, &type_args);
-        inst_def_sig.type_params = method_def.type_parameters.as_id_refs();
+        inst_def_sig.type_params = method_def.type_parameters.clone();
 
         let impl_sig = self.signature_of_call_ref(CallReference::Method(method_impl.id))?;
         let mut inst_impl_sig = self.instantiate_signature_isolate(impl_sig.as_ref(), &type_params, &type_args);
-        inst_impl_sig.type_params = method_impl.type_parameters.as_id_refs();
+        inst_impl_sig.type_params = method_impl.type_parameters.clone();
 
         if !self.check_signature_compatibility(inst_def_sig.as_ref(), inst_impl_sig.as_ref())? {
             return Err(crate::check::errors::TraitMethodSignatureMismatch {

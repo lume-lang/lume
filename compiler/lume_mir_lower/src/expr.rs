@@ -148,7 +148,7 @@ impl FunctionTransformer<'_, '_> {
 
     fn construct(&mut self, expr: &lume_tir::Construct) -> lume_mir::Operand {
         let name = self.tcx().new_named_type(&expr.ty, true).unwrap().to_string();
-        let props = self.tcx().tdb().find_fields(expr.ty.instance_of).collect::<Vec<_>>();
+        let props = self.tcx().fields_on(expr.ty.instance_of).unwrap();
 
         // Sort all the constructor expressions so they have the same order as
         // the fields within the type. If this isn't done, the value of a field may be
@@ -170,7 +170,14 @@ impl FunctionTransformer<'_, '_> {
 
         let prop_types = props
             .iter()
-            .map(|prop| self.lower_type(&prop.field_type))
+            .map(|prop| {
+                let field_type = self
+                    .tcx()
+                    .mk_type_ref_from(&prop.field_type, expr.ty.instance_of)
+                    .unwrap();
+
+                self.lower_type(&field_type)
+            })
             .collect::<Vec<_>>();
 
         // The first type in all object allocations must be a pointer to the metadata
@@ -248,11 +255,9 @@ impl FunctionTransformer<'_, '_> {
             .collect::<Vec<_>>();
 
         let mut ret_ty = self.lower_type(&expr.return_type);
+        let return_type = expr.uninst_return_type.as_ref().unwrap_or(&expr.return_type);
 
-        let hir_call_expr = self.tcx().hir_call_expr(expr.id).unwrap();
-        let hir_callable = self.tcx().lookup_callable(hir_call_expr).unwrap();
-
-        if self.tcx().is_type_parameter(hir_callable.return_type()).unwrap() {
+        if self.tcx().is_type_parameter(return_type).unwrap() {
             ret_ty = lume_mir::Type::pointer(ret_ty);
         }
 
@@ -817,15 +822,15 @@ impl FunctionTransformer<'_, '_> {
         let target_val = self.expression(&expr.callee);
         let target_reg = self.load_operand(&target_val);
 
-        let index = expr.field.index;
-        let offset = self.field_offset(&expr.field);
-        let field_type = self.field_type(&expr.field);
+        let field = self.tcx().hir_expect_field(expr.field);
+        let offset = self.field_offset(&field);
+        let field_type = self.field_type(&field);
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::LoadField {
                 target: target_reg,
                 offset,
-                index,
+                index: field.index,
                 field_type,
             },
             location: expr.location.clone_inner(),
@@ -1116,25 +1121,31 @@ impl FunctionTransformer<'_, '_> {
         }
     }
 
-    fn field_offset(&self, field: &lume_types::Field) -> usize {
+    fn field_offset(&self, field: &lume_hir::Field) -> usize {
         let mut offset = 0;
 
-        for (idx, prop) in self.tcx().tdb().find_fields(field.owner).enumerate() {
+        let owner = self.tcx().owning_struct_of_field(field.id).unwrap();
+
+        for (idx, prop) in owner.fields.iter().enumerate() {
             if idx == field.index {
                 break;
             }
 
-            let prop_ty = self.lower_type(&prop.field_type);
-            offset += prop_ty.bytesize();
+            let field_type = self.tcx().mk_type_ref_from(&prop.field_type, owner.id).unwrap();
+            offset += self.lower_type(&field_type).bytesize();
         }
 
         offset
     }
 
-    fn field_type(&self, field: &lume_types::Field) -> lume_mir::Type {
-        for (idx, prop) in self.tcx().tdb().find_fields(field.owner).enumerate() {
+    fn field_type(&self, field: &lume_hir::Field) -> lume_mir::Type {
+        let owner = self.tcx().owning_struct_of_field(field.id).unwrap();
+
+        for (idx, prop) in owner.fields.iter().enumerate() {
             if idx == field.index {
-                return self.lower_type(&prop.field_type);
+                let field_type = self.tcx().mk_type_ref_from(&prop.field_type, owner.id).unwrap();
+
+                return self.lower_type(&field_type);
             }
         }
 

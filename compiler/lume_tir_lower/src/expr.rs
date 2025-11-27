@@ -83,6 +83,7 @@ impl LowerFunction<'_> {
             arguments: vec![source],
             type_arguments: Vec::new(),
             return_type: target_type,
+            uninst_return_type: None,
             location: expr.location,
         })))
     }
@@ -97,15 +98,15 @@ impl LowerFunction<'_> {
             .map(|field| (field.name.name.clone(), field.clone()))
             .collect::<IndexMap<_, _>>();
 
-        let fields = self.lower.tcx.tdb().find_fields(constructed_type.instance_of);
+        let fields = self.lower.tcx.fields_on(constructed_type.instance_of)?;
 
         for field in fields {
-            if constructed.contains_key(&field.name) {
+            if constructed.contains_key(&field.name.name) {
                 continue;
             }
 
-            if let Some(default_field) = self.lower.tcx.constructer_default_field_of(expr, &field.name) {
-                constructed.insert(field.name.clone(), default_field);
+            if let Some(default_field) = self.lower.tcx.constructer_default_field_of(expr, field.name.as_str()) {
+                constructed.insert(field.name.to_string(), default_field);
             }
         }
 
@@ -135,6 +136,9 @@ impl LowerFunction<'_> {
     fn call_expression(&mut self, expr: lume_hir::CallExpression) -> Result<lume_tir::ExpressionKind> {
         let callable = self.lower.tcx.lookup_callable(expr)?;
         let instantiated_signature = self.lower.tcx.signature_of_instantiated(callable, expr)?;
+
+        let uninst_ret_ty = self.lower.tcx.hir_node_return_type(callable.id()).unwrap();
+        let uninst_ret_ty = self.lower.tcx.mk_type_ref_from_expr(uninst_ret_ty, callable.id())?;
 
         libftrace::debug!(
             "resolved callable `{:+}` from call expression `{}`",
@@ -185,6 +189,7 @@ impl LowerFunction<'_> {
             arguments,
             type_arguments,
             return_type: instantiated_signature.ret_ty,
+            uninst_return_type: Some(uninst_ret_ty),
             location: expr.location(),
         })))
     }
@@ -231,13 +236,15 @@ impl LowerFunction<'_> {
 
         let Some(kind) = self.intrinsic_of(expr) else {
             let callable = self.lower.tcx.probe_callable_intrinsic(expr)?;
+            let return_type = self.lower.tcx.hir_ctx_return_type(callable.id())?;
 
             return Ok(lume_tir::ExpressionKind::Call(Box::new(lume_tir::Call {
                 id: expr.id,
                 function: callable.id(),
                 arguments,
                 type_arguments: Vec::new(),
-                return_type: callable.return_type().to_owned(),
+                return_type,
+                uninst_return_type: None,
                 location: expr.location,
             })));
         };
@@ -384,15 +391,14 @@ impl LowerFunction<'_> {
         let field = self
             .lower
             .tcx
-            .tdb()
-            .find_field(callee_ty.instance_of, &expr.name.name)
+            .field_on(callee_ty.instance_of, expr.name.as_str())?
             .unwrap()
             .clone();
 
         Ok(lume_tir::ExpressionKind::Member(Box::new(lume_tir::Member {
             id: expr.id,
             callee,
-            field,
+            field: field.id,
             name,
             location: expr.location,
         })))

@@ -5,7 +5,7 @@ use error_snippet::Result;
 use lume_errors::DiagCtxHandle;
 use lume_hir::map::Map;
 use lume_hir::symbols::*;
-use lume_hir::{Identifier, Path, PathSegment};
+use lume_hir::{Identifier, Path, PathSegment, TypeId};
 use lume_lexer::Lexer;
 use lume_parser::Parser;
 use lume_session::Package;
@@ -252,6 +252,16 @@ impl<'a> LowerModule<'a> {
             lower.map.imports.insert(import.clone());
         }
 
+        #[cfg(debug_assertions)]
+        for (id, node) in &lower.map.nodes {
+            assert_eq!(
+                *id,
+                node.id(),
+                "mismatched between ID key and value: {id:?} != {:?}",
+                node.id()
+            );
+        }
+
         lower.dcx.ensure_untainted()?;
 
         *node_idx = lower.current_node;
@@ -317,8 +327,20 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Adds a new type parameter, which is currently visible.
-    fn add_type_param(&mut self, name: String, id: lume_hir::TypeId) {
-        self.type_parameters.last_mut().unwrap().insert(name, id);
+    fn add_type_param(&mut self, type_param: lume_hir::TypeParameter) -> NodeId {
+        let id = type_param.id;
+
+        self.type_parameters
+            .last_mut()
+            .unwrap()
+            .insert(type_param.name.name.clone(), TypeId::from(id));
+
+        self.map.nodes.insert(
+            type_param.id,
+            lume_hir::Node::Type(lume_hir::TypeDefinition::TypeParameter(Box::new(type_param))),
+        );
+
+        id
     }
 
     /// Gets the [`lume_hir::Path`] for the item with the given name.

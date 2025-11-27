@@ -104,7 +104,7 @@ impl PrettyPrint for FunctionDefinition {
             .field("visibility", &self.visibility)
             .field("name", &self.name)
             .field("parameters", &parameters)
-            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("type_parameters", &pretty_list!(self.type_parameters, map))
             .field("return_type", pretty_item!(self.return_type, map))
             .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
@@ -129,6 +129,7 @@ impl PrettyPrint for TypeDefinition {
             Self::Enum(item) => item.pretty_fmt(map, f),
             Self::Struct(item) => item.pretty_fmt(map, f),
             Self::Trait(item) => item.pretty_fmt(map, f),
+            Self::TypeParameter(item) => item.pretty_fmt(map, f),
         }
     }
 }
@@ -140,7 +141,7 @@ impl PrettyPrint for EnumDefinition {
         f.debug_struct("EnumDefinition")
             .field("visibility", &self.visibility)
             .field("name", &self.name)
-            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("type_parameters", &pretty_list!(self.type_parameters, map))
             .field("cases", &cases)
             .field("location", &self.location)
             .finish()
@@ -168,7 +169,7 @@ impl PrettyPrint for StructDefinition {
             .field("name", &self.name)
             .field("builtin", &self.builtin)
             .field("fields", &fields)
-            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("type_parameters", &pretty_list!(self.type_parameters, map))
             .field("location", &self.location)
             .finish()
     }
@@ -181,7 +182,7 @@ impl PrettyPrint for Implementation {
         f.debug_struct("Implementation")
             .field("target", &self.target)
             .field("methods", &methods)
-            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("type_parameters", &pretty_list!(self.type_parameters, map))
             .field("location", &self.location)
             .finish()
     }
@@ -207,7 +208,7 @@ impl PrettyPrint for MethodDefinition {
             .field("visibility", &self.visibility)
             .field("name", &self.name)
             .field("parameters", &parameters)
-            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("type_parameters", &pretty_list!(self.type_parameters, map))
             .field("return_type", pretty_item!(self.return_type, map))
             .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
@@ -223,7 +224,7 @@ impl PrettyPrint for TraitDefinition {
             .field("visibility", &self.visibility)
             .field("name", &self.name)
             .field("methods", &methods)
-            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("type_parameters", &pretty_list!(self.type_parameters, map))
             .field("location", &self.location)
             .finish()
     }
@@ -236,7 +237,7 @@ impl PrettyPrint for TraitMethodDefinition {
         f.debug_struct("TraitMethodDefinition")
             .field("name", &self.name)
             .field("parameters", &parameters)
-            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("type_parameters", &pretty_list!(self.type_parameters, map))
             .field("return_type", pretty_item!(self.return_type, map))
             .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
@@ -252,7 +253,7 @@ impl PrettyPrint for TraitImplementation {
             .field("name", &self.name)
             .field("target", &self.target)
             .field("methods", &methods)
-            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("type_parameters", &pretty_list!(self.type_parameters, map))
             .field("location", &self.location)
             .finish()
     }
@@ -265,7 +266,7 @@ impl PrettyPrint for TraitMethodImplementation {
         f.debug_struct("TraitMethodImplementation")
             .field("name", &self.name)
             .field("parameters", &parameters)
-            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("type_parameters", &pretty_list!(self.type_parameters, map))
             .field("return_type", pretty_item!(self.return_type, map))
             .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
@@ -784,18 +785,6 @@ impl PrettyPrint for WildcardPattern {
         f.debug_struct("WildcardPattern")
             .field("location", &self.location)
             .finish()
-    }
-}
-
-impl PrettyPrint for TypeParameters {
-    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let mut list = f.debug_list();
-
-        for param in &self.inner {
-            list.entry(pretty_item!(param.to_owned(), map));
-        }
-
-        list.finish()
     }
 }
 

@@ -24,12 +24,13 @@ impl TyCheckCtx {
         Ok(())
     }
 
+    #[libftrace::traced(level = Debug, err)]
     fn typech_expr_item(&self, symbol: &lume_hir::Node) -> Result<()> {
         match symbol {
             lume_hir::Node::Type(ty) => match ty {
                 lume_hir::TypeDefinition::Struct(struct_def) => self.define_struct_type(struct_def),
                 lume_hir::TypeDefinition::Trait(trait_def) => self.define_trait_type(trait_def),
-                lume_hir::TypeDefinition::Enum(_) => Ok(()),
+                lume_hir::TypeDefinition::Enum(_) | lume_hir::TypeDefinition::TypeParameter(_) => Ok(()),
             },
             lume_hir::Node::TraitImpl(trait_impl) => self.define_trait_implementation(trait_impl),
             lume_hir::Node::Impl(impl_def) => self.define_impl_type(impl_def),
@@ -38,6 +39,7 @@ impl TyCheckCtx {
         }
     }
 
+    #[libftrace::traced(level = Debug, err)]
     fn define_struct_type(&self, struct_def: &lume_hir::StructDefinition) -> Result<()> {
         for field in &struct_def.fields {
             if let Some(default_value) = &field.default_value {
@@ -53,13 +55,14 @@ impl TyCheckCtx {
         Ok(())
     }
 
+    #[libftrace::traced(level = Debug, err)]
     fn define_trait_type(&self, trait_def: &lume_hir::TraitDefinition) -> Result<()> {
         for method in &trait_def.methods {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_parameters_hir = self.hir_avail_type_params(method.id);
-                let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+                let type_parameters_id = self.hir_avail_type_params(method.id);
+                let type_parameters = self.as_type_params(&type_parameters_id)?;
 
                 let return_type = self.mk_type_ref_generic(&method.return_type, &type_parameters)?;
 
@@ -70,13 +73,14 @@ impl TyCheckCtx {
         Ok(())
     }
 
+    #[libftrace::traced(level = Debug, err)]
     fn define_trait_implementation(&self, trait_impl: &lume_hir::TraitImplementation) -> Result<()> {
         for method in &trait_impl.methods {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_parameters_hir = self.hir_avail_type_params(method.id);
-                let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+                let type_parameters_id = self.hir_avail_type_params(method.id);
+                let type_parameters = self.as_type_params(&type_parameters_id)?;
 
                 let return_type = self.mk_type_ref_generic(&method.return_type, &type_parameters)?;
 
@@ -87,15 +91,16 @@ impl TyCheckCtx {
         Ok(())
     }
 
+    #[libftrace::traced(level = Debug, err)]
     fn define_impl_type(&self, impl_def: &lume_hir::Implementation) -> Result<()> {
         for method in &impl_def.methods {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_params_hir = self.hir_avail_type_params(method.id);
-                let type_params = type_params_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+                let type_parameters_id = self.hir_avail_type_params(method.id);
+                let type_parameters = self.as_type_params(&type_parameters_id)?;
 
-                let return_type = self.mk_type_ref_generic(&method.return_type, &type_params)?;
+                let return_type = self.mk_type_ref_generic(&method.return_type, &type_parameters)?;
 
                 self.ensure_block_ty_match(block, &return_type)?;
             }
@@ -104,6 +109,7 @@ impl TyCheckCtx {
         Ok(())
     }
 
+    #[libftrace::traced(level = Debug, err)]
     fn define_function_scope(&self, func: &lume_hir::FunctionDefinition) -> Result<()> {
         if let Some(block) = &func.block {
             self.define_block_scope(block)?;
@@ -125,6 +131,7 @@ impl TyCheckCtx {
     }
 
     /// Type checks the given HIR statement.
+    #[libftrace::traced(level = Debug, err)]
     fn statement(&self, stmt: NodeId) -> Result<()> {
         let stmt = self.hir_expect_stmt(stmt);
 
@@ -172,7 +179,7 @@ impl TyCheckCtx {
 
         if let Some(explicit_type) = &stmt.declared_type {
             let explicit_type = self.mk_type_ref_from(explicit_type, stmt.id)?;
-            let type_def = self.tdb().ty_expect(explicit_type.instance_of)?;
+            let type_def = self.tdb().expect_type(explicit_type.instance_of)?;
 
             if !self.is_type_visible_to(&explicit_type, stmt.id)? {
                 self.dcx().emit(
@@ -398,7 +405,7 @@ impl TyCheckCtx {
         let dest_type = self.mk_type_ref(&expr.target)?;
 
         if !self.is_type_visible_to(&dest_type, expr.id)? {
-            let type_def = self.tdb().ty_expect(dest_type.instance_of)?;
+            let type_def = self.tdb().expect_type(dest_type.instance_of)?;
 
             self.dcx().emit(
                 InaccessibleType {
@@ -435,11 +442,12 @@ impl TyCheckCtx {
     /// as well as their parameter types.
     fn call_expression(&self, expr: lume_hir::CallExpression) -> Result<()> {
         let callable = self.lookup_callable(expr)?;
+        let signature = self.signature_of(callable)?;
 
         if let lume_infer::query::Callable::Method(method) = callable
             && method.kind == lume_types::MethodKind::TraitDefinition
             && self.hir_body_of_node(method.id).is_none()
-            && !method.is_instanced()
+            && !signature.is_instanced()
         {
             self.dcx().emit(
                 DispatchCannotBeInferred {
@@ -507,15 +515,14 @@ impl TyCheckCtx {
             );
         }
 
-        let fields = self.tdb().find_fields(constructed_type.instance_of);
         let mut fields_left = expr.fields.iter().map(|field| &field.name).collect::<IndexSet<_>>();
 
-        for field in fields {
-            let Some(constructor_field) = self.constructer_field_of(expr, &field.name) else {
+        for field in self.fields_on(constructed_type.instance_of)? {
+            let Some(constructor_field) = self.constructer_field_of(expr, field.name.as_str()) else {
                 self.dcx().emit(
                     MissingField {
                         source: expr.location,
-                        field: field.name.clone(),
+                        field: field.name.to_string(),
                     }
                     .into(),
                 );
@@ -530,16 +537,16 @@ impl TyCheckCtx {
                     InaccessibleField {
                         source: constructor_field.location,
                         field_def: hir_field.name.location,
-                        field_name: field.name.clone(),
+                        field_name: field.name.to_string(),
                     }
                     .into(),
                 );
             }
 
-            let prop_ty = &field.field_type;
             let field_ty = self.type_of(constructor_field.value)?;
+            let prop_ty = self.mk_type_ref_from(&field.field_type, constructed_type.instance_of)?;
 
-            if let Err(err) = self.ensure_type_compatibility(&field_ty, prop_ty) {
+            if let Err(err) = self.ensure_type_compatibility(&field_ty, &prop_ty) {
                 self.dcx().emit(err);
             }
 
@@ -663,7 +670,7 @@ impl TyCheckCtx {
             if matches!(case.pattern.kind, lume_hir::PatternKind::Variant(_))
                 && !self.is_type_visible_to(&case_pattern_ty, expr.id)?
             {
-                let type_def = self.tdb().ty_expect(case_pattern_ty.instance_of)?;
+                let type_def = self.tdb().expect_type(case_pattern_ty.instance_of)?;
 
                 self.dcx().emit(
                     InaccessibleType {

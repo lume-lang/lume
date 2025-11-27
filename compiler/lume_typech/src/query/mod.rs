@@ -34,10 +34,10 @@ impl TyCheckCtx {
     /// the corresponding callable.
     #[libftrace::traced(level = Trace, err, ret)]
     fn check_signature<'a>(&self, callable: Callable<'a>, expr: lume_hir::CallExpression<'a>) -> Result<bool> {
-        let narrow_signature = callable.signature();
+        let narrow_signature = self.signature_of(callable)?;
         let is_instance_method = narrow_signature.is_instanced();
 
-        if !self.check_type_params(expr, narrow_signature.type_params, expr.type_arguments())? {
+        if !self.check_type_params(expr, &narrow_signature.type_params, expr.type_arguments())? {
             return Ok(false);
         }
 
@@ -104,21 +104,23 @@ impl TyCheckCtx {
 
         let mut success = true;
 
-        for (param_id, hir_arg) in type_params.iter().zip(type_args.iter()) {
-            let param = self.tdb().type_parameter(*param_id).unwrap();
+        for (&param_id, hir_arg) in type_params.iter().zip(type_args.iter()) {
+            let param = self.hir_expect_type_parameter(param_id);
             let arg = self.mk_type_ref_from_expr(hir_arg, expr.id())?;
 
             for constraint in &param.constraints {
-                if !self.check_type_compatibility(&arg, constraint)? {
+                let constraint_type = self.mk_type_ref_from(constraint, param_id)?;
+
+                if !self.check_type_compatibility(&arg, &constraint_type)? {
                     success = false;
 
                     self.dcx().emit(
                         diagnostics::TypeParameterConstraintUnsatisfied {
                             source: arg.location,
                             constraint_loc: constraint.location,
-                            param_name: param.name.clone(),
+                            param_name: param.name.to_string(),
                             type_name: self.new_named_type(&arg, false)?,
-                            constraint_name: self.new_named_type(constraint, false)?,
+                            constraint_name: self.new_named_type(&constraint_type, false)?,
                         }
                         .into(),
                     );
@@ -135,15 +137,16 @@ impl TyCheckCtx {
     fn check_params<'a>(
         &self,
         expr: lume_hir::CallExpression<'a>,
-        parameters: &'a lume_types::Parameters,
+        parameters: &'a [lume_types::Parameter],
         arguments: &'a [&'a lume_hir::Expression],
     ) -> Result<bool> {
+        let is_vararg = parameters.iter().any(|param| param.vararg);
+
         // Verify that the expected argument count is met, as defined
         // by the parameter definition.
-        if (parameters.is_vararg() && parameters.len() - 1 > arguments.len())
-            || (!parameters.is_vararg() && parameters.len() != arguments.len())
+        if (is_vararg && parameters.len() - 1 > arguments.len()) || (!is_vararg && parameters.len() != arguments.len())
         {
-            if parameters.is_vararg() {
+            if is_vararg {
                 self.dcx().emit(
                     diagnostics::VariableArgumentCountMismatch {
                         source: expr.location(),
@@ -168,7 +171,7 @@ impl TyCheckCtx {
 
         let mut success = true;
 
-        if parameters.is_vararg() {
+        if is_vararg {
             // If the parameter count is variable, expect at least
             // the amount of required parameters as arguments.
             //
@@ -189,7 +192,7 @@ impl TyCheckCtx {
 
             let fixed_param_count = parameters.len() - 1;
 
-            let (vararg_param, fixed_params) = parameters.inner().split_last().unwrap();
+            let (vararg_param, fixed_params) = parameters.split_last().unwrap();
             let (fixed_args, vararg_args) = arguments.split_at(fixed_param_count);
 
             // Verify that all the fixed parameters are compatible with the arguments
@@ -231,7 +234,7 @@ impl TyCheckCtx {
 
             // Verify that all the parameters are compatible with the arguments
             // passed to the method.
-            for (param, arg) in parameters.inner().iter().zip(arguments.iter()) {
+            for (param, arg) in parameters.iter().zip(arguments.iter()) {
                 let arg_type = self.type_of_expr(arg)?;
 
                 if let Err(err) = self.ensure_type_compatibility(&arg_type, &param.ty) {
@@ -573,8 +576,8 @@ impl TyCheckCtx {
     pub fn is_type_visible_to(&self, ty: &TypeRef, from: NodeId) -> Result<bool> {
         // All standard types are always implicitly visible from any node.
         if !matches!(
-            &self.tdb().ty_expect(ty.instance_of)?.kind,
-            lume_types::TypeKind::User(_)
+            &self.tdb().expect_type(ty.instance_of)?.kind,
+            lume_types::TypeKind::Struct | lume_types::TypeKind::Enum | lume_types::TypeKind::Trait
         ) {
             return Ok(true);
         }

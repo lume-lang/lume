@@ -17,6 +17,7 @@ lume_span = { path = "../../crates/lume_span" }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 indexmap = { workspace = true }
+libftrace = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 
 [lints]

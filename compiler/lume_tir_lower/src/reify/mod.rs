@@ -51,7 +51,7 @@ impl<'tcx> ReificationPass<'tcx> {
     /// **Note:** the `$T` parameter is not accessible within the function body
     /// and is only shown for presentation purposes.
     fn add_metadata_params(&self, func: &mut Function) {
-        for type_param in &func.type_params.inner {
+        for type_param in &func.type_params {
             let name = format!("${}", type_param.name).intern();
             let ty = self.tcx.std_type();
 

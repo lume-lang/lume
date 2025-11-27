@@ -111,16 +111,9 @@ impl TyInferCtx {
     /// found within the context.
     #[libftrace::traced(level = Info, err)]
     pub fn infer(&mut self) -> Result<()> {
-        self.define_types();
-        self.define_functions();
-        self.define_implementations();
-        self.define_trait_implementations();
-        self.define_fields()?;
-        self.define_trait_methods()?;
+        self.define_items()?;
+        self.define_methods()?;
         self.define_type_parameters()?;
-        self.define_type_constraints()?;
-        self.define_field_types()?;
-        self.define_method_bodies()?;
         self.define_scopes()?;
         self.infer_type_arguments()?;
 
@@ -202,8 +195,8 @@ impl TyInferCtx {
     /// from the given definition.
     #[libftrace::traced(level = Debug, fields(ty = ty.name, loc = ty.location, def = def), err)]
     pub fn mk_type_ref_from(&self, ty: &lume_hir::Type, def: NodeId) -> Result<TypeRef> {
-        let type_parameters_hir = self.hir_avail_type_params(def);
-        let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+        let type_parameters_id = self.hir_avail_type_params(def);
+        let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.mk_type_ref_generic(ty, &type_parameters)
     }
@@ -219,8 +212,8 @@ impl TyInferCtx {
     /// available from the given definition.
     #[libftrace::traced(level = Debug, err)]
     pub fn mk_type_refs_from(&self, ty: &[lume_hir::Type], def: NodeId) -> Result<Vec<TypeRef>> {
-        let type_parameters_hir = self.hir_avail_type_params(def);
-        let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+        let type_parameters_id = self.hir_avail_type_params(def);
+        let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.mk_type_refs_generic(ty, &type_parameters)
     }
@@ -314,8 +307,8 @@ impl TyInferCtx {
     /// references to type IDs.
     #[libftrace::traced(level = Debug, err)]
     pub fn find_type_ref_from(&self, name: &Path, def: NodeId) -> Result<Option<TypeRef>> {
-        let type_parameters_hir = self.hir_avail_type_params(def);
-        let type_parameters = type_parameters_hir.iter().collect::<Vec<_>>();
+        let type_parameters_id = self.hir_avail_type_params(def);
+        let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.find_type_ref_generic(name, &type_parameters)
     }
@@ -383,13 +376,15 @@ impl TyInferCtx {
             libftrace::debug!("checking type parameter constraints: {from:?} => {to:?}");
 
             for constraint in &to_arg.constraints {
-                if !self.check_type_compatibility(from, constraint)? {
+                let constraint_type = self.mk_type_ref_from(constraint, to.instance_of)?;
+
+                if !self.check_type_compatibility(from, &constraint_type)? {
                     return Err(errors::TypeParameterConstraintUnsatisfied {
                         source: from.location,
                         constraint_loc: constraint.location,
-                        param_name: to_arg.name.clone(),
+                        param_name: to_arg.name.to_string(),
                         type_name: self.new_named_type(from, false)?,
-                        constraint_name: self.new_named_type(constraint, false)?,
+                        constraint_name: self.new_named_type(&constraint_type, false)?,
                     }
                     .into());
                 }
@@ -463,37 +458,6 @@ impl TyInferCtx {
             }
         }
 
-        let mut type_path = ty.name.root.clone();
-
-        while !type_path.is_empty() {
-            if !self.tdb().namespace_exists(&type_path) {
-                let subpath = Path::from(type_path);
-
-                let source = if let Some(import) = self.hir.get_imported(&subpath) {
-                    import.location
-                } else {
-                    subpath.location
-                };
-
-                if let Some(parent) = subpath.clone().parent() {
-                    return errors::InvalidNamespace {
-                        source,
-                        parent: format!("{parent:+}"),
-                        name: subpath.name.to_string(),
-                    }
-                    .into();
-                }
-
-                return errors::InvalidNamespaceRoot {
-                    source,
-                    name: format!("{:+}", subpath.name.to_string()),
-                }
-                .into();
-            }
-
-            type_path.pop();
-        }
-
         if let Some(import) = self.hir.get_imported(&ty.name) {
             return errors::InvalidTypeInNamespace {
                 source: import.name.name().location,
@@ -546,7 +510,7 @@ impl TyInferCtx {
                 sig.type_params
                     .iter()
                     .map(|id| {
-                        let param = self.tdb().type_parameter(*id).unwrap();
+                        let param = self.hir_expect_type_parameter(*id);
 
                         self.type_param_to_string(param, expand)
                     })
@@ -558,7 +522,6 @@ impl TyInferCtx {
         let parameters = format!(
             "({})",
             sig.params
-                .inner()
                 .iter()
                 .map(|param| {
                     if param.name == "self" {
@@ -586,9 +549,10 @@ impl TyInferCtx {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if any types referenced by the given [`TypeParameter`], or
-    /// any child instances are missing from the type context.
-    pub fn type_param_to_string(&self, type_param: &lume_types::TypeParameter, expand: bool) -> Result<String> {
+    /// Returns `Err` if any types referenced by the given
+    /// [`lume_hir::TypeParameter`], or any child instances are missing from
+    /// the type context.
+    pub fn type_param_to_string(&self, type_param: &lume_hir::TypeParameter, expand: bool) -> Result<String> {
         let constraints = if type_param.constraints.is_empty() {
             String::new()
         } else {
@@ -597,7 +561,11 @@ impl TyInferCtx {
                 type_param
                     .constraints
                     .iter()
-                    .map(|constraint| { Ok(self.new_named_type(constraint, expand)?.to_string()) })
+                    .map(|constraint| {
+                        let constraint_type = self.mk_type_ref_from(constraint, type_param.id)?;
+
+                        Ok(self.new_named_type(&constraint_type, expand)?.to_string())
+                    })
                     .collect::<Result<Vec<_>>>()?
                     .join(", ")
             )

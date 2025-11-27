@@ -2,13 +2,14 @@ use error_snippet::Result;
 use lume_architect::cached_query;
 use lume_hir::{CallExpression, Node, Path, Visibility};
 use lume_span::NodeId;
-use lume_types::{Function, Method, Trait, TypeRef};
+use lume_types::{Function, Method, TypeRef};
 
 use crate::{TyInferCtx, *};
 
 mod diagnostics;
 pub mod hir;
 pub mod lookup;
+pub mod ty;
 
 #[derive(Debug, Hash, Copy, Clone, PartialEq, Eq)]
 pub enum CallReference {
@@ -43,30 +44,8 @@ impl Callable<'_> {
         }
     }
 
-    pub fn signature(&'_ self) -> lume_types::FunctionSig<'_> {
-        match self {
-            Self::Method(method) => method.sig(),
-            Self::Function(function) => function.sig(),
-        }
-    }
-
-    pub fn return_type(&self) -> &lume_types::TypeRef {
-        match self {
-            Self::Method(method) => &method.return_type,
-            Self::Function(function) => &function.return_type,
-        }
-    }
-
     pub fn to_call_reference(self) -> CallReference {
         self.into()
-    }
-
-    pub fn is_instance(&self) -> bool {
-        if let Self::Method(method) = self {
-            method.is_instanced()
-        } else {
-            false
-        }
     }
 }
 
@@ -127,10 +106,9 @@ impl TyInferCtx {
                 };
 
                 let type_parameters = self.hir_avail_type_params(e.id);
-                let type_parameters_id = type_parameters.as_id_refs();
 
                 let type_args = self.mk_type_refs_from(e.path.bound_types(), e.id)?;
-                let instantiated = self.instantiate_type_from(&ty_opt, &type_parameters_id, &type_args);
+                let instantiated = self.instantiate_type_from(&ty_opt, &type_parameters, &type_args);
 
                 instantiated.clone()
             }
@@ -147,7 +125,7 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(expr.callee)?;
 
-                let Some(field) = self.tdb().find_field(callee_type.instance_of, &expr.name.name) else {
+                let Some(field) = self.field_on(callee_type.instance_of, &expr.name.name)? else {
                     let ty = self.tdb().type_(callee_type.instance_of).unwrap();
 
                     return Err(crate::errors::MissingField {
@@ -159,10 +137,10 @@ impl TyInferCtx {
                     .into());
                 };
 
-                let field_type = &field.field_type;
-                let type_params = self.hir_avail_type_params(callee_type.instance_of).as_id_refs();
+                let type_params = self.hir_avail_type_params(callee_type.instance_of);
+                let field_type = self.mk_type_ref_from(&field.field_type, callee_type.instance_of)?;
 
-                self.instantiate_type_from(field_type, &type_params, &callee_type.bound_types)
+                self.instantiate_type_from(&field_type, &type_params, &callee_type.bound_types)
             }
             lume_hir::ExpressionKind::Scope(scope) => self.type_of_scope(scope)?,
             lume_hir::ExpressionKind::Switch(switch) => match switch.cases.first() {
@@ -492,7 +470,7 @@ impl TyInferCtx {
         let field_type = self.mk_type_ref_from(enum_field, enum_def.id)?;
 
         let type_args = self.mk_type_refs_from(&variant_name.all_bound_types(), enum_def.id)?;
-        let type_params = enum_def.type_parameters.as_id_refs();
+        let type_params = &enum_def.type_parameters;
         let instantiated_field_type = self.instantiate_type_from(&field_type, &type_params, &type_args);
 
         Ok(instantiated_field_type)
@@ -501,7 +479,7 @@ impl TyInferCtx {
     /// Returns the fully-qualified [`Path`] of the given [`TypeRef`].
     #[libftrace::traced(level = Trace, err, ret(Display))]
     pub fn type_ref_name(&self, type_ref: &TypeRef) -> Result<&Path> {
-        Ok(&self.tdb().ty_expect(type_ref.instance_of)?.name)
+        Ok(&self.tdb().expect_type(type_ref.instance_of)?.name)
     }
 
     /// Gets the `lang_item` with the given name from the HIR map.
@@ -527,70 +505,73 @@ impl TyInferCtx {
     /// Returns the [`Trait`] definition, which matches the [`Use`] declaration
     /// with the given ID.
     #[libftrace::traced(level = Trace, err)]
-    pub fn trait_def_of(&self, id: NodeId) -> Result<&Trait> {
-        let Some(use_ref) = self.tdb().use_(id) else {
-            return Err(lume_types::errors::NodeNotFound { id }.into());
+    pub fn trait_def_of(&self, id: NodeId) -> Result<&lume_hir::TraitDefinition> {
+        let Node::TraitImpl(trait_impl) = self.hir_expect_node(id) else {
+            return Err(crate::query::diagnostics::NodeNotFound { id }.into());
         };
 
-        self.tdb().ty_expect_trait(use_ref.trait_.instance_of)
+        let trait_ty = self.mk_type_ref_from(&trait_impl.name, trait_impl.id)?;
+
+        Ok(self.hir_expect_trait(trait_ty.instance_of))
     }
 
     /// Returns the struct definition with the given type ID.
     #[libftrace::traced(level = Trace, err)]
     pub fn struct_def_type(&self, id: NodeId) -> Result<&lume_hir::StructDefinition> {
-        let Some(parent_ty) = self.tdb().type_(id) else {
-            return Err(lume_types::errors::NodeNotFound { id }.into());
+        let Some(type_def) = self.tdb().type_(id) else {
+            return Err(crate::query::diagnostics::NodeNotFound { id }.into());
         };
 
-        let lume_types::TypeKind::User(lume_types::UserType::Struct(struct_ty)) = &parent_ty.kind else {
-            return Err(lume_types::errors::UnexpectedTypeKind {
-                found: parent_ty.kind.as_kind_ref(),
-                expected: lume_types::TypeKindRef::Struct,
+        let lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(struct_def)) = self.hir_expect_node(type_def.id)
+        else {
+            return Err(crate::query::diagnostics::UnexpectedTypeKind {
+                found: type_def.kind,
+                expected: lume_types::TypeKind::Struct,
             }
             .into());
         };
 
-        Ok(self.hir_expect_struct(struct_ty.id))
+        Ok(struct_def.as_ref())
     }
 
     /// Returns the enum definition with the given type ID.
     #[libftrace::traced(level = Trace, err)]
     pub fn enum_def_type(&self, id: NodeId) -> Result<&lume_hir::EnumDefinition> {
-        let Some(parent_ty) = self.tdb().type_(id) else {
-            return Err(lume_types::errors::NodeNotFound { id }.into());
+        let Some(type_def) = self.tdb().type_(id) else {
+            return Err(crate::query::diagnostics::NodeNotFound { id }.into());
         };
 
-        let lume_types::TypeKind::User(lume_types::UserType::Enum(enum_ty)) = &parent_ty.kind else {
-            return Err(lume_types::errors::UnexpectedTypeKind {
-                found: parent_ty.kind.as_kind_ref(),
-                expected: lume_types::TypeKindRef::Enum,
+        let lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(enum_def)) = self.hir_expect_node(type_def.id) else {
+            return Err(crate::query::diagnostics::UnexpectedTypeKind {
+                found: type_def.kind,
+                expected: lume_types::TypeKind::Trait,
             }
             .into());
         };
 
-        Ok(self.hir_expect_enum(enum_ty.id))
+        Ok(enum_def.as_ref())
     }
 
     /// Returns the enum definition with the given name.
     #[libftrace::traced(level = Trace, err)]
     pub fn enum_def_of_name(&self, name: &Path) -> Result<&lume_hir::EnumDefinition> {
-        let Some(parent_ty) = self.tdb().find_type(name) else {
-            return Err(lume_types::errors::TypeNameNotFound {
+        let Some(type_def) = self.tdb().find_type(name) else {
+            return Err(crate::query::diagnostics::TypeNameNotFound {
                 name: name.clone(),
                 location: name.location,
             }
             .into());
         };
 
-        let lume_types::TypeKind::User(lume_types::UserType::Enum(enum_ty)) = &parent_ty.kind else {
-            return Err(lume_types::errors::UnexpectedTypeKind {
-                found: parent_ty.kind.as_kind_ref(),
-                expected: lume_types::TypeKindRef::Trait,
+        let lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(enum_def)) = self.hir_expect_node(type_def.id) else {
+            return Err(crate::query::diagnostics::UnexpectedTypeKind {
+                found: type_def.kind,
+                expected: lume_types::TypeKind::Trait,
             }
             .into());
         };
 
-        Ok(self.hir_expect_enum(enum_ty.id))
+        Ok(enum_def.as_ref())
     }
 
     /// Returns the enum case definitions on the enum type with the given ID.
@@ -610,7 +591,7 @@ impl TyInferCtx {
     #[libftrace::traced(level = Trace, err)]
     pub fn enum_cases_of_name(&self, name: &Path) -> Result<&[lume_hir::EnumDefinitionCase]> {
         let Some(parent_ty) = self.tdb().find_type(name) else {
-            return Err(lume_types::errors::TypeNameNotFound {
+            return Err(crate::query::diagnostics::TypeNameNotFound {
                 name: name.clone(),
                 location: name.location,
             }
@@ -637,7 +618,7 @@ impl TyInferCtx {
     #[libftrace::traced(level = Trace, err)]
     pub fn enum_case_with_name(&self, variant: &Path) -> Result<&lume_hir::EnumDefinitionCase> {
         let Some(parent_ty_path) = variant.clone().parent() else {
-            return Err(lume_types::errors::PathWithoutParent { path: variant.clone() }.into());
+            return Err(crate::query::diagnostics::PathWithoutParent { path: variant.clone() }.into());
         };
 
         for case in self.enum_cases_of_name(&parent_ty_path)? {
@@ -692,8 +673,7 @@ impl TyInferCtx {
         prop_name: &str,
     ) -> Option<lume_hir::ConstructorField> {
         let construct_type = self.find_type_ref(&expr.path).ok()??;
-        let struct_type = self.tdb().ty_expect_struct(construct_type.instance_of).ok()?;
-        let struct_hir_type = self.hir_expect_struct(struct_type.id);
+        let struct_hir_type = self.hir_expect_struct(construct_type.instance_of);
 
         let matching_field = struct_hir_type.fields().find(|prop| prop.name.as_str() == prop_name)?;
 
@@ -950,26 +930,24 @@ impl TyInferCtx {
             return Ok(None);
         };
 
-        for type_field in self.tdb().find_fields(constructed_type.instance_of) {
-            if type_field.name != field.name.name {
-                continue;
-            }
+        if let Some(type_field) = self.field_on(constructed_type.instance_of, &field.name.name)? {
+            let field_type = self.mk_type_ref_from(&type_field.field_type, constructed_type.instance_of)?;
 
-            return Ok(Some(type_field.field_type.clone()));
+            return Ok(Some(field_type));
         }
 
-        Result::Ok(None)
+        Ok(None)
     }
 
     #[cached_query(result)]
     #[libftrace::traced(level = Trace, err)]
     fn expected_type_of_call(&self, expr: NodeId, call: CallExpression<'_>) -> Result<Option<TypeRef>> {
         let callable = self.probe_callable(call)?;
+
         let is_instance_call = if let CallExpression::Instanced(_) = call
-            && let Callable::Method(method) = callable
-            && method.is_instanced()
+            && let Callable::Method(_) = callable
         {
-            true
+            self.is_instanced_method(callable.id())
         } else {
             false
         };
@@ -985,7 +963,8 @@ impl TyInferCtx {
                 argument_idx += 1;
             }
 
-            let Some(parameter) = &callable.signature().params.inner().get(argument_idx) else {
+            let signature = self.signature_of(callable)?;
+            let Some(parameter) = signature.params.get(argument_idx) else {
                 return Ok(None);
             };
 
@@ -1003,7 +982,7 @@ impl TyInferCtx {
         if let CallExpression::Instanced(instance_call) = call
             && expr == instance_call.callee
         {
-            let callee_type = &signature.params.params.first().unwrap().ty;
+            let callee_type = &signature.params.first().unwrap().ty;
 
             return Ok(Some(callee_type.clone()));
         }
@@ -1013,7 +992,7 @@ impl TyInferCtx {
             argument_idx += 1;
         }
 
-        let parameter = &signature.params.inner()[argument_idx];
+        let parameter = &signature.params[argument_idx];
 
         Ok(Some(parameter.ty.clone()))
     }
@@ -1121,6 +1100,19 @@ impl TyInferCtx {
         }
     }
 
+    pub fn fields_on(&self, id: NodeId) -> Result<&[lume_hir::Field]> {
+        let Some(Node::Type(lume_hir::TypeDefinition::Struct(struct_def))) = self.hir_node(id) else {
+            return Ok(&[]);
+        };
+
+        Ok(&struct_def.fields)
+    }
+
+    #[libftrace::traced(level = Trace)]
+    pub fn field_on(&self, id: NodeId, name: &str) -> Result<Option<&lume_hir::Field>> {
+        Ok(self.fields_on(id)?.iter().find(|field| field.name.as_str() == name))
+    }
+
     /// Gets the visibility of the given node, if one can be applied to it.
     ///
     /// If the type of node cannot have a visibility modifier, returns [`None`].
@@ -1133,6 +1125,7 @@ impl TyInferCtx {
                 lume_hir::TypeDefinition::Enum(n) => Some(n.visibility),
                 lume_hir::TypeDefinition::Struct(n) => Some(n.visibility),
                 lume_hir::TypeDefinition::Trait(n) => Some(n.visibility),
+                lume_hir::TypeDefinition::TypeParameter(_) => None,
             },
             Node::TraitImpl(_)
             | Node::TraitMethodDef(_)
