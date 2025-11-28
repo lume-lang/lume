@@ -63,9 +63,10 @@ impl TyInferCtx {
         let mut type_vars = self.type_vars.try_write().unwrap();
         let existing = type_vars.entry(type_variable).or_default().substitute.replace(with);
 
-        if existing.is_some() {
-            panic!("bug!: replaced existing substitution of {type_variable:?}");
-        }
+        assert!(
+            existing.is_none(),
+            "bug!: replaced existing substitution of {type_variable:?}"
+        );
     }
 }
 
@@ -80,20 +81,18 @@ impl TyInferCtx {
     pub(crate) fn unify_ctx(&mut self) -> Result<()> {
         for node in self.hir.nodes().values() {
             match node {
-                lume_hir::Node::Pattern(pattern) => match &pattern.kind {
-                    lume_hir::PatternKind::Variant(variant) => {
+                lume_hir::Node::Pattern(pattern) => {
+                    if let lume_hir::PatternKind::Variant(variant) = &pattern.kind {
                         self.create_type_constraints(pattern.id, &variant.name)?;
                     }
-                    _ => {}
-                },
-                lume_hir::Node::Statement(stmt) => match &stmt.kind {
-                    lume_hir::StatementKind::Variable(decl) => {
-                        if let Some(declared_type) = &decl.declared_type {
-                            verify::verify_type_name(self, &declared_type.name)?;
-                        }
+                }
+                lume_hir::Node::Statement(stmt) => {
+                    if let lume_hir::StatementKind::Variable(decl) = &stmt.kind
+                        && let Some(declared_type) = &decl.declared_type
+                    {
+                        verify::verify_type_name(self, &declared_type.name);
                     }
-                    _ => {}
-                },
+                }
                 lume_hir::Node::Expression(expr) => match &expr.kind {
                     lume_hir::ExpressionKind::Cast(cast) => {
                         self.create_type_constraints(expr.id, &cast.target.name)?;
@@ -122,7 +121,7 @@ impl TyInferCtx {
 
 impl TyInferCtx {
     #[libftrace::traced(level = Trace, err)]
-    fn create_type_constraints<'tcx>(&self, expr: NodeId, path: &lume_hir::Path) -> Result<()> {
+    fn create_type_constraints(&self, expr: NodeId, path: &lume_hir::Path) -> Result<()> {
         match &path.name {
             lume_hir::PathSegment::Type { .. } => {
                 let Some(type_def) = self.tdb().find_type(path) else {
@@ -178,12 +177,7 @@ impl TyInferCtx {
 
 impl TyInferCtx {
     #[libftrace::traced(level = Trace, err)]
-    fn create_constraints_of<'tcx>(
-        &self,
-        expr: NodeId,
-        path: &lume_hir::Path,
-        type_variable: TypeVariableId,
-    ) -> Result<()> {
+    fn create_constraints_of(&self, expr: NodeId, path: &lume_hir::Path, type_variable: TypeVariableId) -> Result<()> {
         self.ensure_entry_for(type_variable);
 
         match &path.name {
@@ -281,7 +275,7 @@ impl TyInferCtx {
 
                 let params = &enum_case_def.parameters;
 
-                for (param, arg) in params.into_iter().zip(arguments) {
+                for (param, arg) in params.iter().zip(arguments) {
                     let param_ty = self.mk_type_ref_from(param, enum_def.id)?;
 
                     if !is_type_contained_within(type_variable.1.as_node_id(), &param_ty) {
@@ -320,7 +314,7 @@ impl TyInferCtx {
             && let Some(expected_type) = self.expected_type_of(expr)?
         {
             self.eq(type_variable, self.type_of(expr)?, expected_type);
-        };
+        }
 
         Ok(())
     }
@@ -410,8 +404,8 @@ impl TyInferCtx {
 }
 
 #[libftrace::traced(level = Trace, err)]
-fn normalize_equality_constraints<'tcx>(
-    tcx: &'tcx TyInferCtx,
+fn normalize_equality_constraints(
+    tcx: &TyInferCtx,
     type_variable: TypeVariableId,
     constraints: Vec<Constraint>,
 ) -> Result<TypeRef> {
@@ -477,8 +471,8 @@ fn normalize_equality_constraints<'tcx>(
 }
 
 #[libftrace::traced(level = Trace, err)]
-fn normalize_constraint_types<'tcx>(
-    tcx: &'tcx TyInferCtx,
+fn normalize_constraint_types(
+    tcx: &TyInferCtx,
     type_variable: TypeVariableId,
     lhs: &TypeRef,
     rhs: &TypeRef,
@@ -602,7 +596,7 @@ impl TyInferCtx {
                 match segment {
                     lume_hir::PathSegment::Type { bound_types, .. }
                     | lume_hir::PathSegment::Callable { bound_types, .. } => {
-                        for (num_type, bound_type) in bound_types.into_iter().enumerate() {
+                        for (num_type, bound_type) in bound_types.iter().enumerate() {
                             if bound_type.id != type_variable_id.1 {
                                 continue;
                             }

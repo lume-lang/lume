@@ -188,7 +188,7 @@ impl TyInferCtx {
 
         for (id, kind) in type_items {
             match kind {
-                NodeType::StructDef => self.define_struct_type_definition(id)?,
+                NodeType::StructDef => self.define_struct_type_definition(id),
                 NodeType::TraitDef => self.define_trait_type_definition(id)?,
                 NodeType::EnumDef => self.define_enum_type_definition(id)?,
                 _ => unreachable!(),
@@ -198,7 +198,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    fn define_struct_type_definition(&mut self, id: NodeId) -> Result<()> {
+    fn define_struct_type_definition(&mut self, id: NodeId) {
         let Some(lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(struct_def))) = self.hir.node_mut(id) else {
             unreachable!()
         };
@@ -212,9 +212,7 @@ impl TyInferCtx {
             self.hir.nodes.insert_before(idx, std_id, node);
         } else {
             self.tcx.db_mut().type_alloc(struct_def.id, &name, TypeKind::Struct);
-        };
-
-        Ok(())
+        }
     }
 
     fn define_trait_type_definition(&mut self, id: NodeId) -> Result<()> {

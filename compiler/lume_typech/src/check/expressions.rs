@@ -10,7 +10,7 @@ impl TyCheckCtx {
     /// Type checker pass to check whether expressions yield
     /// their expected type, depending on the surrounding context.
     #[libftrace::traced(level = Debug, err)]
-    pub(crate) fn typech_expressions(&mut self) -> Result<()> {
+    pub(crate) fn typech_expressions(&mut self) {
         for (id, item) in &self.hir().nodes {
             if !self.hir_is_local_node(*id) {
                 continue;
@@ -20,8 +20,6 @@ impl TyCheckCtx {
                 self.dcx().emit(err);
             }
         }
-
-        Ok(())
     }
 
     #[libftrace::traced(level = Debug, err)]

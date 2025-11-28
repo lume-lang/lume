@@ -9,7 +9,6 @@ use cranelift_object::ObjectProduct;
 use gimli::RunTimeEndian;
 use gimli::write::{EhFrame, FrameTable, Writer};
 use indexmap::IndexMap;
-use lume_errors::Result;
 use lume_span::NodeId;
 use object::write::*;
 
@@ -61,7 +60,7 @@ impl RootUnwindContext {
     }
 
     /// Write the unwind sections to the given object file.
-    pub fn write(&mut self, backend: &CraneliftBackend, product: &mut ObjectProduct) -> Result<()> {
+    pub fn write(&mut self, backend: &CraneliftBackend, product: &mut ObjectProduct) {
         self.populate_frame_table(backend);
 
         let segment = product.object.segment_name(StandardSegment::Data).to_vec();
@@ -106,8 +105,6 @@ impl RootUnwindContext {
                 })
                 .unwrap();
         }
-
-        Ok(())
     }
 
     fn populate_frame_table(&mut self, backend: &CraneliftBackend) {

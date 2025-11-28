@@ -488,7 +488,7 @@ impl TyInferCtx {
 
         let type_args = self.mk_type_refs_from(&variant_name.all_bound_types(), enum_def.id)?;
         let type_params = &enum_def.type_parameters;
-        let instantiated_field_type = self.instantiate_type_from(&field_type, &type_params, &type_args);
+        let instantiated_field_type = self.instantiate_type_from(&field_type, type_params, &type_args);
 
         Ok(instantiated_field_type)
     }

@@ -50,7 +50,7 @@ impl LowerModule<'_> {
             lume_ast::Expression::Literal(e) => self.expr_literal(*e),
             lume_ast::Expression::Member(e) => self.expr_member(*e)?,
             lume_ast::Expression::Range(e) => self.expr_range(*e)?,
-            lume_ast::Expression::Scope(e) => self.expr_scope(*e)?,
+            lume_ast::Expression::Scope(e) => self.expr_scope(*e),
             lume_ast::Expression::Switch(e) => self.expr_switch(*e)?,
             lume_ast::Expression::Variable(e) => self.expr_variable(*e)?,
             lume_ast::Expression::Variant(e) => self.expr_variant(*e)?,
@@ -532,7 +532,7 @@ impl LowerModule<'_> {
     }
 
     #[libftrace::traced(level = Debug)]
-    fn expr_scope(&mut self, expr: lume_ast::Scope) -> Result<lume_hir::Expression> {
+    fn expr_scope(&mut self, expr: lume_ast::Scope) -> lume_hir::Expression {
         self.locals.push_frame();
 
         let id = self.next_node_id();
@@ -541,11 +541,11 @@ impl LowerModule<'_> {
 
         self.locals.pop_frame();
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             location,
             kind: lume_hir::ExpressionKind::Scope(lume_hir::Scope { id, body, location }),
-        })
+        }
     }
 
     #[libftrace::traced(level = Debug)]

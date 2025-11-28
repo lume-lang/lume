@@ -7,7 +7,7 @@ use cranelift_object::ObjectProduct;
 use gimli::write::*;
 use gimli::{DwLang, Encoding, LineEncoding, Register, RunTimeEndian, SectionId};
 use indexmap::IndexMap;
-use lume_errors::{MapDiagnostic, Result};
+use lume_errors::Result;
 use lume_mir::{Function, ModuleMap};
 use lume_span::source::Location;
 use lume_span::{NodeId, SourceFileId};
@@ -185,7 +185,7 @@ impl<'ctx> RootDebugContext<'ctx> {
         &mut self,
         backend: &CraneliftBackend,
         function_metadata: &HashMap<NodeId, FunctionMetadata>,
-    ) -> Result<()> {
+    ) {
         for (file, functions) in self.ctx.group_by_file() {
             let Some(compile_unit_id) = self.file_units.get(&file.id).copied() else {
                 continue;
@@ -215,10 +215,10 @@ impl<'ctx> RootDebugContext<'ctx> {
                     let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
                     compile_unit.line_program.row().address_offset = u64::from(start);
 
-                    let location = if !loc.is_default() {
-                        backend.lookup_source_loc(loc)
-                    } else {
+                    let location = if loc.is_default() {
                         self.ctx.function(func.id).location.clone()
+                    } else {
+                        backend.lookup_source_loc(loc)
                     };
 
                     let (file_id, line, _) = self.get_source_span(location, compile_unit_id);
@@ -233,7 +233,7 @@ impl<'ctx> RootDebugContext<'ctx> {
                 }
 
                 let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
-                compile_unit.line_program.end_sequence(range_end as u64);
+                compile_unit.line_program.end_sequence(u64::from(range_end));
 
                 // DW_AT_decl_*
                 let (file_id, line, column) = self.get_source_span(func.location.clone(), compile_unit_id);
@@ -245,8 +245,6 @@ impl<'ctx> RootDebugContext<'ctx> {
                 entry.set(gimli::DW_AT_decl_column, AttributeValue::Udata(column as u64));
             }
         }
-
-        Ok(())
     }
 
     /// Finish building the final DWARF debugging sections in given object file,
@@ -255,13 +253,12 @@ impl<'ctx> RootDebugContext<'ctx> {
         let mut sections = Sections::new(WriterRelocate::new(self.endianess));
         self.dwarf.write(&mut sections).unwrap();
 
-        sections
-            .for_each_mut(|id, section| {
-                let debug_id = product.object.segment_name(StandardSegment::Debug);
+        sections.for_each_mut(|id, section| {
+            let debug_id = product.object.segment_name(StandardSegment::Debug);
+            section.write_to_section(&mut product.object, debug_id, id.name(), SectionKind::Debug);
 
-                section.write_to_section(&mut product.object, debug_id, id.name(), SectionKind::Debug)
-            })
-            .map_diagnostic()?;
+            Result::Ok(())
+        })?;
 
         Ok(())
     }
@@ -286,10 +283,10 @@ impl<'ctx> RootDebugContext<'ctx> {
             let encoding = line_program.encoding();
 
             let file_info = if self.ctx.options.debug_info.embed_sources() {
-                let mut file_info = FileInfo::default();
-                file_info.source = Some(LineString::String(loc.file.content.as_bytes().to_vec()));
-
-                Some(file_info)
+                Some(FileInfo {
+                    source: Some(LineString::String(loc.file.content.as_bytes().to_vec())),
+                    ..Default::default()
+                })
             } else {
                 None
             };
@@ -308,10 +305,10 @@ impl<'ctx> RootDebugContext<'ctx> {
                         .map(|p| p.to_string_lossy().as_bytes().to_vec())
                         .unwrap_or_default();
 
-                    let dir_id = if !dir_name.is_empty() {
-                        line_program.add_directory(LineString::new(dir_name, encoding, line_strings))
-                    } else {
+                    let dir_id = if dir_name.is_empty() {
                         line_program.default_directory()
+                    } else {
+                        line_program.add_directory(LineString::new(dir_name, encoding, line_strings))
                     };
 
                     let file_name = LineString::new(file_name, encoding, line_strings);
@@ -377,18 +374,17 @@ impl WriterRelocate {
         segment: impl AsRef<[u8]>,
         section: impl AsRef<[u8]>,
         kind: SectionKind,
-    ) -> gimli::write::Result<()> {
+    ) {
         if !self.writer.slice().is_empty() {
-            let data = self.writer.take().to_vec();
+            let data = self.writer.take().clone();
 
             let section_id = dest.add_section(segment.as_ref().to_vec(), section.as_ref().to_vec(), kind);
             dest.append_section_data(section_id, &data, 8);
         }
-
-        gimli::write::Result::Ok(())
     }
 }
 
+#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 impl Writer for WriterRelocate {
     type Endian = RunTimeEndian;
 

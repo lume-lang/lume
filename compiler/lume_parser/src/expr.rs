@@ -223,8 +223,9 @@ impl Parser<'_> {
     ///
     /// Postfix expressions are expressions which appear at the end of an
     /// expression, such as increment or decrement operators.
+    #[expect(clippy::unused_self, reason = "this is more consistent")]
     #[libftrace::traced(level = Trace, fields(operator))]
-    fn parse_postfix_expression(&mut self, target: Expression, operator: Token) -> Expression {
+    fn parse_postfix_expression(&self, target: Expression, operator: Token) -> Expression {
         let start = target.location().start();
         let end = operator.end();
 
@@ -387,18 +388,18 @@ impl Parser<'_> {
                     (_, TokenType::LeftParen) => self.parse_call(None, identifier),
                     (_, TokenType::LeftCurly) => self.parse_construction_expression(identifier),
                     (true, _) => self.parse_path_expression(identifier),
-                    (false, _) => Ok(self.parse_variable(identifier)),
+                    (false, _) => Ok(identifier.as_var()),
                 }
             }
 
             // If the identifier is all upper case, we'll parse it as a const variable reference
-            _ if identifier.is_all_upper() => Ok(self.parse_variable(identifier)),
+            _ if identifier.is_all_upper() => Ok(identifier.as_var()),
 
             // If the identifier is not lower case, it might be a path expression
             _ if !identifier.is_lower() => self.parse_path_expression(identifier),
 
             // If the name stands alone, it's likely a variable reference
-            _ => Ok(self.parse_variable(identifier)),
+            _ => Ok(identifier.as_var()),
         }
     }
 
@@ -719,14 +720,6 @@ impl Parser<'_> {
         let location = (start..end).into();
 
         Ok(ConstructorField { name, value, location })
-    }
-
-    /// Parses a variable reference expression on the current cursor position.
-    #[libftrace::traced(level = Trace, fields(target))]
-    fn parse_variable(&mut self, target: Identifier) -> Expression {
-        let variable = Variable { name: target };
-
-        Expression::Variable(Box::new(variable))
     }
 
     /// Parses a literal value expression on the current cursor position.

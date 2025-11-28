@@ -298,9 +298,9 @@ mod test {
         let dcx = DiagCtx::new();
 
         match manifold_entry(Config::default(), dcx.clone()) {
-            Ok(exit_code) if exit_code == 0 => return Ok(()),
-            Err(err) => dcx.emit(err),
+            Ok(0) => return Ok(()),
             Ok(_) => {}
+            Err(err) => dcx.emit(err),
         }
 
         let mut renderer = error_snippet::GraphicalRenderer::new();

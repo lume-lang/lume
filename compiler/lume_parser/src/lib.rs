@@ -114,7 +114,7 @@ impl<'src> Parser<'src> {
                 break;
             }
 
-            self.read_doc_comment()?;
+            self.read_doc_comment();
             self.attributes = Some(self.parse_attributes()?);
 
             expressions.push(self.parse_top_level_expression()?);
@@ -495,7 +495,7 @@ impl<'src> Parser<'src> {
     /// Reads the current documentation comment into the parser's state, if any
     /// is present.
     #[libftrace::traced(level = Debug, err)]
-    fn read_doc_comment(&mut self) -> Result<()> {
+    fn read_doc_comment(&mut self) {
         let mut doc_comments = Vec::new();
 
         while let Some(doc_token) = self.consume_if(TokenType::DocComment)
@@ -506,7 +506,7 @@ impl<'src> Parser<'src> {
 
         if doc_comments.is_empty() {
             libftrace::trace!("no doc comment found");
-            return Ok(());
+            return;
         }
 
         self.doc_token = Some(
@@ -516,8 +516,6 @@ impl<'src> Parser<'src> {
                 .collect::<Vec<String>>()
                 .join("\n"),
         );
-
-        Ok(())
     }
 
     /// Asserts that the current token is an `fn` token.

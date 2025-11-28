@@ -39,7 +39,7 @@ impl TraitLookup {
             .or_default()
             .insert(trait_type.clone());
 
-        let key = self.key_of(trait_type, impl_type);
+        let key = key_of(trait_type, impl_type);
 
         self.metadata.insert(key, TraitImplementationMetadata {
             id,
@@ -50,10 +50,10 @@ impl TraitLookup {
     /// Adds a new trait method implementation to the given trait
     /// implementation.
     pub fn add_impl_method(&mut self, trait_type: &TypeRef, impl_type: &TypeRef, method_id: NodeId) {
-        debug_assert!(self.impls_of.get(trait_type).map_or(false, |im| im.contains(impl_type)));
-        debug_assert!(self.impls_on.get(impl_type).map_or(false, |im| im.contains(trait_type)));
+        debug_assert!(self.impls_of.get(trait_type).is_some_and(|im| im.contains(impl_type)));
+        debug_assert!(self.impls_on.get(impl_type).is_some_and(|im| im.contains(trait_type)));
 
-        let key = self.key_of(trait_type, impl_type);
+        let key = key_of(trait_type, impl_type);
 
         self.metadata
             .get_mut(&key)
@@ -64,14 +64,14 @@ impl TraitLookup {
 
     /// Gets all the trait implementations of the given trait type.
     pub fn implementations_of(&self, trait_type: &TypeRef) -> impl Iterator<Item = &TypeRef> {
-        static EMPTY: &'static indexmap::set::Slice<TypeRef> = indexmap::set::Slice::new();
+        static EMPTY: &indexmap::set::Slice<TypeRef> = indexmap::set::Slice::new();
 
         self.impls_of.get(trait_type).map_or(EMPTY, |i| i.as_slice()).iter()
     }
 
     /// Gets all the trait implementations on the given implemented type.
     pub fn implementations_on(&self, impl_type: &TypeRef) -> impl Iterator<Item = &TypeRef> {
-        static EMPTY: &'static indexmap::set::Slice<TypeRef> = indexmap::set::Slice::new();
+        static EMPTY: &indexmap::set::Slice<TypeRef> = indexmap::set::Slice::new();
 
         self.impls_on.get(impl_type).map_or(EMPTY, |i| i.as_slice()).iter()
     }
@@ -86,7 +86,7 @@ impl TraitLookup {
 
     /// Gets the ID of the trait implementation block.
     pub fn trait_impl_id(&self, trait_type: &TypeRef, impl_type: &TypeRef) -> Option<NodeId> {
-        let key = self.key_of(trait_type, impl_type);
+        let key = key_of(trait_type, impl_type);
 
         self.metadata.get(&key).map(|meta| meta.id)
     }
@@ -94,14 +94,14 @@ impl TraitLookup {
     /// Gets all the implemented methods in the trait implementation of
     /// `trait_type` on `impl_type` type.
     pub fn implemented_methods_in(&self, trait_type: &TypeRef, impl_type: &TypeRef) -> &[NodeId] {
-        let key = self.key_of(trait_type, impl_type);
+        let key = key_of(trait_type, impl_type);
 
         self.metadata.get(&key).map_or(&[], |meta| meta.methods.as_slice())
     }
+}
 
-    fn key_of(&self, trait_type: &TypeRef, impl_type: &TypeRef) -> TraitImplKey {
-        let hash = lume_span::hash_id(&(trait_type, impl_type));
+fn key_of(trait_type: &TypeRef, impl_type: &TypeRef) -> TraitImplKey {
+    let hash = lume_span::hash_id(&(trait_type, impl_type));
 
-        TraitImplKey(hash)
-    }
+    TraitImplKey(hash)
 }

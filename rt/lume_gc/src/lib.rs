@@ -104,11 +104,11 @@ unsafe extern "C" {
 /// This function should only ever be executed *once* at startup, since it's
 /// somewhat slow.
 pub fn declare_stack_maps() -> Vec<CompiledFunctionMetadata> {
-    let ptr = unsafe { &__STACK_MAPS as *const u8 };
+    let ptr = &raw const __STACK_MAPS;
     let mut offset = 0;
 
     let read_u64 = |offset: &mut usize| -> u64 {
-        let val = unsafe { (ptr.byte_add(*offset) as *const u64).read() };
+        let val = unsafe { ptr.byte_add(*offset).cast::<u64>().read() };
         *offset += 8;
 
         val

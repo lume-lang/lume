@@ -125,7 +125,7 @@ impl TyInferCtx {
 
     /// Gets the return type of the [`lume_hir::Node`] with the given ID.
     #[libftrace::traced(level = Trace)]
-    pub fn return_type_of<'a>(&'a self, id: NodeId) -> Option<&'a lume_hir::Type> {
+    pub fn return_type_of(&self, id: NodeId) -> Option<&lume_hir::Type> {
         match self.hir_node(id)? {
             Node::Function(method) => Some(&method.return_type),
             Node::Method(method) => Some(&method.return_type),
@@ -168,7 +168,7 @@ impl TyInferCtx {
                 lume_hir::TypeDefinition::Struct(def) => def.doc_comment.as_ref(),
                 lume_hir::TypeDefinition::Trait(def) => def.doc_comment.as_ref(),
                 lume_hir::TypeDefinition::Enum(def) => def.doc_comment.as_ref(),
-                _ => None,
+                lume_hir::TypeDefinition::TypeParameter(_) => None,
             },
             lume_hir::Node::Method(method) => method.doc_comment.as_ref(),
             lume_hir::Node::TraitMethodDef(method) => method.doc_comment.as_ref(),

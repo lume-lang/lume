@@ -241,7 +241,7 @@ impl TyInferCtx {
     /// Returns the parent of the given HIR element, if any is found.
     #[track_caller]
     #[libftrace::traced(level = Trace)]
-    pub fn hir_parent_node_of<'a>(&'a self, id: NodeId) -> Option<&'a Node> {
+    pub fn hir_parent_node_of(&self, id: NodeId) -> Option<&Node> {
         self.hir_parent_of(id).and_then(|id| self.hir.node(id))
     }
 

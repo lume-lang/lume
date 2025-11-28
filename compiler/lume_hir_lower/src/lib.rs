@@ -209,14 +209,14 @@ impl<'a> LowerModule<'a> {
     pub fn lower(
         map: &'a mut Map,
         node_idx: &'a mut NodeId,
-        mut defined: &mut HashSet<DefinedItem>,
+        defined: &mut HashSet<DefinedItem>,
         file: Arc<SourceFile>,
         dcx: DiagCtxHandle,
         expressions: Vec<lume_ast::TopLevelExpression>,
         import_std: bool,
     ) -> Result<()> {
         let mut lower = LowerModule::new(map, *node_idx, file, dcx);
-        std::mem::swap(&mut lower.defined, &mut defined);
+        std::mem::swap(&mut lower.defined, defined);
 
         if import_std {
             lower.insert_implicit_imports()?;
@@ -334,7 +334,7 @@ impl<'a> LowerModule<'a> {
         // handling.
         if path.is_variant() {
             return self.resolve_variant_name(path);
-        };
+        }
 
         let root = if let Some(namespace) = &self.namespace
             && path.root.is_empty()

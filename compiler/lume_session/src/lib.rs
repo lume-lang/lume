@@ -264,7 +264,6 @@ impl Package {
     }
 
     /// Gets the relative path to a file within the project directory.
-    #[expect(clippy::missing_panics_doc, reason = "infallible")]
     pub fn relative_source_path<'a>(&'a self, file: &'a Path) -> PathBuf {
         let root = self.root();
 
@@ -407,7 +406,7 @@ impl Default for Package {
 /// Represents a unique hash for a given iteration of a package, including
 /// source file content, package metadata, etc..
 #[derive(Serialize, Deserialize, Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PackageHash(usize);
+pub struct PackageHash(u64);
 
 impl Display for PackageHash {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -433,7 +432,7 @@ impl Package {
         self.dependencies.graph.hash(&mut state);
         self.dependencies.no_std.hash(&mut state);
 
-        PackageHash(state.finish() as usize)
+        PackageHash(state.finish())
     }
 }
 
