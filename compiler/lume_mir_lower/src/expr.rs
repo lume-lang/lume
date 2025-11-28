@@ -347,7 +347,7 @@ impl FunctionTransformer<'_, '_> {
             lume_tir::PatternKind::Variant(variant) => {
                 let discriminant_value = self
                     .tcx()
-                    .discriminant_of_variant_ty(variant.ty.instance_of, variant.name.name.name())
+                    .discriminant_of_variant(variant.ty.instance_of, variant.name.name.name())
                     .unwrap();
 
                 let operand_disc = self.func.declare_raw(lume_mir::Type::u8(), lume_mir::Declaration {
@@ -964,7 +964,7 @@ impl FunctionTransformer<'_, '_> {
         };
 
         let enum_ty = self.tcx().type_of(expr.id).unwrap();
-        let enum_def = self.tcx().enum_def_type(enum_ty.instance_of).unwrap();
+        let enum_def = self.tcx().enum_definition(enum_ty.instance_of).unwrap();
         let enum_def_id = enum_def.id;
 
         // The first type in all object allocations must be a pointer to the metadata
@@ -974,7 +974,7 @@ impl FunctionTransformer<'_, '_> {
 
         let mut union_cases = Vec::new();
 
-        for variant in self.tcx().enum_cases_expr(expr.id).unwrap() {
+        for variant in self.tcx().cases_of_enum_expr(expr.id).unwrap() {
             let mut items = Vec::new();
 
             let params = &variant.parameters;
