@@ -61,7 +61,7 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_parameters_id = self.hir_avail_type_params(method.id);
+                let type_parameters_id = self.available_type_params_at(method.id);
                 let type_parameters = self.as_type_params(&type_parameters_id)?;
 
                 let return_type = self.mk_type_ref_generic(&method.return_type, &type_parameters)?;
@@ -79,7 +79,7 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_parameters_id = self.hir_avail_type_params(method.id);
+                let type_parameters_id = self.available_type_params_at(method.id);
                 let type_parameters = self.as_type_params(&type_parameters_id)?;
 
                 let return_type = self.mk_type_ref_generic(&method.return_type, &type_parameters)?;
@@ -97,7 +97,7 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_parameters_id = self.hir_avail_type_params(method.id);
+                let type_parameters_id = self.available_type_params_at(method.id);
                 let type_parameters = self.as_type_params(&type_parameters_id)?;
 
                 let return_type = self.mk_type_ref_generic(&method.return_type, &type_parameters)?;
@@ -222,7 +222,7 @@ impl TyCheckCtx {
     /// this method would raise an error, since the value expands to be of type
     /// `Boolean`, which is incompatible with `Int32`.
     fn return_statement(&self, stmt: &lume_hir::Return) -> Result<()> {
-        let expected = self.hir_ctx_return_type(stmt.id)?;
+        let expected = self.return_type_within(stmt.id)?;
 
         let actual = match stmt.value {
             Some(val) => self.type_of(val)?,
@@ -700,7 +700,7 @@ impl TyCheckCtx {
     /// the types of passed parameters, if any.
     #[libftrace::traced(level = Trace, err)]
     fn variant_expression(&self, expr: &lume_hir::Variant) -> Result<()> {
-        let enum_def = self.enum_def_of_name(&expr.name.clone().parent().unwrap())?;
+        let enum_def = self.enum_def_with_name(&expr.name.clone().parent().unwrap())?;
         let enum_case_def = self.enum_case_with_name(&expr.name)?;
 
         if !self.is_visible_to(expr.id, enum_def.id)? {

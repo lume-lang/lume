@@ -133,3 +133,10 @@ pub struct UnexpectedTypeKind {
     pub expected: TypeKind,
     pub found: TypeKind,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find variant {name} on type {type_id:?}")]
+pub struct VariantNameNotFound {
+    pub type_id: NodeId,
+    pub name: String,
+}

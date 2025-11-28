@@ -137,7 +137,7 @@ impl LowerFunction<'_> {
         let callable = self.lower.tcx.lookup_callable(expr)?;
         let instantiated_signature = self.lower.tcx.signature_of_instantiated(callable, expr)?;
 
-        let uninst_ret_ty = self.lower.tcx.hir_node_return_type(callable.id()).unwrap();
+        let uninst_ret_ty = self.lower.tcx.return_type_of(callable.id()).unwrap();
         let uninst_ret_ty = self.lower.tcx.mk_type_ref_from_expr(uninst_ret_ty, callable.id())?;
 
         libftrace::debug!(
@@ -236,7 +236,7 @@ impl LowerFunction<'_> {
 
         let Some(kind) = self.intrinsic_of(expr) else {
             let callable = self.lower.tcx.probe_callable_intrinsic(expr)?;
-            let return_type = self.lower.tcx.hir_ctx_return_type(callable.id())?;
+            let return_type = self.lower.tcx.return_type_within(callable.id())?;
 
             return Ok(lume_tir::ExpressionKind::Call(Box::new(lume_tir::Call {
                 id: expr.id,
@@ -423,7 +423,7 @@ impl LowerFunction<'_> {
 
     #[libftrace::traced(level = Trace)]
     fn switch_expression(&mut self, expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
-        if self.lower.tcx.switch_table_const_literal(expr) {
+        if self.lower.tcx.is_switch_constant(expr) {
             self.switch_expression_constant(expr)
         } else {
             self.switch_expression_dynamic(expr)

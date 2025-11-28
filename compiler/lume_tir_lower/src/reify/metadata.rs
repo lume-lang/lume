@@ -37,7 +37,7 @@ impl ReificationPass<'_> {
 
         let type_parameters = self
             .tcx
-            .hir_avail_type_params(type_id)
+            .available_type_params_at(type_id)
             .iter()
             .map(|param| self.type_parameter_metadata(*param))
             .collect::<Result<Vec<_>>>()?;
@@ -92,7 +92,7 @@ impl ReificationPass<'_> {
                     // of the metadata pointer.
                     let mut size = PTR_SIZE + 1;
 
-                    for variant in self.tcx.enum_cases_of_name(&enum_def.name)? {
+                    for variant in self.tcx.cases_of_enum_definition(&enum_def.name)? {
                         for param in &variant.parameters {
                             let param_type_ref = self.tcx.mk_type_ref_from(param, enum_def.id)?;
 

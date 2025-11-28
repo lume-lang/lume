@@ -160,7 +160,7 @@ impl TyInferCtx {
                     .parent()
                     .expect("expected Variant path segment to have Type parent");
 
-                let enum_def = self.enum_def_of_name(&parent_path)?;
+                let enum_def = self.enum_def_with_name(&parent_path)?;
                 let declared_type_args = path.all_bound_types().len();
 
                 for type_param in enum_def.type_parameters.iter().skip(declared_type_args) {
@@ -248,7 +248,7 @@ impl TyInferCtx {
                     .parent()
                     .expect("expected Variant path segment to have Type parent");
 
-                let enum_def = self.enum_def_of_name(&parent_path)?;
+                let enum_def = self.enum_def_with_name(&parent_path)?;
                 let enum_case_def = self.enum_case_with_name(path)?;
 
                 let arguments = match &self.hir_expect_node(expr) {
@@ -586,7 +586,7 @@ impl TyInferCtx {
                 }
                 lume_hir::ExpressionKind::Variant(expr) => {
                     let parent_path = expr.name.clone().parent().unwrap();
-                    let enum_def = self.enum_def_of_name(&parent_path)?;
+                    let enum_def = self.enum_def_with_name(&parent_path)?;
 
                     let mut enum_name = enum_def.name.clone();
                     enum_name.place_bound_types(self.type_params_as_types(&enum_def.type_parameters)?);

@@ -65,7 +65,7 @@ impl TyCheckCtx {
             .into());
         }
 
-        let Ok(enum_def) = self.enum_def_type(ty.instance_of) else {
+        let Ok(enum_def) = self.enum_definition(ty.instance_of) else {
             panic!("bug!: expected to find `EnumDefinition` because of exhausted pattern types");
         };
 

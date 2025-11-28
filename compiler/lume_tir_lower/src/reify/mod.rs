@@ -95,7 +95,7 @@ impl<'tcx> ReificationPass<'tcx> {
     }
 
     fn add_metadata_arguments_on_call(&mut self, call: &mut Call) -> Result<()> {
-        let type_param_len = self.tcx.hir_avail_type_params(call.function).len();
+        let type_param_len = self.tcx.available_type_params_at(call.function).len();
         let type_arg_len = call.type_arguments.len();
 
         let mut metadata_args = Vec::with_capacity(call.type_arguments.len());
@@ -136,7 +136,7 @@ impl<'tcx> ReificationPass<'tcx> {
     fn add_metadata_argument_inherited(&self, call: &Call, idx: usize, type_arg: &TypeRef) -> lume_tir::Expression {
         let name = format!("${idx}").intern();
 
-        let parent_func_params = self.tcx.hir_avail_params(call.id);
+        let parent_func_params = self.tcx.available_params_at(call.id);
         let param_idx = parent_func_params.len() + idx;
         let reference = lume_tir::VariableId(param_idx);
 

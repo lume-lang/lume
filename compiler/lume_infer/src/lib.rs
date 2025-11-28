@@ -140,19 +140,6 @@ impl TyInferCtx {
         Ok(())
     }
 
-    /// Gets the HIR statement with the given ID and assert that it's a variable
-    /// declaration statement.
-    #[libftrace::traced(level = Debug)]
-    #[allow(dead_code, reason = "expected used in future")]
-    pub(crate) fn hir_expect_var_stmt(&self, id: NodeId) -> &lume_hir::VariableDeclaration {
-        let stmt = self.hir_expect_stmt(id);
-
-        match &stmt.kind {
-            lume_hir::StatementKind::Variable(decl) => decl,
-            t => panic!("invalid variable reference type: {t:?}"),
-        }
-    }
-
     /// Lowers the given HIR type into a type reference.
     #[libftrace::traced(level = Debug, fields(ty = ty.name, loc = ty.location))]
     pub fn mk_type_ref(&self, ty: &lume_hir::Type) -> Result<TypeRef> {
@@ -195,7 +182,7 @@ impl TyInferCtx {
     /// from the given definition.
     #[libftrace::traced(level = Debug, fields(ty = ty.name, loc = ty.location, def = def), err)]
     pub fn mk_type_ref_from(&self, ty: &lume_hir::Type, def: NodeId) -> Result<TypeRef> {
-        let type_parameters_id = self.hir_avail_type_params(def);
+        let type_parameters_id = self.available_type_params_at(def);
         let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.mk_type_ref_generic(ty, &type_parameters)
@@ -212,7 +199,7 @@ impl TyInferCtx {
     /// available from the given definition.
     #[libftrace::traced(level = Debug, err)]
     pub fn mk_type_refs_from(&self, ty: &[lume_hir::Type], def: NodeId) -> Result<Vec<TypeRef>> {
-        let type_parameters_id = self.hir_avail_type_params(def);
+        let type_parameters_id = self.available_type_params_at(def);
         let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.mk_type_refs_generic(ty, &type_parameters)
@@ -307,7 +294,7 @@ impl TyInferCtx {
     /// references to type IDs.
     #[libftrace::traced(level = Debug, err)]
     pub fn find_type_ref_from(&self, name: &Path, def: NodeId) -> Result<Option<TypeRef>> {
-        let type_parameters_id = self.hir_avail_type_params(def);
+        let type_parameters_id = self.available_type_params_at(def);
         let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.find_type_ref_generic(name, &type_parameters)

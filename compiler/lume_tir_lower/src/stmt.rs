@@ -35,7 +35,7 @@ impl LowerFunction<'_> {
     }
 
     fn break_statement(&mut self, stmt: &lume_hir::Break) -> lume_tir::Statement {
-        let target = self.lower.tcx.hir_loop_target(stmt.id).unwrap();
+        let target = self.lower.tcx.loop_target_at(stmt.id).unwrap();
 
         lume_tir::Statement::Break(lume_tir::Break {
             id: stmt.id,
@@ -45,7 +45,7 @@ impl LowerFunction<'_> {
     }
 
     fn continue_statement(&mut self, stmt: &lume_hir::Continue) -> lume_tir::Statement {
-        let target = self.lower.tcx.hir_loop_target(stmt.id).unwrap();
+        let target = self.lower.tcx.loop_target_at(stmt.id).unwrap();
 
         lume_tir::Statement::Continue(lume_tir::Continue {
             id: stmt.id,
