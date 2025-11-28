@@ -4,7 +4,7 @@ use crate::LowerFunction;
 
 impl LowerFunction<'_> {
     pub(crate) fn type_parameters(&mut self, type_params: &[lume_span::NodeId]) -> Vec<lume_tir::TypeParameter> {
-        let type_params = type_params
+        type_params
             .iter()
             .map(|id| {
                 let variable_id = self.mark_variable(lume_tir::VariableSource::Parameter);
@@ -21,8 +21,6 @@ impl LowerFunction<'_> {
                     constraints,
                 }
             })
-            .collect();
-
-        type_params
+            .collect()
     }
 }

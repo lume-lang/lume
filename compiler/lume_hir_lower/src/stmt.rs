@@ -74,7 +74,7 @@ impl LowerModule<'_> {
             lume_ast::Statement::Return(s) => self.stmt_return(*s)?,
             lume_ast::Statement::InfiniteLoop(e) => self.stmt_infinite_loop(*e),
             lume_ast::Statement::IteratorLoop(e) => self.stmt_iterator_loop(*e)?,
-            lume_ast::Statement::PredicateLoop(e) => self.stmt_predicate_loop(*e)?,
+            lume_ast::Statement::PredicateLoop(e) => self.stmt_predicate_loop(*e),
             lume_ast::Statement::Expression(s) => {
                 let id = self.next_node_id();
                 let expr = self.expression(*s)?;
@@ -211,7 +211,7 @@ impl LowerModule<'_> {
     }
 
     #[libftrace::traced(level = Debug)]
-    fn stmt_predicate_loop(&mut self, expr: lume_ast::PredicateLoop) -> Result<lume_hir::Statement> {
+    fn stmt_predicate_loop(&mut self, expr: lume_ast::PredicateLoop) -> lume_hir::Statement {
         let id = self.next_node_id();
         let location = self.location(expr.location);
 
@@ -241,10 +241,10 @@ impl LowerModule<'_> {
             location: lume_ast::Location(0..0),
         });
 
-        Ok(lume_hir::Statement {
+        lume_hir::Statement {
             id,
             location,
             kind: lume_hir::StatementKind::InfiniteLoop(lume_hir::InfiniteLoop { id, block, location }),
-        })
+        }
     }
 }

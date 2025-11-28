@@ -119,7 +119,7 @@ impl TyInferCtx {
 
         libftrace::debug!("finished inference");
 
-        unify::verify_type_names(self)?;
+        unify::verify_type_names(self);
         self.unify_ctx()?;
 
         // We need to invalidate the global cache for method calls, since the

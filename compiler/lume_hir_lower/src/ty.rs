@@ -28,7 +28,7 @@ impl LowerModule<'_> {
         // If there is currently a visible type parameter with the same name, attempt to
         // use it's ID...
         let id = if expr.name.root.is_empty()
-            && let Some(id) = self.id_of_type_param(&expr.name.name.name().as_str())
+            && let Some(id) = self.id_of_type_param(expr.name.name.name().as_str())
         {
             id
         } else {

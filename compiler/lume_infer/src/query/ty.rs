@@ -184,7 +184,7 @@ impl TyInferCtx {
             lume_hir::IntrinsicKind::Less { .. } => ("cmp_trait", "lt"),
             lume_hir::IntrinsicKind::LessEqual { .. } => ("cmp_trait", "le"),
             lume_hir::IntrinsicKind::Greater { .. } => ("cmp_trait", "gt"),
-            lume_hir::IntrinsicKind::GreaterEqual { .. } => ("cmp_trait", "gt"),
+            lume_hir::IntrinsicKind::GreaterEqual { .. } => ("cmp_trait", "ge"),
         }
     }
 

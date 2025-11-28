@@ -92,7 +92,7 @@ impl LowerFunction<'_> {
                 lume_mir::Intrinsic::IntNegate { .. } => self.ineg(&args[0]),
 
                 // Boolean arithmetic
-                lume_mir::Intrinsic::BooleanNot { .. } => self.not(&args[0]),
+                lume_mir::Intrinsic::BooleanNot => self.not(&args[0]),
 
                 lume_mir::Intrinsic::Metadata { metadata } => {
                     let Some(value) = self.reference_static_data(&metadata.full_name) else {

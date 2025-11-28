@@ -226,8 +226,7 @@ impl Parser<'_> {
 
         let start = attributes
             .first()
-            .map(|attr| attr.location.start())
-            .unwrap_or(self.consume(TokenType::Struct)?.start());
+            .map_or(self.consume(TokenType::Struct)?.start(), |attr| attr.location.start());
 
         let builtin = self.check(TokenType::Builtin);
 
@@ -262,7 +261,7 @@ impl Parser<'_> {
 
     #[libftrace::traced(level = Trace, err)]
     fn parse_struct_field(&mut self) -> Result<Field> {
-        self.read_doc_comment()?;
+        self.read_doc_comment();
 
         let visibility = self.parse_visibility()?;
 
@@ -323,7 +322,7 @@ impl Parser<'_> {
 
     #[libftrace::traced(level = Debug, err)]
     fn parse_method_definition(&mut self) -> Result<MethodDefinition> {
-        self.read_doc_comment()?;
+        self.read_doc_comment();
 
         let visibility = self.parse_visibility()?;
         let start = visibility
@@ -440,7 +439,7 @@ impl Parser<'_> {
 
     #[libftrace::traced(level = Trace, err)]
     fn parse_trait_method(&mut self) -> Result<TraitMethodDefinition> {
-        self.read_doc_comment()?;
+        self.read_doc_comment();
 
         let start = self.expect_fn()?.start();
 
@@ -573,7 +572,7 @@ impl Parser<'_> {
     /// Parses a single enum type case, such as `V4` or `V4(String)`.
     #[libftrace::traced(level = Trace, err)]
     fn parse_enum_case(&mut self) -> Result<EnumDefinitionCase> {
-        self.read_doc_comment()?;
+        self.read_doc_comment();
 
         let name = self.parse_identifier()?;
 

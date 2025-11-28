@@ -170,8 +170,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         let ret_loc = block
             .statements
             .last()
-            .map(|stmt| stmt.location().clone_inner())
-            .unwrap_or(Location::empty());
+            .map_or(Location::empty(), |stmt| stmt.location().clone_inner());
 
         self.func.current_block_mut().return_void(ret_loc);
     }

@@ -823,8 +823,8 @@ impl FunctionTransformer<'_, '_> {
         let target_reg = self.load_operand(&target_val);
 
         let field = self.tcx().hir_expect_field(expr.field);
-        let offset = self.field_offset(&field);
-        let field_type = self.field_type(&field);
+        let offset = self.field_offset(field);
+        let field_type = self.field_type(field);
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::LoadField {

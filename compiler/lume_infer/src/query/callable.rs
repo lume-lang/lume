@@ -96,10 +96,8 @@ impl TyInferCtx {
     pub fn callable_with_name(&self, name: &Path) -> Option<Callable<'_>> {
         if let Some(method) = self.tdb().find_method(name) {
             Some(Callable::Method(method))
-        } else if let Some(func) = self.tdb().find_function(name) {
-            Some(Callable::Function(func))
         } else {
-            None
+            self.tdb().find_function(name).map(Callable::Function)
         }
     }
 
@@ -204,15 +202,15 @@ impl TyInferCtx {
     pub fn lookup_method_on<'a>(&'a self, ty: &lume_types::TypeRef, name: &Identifier) -> Option<&'a Method> {
         // First check whether any method is defined directly on the type
         let methods = self.lookup_methods_on(ty, name, BlanketLookup::Exclude);
-        if let Some(idx) = self.find_local_method(&ty.location, &methods) {
-            return Some(&methods[idx]);
+        if let Some(idx) = self.find_local_method(ty.location, &methods) {
+            return Some(methods[idx]);
         }
 
         // If not, attempt to look for blanket implementations as well.
         let methods = self.lookup_methods_on(ty, name, BlanketLookup::Include);
-        let idx = self.find_local_method(&ty.location, &methods)?;
+        let idx = self.find_local_method(ty.location, &methods)?;
 
-        Some(&methods[idx])
+        Some(methods[idx])
     }
 
     /// Find the index into `methods` with the method which is "closest" to the
@@ -223,7 +221,7 @@ impl TyInferCtx {
     /// exists within the same package as `local_loc`. If that also fails,
     /// it returns the index of the first method in the slice.
     #[libftrace::traced(level = Trace)]
-    fn find_local_method(&self, local_loc: &Location, methods: &[&Method]) -> Option<usize> {
+    fn find_local_method(&self, local_loc: Location, methods: &[&Method]) -> Option<usize> {
         // Methods defined within the same file as the given location.
         if let Some(idx) = methods
             .iter()
@@ -291,10 +289,7 @@ impl TyInferCtx {
     /// Folds all the functions which could be suggested from the given call
     /// expression into a single, emittable error message.
     #[libftrace::traced(level = Trace)]
-    fn fold_function_suggestions<'a>(
-        &self,
-        expr: &lume_hir::StaticCall,
-    ) -> Result<super::diagnostics::MissingFunction> {
+    fn fold_function_suggestions(&self, expr: &lume_hir::StaticCall) -> Result<super::diagnostics::MissingFunction> {
         let suggestion: Option<Result<error_snippet::Error>> =
             self.lookup_function_suggestions(&expr.name).first().map(|suggestion| {
                 let function_name = suggestion.name.clone();
@@ -323,14 +318,14 @@ impl TyInferCtx {
     /// Folds all the methods which could be suggested from the given call
     /// expression into a single, emittable error message.
     #[libftrace::traced(level = Trace)]
-    fn fold_method_suggestions<'a>(&self, expr: lume_hir::CallExpression) -> Result<super::diagnostics::MissingMethod> {
+    fn fold_method_suggestions(&self, expr: lume_hir::CallExpression) -> Result<super::diagnostics::MissingMethod> {
         // We don't add method suggestions to intrinsic calls.
         if let lume_hir::CallExpression::Intrinsic(expr) = &expr {
             let callee_id = *expr.kind.arguments().first().unwrap();
             let callee_type = self.type_of(callee_id)?;
 
             return Ok(super::diagnostics::MissingMethod {
-                source: expr.location.clone(),
+                source: expr.location,
                 type_name: self.new_named_type(&callee_type, false)?,
                 method_name: expr.name(),
                 suggestions: Vec::new(),
@@ -437,7 +432,7 @@ impl TyInferCtx {
                 Ok(Callable::Method(method))
             }
             expr @ lume_hir::CallExpression::Intrinsic(call) => {
-                let method = self.lookup_intrinsic_method(&call)?;
+                let method = self.lookup_intrinsic_method(call)?;
 
                 let Some(method) = method else {
                     let trait_name = self
@@ -478,7 +473,7 @@ impl TyInferCtx {
                 } else {
                     let functions = self.probe_functions(&call.name);
 
-                    let Some(func_idx) = self.find_local_function(&call.location, &functions) else {
+                    let Some(func_idx) = self.find_local_function(call.location, &functions) else {
                         let missing_func_err = self.fold_function_suggestions(call)?;
 
                         return Err(missing_func_err.into());
@@ -498,7 +493,7 @@ impl TyInferCtx {
     /// which exists within the same package as `local_loc`. If that also
     /// fails, it returns the index of the first function in the slice.
     #[libftrace::traced(level = Trace)]
-    fn find_local_function(&self, local_loc: &Location, funcs: &[&Function]) -> Option<usize> {
+    fn find_local_function(&self, local_loc: Location, funcs: &[&Function]) -> Option<usize> {
         // Functions defined within the same file as the given location.
         if let Some(idx) = funcs
             .iter()
@@ -647,7 +642,7 @@ impl TyInferCtx {
         let params = &signature.params;
 
         let args = match (expr, signature.is_instanced()) {
-            (lume_hir::CallExpression::Instanced(call), true) => vec![&[call.callee][..], &call.arguments[..]].concat(),
+            (lume_hir::CallExpression::Instanced(call), true) => [&[call.callee][..], &call.arguments[..]].concat(),
             (lume_hir::CallExpression::Intrinsic(call), true) => call.kind.arguments(),
             (lume_hir::CallExpression::Static(call), _) => call.arguments.clone(),
             (lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_), false) => {
@@ -688,12 +683,12 @@ impl TyInferCtx {
         }
 
         for (idx, param) in signature.params.iter().enumerate() {
-            let param_ty = self.instantiate_type_from(&param.ty, &signature.type_params, &type_args);
+            let param_ty = self.instantiate_type_from(&param.ty, signature.type_params, &type_args);
 
             param_ty.clone_into(&mut inst.params[idx].ty);
         }
 
-        self.instantiate_type_from(&signature.ret_ty, &signature.type_params, &type_args)
+        self.instantiate_type_from(signature.ret_ty, signature.type_params, &type_args)
             .clone_into(&mut inst.ret_ty);
 
         Ok(inst)
@@ -702,9 +697,9 @@ impl TyInferCtx {
     /// Instantiates a function signature against the given type arguments,
     /// resolving the parameters and return type within the signature.
     #[libftrace::traced(level = Trace)]
-    pub fn instantiate_function<'a>(
+    pub fn instantiate_function(
         &self,
-        sig: lume_types::FunctionSig<'a>,
+        sig: lume_types::FunctionSig<'_>,
         type_args: &[TypeRef],
     ) -> lume_types::FunctionSigOwned {
         self.instantiate_signature_isolate(sig, sig.type_params, type_args)
@@ -713,9 +708,9 @@ impl TyInferCtx {
     /// Instantiates a function signature against the given type arguments,
     /// resolving the parameters and return type within the signature.
     #[libftrace::traced(level = Trace)]
-    pub fn instantiate_signature_isolate<'a>(
+    pub fn instantiate_signature_isolate(
         &self,
-        sig: lume_types::FunctionSig<'a>,
+        sig: lume_types::FunctionSig<'_>,
         type_params: &[NodeId],
         type_args: &[TypeRef],
     ) -> lume_types::FunctionSigOwned {
@@ -814,7 +809,7 @@ impl TyInferCtx {
                 let mut type_args = self.mk_type_refs_generic(hir_type_args, &type_parameters)?;
 
                 let callee_type = self.type_of(callee)?;
-                type_args.extend(callee_type.bound_types.into_iter());
+                type_args.extend(callee_type.bound_types);
 
                 Ok(type_args)
             }
@@ -824,7 +819,7 @@ impl TyInferCtx {
     /// Attempts the infer the instantiated type of `type_param_id` from the
     /// given set of parameter type and matching argument type.
     #[libftrace::traced(level = Trace)]
-    fn instantiate_argument_type<'a>(
+    fn instantiate_argument_type(
         &self,
         type_param_id: NodeId,
         param_type: &TypeRef,
@@ -853,17 +848,17 @@ impl TyInferCtx {
         match callable {
             Callable::Method(method) => match self.hir_expect_node(method.id) {
                 lume_hir::Node::Method(method) => Ok(FunctionSigOwned {
-                    params: params_of(self, method.id, &method.parameters)?,
+                    params: params_of(self, method.id, &method.parameters),
                     type_params: method.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                 }),
                 lume_hir::Node::TraitMethodDef(method) => Ok(FunctionSigOwned {
-                    params: params_of(self, method.id, &method.parameters)?,
+                    params: params_of(self, method.id, &method.parameters),
                     type_params: method.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                 }),
                 lume_hir::Node::TraitMethodImpl(method) => Ok(FunctionSigOwned {
-                    params: params_of(self, method.id, &method.parameters)?,
+                    params: params_of(self, method.id, &method.parameters),
                     type_params: method.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                 }),
@@ -875,7 +870,7 @@ impl TyInferCtx {
                 };
 
                 Ok(FunctionSigOwned {
-                    params: params_of(self, func.id, &func.parameters)?,
+                    params: params_of(self, func.id, &func.parameters),
                     type_params: func.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&func.return_type, func.id)?,
                 })
@@ -894,17 +889,17 @@ impl TyInferCtx {
             Callable::Method(method) => {
                 let mut signature = match self.hir_expect_node(method.id) {
                     lume_hir::Node::Method(method) => FunctionSigOwned {
-                        params: params_of(self, method.id, &method.parameters)?,
+                        params: params_of(self, method.id, &method.parameters),
                         type_params: method.type_parameters.clone(),
                         ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                     },
                     lume_hir::Node::TraitMethodDef(method) => FunctionSigOwned {
-                        params: params_of(self, method.id, &method.parameters)?,
+                        params: params_of(self, method.id, &method.parameters),
                         type_params: method.type_parameters.clone(),
                         ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                     },
                     lume_hir::Node::TraitMethodImpl(method) => FunctionSigOwned {
-                        params: params_of(self, method.id, &method.parameters)?,
+                        params: params_of(self, method.id, &method.parameters),
                         type_params: method.type_parameters.clone(),
                         ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                     },
@@ -923,7 +918,7 @@ impl TyInferCtx {
                 };
 
                 Ok(FunctionSigOwned {
-                    params: params_of(self, func.id, &func.parameters)?,
+                    params: params_of(self, func.id, &func.parameters),
                     type_params: func.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&func.return_type, func.id)?,
                 })
@@ -1034,18 +1029,18 @@ impl TyInferCtx {
     }
 }
 
-fn param_of(tcx: &TyInferCtx, parent: NodeId, param: &lume_hir::Parameter) -> Result<lume_types::Parameter> {
+fn param_of(tcx: &TyInferCtx, parent: NodeId, param: &lume_hir::Parameter) -> lume_types::Parameter {
     let param_ty = tcx.mk_type_ref_from(&param.param_type, parent).unwrap();
 
-    Ok(lume_types::Parameter {
+    lume_types::Parameter {
         idx: param.index,
         name: param.name.to_string(),
         ty: param_ty,
         vararg: param.vararg,
         location: param.location,
-    })
+    }
 }
 
-fn params_of(tcx: &TyInferCtx, parent: NodeId, params: &[lume_hir::Parameter]) -> Result<Vec<lume_types::Parameter>> {
-    params.into_iter().map(|param| param_of(tcx, parent, param)).collect()
+fn params_of(tcx: &TyInferCtx, parent: NodeId, params: &[lume_hir::Parameter]) -> Vec<lume_types::Parameter> {
+    params.iter().map(|param| param_of(tcx, parent, param)).collect()
 }

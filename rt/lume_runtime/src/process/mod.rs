@@ -69,7 +69,7 @@ pub extern "C" fn abort() {
         backtrace::resolve(frame.ip(), |symbol| {
             let mut info = SymbolInfo {
                 idx,
-                ip: frame.ip().cast_const() as *const _,
+                ip: frame.ip().cast_const().cast(),
                 ..Default::default()
             };
 
@@ -86,7 +86,7 @@ pub extern "C" fn abort() {
         if !resolved {
             println!("{}", SymbolInfo {
                 idx,
-                ip: frame.ip().cast_const() as *const _,
+                ip: frame.ip().cast_const().cast(),
                 ..Default::default()
             });
         }

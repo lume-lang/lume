@@ -57,7 +57,7 @@ struct IntrinsicFunctions {
 ///
 /// Returns `Err` if the compiler returned an error while compiling the MIR.
 #[libftrace::traced(level = Debug, err)]
-pub fn generate<'ctx>(mir: ModuleMap) -> Result<Vec<u8>> {
+pub fn generate(mir: ModuleMap) -> Result<Vec<u8>> {
     let object = CraneliftBackend::new(mir)?.generate()?;
 
     object.emit().map_diagnostic()
@@ -170,7 +170,7 @@ impl CraneliftBackend {
         }
 
         if let Some(debug_ctx) = debug_ctx.as_mut() {
-            debug_ctx.populate_function_units(self, &function_metadata)?;
+            debug_ctx.populate_function_units(self, &function_metadata);
         }
 
         let module: ObjectModule = Rc::into_inner(self.module.take().unwrap())
@@ -185,7 +185,7 @@ impl CraneliftBackend {
             debug_ctx.finish(&mut object)?;
         }
 
-        unwind_ctx.write(self, &mut object)?;
+        unwind_ctx.write(self, &mut object);
 
         Ok(object)
     }
@@ -285,7 +285,7 @@ impl CraneliftBackend {
         }
 
         if let Some(debug_ctx) = debug_ctx.as_mut() {
-            debug_ctx.define_function(func.id, &ctx);
+            debug_ctx.define_function(func.id, ctx);
         }
 
         Ok(())
@@ -327,7 +327,7 @@ impl CraneliftBackend {
     pub(crate) fn declare_static_string(&self, value: &str) -> DataId {
         let mut bytes = value.as_bytes().to_vec();
 
-        let has_terminator = bytes.last().map_or(false, |b| *b == 0);
+        let has_terminator = bytes.last().is_some_and(|b| *b == 0);
         if !has_terminator {
             bytes.push(0);
         }
@@ -338,6 +338,7 @@ impl CraneliftBackend {
     pub(crate) fn calculate_source_loc(&self, loc: Location) -> SourceLoc {
         let (idx, _) = self.location_indices.try_write().unwrap().insert_full(loc);
 
+        #[allow(clippy::cast_possible_truncation)]
         SourceLoc::new(idx as u32)
     }
 

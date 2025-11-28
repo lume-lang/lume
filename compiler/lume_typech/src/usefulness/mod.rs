@@ -69,7 +69,7 @@ impl TyCheckCtx {
             panic!("bug!: expected to find `EnumDefinition` because of exhausted pattern types");
         };
 
-        let mut missing_variants: IndexSet<usize> = IndexSet::from_iter(0..enum_def.cases.len());
+        let mut missing_variants: IndexSet<usize> = (0..enum_def.cases.len()).collect();
 
         for pattern in patterns {
             if let lume_hir::PatternKind::Variant(variant_pattern) = &pattern.kind {
@@ -122,10 +122,10 @@ impl TyCheckCtx {
                         .mk_type_ref_from(enum_field, enum_def.id)?
                         .with_location(ty.location);
 
-                    let subpatterns = column_of_patterns(&matching_patterns, field_idx)?;
+                    let subpatterns = column_of_patterns(&matching_patterns, field_idx);
                     let parents = &[parents, &[(variant_pattern, field_idx)][..]].concat();
 
-                    self.do_patterns_exhaust_type(&enum_field_ty, &subpatterns, &parents)?;
+                    self.do_patterns_exhaust_type(&enum_field_ty, &subpatterns, parents)?;
                 }
             }
         }
@@ -251,10 +251,7 @@ fn matching_variant_patterns<'pat>(
 ///
 /// when passing the patterns of the `switch` expression and a `column` of
 /// 1, this method returns the patterns `[Two::A, Two::B, Two::C]`.
-fn column_of_patterns<'pat>(
-    patterns: &[&'pat lume_hir::Pattern],
-    column: usize,
-) -> Result<Vec<&'pat lume_hir::Pattern>> {
+fn column_of_patterns<'pat>(patterns: &[&'pat lume_hir::Pattern], column: usize) -> Vec<&'pat lume_hir::Pattern> {
     let mut subpatterns = Vec::new();
 
     for pattern in patterns {
@@ -270,5 +267,5 @@ fn column_of_patterns<'pat>(
         subpatterns.push(subpattern);
     }
 
-    Ok(subpatterns)
+    subpatterns
 }

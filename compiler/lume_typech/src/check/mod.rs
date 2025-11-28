@@ -18,8 +18,8 @@ impl TyCheckCtx {
     /// found within the context.
     #[libftrace::traced(level = Info, err)]
     pub fn typecheck(&mut self) -> Result<()> {
-        self.typech_expressions()?;
-        self.typech_traits()?;
+        self.typech_expressions();
+        self.typech_traits();
 
         self.dcx().ensure_untainted()?;
 

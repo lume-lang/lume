@@ -88,6 +88,7 @@ impl std::fmt::Display for ModuleMap {
 
 /// Defines a function signature, such as parameter types and return type,
 /// as well as any declared modifiers such as `external` or `inline`.
+#[expect(clippy::struct_excessive_bools, reason = "bools are unrelated to each other")]
 #[derive(Serialize, Deserialize, Default, Debug, Clone, PartialEq, Eq)]
 pub struct Signature {
     /// Defines whether the function is externally defined or not.
@@ -1128,7 +1129,7 @@ impl std::fmt::Display for Intrinsic {
         match &self {
             Self::FloatEq { .. } | Self::IntEq { .. } | Self::BooleanEq => write!(f, "=="),
             Self::FloatNe { .. } | Self::IntNe { .. } | Self::BooleanNe => write!(f, "!="),
-            Self::FloatLe { .. } | Self::IntLe { .. } => write!(f, "<"),
+            Self::FloatLe { .. } | Self::IntLe { .. } => write!(f, "<="),
             Self::FloatLt { .. } | Self::IntLt { .. } => write!(f, "<"),
             Self::FloatGe { .. } | Self::IntGe { .. } => write!(f, ">="),
             Self::FloatGt { .. } | Self::IntGt { .. } => write!(f, ">"),

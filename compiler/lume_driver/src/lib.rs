@@ -129,12 +129,10 @@ impl Compiler {
     /// Generates MIR for all the modules within the given state object.
     #[cfg(feature = "codegen")]
     #[libftrace::traced(level = Debug)]
-    fn codegen(self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<lume_mir::ModuleMap> {
+    fn codegen(self, tcx: &TyCheckCtx, tir: TypedIR) -> lume_mir::ModuleMap {
         let opts = self.gcx.session.options.clone();
         let mir = lume_mir_lower::ModuleTransformer::transform(self.package, tcx, tir, opts);
 
-        let mir = lume_mir_opt::Optimizer::optimize(tcx, mir);
-
-        Ok(mir)
+        lume_mir_opt::Optimizer::optimize(tcx, mir)
     }
 }

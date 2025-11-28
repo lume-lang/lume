@@ -49,7 +49,7 @@ impl Driver {
         let mut dependency_hir = lume_hir::map::Map::empty(PackageId::empty());
 
         for dependency in dependencies {
-            if !crate::incremental::needs_compilation(&gcx, &dependency)? {
+            if !crate::incremental::needs_compilation(&gcx, &dependency) {
                 objects.push(lume_linker::ObjectSource::Cache {
                     name: dependency.name.clone(),
                     path: gcx.obj_bc_path_of(&dependency.name),
@@ -134,7 +134,7 @@ impl Compiler {
         }
 
         let (tcx, typed_ir) = compiler.type_check(sources)?;
-        let mir = compiler.codegen(&tcx, typed_ir)?;
+        let mir = compiler.codegen(&tcx, typed_ir);
 
         Ok(CompiledPackage { tcx, mir })
     }

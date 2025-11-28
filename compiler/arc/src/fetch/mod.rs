@@ -63,10 +63,7 @@ pub fn clean_local_cache_dir(dry_run: bool) -> Result<()> {
         return Ok(());
     }
 
-    let cached_packages = match std::fs::read_dir(lcd) {
-        Ok(packages) => packages,
-        Err(err) => return Err(err.into()),
-    };
+    let cached_packages = std::fs::read_dir(lcd)?;
 
     for entry in cached_packages {
         let cached_pkg_path = match entry {

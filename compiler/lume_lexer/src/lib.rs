@@ -897,6 +897,7 @@ mod tests {
     use super::*;
 
     #[track_caller]
+    #[allow(clippy::type_complexity)]
     pub fn assert_lex<'src>(
         source: &'src str,
         tokens: &[(

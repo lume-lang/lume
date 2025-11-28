@@ -16,7 +16,7 @@ impl TyCheckCtx {
     /// If the [`Method`] is not valid for the given expression, returns
     /// [`CallableCheckResult::Failure`] with one-or-more reasons.
     #[libftrace::traced(level = Trace, err, ret)]
-    pub(crate) fn check_method<'a>(&self, method: &'a Method, expr: lume_hir::CallExpression) -> Result<bool> {
+    pub(crate) fn check_method(&self, method: &Method, expr: lume_hir::CallExpression) -> Result<bool> {
         self.check_signature(Callable::Method(method), expr)
     }
 
@@ -52,7 +52,7 @@ impl TyCheckCtx {
             // ```lm
             // Foo::foo(a);
             // ```
-            (lume_hir::CallExpression::Instanced(call), true) => vec![&[call.callee][..], &call.arguments[..]].concat(),
+            (lume_hir::CallExpression::Instanced(call), true) => [&[call.callee][..], &call.arguments[..]].concat(),
             (lume_hir::CallExpression::Intrinsic(call), true) => call.kind.arguments(),
             (lume_hir::CallExpression::Static(call), _) => call.arguments.clone(),
             (lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_), false) => {
