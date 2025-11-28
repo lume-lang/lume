@@ -1,7 +1,7 @@
 use error_snippet::Result;
 
+use crate::LowerModule;
 use crate::errors::*;
-use crate::{LowerModule, err};
 
 impl LowerModule<'_> {
     /// Lowers an import path to an HIR path.
@@ -13,7 +13,12 @@ impl LowerModule<'_> {
         let location = self.location(path.location);
 
         let Some((name, root)) = path.path.split_last() else {
-            return Err(err!(self, location, InvalidNamespacePath, path, Box::new(path.path)));
+            return Err(InvalidNamespacePath {
+                source: self.file.clone(),
+                range: location.index.clone(),
+                path: Box::new(path.path),
+            }
+            .into());
         };
 
         let name = lume_hir::PathSegment::namespace(self.identifier(name.clone()));

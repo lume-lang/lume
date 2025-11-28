@@ -595,7 +595,12 @@ impl LowerModule<'_> {
         let location = self.location(expr.location().clone());
 
         let Some(var_source) = self.locals.retrieve(&expr.name.name) else {
-            return Err(err!(self, location, UndeclaredVariable, name, expr.name.name));
+            return Err(UndeclaredVariable {
+                source: self.file.clone(),
+                range: location.index.clone(),
+                name: expr.name.name,
+            }
+            .into());
         };
 
         Ok(lume_hir::Expression {
