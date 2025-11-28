@@ -13,10 +13,10 @@ impl Parser<'_> {
             TokenKind::Import => self.parse_import(),
             TokenKind::Namespace => self.parse_namespace(),
             TokenKind::Impl => self.parse_implementation(),
-            TokenKind::Fn => self.parse_fn(),
-            TokenKind::Struct => self.parse_struct(),
-            TokenKind::Trait => self.parse_trait(),
-            TokenKind::Enum => self.parse_enum(),
+            TokenKind::Fn => self.parse_function(),
+            TokenKind::Struct => self.parse_struct_definition(),
+            TokenKind::Trait => self.parse_trait_definition(),
+            TokenKind::Enum => self.parse_enum_definition(),
             TokenKind::Use => self.parse_trait_implementation(),
             k => Err(InvalidTopLevelStatement {
                 source: self.source.clone(),
@@ -32,7 +32,7 @@ impl Parser<'_> {
         let visibility = self.parse_visibility()?;
 
         match self.token().kind {
-            TokenKind::Fn => self.parse_fn_visibility(visibility),
+            TokenKind::Fn => self.parse_function_visibility(visibility),
             TokenKind::Struct => self.parse_struct_visibility(visibility),
             TokenKind::Trait => self.parse_trait_visibility(visibility),
             TokenKind::Enum => self.parse_enum_visibility(visibility),
@@ -85,79 +85,45 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_implementation(&mut self) -> Result<TopLevelExpression> {
-        let start = self.expect_impl()?.start();
+    fn parse_visibility(&mut self) -> Result<Option<Visibility>> {
+        match self.token().kind {
+            TokenKind::Pub => {
+                let token = self.consume(TokenType::Pub)?;
 
-        let type_parameters = self.parse_type_parameters()?;
-        let name = self.parse_type()?;
-        let methods = self.consume_curly_seq(Parser::parse_method)?;
+                if self.check(TokenType::LeftParen) {
+                    self.consume(TokenType::Internal)?;
 
-        let end = self.previous_token().end();
+                    let start = token.start();
+                    let end = self.consume(TokenType::RightParen)?.end();
 
-        Ok(TopLevelExpression::Impl(Box::new(Implementation {
-            name: Box::new(name),
-            methods,
-            type_parameters,
-            location: (start..end).into(),
-        })))
-    }
+                    return Ok(Some(Visibility::Internal {
+                        location: (start..end).into(),
+                    }));
+                }
 
-    #[libftrace::traced(level = Trace, err)]
-    fn parse_fn(&mut self) -> Result<TopLevelExpression> {
-        let visibility = self.parse_visibility()?;
-
-        self.parse_fn_visibility(visibility)
-    }
-
-    #[libftrace::traced(level = Debug, err)]
-    fn parse_fn_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
-        let start = visibility
-            .as_ref()
-            .map_or(self.expect_fn()?.start(), |vis| vis.location().start());
-
-        let external = self.check_external();
-        let name = self.parse_callable_name_or_err(
-            ExpectedFunctionName {
-                source: self.source.clone(),
-                range: self.token().index,
+                Ok(Some(Visibility::Public {
+                    location: token.index.into(),
+                }))
             }
-            .into(),
-        )?;
-
-        let type_parameters = self.parse_type_parameters()?;
-        let parameters = self.parse_fn_params()?;
-        let return_type = self.parse_fn_return_type()?;
-        let block = self.parse_opt_external_block(external)?;
-
-        let end = self.previous_token().end();
-
-        let function_def = FunctionDefinition {
-            visibility,
-            external,
-            name,
-            parameters,
-            type_parameters,
-            return_type,
-            block,
-            location: (start..end).into(),
-            documentation: self.doc_token.take(),
-        };
-
-        Ok(TopLevelExpression::FunctionDefinition(Box::new(function_def)))
+            TokenKind::Priv => Ok(Some(Visibility::Private {
+                location: self.consume(TokenType::Priv)?.index.into(),
+            })),
+            _ => Ok(None),
+        }
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_fn_params(&mut self) -> Result<Vec<Parameter>> {
+    fn parse_parameters(&mut self) -> Result<Vec<Parameter>> {
         // If no opening parenthesis, no parameters are defined.
         if !self.peek(TokenType::LeftParen) {
             return Ok(Vec::new());
         }
 
-        self.consume_paren_seq(Parser::parse_fn_param)
+        self.consume_paren_seq(Parser::parse_parameter)
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_fn_param(&mut self) -> Result<Parameter> {
+    fn parse_parameter(&mut self) -> Result<Parameter> {
         if let Some(token) = self.consume_if(TokenType::SelfRef) {
             let location = token.index;
 
@@ -194,7 +160,7 @@ impl Parser<'_> {
 
     /// Parses the return type of the current function definition.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_fn_return_type(&mut self) -> Result<Option<Box<Type>>> {
+    fn parse_return_type(&mut self) -> Result<Option<Box<Type>>> {
         if self.consume_if(TokenType::Arrow).is_none() {
             return Ok(None);
         }
@@ -202,8 +168,52 @@ impl Parser<'_> {
         Ok(Some(Box::new(self.parse_type()?)))
     }
 
+    #[libftrace::traced(level = Trace, err)]
+    fn parse_function(&mut self) -> Result<TopLevelExpression> {
+        let visibility = self.parse_visibility()?;
+
+        self.parse_function_visibility(visibility)
+    }
+
     #[libftrace::traced(level = Debug, err)]
-    fn parse_struct(&mut self) -> Result<TopLevelExpression> {
+    fn parse_function_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
+        let start = visibility
+            .as_ref()
+            .map_or(self.expect_fn()?.start(), |vis| vis.location().start());
+
+        let external = self.check_external();
+        let name = self.parse_callable_name_or_err(
+            ExpectedFunctionName {
+                source: self.source.clone(),
+                range: self.token().index,
+            }
+            .into(),
+        )?;
+
+        let type_parameters = self.parse_type_parameters()?;
+        let parameters = self.parse_parameters()?;
+        let return_type = self.parse_return_type()?;
+        let block = self.parse_opt_external_block(external)?;
+
+        let end = self.previous_token().end();
+
+        let function_def = FunctionDefinition {
+            visibility,
+            external,
+            name,
+            parameters,
+            type_parameters,
+            return_type,
+            block,
+            location: (start..end).into(),
+            documentation: self.doc_token.take(),
+        };
+
+        Ok(TopLevelExpression::FunctionDefinition(Box::new(function_def)))
+    }
+
+    #[libftrace::traced(level = Debug, err)]
+    fn parse_struct_definition(&mut self) -> Result<TopLevelExpression> {
         let visibility = self.parse_visibility()?;
 
         self.parse_struct_visibility(visibility)
@@ -251,34 +261,6 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_visibility(&mut self) -> Result<Option<Visibility>> {
-        match self.token().kind {
-            TokenKind::Pub => {
-                let token = self.consume(TokenType::Pub)?;
-
-                if self.check(TokenType::LeftParen) {
-                    self.consume(TokenType::Internal)?;
-
-                    let start = token.start();
-                    let end = self.consume(TokenType::RightParen)?.end();
-
-                    return Ok(Some(Visibility::Internal {
-                        location: (start..end).into(),
-                    }));
-                }
-
-                Ok(Some(Visibility::Public {
-                    location: token.index.into(),
-                }))
-            }
-            TokenKind::Priv => Ok(Some(Visibility::Private {
-                location: self.consume(TokenType::Priv)?.index.into(),
-            })),
-            _ => Ok(None),
-        }
-    }
-
-    #[libftrace::traced(level = Trace, err)]
     fn parse_struct_field(&mut self) -> Result<Field> {
         self.read_doc_comment()?;
 
@@ -321,8 +303,26 @@ impl Parser<'_> {
         })
     }
 
+    #[libftrace::traced(level = Trace, err)]
+    fn parse_implementation(&mut self) -> Result<TopLevelExpression> {
+        let start = self.expect_impl()?.start();
+
+        let type_parameters = self.parse_type_parameters()?;
+        let name = self.parse_type()?;
+        let methods = self.consume_curly_seq(Parser::parse_method_definition)?;
+
+        let end = self.previous_token().end();
+
+        Ok(TopLevelExpression::Impl(Box::new(Implementation {
+            name: Box::new(name),
+            methods,
+            type_parameters,
+            location: (start..end).into(),
+        })))
+    }
+
     #[libftrace::traced(level = Debug, err)]
-    fn parse_method(&mut self) -> Result<MethodDefinition> {
+    fn parse_method_definition(&mut self) -> Result<MethodDefinition> {
         self.read_doc_comment()?;
 
         let visibility = self.parse_visibility()?;
@@ -344,8 +344,8 @@ impl Parser<'_> {
 
         let name = self.parse_method_name()?;
         let type_parameters = self.parse_type_parameters()?;
-        let parameters = self.parse_fn_params()?;
-        let return_type = self.parse_fn_return_type()?;
+        let parameters = self.parse_parameters()?;
+        let return_type = self.parse_return_type()?;
         let block = self.parse_opt_external_block(external)?;
 
         let end = self.token_at(self.index - 1).end();
@@ -395,7 +395,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_trait(&mut self) -> Result<TopLevelExpression> {
+    fn parse_trait_definition(&mut self) -> Result<TopLevelExpression> {
         let visibility = self.parse_visibility()?;
 
         self.parse_trait_visibility(visibility)
@@ -453,8 +453,8 @@ impl Parser<'_> {
         };
 
         let type_parameters = self.parse_type_parameters()?;
-        let parameters = self.parse_fn_params()?;
-        let return_type = self.parse_fn_return_type()?;
+        let parameters = self.parse_parameters()?;
+        let return_type = self.parse_return_type()?;
         let block = if self.check(TokenType::Semicolon) {
             None
         } else {
@@ -475,7 +475,62 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_enum(&mut self) -> Result<TopLevelExpression> {
+    fn parse_trait_implementation(&mut self) -> Result<TopLevelExpression> {
+        let start = self.consume(TokenType::Use)?.start();
+        let type_parameters = self.parse_type_parameters()?;
+
+        let name = self.parse_type()?;
+
+        self.consume(TokenType::In)?;
+        let target = self.parse_type()?;
+
+        let methods = self.consume_curly_seq(Parser::parse_trait_method_implementation)?;
+        let end = self.previous_token().end();
+
+        Ok(TopLevelExpression::TraitImpl(Box::new(TraitImplementation {
+            type_parameters,
+            name: Box::new(name),
+            target: Box::new(target),
+            methods,
+            location: (start..end).into(),
+        })))
+    }
+
+    #[libftrace::traced(level = Trace, err)]
+    fn parse_trait_method_implementation(&mut self) -> Result<TraitMethodImplementation> {
+        let visibility = self.parse_visibility()?;
+
+        let start = visibility.map_or(self.expect_fn()?.start(), |v| v.location().start());
+        let external = self.check_external();
+
+        let Ok(name) = self.parse_callable_name() else {
+            return Err(ExpectedFunctionName {
+                source: self.source.clone(),
+                range: self.token().index,
+            }
+            .into());
+        };
+
+        let type_parameters = self.parse_type_parameters()?;
+        let parameters = self.parse_parameters()?;
+        let return_type = self.parse_return_type()?;
+        let block = self.parse_opt_external_block(external)?;
+
+        let end = self.previous_token().end();
+
+        Ok(TraitMethodImplementation {
+            external,
+            name,
+            parameters,
+            type_parameters,
+            return_type,
+            block,
+            location: (start..end).into(),
+        })
+    }
+
+    #[libftrace::traced(level = Debug, err)]
+    fn parse_enum_definition(&mut self) -> Result<TopLevelExpression> {
         let visibility = self.parse_visibility()?;
 
         self.parse_enum_visibility(visibility)
@@ -538,61 +593,6 @@ impl Parser<'_> {
             parameters,
             location: (start..end).into(),
             documentation: self.doc_token.take(),
-        })
-    }
-
-    #[libftrace::traced(level = Debug, err)]
-    fn parse_trait_implementation(&mut self) -> Result<TopLevelExpression> {
-        let start = self.consume(TokenType::Use)?.start();
-        let type_parameters = self.parse_type_parameters()?;
-
-        let name = self.parse_type()?;
-
-        self.consume(TokenType::In)?;
-        let target = self.parse_type()?;
-
-        let methods = self.consume_curly_seq(Parser::parse_trait_method_implementation)?;
-        let end = self.previous_token().end();
-
-        Ok(TopLevelExpression::TraitImpl(Box::new(TraitImplementation {
-            type_parameters,
-            name: Box::new(name),
-            target: Box::new(target),
-            methods,
-            location: (start..end).into(),
-        })))
-    }
-
-    #[libftrace::traced(level = Trace, err)]
-    fn parse_trait_method_implementation(&mut self) -> Result<TraitMethodImplementation> {
-        let visibility = self.parse_visibility()?;
-
-        let start = visibility.map_or(self.expect_fn()?.start(), |v| v.location().start());
-        let external = self.check_external();
-
-        let Ok(name) = self.parse_callable_name() else {
-            return Err(ExpectedFunctionName {
-                source: self.source.clone(),
-                range: self.token().index,
-            }
-            .into());
-        };
-
-        let type_parameters = self.parse_type_parameters()?;
-        let parameters = self.parse_fn_params()?;
-        let return_type = self.parse_fn_return_type()?;
-        let block = self.parse_opt_external_block(external)?;
-
-        let end = self.previous_token().end();
-
-        Ok(TraitMethodImplementation {
-            external,
-            name,
-            parameters,
-            type_parameters,
-            return_type,
-            block,
-            location: (start..end).into(),
         })
     }
 }

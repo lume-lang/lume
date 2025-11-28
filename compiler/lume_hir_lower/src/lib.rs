@@ -51,26 +51,6 @@ const DEFAULT_STD_IMPORTS: &[&str] = &[
     "RangeInclusive",
 ];
 
-#[macro_export]
-macro_rules! err {
-    (
-        $self:expr,
-        $location:expr,
-        $kind:ident $(,)?
-        $(
-            $field: ident,
-            $value: expr
-        ),*
-    ) => {
-        $kind {
-            source: $self.file.clone(),
-            range: $location.index.clone(),
-            $( $field: $value ),*
-        }
-        .into()
-    };
-}
-
 pub struct LowerState<'a> {
     /// Defines the package of the current project.
     package: &'a Package,
