@@ -64,22 +64,6 @@ impl Node {
         }
     }
 
-    pub fn as_ref(&self) -> NodeRef<'_> {
-        match self {
-            Self::Function(n) => NodeRef::Function(n),
-            Self::Type(n) => NodeRef::Type(n),
-            Self::TraitImpl(n) => NodeRef::TraitImpl(n),
-            Self::Impl(n) => NodeRef::Impl(n),
-            Self::Field(n) => NodeRef::Field(n),
-            Self::Method(n) => NodeRef::Method(n),
-            Self::TraitMethodDef(n) => NodeRef::TraitMethodDef(n),
-            Self::TraitMethodImpl(n) => NodeRef::TraitMethodImpl(n),
-            Self::Pattern(n) => NodeRef::Pattern(n),
-            Self::Statement(n) => NodeRef::Statement(n),
-            Self::Expression(n) => NodeRef::Expression(n),
-        }
-    }
-
     pub fn is_item(&self) -> bool {
         match self {
             Self::Function(_)
@@ -113,68 +97,6 @@ pub enum NodeType {
     Pattern,
     Statement,
     Expression,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum NodeRef<'a> {
-    Function(&'a FunctionDefinition),
-    Type(&'a TypeDefinition),
-    TraitImpl(&'a TraitImplementation),
-    Impl(&'a Implementation),
-    Field(&'a Field),
-    Method(&'a MethodDefinition),
-    TraitMethodDef(&'a TraitMethodDefinition),
-    TraitMethodImpl(&'a TraitMethodImplementation),
-    Pattern(&'a Pattern),
-    Statement(&'a Statement),
-    Expression(&'a Expression),
-}
-
-impl NodeRef<'_> {
-    pub fn id(&self) -> NodeId {
-        match self {
-            Self::Function(n) => n.id,
-            Self::Type(n) => n.id(),
-            Self::TraitImpl(n) => n.id,
-            Self::Impl(n) => n.id,
-            Self::Field(def) => def.id,
-            Self::Method(def) => def.id,
-            Self::TraitMethodDef(def) => def.id,
-            Self::TraitMethodImpl(def) => def.id,
-            Self::Pattern(def) => def.id,
-            Self::Statement(def) => def.id,
-            Self::Expression(def) => def.id,
-        }
-    }
-
-    pub fn type_parameters(&self) -> &[NodeId] {
-        match self {
-            Self::Function(def) => &def.type_parameters,
-            Self::Type(def) => def.type_parameters(),
-            Self::TraitImpl(def) => &def.type_parameters,
-            Self::Impl(def) => &def.type_parameters,
-            Self::Method(def) => &def.type_parameters,
-            Self::TraitMethodDef(def) => &def.type_parameters,
-            Self::TraitMethodImpl(def) => &def.type_parameters,
-            Self::Field(_) | Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => &[],
-        }
-    }
-
-    pub fn location(&self) -> Location {
-        match self {
-            Self::Function(n) => n.location,
-            Self::Type(n) => n.location(),
-            Self::TraitImpl(n) => n.location,
-            Self::Impl(n) => n.location,
-            Self::Field(n) => n.location,
-            Self::Method(n) => n.location,
-            Self::TraitMethodDef(n) => n.location,
-            Self::TraitMethodImpl(n) => n.location,
-            Self::Pattern(n) => n.location,
-            Self::Statement(n) => n.location,
-            Self::Expression(n) => n.location,
-        }
-    }
 }
 
 /// Trait for HIR nodes which have some location attached.
@@ -1208,7 +1130,7 @@ impl Expression {
         )
     }
 
-    /// Creates a new [`Expression`] with a [`LiteralKind::U64`] value.
+    /// Creates a new [`Expression`] with a [`IntKind::U64`] value.
     ///
     /// # Errors
     ///

@@ -1764,8 +1764,8 @@ pub enum TypeKind {
 
     /// Defines a string type.
     ///
-    /// While the [`Type::String`] type is a separate type, it is most often
-    /// lowering into a pointer to a [`Type::Integer`] type.
+    /// While the [`TypeKind::String`] type is a separate type, it is most often
+    /// lowering into a pointer to a [`TypeKind::Integer`] type.
     String,
 
     /// Defines a pointer type.

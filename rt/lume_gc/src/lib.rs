@@ -1,7 +1,7 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_ptr_alignment)]
 
-pub(crate) mod alloc;
+pub mod alloc;
 pub(crate) mod arch;
 
 use alloc::with_allocator;
@@ -45,7 +45,7 @@ impl CompiledFunctionMetadata {
     }
 
     /// Gets the offset of the given address inside the function
-    /// address interval as [`Some(offset)`], if the address exists within it.
+    /// address interval as [`Some`], if the address exists within it.
     ///
     /// Otherwise, returns [`None`].
     #[inline]
@@ -168,7 +168,7 @@ fn find_current_stack_map_of_addr(pc: *const u8) -> Option<&'static CompiledFunc
 /// Represents a single stack map, corresponding to a specific
 /// safepoint location within a compiled Lume function.
 #[derive(Debug)]
-pub(crate) struct FrameStackMap {
+pub struct FrameStackMap {
     pub map: &'static CompiledFunctionMetadata,
     pub frame_pointer: *const u8,
     pub program_counter: *const u8,
@@ -382,7 +382,7 @@ pub fn allocate_object(size: usize, metadata: *const TypeMetadata) -> *mut u8 {
 /// can be used as a function pointer in Cranelift.
 ///
 /// This function will drop all allocations which have been made with the global
-/// allocator, [`GA`].
+/// allocator.
 #[inline]
 pub fn drop_allocations() {
     libftrace::trace!("dropping all allocations");

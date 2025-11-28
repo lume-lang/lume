@@ -1,11 +1,11 @@
 pub use {error_snippet, owo_colors};
 
-/// Asserts that the given [`DiagCtx`] renders the same output as
+/// Asserts that the given [`lume_errors::DiagCtx`] renders the same output as
 /// has been saved and snapshot in a previous iteration.
 ///
 /// # Panics
 ///
-/// Panics if the given [`DiagCtx`] is unbuffered.
+/// Panics if the given [`lume_errors::DiagCtx`] is unbuffered.
 #[macro_export]
 macro_rules! assert_dcx_snapshot {
     ($dcx:expr) => {

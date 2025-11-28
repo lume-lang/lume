@@ -177,7 +177,7 @@ impl ReificationPass<'_> {
             let func_id = method.id;
 
             let definition_id = if let Some(lume_hir::Node::TraitMethodImpl(method_impl)) = self.tcx.hir_node(func_id) {
-                self.tcx.hir_trait_method_def_of_impl(method_impl)?.id
+                self.tcx.trait_method_definition_of_method_impl(method_impl)?.id
             } else {
                 func_id
             };

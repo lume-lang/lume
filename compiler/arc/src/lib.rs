@@ -12,7 +12,7 @@ use parser::PackageParser;
 
 pub use crate::fetch::{clean_local_cache_dir, local_cache_dir};
 
-/// Locates the [`Package`] in the given root directory.
+/// Locates the [`lume_session::Package`] in the given root directory.
 ///
 /// # Errors
 ///

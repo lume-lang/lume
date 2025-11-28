@@ -42,7 +42,7 @@ const NEWCOMER_TYPE_NAMES: &[(&str, &str)] = &[
 ];
 
 /// Data structure for defining the inferred types of expressions, statements,
-/// etc., such that it can be used and/or consumed from the [`TyCheckCtx`].
+/// etc., such that it can be used and/or consumed in the `lume_typech` crate.
 pub struct TyInferCtx {
     /// Defines the type context from the build context.
     tcx: TyCtx,

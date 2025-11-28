@@ -1,5 +1,14 @@
+//! This file contains lookup functions for HIR nodes and other utility
+//! functions, which are useful when querying from the HIR map directly.
+//!
+//! Many of the methods in this file, especially the ones named `expect_*`, will
+//! panic when pre-conditions are unmet - even on non-debug builds. For example,
+//! [`TyInferCtx::hir_expect_field`] will panic if the node with the given ID is
+//! not a [`Node::Field`] node. For a non-panicking version, use
+//! [`TyInferCtx::hir_field`].
+
 use lume_architect::cached_query;
-use lume_hir::{Node, NodeRef, Path};
+use lume_hir::{Node, Path};
 use lume_span::*;
 
 use crate::TyInferCtx;
@@ -45,12 +54,6 @@ impl TyInferCtx {
             Some(item) => item,
             None => panic!("expected HIR node with ID of {id:?}"),
         }
-    }
-
-    /// Returns the [`lume_hir::NodeRef`] with the given ID, if any.
-    #[libftrace::traced(level = Trace, fields(id))]
-    pub fn hir_node_ref(&self, id: NodeId) -> Option<NodeRef<'_>> {
-        self.hir_node(id).map(|n| n.as_ref())
     }
 
     /// Returns the [`lume_hir::Statement`] with the given ID, if any.
