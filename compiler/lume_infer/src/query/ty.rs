@@ -78,7 +78,7 @@ impl TyInferCtx {
     }
 
     /// Determines whether the given [`TypeRef`] is a kind of
-    /// [`TypeKindRef::Struct`].
+    /// [`TypeKind::Struct`].
     #[libftrace::traced(level = Trace, err, ret)]
     pub fn is_struct(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().expect_type(ty.instance_of).map(|ty| &ty.kind) {
@@ -88,7 +88,7 @@ impl TyInferCtx {
     }
 
     /// Determines whether the given [`TypeRef`] is a kind of
-    /// [`TypeKindRef::Trait`].
+    /// [`TypeKind::Trait`].
     #[libftrace::traced(level = Trace, err, ret)]
     pub fn is_trait(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().expect_type(ty.instance_of).map(|ty| &ty.kind) {
@@ -97,8 +97,7 @@ impl TyInferCtx {
         }
     }
 
-    /// Determines whether the given [`TypeRef`] is a kind of
-    /// [`TypeKindRef::TypeParameter`].
+    /// Determines whether the given [`TypeRef`] refers to a type parameter.
     #[libftrace::traced(level = Trace, err, ret)]
     pub fn is_type_parameter(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().type_(ty.instance_of).map(|t| t.kind) {
@@ -107,8 +106,10 @@ impl TyInferCtx {
         }
     }
 
-    /// Determines whether the given [`TypeRef`] is a kind of
-    /// [`TypeKindRef::TypeParameter`].
+    /// If the given [`TypeRef`] refers to a type parameter, returns a reference
+    /// to it's definition.
+    ///
+    /// Otherwise, returns [`None`].
     #[libftrace::traced(level = Trace, err, ret)]
     pub fn as_type_parameter(&self, ty: &TypeRef) -> Result<Option<&lume_hir::TypeParameter>> {
         match self.hir_expect_type(ty.instance_of) {

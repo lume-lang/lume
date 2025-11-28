@@ -6,8 +6,8 @@ use lume_types::TypeRef;
 use crate::TyInferCtx;
 
 impl TyInferCtx {
-    /// Returns the [`Trait`] definition, which matches the
-    /// [`lume_hir::TraitDefinition`] declaration with the given ID.
+    /// Returns the [`lume_hir::TraitDefinition`] definition, which matches the
+    /// [`lume_hir::TraitImplementation`] with the given ID.
     #[libftrace::traced(level = Trace, err)]
     pub fn trait_def_of(&self, id: NodeId) -> Result<&lume_hir::TraitDefinition> {
         let Node::TraitImpl(trait_impl) = self.hir_expect_node(id) else {
@@ -105,41 +105,46 @@ impl TyInferCtx {
         self.get_trait_impl_of(&cast_trait, source)
     }
 
+    /// Gets the trait definition which is being implemented by the given
+    /// [`lume_hir::TraitImplementation`].
     #[libftrace::traced(level = Trace)]
-    pub fn hir_trait_def_of_impl(
+    pub fn trait_definition_of_impl(
         &self,
         trait_impl: &lume_hir::TraitImplementation,
     ) -> Result<&lume_hir::TraitDefinition> {
-        let tdb = self.tdb();
         let trait_name = &trait_impl.name.name;
 
-        let Some(type_def) = tdb.find_type(trait_name) else {
+        let Some(type_def) = self.tdb().find_type(trait_name) else {
             panic!("bug!: trait definition with name `{trait_name:+}` does not exist");
         };
 
         Ok(self.hir_expect_trait(type_def.id))
     }
 
+    /// Gets the parent trait definition which defines the method being
+    /// implemented by `method_impl`.
     #[libftrace::traced(level = Trace)]
-    pub fn hir_trait_def_of_method_impl(
+    pub fn trait_definition_of_method_impl(
         &self,
-        trait_method_impl: &lume_hir::TraitMethodImplementation,
+        method_impl: &lume_hir::TraitMethodImplementation,
     ) -> Result<&lume_hir::TraitDefinition> {
-        for parent in self.hir_parent_iter(trait_method_impl.id) {
+        for parent in self.hir_parent_iter(method_impl.id) {
             if let lume_hir::Node::TraitImpl(trait_impl) = parent {
-                return self.hir_trait_def_of_impl(trait_impl);
+                return self.trait_definition_of_impl(trait_impl);
             }
         }
 
         panic!("bug!: trait method implementation defined outside trait implementation");
     }
 
+    /// Gets the matching trait method definition which defines the method being
+    /// implemented by `method_impl`.
     #[libftrace::traced(level = Trace)]
-    pub fn hir_trait_method_def_of_impl(
+    pub fn trait_method_definition_of_method_impl(
         &self,
         trait_method_impl: &lume_hir::TraitMethodImplementation,
     ) -> Result<&lume_hir::TraitMethodDefinition> {
-        let trait_def = self.hir_trait_def_of_method_impl(trait_method_impl)?;
+        let trait_def = self.trait_definition_of_method_impl(trait_method_impl)?;
 
         let Some(trait_method_def) = trait_def
             .methods

@@ -76,7 +76,7 @@ impl From<Callable<'_>> for CallReference {
 }
 
 impl TyInferCtx {
-    /// Returns the *type* of the expression with the given [`ExpressionId`].
+    /// Returns the *type* of the expression with the given [`NodeId`].
     ///
     /// # Panics
     ///
@@ -90,7 +90,7 @@ impl TyInferCtx {
         self.type_of_expr(self.hir_expect_expr(def))
     }
 
-    /// Returns the *type* of the given [`Expression`].
+    /// Returns the *type* of the given [`lume_hir::Expression`].
     ///
     /// # Panics
     ///
@@ -393,12 +393,12 @@ impl TyInferCtx {
     #[libftrace::traced(level = Trace, fields(name = expr.name()), err, ret)]
     pub fn type_of_call(&self, expr: lume_hir::CallExpression) -> Result<TypeRef> {
         let callable = self.probe_callable(expr)?;
-        let signature = self.signature_of_instantiated(callable, expr)?;
+        let signature = self.instantiated_signature_of(callable, expr)?;
 
         Ok(signature.ret_ty)
     }
 
-    /// Returns the *type* of the given [`Pattern`].
+    /// Returns the *type* of the given [`lume_hir::Pattern`].
     ///
     /// # Panics
     ///
@@ -768,9 +768,9 @@ impl TyInferCtx {
         }
     }
 
-    /// Attempts to get the expected type of the [`Expression`] with the given
-    /// ID, in the context in which it is defined. For example, given an
-    /// expression like this:
+    /// Attempts to get the expected type of the [`lume_hir::Expression`] with
+    /// the given ID, in the context in which it is defined. For example,
+    /// given an expression like this:
     /// ```lm
     /// let _: std::Array<Int32> = std::Array::new();
     /// ```
@@ -785,9 +785,9 @@ impl TyInferCtx {
     ///
     /// would be impossible to solve, since no explicit type is declared.
     ///
-    /// If a type could not be determined, [`guess_type_of_ctx`] is invoked to
-    /// attempt to infer the type from other expressions and statements
-    /// which reference the target expression.
+    /// If a type could not be determined, [`Self::guess_type_of_ctx`] is
+    /// invoked to attempt to infer the type from other expressions and
+    /// statements which reference the target expression.
     #[cached_query(result)]
     #[libftrace::traced(level = Trace, err)]
     pub fn expected_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
@@ -798,9 +798,9 @@ impl TyInferCtx {
         }
     }
 
-    /// Attempts to get the expected type of the [`Expression`] with the given
-    /// ID, in the context in which it is defined. For example, given an
-    /// expression like this:
+    /// Attempts to get the expected type of the [`lume_hir::Expression`] with
+    /// the given ID, in the context in which it is defined. For example,
+    /// given an expression like this:
     /// ```lm
     /// let _: std::Array<Int32> = std::Array::new();
     /// ```

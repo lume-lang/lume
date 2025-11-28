@@ -106,7 +106,7 @@ fn compiled_pkg_metadata(pkg: &CompiledPackage) -> PackageMetadata {
 }
 
 impl Compiler {
-    /// Builds the [`Package`] with the given ID from the [`Project`] into an
+    /// Builds the [`Package`] with the given ID from the [`Package`] into an
     /// MIR map.
     ///
     /// # Errors

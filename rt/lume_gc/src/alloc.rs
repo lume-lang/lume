@@ -415,7 +415,7 @@ impl GenerationalAllocator {
     }
 
     /// Determines whether the current allocator needs to be collected or not.
-    pub(crate) fn is_collection_required(&self) -> bool {
+    pub fn is_collection_required(&self) -> bool {
         let mem_in_use = self.young.allocator.current_size();
         let mem_available = self.young.allocator.total_size();
 
@@ -435,7 +435,7 @@ impl GenerationalAllocator {
     /// generation, moving all allocations to that generation. All the objects
     /// who where not alive in the 1st generation are deallocated. After
     /// all the allocations have been handled, the 1st generation is cleared.
-    pub(crate) fn promote_allocations(&mut self, frame: &FrameStackMap) {
+    pub fn promote_allocations(&mut self, frame: &FrameStackMap) {
         // Reverse the list of all objects. Object references are added in the order
         // that they're found, but we must promote child objects first, so that
         // any parent object doesn't copy the old location of the child.
@@ -474,7 +474,7 @@ impl GenerationalAllocator {
 
     /// Drops all allocations made with the allocator, effectively resetting
     /// all the state within the allocator.
-    pub(crate) fn drop_allocations(&mut self) {
+    pub fn drop_allocations(&mut self) {
         self.young.clear();
         self.old.clear();
     }

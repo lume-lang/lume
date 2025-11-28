@@ -135,7 +135,7 @@ impl LowerFunction<'_> {
     #[libftrace::traced(level = Trace, err)]
     fn call_expression(&mut self, expr: lume_hir::CallExpression) -> Result<lume_tir::ExpressionKind> {
         let callable = self.lower.tcx.lookup_callable(expr)?;
-        let instantiated_signature = self.lower.tcx.signature_of_instantiated(callable, expr)?;
+        let instantiated_signature = self.lower.tcx.instantiated_signature_of(callable, expr)?;
 
         let uninst_ret_ty = self.lower.tcx.return_type_of(callable.id()).unwrap();
         let uninst_ret_ty = self.lower.tcx.mk_type_ref_from_expr(uninst_ret_ty, callable.id())?;

@@ -228,7 +228,8 @@ impl Type {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(8)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int`] with 8
+    /// bits.
     pub fn i8() -> Self {
         Self {
             id: TYPEREF_INT8_ID,
@@ -237,7 +238,8 @@ impl Type {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(16)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int`] with 16
+    /// bits.
     pub fn i16() -> Self {
         Self {
             id: TYPEREF_INT16_ID,
@@ -246,7 +248,8 @@ impl Type {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(32)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int`] with 32
+    /// bits.
     pub fn i32() -> Self {
         Self {
             id: TYPEREF_INT32_ID,
@@ -255,7 +258,8 @@ impl Type {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(64)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int`] with 64
+    /// bits.
     pub fn i64() -> Self {
         Self {
             id: TYPEREF_INT64_ID,
@@ -264,7 +268,8 @@ impl Type {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(8)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt`] with 8
+    /// bits.
     pub fn u8() -> Self {
         Self {
             id: TYPEREF_UINT8_ID,
@@ -273,7 +278,8 @@ impl Type {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(16)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt`] with 16
+    /// bits.
     pub fn u16() -> Self {
         Self {
             id: TYPEREF_UINT16_ID,
@@ -282,7 +288,8 @@ impl Type {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(32)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt`] with 32
+    /// bits.
     pub fn u32() -> Self {
         Self {
             id: TYPEREF_UINT32_ID,
@@ -291,7 +298,8 @@ impl Type {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(64)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt`] with 64
+    /// bits.
     pub fn u64() -> Self {
         Self {
             id: TYPEREF_UINT64_ID,
@@ -300,7 +308,8 @@ impl Type {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float(32)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float`] with 32
+    /// bits.
     pub fn f32() -> Self {
         Self {
             id: TYPEREF_FLOAT32_ID,
@@ -309,7 +318,8 @@ impl Type {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float(64)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float`] with 64
+    /// bits.
     pub fn f64() -> Self {
         Self {
             id: TYPEREF_FLOAT64_ID,
@@ -346,7 +356,7 @@ impl TypeRef {
         self
     }
 
-    /// Creates a new [`TypeRef`] with an inner type of [`TypeKindRef::Void`].
+    /// Creates a new [`TypeRef`] with an inner type of [`TypeKind::Void`].
     pub fn void() -> Self {
         Self {
             instance_of: TYPEREF_VOID_ID,
@@ -364,7 +374,8 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(8)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int`] with 8
+    /// bits.
     pub fn i8() -> Self {
         Self {
             instance_of: TYPEREF_INT8_ID,
@@ -373,7 +384,8 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(16)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int`] with 16
+    /// bits.
     pub fn i16() -> Self {
         Self {
             instance_of: TYPEREF_INT16_ID,
@@ -382,7 +394,8 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(32)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int`] with 32
+    /// bits.
     pub fn i32() -> Self {
         Self {
             instance_of: TYPEREF_INT32_ID,
@@ -391,7 +404,8 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(64)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int`] with 64
+    /// bits.
     pub fn i64() -> Self {
         Self {
             instance_of: TYPEREF_INT64_ID,
@@ -400,7 +414,8 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(8)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt`] with 8
+    /// bits.
     pub fn u8() -> Self {
         Self {
             instance_of: TYPEREF_UINT8_ID,
@@ -409,7 +424,8 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(16)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt`] with 16
+    /// bits.
     pub fn u16() -> Self {
         Self {
             instance_of: TYPEREF_UINT16_ID,
@@ -418,7 +434,8 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(32)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt`] with 32
+    /// bits.
     pub fn u32() -> Self {
         Self {
             instance_of: TYPEREF_UINT32_ID,
@@ -427,7 +444,8 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(64)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt`] with 64
+    /// bits.
     pub fn u64() -> Self {
         Self {
             instance_of: TYPEREF_UINT64_ID,
@@ -436,7 +454,8 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float(32)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float`] with 32
+    /// bits.
     pub fn f32() -> Self {
         Self {
             instance_of: TYPEREF_FLOAT32_ID,
@@ -445,7 +464,8 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float(64)`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float`] with 64
+    /// bits.
     pub fn f64() -> Self {
         Self {
             instance_of: TYPEREF_FLOAT64_ID,
@@ -785,12 +805,7 @@ impl TypeDatabaseContext {
         );
     }
 
-    /// Allocates a new [`Method`] on the given [`Item`].
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if `owner` refers to an [`Item`] which could not be found,
-    /// or is not a type.
+    /// Allocates a new [`Method`] on the given owner [`NodeId`].
     #[inline]
     #[libftrace::traced(level = Trace, fields(id, name = format!("{name:+}")))]
     pub fn method_alloc(&mut self, id: NodeId, owner: TypeRef, name: Path, kind: MethodKind) {

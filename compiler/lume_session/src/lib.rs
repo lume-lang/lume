@@ -243,7 +243,7 @@ pub struct Package {
     /// Defines the URL of the source code repository for the package.
     pub repository: Option<String>,
 
-    /// Defines the source files defined within the [`Project`].
+    /// Defines the source files defined within the [`Package`].
     pub files: IndexMap<FileName, Arc<SourceFile>>,
 
     /// Defines the dependencies for the package.
@@ -275,14 +275,14 @@ impl Package {
         }
     }
 
-    /// Pushes the given source file to the [`Project`]s files.
+    /// Pushes the given source file to the [`Package`]s files.
     pub fn add_source(&mut self, file: Arc<SourceFile>) {
         if !self.files.contains_key(&file.name) {
             self.files.insert(file.name.clone(), file);
         }
     }
 
-    /// Appends all the given source files to the [`Project`]s files.
+    /// Appends all the given source files to the [`Package`]s files.
     pub fn append_sources(&mut self, files: impl IntoIterator<Item = Arc<SourceFile>>) {
         for file in files {
             self.add_source(file);
