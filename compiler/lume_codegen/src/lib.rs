@@ -1,4 +1,5 @@
 pub mod dwarf;
+pub(crate) mod entry;
 pub(crate) mod inst;
 pub(crate) mod metadata;
 pub(crate) mod ty;
@@ -29,6 +30,12 @@ use object::{RelocationEncoding, RelocationFlags};
 use crate::dwarf::{DebugRelocName, RootDebugContext, WriterRelocate};
 use crate::unwind::RootUnwindContext;
 
+pub const MAIN_ENTRY: &str = "main";
+pub const LUME_ENTRY: &str = "__lume_entry";
+
+pub const LUME_START: &str = "__lume_start";
+pub const LUME_END: &str = "__lume_end";
+
 pub const GC_ALLOC: &str = "std::mem::GC::alloc";
 pub const GC_STEP: &str = "std::mem::GC::step";
 
@@ -46,6 +53,9 @@ struct FunctionMetadata {
 
 #[derive(Debug, Clone)]
 struct IntrinsicFunctions {
+    pub lume_start: cranelift_module::FuncId,
+    pub lume_end: cranelift_module::FuncId,
+
     pub gc_step: cranelift_module::FuncId,
     pub gc_alloc: cranelift_module::FuncId,
 }
@@ -96,6 +106,8 @@ impl CraneliftBackend {
         let ptr_ty = module.target_config().pointer_type();
 
         let intrinsics = IntrinsicFunctions {
+            lume_start: import_function(&mut module, LUME_START, &[], None)?,
+            lume_end: import_function(&mut module, LUME_END, &[], None)?,
             gc_step: import_function(&mut module, GC_STEP, &[], None)?,
             gc_alloc: import_function(&mut module, GC_ALLOC, &[ptr_ty, ptr_ty], Some(ptr_ty))?,
         };
@@ -129,6 +141,8 @@ impl CraneliftBackend {
         let mut ctx = self.module_mut().make_context();
         let mut builder_ctx = FunctionBuilderContext::new();
         let mut function_metadata = HashMap::new();
+
+        self.create_entry_fn(&mut ctx, &mut builder_ctx)?;
 
         let mut debug_ctx = if self.context.options.debug_info > DebugInfo::None {
             Some(RootDebugContext::new(&self.context, self.module().isa()))

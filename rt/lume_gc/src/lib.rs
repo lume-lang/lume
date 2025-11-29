@@ -383,7 +383,7 @@ pub fn allocate_object(size: usize, metadata: *const TypeMetadata) -> *mut u8 {
 ///
 /// This function will drop all allocations which have been made with the global
 /// allocator.
-#[inline]
+#[unsafe(export_name = "std::mem::GC::finish")]
 pub fn drop_allocations() {
     libftrace::trace!("dropping all allocations");
 
