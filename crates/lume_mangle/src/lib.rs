@@ -1,3 +1,7 @@
+use lume_errors::Result;
+use lume_span::NodeId;
+use lume_typech::TyCheckCtx;
+
 pub mod l1;
 
 /// Defines the mangling version to use when mangling symbol names.
@@ -8,4 +12,10 @@ pub mod l1;
 pub enum Version {
     #[default]
     L1,
+}
+
+pub fn mangled(tcx: &TyCheckCtx, id: NodeId, version: Version) -> Result<String> {
+    match version {
+        Version::L1 => l1::mangled_name_of(tcx, id),
+    }
 }

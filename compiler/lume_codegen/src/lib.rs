@@ -214,7 +214,7 @@ impl CraneliftBackend {
 
         let func_id = self
             .module_mut()
-            .declare_function(&func.name, linkage, &sig)
+            .declare_function(&func.mangled_name, linkage, &sig)
             .map_diagnostic()?;
 
         Ok((func_id, sig))
