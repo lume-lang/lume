@@ -158,6 +158,7 @@ impl std::fmt::Display for Parameter {
 pub struct Function {
     pub id: NodeId,
     pub name: String,
+    pub mangled_name: String,
     pub signature: Signature,
 
     pub registers: Registers,
@@ -172,10 +173,11 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(id: NodeId, name: String, location: Location) -> Self {
+    pub fn new(id: NodeId, name: String, mangled_name: String, location: Location) -> Self {
         Function {
             id,
             name,
+            mangled_name,
             registers: Registers::default(),
             slots: IndexMap::new(),
             blocks: IndexMap::new(),

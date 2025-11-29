@@ -13,7 +13,7 @@ pub(crate) struct DynamicShimBuilder<'shim, 'mir, 'tcx> {
 
 impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
     pub(crate) fn new(builder: &'shim mut FunctionTransformer<'mir, 'tcx>, func_id: NodeId) -> Self {
-        builder.func.name = format!("$_dyn_{}", builder.func.name);
+        builder.func.mangled_name = format!("_dyn_{}", builder.func.mangled_name);
 
         let regs = &builder.func.registers;
         let mut params = regs.iter_params().map(|reg| reg.id).collect::<Vec<_>>();

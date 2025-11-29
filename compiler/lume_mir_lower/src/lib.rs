@@ -67,11 +67,12 @@ pub(crate) struct FunctionTransformer<'mir, 'tcx> {
 impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     /// Defines the MIR function which is being created.
     pub fn define(transformer: &'mir mut ModuleTransformer<'tcx>, id: NodeId, func: &lume_tir::Function) -> Function {
-        let mangled_name = lume_mangle::l1::mangled_name_of(transformer.mcx.tcx(), id).unwrap();
+        let mangle_version = lume_mangle::Version::default();
+        let mangled_name = lume_mangle::mangled(transformer.mcx.tcx(), id, mangle_version).unwrap();
 
         let mut transformer = Self {
             transformer,
-            func: Function::new(id, mangled_name, func.location.clone_inner()),
+            func: Function::new(id, func.name_as_str(), mangled_name, func.location.clone_inner()),
             variables: HashMap::new(),
         };
 
@@ -86,11 +87,12 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         id: NodeId,
         func: &lume_tir::Function,
     ) -> Function {
-        let mangled_name = lume_mangle::l1::mangled_name_of(transformer.mcx.tcx(), id).unwrap();
+        let mangle_version = lume_mangle::Version::default();
+        let mangled_name = lume_mangle::mangled(transformer.mcx.tcx(), id, mangle_version).unwrap();
 
         let mut transformer = Self {
             transformer,
-            func: Function::new(id, mangled_name, func.location.clone_inner()),
+            func: Function::new(id, func.name_as_str(), mangled_name, func.location.clone_inner()),
             variables: HashMap::new(),
         };
 
