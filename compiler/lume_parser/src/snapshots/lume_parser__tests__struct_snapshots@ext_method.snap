@@ -29,6 +29,7 @@ expression: "parse(\"\n        impl Foo {\n            fn external bar() -> Int3
             ),
             methods: [
                 MethodDefinition {
+                    attributes: [],
                     visibility: None,
                     external: true,
                     name: Identifier {

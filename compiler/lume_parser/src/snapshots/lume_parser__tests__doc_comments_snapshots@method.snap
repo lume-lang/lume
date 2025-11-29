@@ -29,6 +29,7 @@ expression: "parse(\"impl Foo {\n            /// This is a doc comment\n        
             ),
             methods: [
                 MethodDefinition {
+                    attributes: [],
                     visibility: Some(
                         Public {
                             location: Location(
