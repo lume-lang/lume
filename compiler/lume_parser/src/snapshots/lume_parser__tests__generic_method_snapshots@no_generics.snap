@@ -29,6 +29,7 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
             ),
             methods: [
                 MethodDefinition {
+                    attributes: [],
                     visibility: None,
                     external: false,
                     name: Identifier {

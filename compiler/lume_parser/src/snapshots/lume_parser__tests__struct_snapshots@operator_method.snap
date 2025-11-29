@@ -29,6 +29,7 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> Boolean {\
             ),
             methods: [
                 MethodDefinition {
+                    attributes: [],
                     visibility: Some(
                         Public {
                             location: Location(

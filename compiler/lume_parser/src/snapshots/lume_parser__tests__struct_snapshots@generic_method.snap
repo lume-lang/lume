@@ -29,6 +29,7 @@ expression: "parse(\"\n        impl Foo {\n            fn bar<T>() -> Int32 { }\
             ),
             methods: [
                 MethodDefinition {
+                    attributes: [],
                     visibility: None,
                     external: false,
                     name: Identifier {
