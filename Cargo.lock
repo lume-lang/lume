@@ -1238,6 +1238,7 @@ dependencies = [
  "libftrace",
  "lume_errors",
  "lume_mir",
+ "lume_options",
  "lume_session",
  "lume_span",
  "lume_type_metadata",
@@ -1319,6 +1320,7 @@ version = "0.1.1"
 dependencies = [
  "indexmap",
  "libftrace",
+ "lume_options",
  "lume_rt_metadata",
  "mimalloc",
  "sysinfo",
@@ -1499,6 +1501,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_options"
+version = "0.1.1"
+dependencies = [
+ "postcard",
+ "serde",
+]
+
+[[package]]
 name = "lume_parser"
 version = "0.1.1"
 dependencies = [
@@ -1522,6 +1532,7 @@ version = "0.1.1"
 dependencies = [
  "backtrace",
  "lume_gc",
+ "lume_options",
  "lume_rt_metadata",
  "owo-colors",
 ]

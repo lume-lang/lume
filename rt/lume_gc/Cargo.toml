@@ -5,6 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+lume_options = { path = "../lume_options" }
 lume_rt_metadata = { path = "../lume_rt_metadata" }
 
 libftrace = { workspace = true }

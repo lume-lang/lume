@@ -4,7 +4,7 @@
 pub mod alloc;
 pub(crate) mod arch;
 
-use alloc::with_allocator;
+use alloc::{initialize_gc, with_allocator};
 use std::cmp::Ordering;
 use std::fmt::Display;
 use std::sync::LazyLock;
@@ -331,6 +331,14 @@ fn find_current_stack_map() -> Option<FrameStackMap> {
     }
 
     None
+}
+
+/// Initializes the allocator with the given options.
+pub fn initialize(opts: &lume_options::RuntimeOptions) {
+    libftrace::debug!("initializing allocator");
+    libftrace::trace!("allocator options: {opts:#?}");
+
+    initialize_gc(opts);
 }
 
 /// Static version of [`alloc::GenerationalAllocator::promote_allocations`], so
