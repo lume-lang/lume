@@ -1,6 +1,6 @@
 pub mod array;
-pub mod entry;
 pub mod io;
+pub mod lifetime;
 pub mod mem;
 pub mod process;
 pub mod string;
