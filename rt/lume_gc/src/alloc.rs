@@ -496,10 +496,19 @@ unsafe impl<T> Sync for Global<T> where T: Send {}
 
 static GA: OnceLock<Global<GenerationalAllocator>> = OnceLock::new();
 
-pub fn with_allocator<R, F: FnOnce(&mut GenerationalAllocator) -> R>(f: F) -> R {
-    let global = GA.get_or_init(|| Global {
-        inner: UnsafeCell::new(GenerationalAllocator::with_root(6)),
+pub fn initialize_gc(opts: &lume_options::RuntimeOptions) {
+    let allocator = match opts.gc_size {
+        lume_options::GarbageCollectorSize::Static(size) => GenerationalAllocator::new(size),
+        lume_options::GarbageCollectorSize::Rooted(root) => GenerationalAllocator::with_root(root),
+    };
+
+    let _ = GA.set(Global {
+        inner: UnsafeCell::new(allocator),
     });
+}
+
+pub fn with_allocator<R, F: FnOnce(&mut GenerationalAllocator) -> R>(f: F) -> R {
+    let global = GA.get().expect("expected GC to be initialized!");
 
     unsafe { f(&mut *global.inner.get()) }
 }
