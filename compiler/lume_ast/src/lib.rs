@@ -684,6 +684,7 @@ node_location!(Field);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
+    pub attributes: Vec<Attribute>,
     pub visibility: Option<Visibility>,
     pub external: bool,
     pub name: Identifier,

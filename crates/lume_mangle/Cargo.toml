@@ -1,0 +1,22 @@
+[package]
+name = "lume_mangle"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+lume_errors = { path = "../lume_errors" }
+lume_hir = { path = "../../compiler/lume_hir" }
+lume_infer = { path = "../../compiler/lume_infer" }
+lume_session = { path = "../../compiler/lume_session" }
+lume_span = { path = "../lume_span" }
+lume_typech = { path = "../../compiler/lume_typech" }
+
+[dev-dependencies]
+build_stage = { path = "../../tools/build_stage" }
+
+[lints]
+workspace = true
