@@ -323,6 +323,10 @@ impl Parser<'_> {
     #[libftrace::traced(level = Debug, err)]
     fn parse_method_definition(&mut self) -> Result<MethodDefinition> {
         self.read_doc_comment();
+        self.attributes = Some(self.parse_attributes()?);
+
+        let documentation = self.doc_token.take();
+        let attributes = self.attributes.take().unwrap_or_default();
 
         let visibility = self.parse_visibility()?;
         let start = visibility
@@ -350,6 +354,7 @@ impl Parser<'_> {
         let end = self.token_at(self.index - 1).end();
 
         Ok(MethodDefinition {
+            attributes,
             visibility,
             external,
             name,
@@ -358,7 +363,7 @@ impl Parser<'_> {
             return_type,
             block,
             location: (start..end).into(),
-            documentation: self.doc_token.take(),
+            documentation,
         })
     }
 

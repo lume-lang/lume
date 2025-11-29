@@ -67,9 +67,11 @@ pub(crate) struct FunctionTransformer<'mir, 'tcx> {
 impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     /// Defines the MIR function which is being created.
     pub fn define(transformer: &'mir mut ModuleTransformer<'tcx>, id: NodeId, func: &lume_tir::Function) -> Function {
+        let mangled_name = lume_mangle::l1::mangled_name_of(transformer.mcx.tcx(), id).unwrap();
+
         let mut transformer = Self {
             transformer,
-            func: Function::new(id, func.name_as_str(), func.location.clone_inner()),
+            func: Function::new(id, mangled_name, func.location.clone_inner()),
             variables: HashMap::new(),
         };
 
@@ -84,9 +86,11 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         id: NodeId,
         func: &lume_tir::Function,
     ) -> Function {
+        let mangled_name = lume_mangle::l1::mangled_name_of(transformer.mcx.tcx(), id).unwrap();
+
         let mut transformer = Self {
             transformer,
-            func: Function::new(id, func.name_as_str(), func.location.clone_inner()),
+            func: Function::new(id, mangled_name, func.location.clone_inner()),
             variables: HashMap::new(),
         };
 
@@ -324,18 +328,10 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         let vararg_loc = last_arg.unwrap_or_else(|| vararg_type.location.clone_inner());
         let metadata_reg = self.declare_metadata_of(vararg_type, vararg_loc.clone());
 
-        let array_alloc_func = self
-            .transformer
-            .mcx
-            .find_function("std::Array<`1>::with_capacity")
-            .expect("expected to find std::Array:with_capacity function");
+        let array_alloc_func_id = self.tcx().lang_item("array_with_capacity").unwrap();
+        let array_alloc_func = self.transformer.mcx.function(array_alloc_func_id).unwrap();
 
-        let array_push_func = self
-            .transformer
-            .mcx
-            .find_function("std::Array<`1>::push")
-            .expect("expected to find std::Array:push function")
-            .id;
+        let array_push_func_id = self.tcx().lang_item("array_push").unwrap();
 
         let vararg_arr_reg = self
             .func
@@ -352,7 +348,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
 
         for arg in args {
             self.call(
-                array_push_func,
+                array_push_func_id,
                 vec![
                     lume_mir::Operand::reference_of(vararg_arr_reg),
                     arg,

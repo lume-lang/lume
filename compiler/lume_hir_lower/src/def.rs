@@ -130,6 +130,7 @@ impl LowerModule<'_> {
     #[libftrace::traced(level = Debug)]
     fn def_impl_method(&mut self, expr: lume_ast::MethodDefinition) -> Result<lume_hir::MethodDefinition> {
         let id = self.next_node_id();
+        self.add_lang_items(id, &expr.attributes)?;
 
         let visibility = lower_visibility(expr.visibility.as_ref());
         let name = self.identifier(expr.name);

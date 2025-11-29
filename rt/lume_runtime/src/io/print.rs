@@ -74,52 +74,52 @@ fn internal_format_str(fmt: String, args: &[String]) -> String {
     formatted
 }
 
-#[unsafe(export_name = "std::Int8::to_string")]
+#[unsafe(export_name = "std::Int8::ToString::to_string")]
 pub extern "C" fn int8_tostring(val: i8) -> LumeString {
     cstr_from_string(format!("{val}"))
 }
 
-#[unsafe(export_name = "std::Int16::to_string")]
+#[unsafe(export_name = "std::Int16::ToString::to_string")]
 pub extern "C" fn int16_tostring(val: i16) -> LumeString {
     cstr_from_string(format!("{val}"))
 }
 
-#[unsafe(export_name = "std::Int32::to_string")]
+#[unsafe(export_name = "std::Int32::ToString::to_string")]
 pub extern "C" fn int32_tostring(val: i32) -> LumeString {
     cstr_from_string(format!("{val}"))
 }
 
-#[unsafe(export_name = "std::Int64::to_string")]
+#[unsafe(export_name = "std::Int64::ToString::to_string")]
 pub extern "C" fn int64_tostring(val: i64) -> LumeString {
     cstr_from_string(format!("{val}"))
 }
 
-#[unsafe(export_name = "std::UInt8::to_string")]
+#[unsafe(export_name = "std::UInt8::ToString::to_string")]
 pub extern "C" fn uint8_tostring(val: u8) -> LumeString {
     cstr_from_string(format!("{val}"))
 }
 
-#[unsafe(export_name = "std::UInt16::to_string")]
+#[unsafe(export_name = "std::UInt16::ToString::to_string")]
 pub extern "C" fn uint16_tostring(val: u16) -> LumeString {
     cstr_from_string(format!("{val}"))
 }
 
-#[unsafe(export_name = "std::UInt32::to_string")]
+#[unsafe(export_name = "std::UInt32::ToString::to_string")]
 pub extern "C" fn uint32_tostring(val: u32) -> LumeString {
     cstr_from_string(format!("{val}"))
 }
 
-#[unsafe(export_name = "std::UInt64::to_string")]
+#[unsafe(export_name = "std::UInt64::ToString::to_string")]
 pub extern "C" fn uint64_tostring(val: u64) -> LumeString {
     cstr_from_string(format!("{val}"))
 }
 
-#[unsafe(export_name = "std::Float::to_string")]
+#[unsafe(export_name = "std::Float::ToString::to_string")]
 pub extern "C" fn float_tostring(val: f32) -> LumeString {
     cstr_from_string(format!("{val}"))
 }
 
-#[unsafe(export_name = "std::Double::to_string")]
+#[unsafe(export_name = "std::Double::ToString::to_string")]
 pub extern "C" fn double_tostring(val: f64) -> LumeString {
     cstr_from_string(format!("{val}"))
 }

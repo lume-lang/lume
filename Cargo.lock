@@ -1247,6 +1247,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_demangle"
+version = "0.1.1"
+dependencies = [
+ "lume_errors",
+ "lume_mangle",
+]
+
+[[package]]
 name = "lume_driver"
 version = "0.1.1"
 dependencies = [
@@ -1407,6 +1415,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_mangle"
+version = "0.1.1"
+dependencies = [
+ "build_stage",
+ "lume_errors",
+ "lume_hir",
+ "lume_infer",
+ "lume_session",
+ "lume_span",
+ "lume_typech",
+]
+
+[[package]]
 name = "lume_metadata"
 version = "0.1.1"
 dependencies = [
@@ -1438,6 +1459,7 @@ version = "0.1.1"
 dependencies = [
  "indexmap",
  "lume_hir",
+ "lume_mangle",
  "lume_mir",
  "lume_mir_queries",
  "lume_session",
