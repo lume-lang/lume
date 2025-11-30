@@ -7,7 +7,7 @@ use crate::commands::project_or_cwd;
 #[command(name = "build", about = "Build a Lume package", long_about = None)]
 pub struct BuildCommand {
     #[command(flatten)]
-    pub build: super::BuildOptions,
+    pub build: crate::opts::BuildOptions,
 }
 
 impl BuildCommand {

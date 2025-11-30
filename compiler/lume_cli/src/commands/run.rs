@@ -8,11 +8,12 @@ use crate::commands::project_or_cwd;
 #[derive(Debug, clap::Parser)]
 #[command(name = "run", about = "Build and run a Lume package", long_about = None)]
 pub struct RunCommand {
-    #[command(flatten)]
-    pub build: super::BuildOptions,
-
-    #[arg(trailing_var_arg = true)]
+    /// Arguments for the binary to run
+    #[arg(trailing_var_arg = true, index = 2)]
     pub args: Vec<String>,
+
+    #[command(flatten)]
+    pub build: crate::opts::BuildOptions,
 }
 
 impl RunCommand {
