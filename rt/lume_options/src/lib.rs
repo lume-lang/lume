@@ -12,18 +12,21 @@ pub struct RuntimeOptions {
 
 /// Converts the given [`RuntimeOptions`] instance into a vector of encoded
 /// bytes.
-pub fn to_vec(options: &RuntimeOptions) -> postcard::Result<Vec<u8>> {
-    postcard::to_allocvec(options)
+pub fn to_vec(options: &RuntimeOptions) -> Result<Vec<u8>, ciborium::ser::Error<std::io::Error>> {
+    let mut buffer = Vec::<u8>::new();
+    ciborium::into_writer(options, &mut buffer)?;
+
+    Ok(buffer)
 }
 
 /// Converts the given sequence of bytes into an instance of [`RuntimeOptions`].
-pub fn from_bytes<B: AsRef<[u8]>>(s: B) -> postcard::Result<RuntimeOptions> {
-    postcard::from_bytes(s.as_ref())
+pub fn from_bytes<B: AsRef<[u8]>>(s: B) -> Result<RuntimeOptions, ciborium::de::Error<std::io::Error>> {
+    ciborium::from_reader(s.as_ref())
 }
 
 /// Reads an encoded sequence of bytes from the given pointer into an instance
 /// of [`RuntimeOptions`].
-pub fn from_ptr(ptr: *const u8) -> postcard::Result<RuntimeOptions> {
+pub fn from_ptr(ptr: *const u8) -> Result<RuntimeOptions, ciborium::de::Error<std::io::Error>> {
     let encoded_len = unsafe { ptr.cast::<u64>().read() } as usize;
     let encoded_ptr = unsafe { ptr.byte_add(size_of::<u64>()) };
 
