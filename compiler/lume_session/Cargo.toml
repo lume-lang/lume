@@ -10,6 +10,7 @@ doctest = false
 
 [dependencies]
 lume_errors = { path = "../../crates/lume_errors" }
+lume_options = { path = "../../rt/lume_options" }
 lume_span = { path = "../../crates/lume_span" }
 
 clap = { workspace = true, optional = true }

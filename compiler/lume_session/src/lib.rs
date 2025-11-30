@@ -248,6 +248,9 @@ pub struct Package {
 
     /// Defines the dependencies for the package.
     pub dependencies: Dependencies,
+
+    /// Defines the options for the runtime.
+    pub runtime: lume_options::RuntimeOptions,
 }
 
 impl Package {
@@ -399,6 +402,7 @@ impl Default for Package {
             repository: None,
             files: IndexMap::new(),
             dependencies: Dependencies::default(),
+            runtime: lume_options::RuntimeOptions::default(),
         }
     }
 }

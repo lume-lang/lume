@@ -497,7 +497,7 @@ unsafe impl<T> Sync for Global<T> where T: Send {}
 static GA: OnceLock<Global<GenerationalAllocator>> = OnceLock::new();
 
 pub fn initialize_gc(opts: &lume_options::RuntimeOptions) {
-    let allocator = match opts.gc_size {
+    let allocator = match opts.gc.heap_size {
         lume_options::GarbageCollectorSize::Static(size) => GenerationalAllocator::new(size),
         lume_options::GarbageCollectorSize::Rooted(root) => GenerationalAllocator::with_root(root),
     };

@@ -1,36 +1,13 @@
+pub mod gc;
+
+pub use gc::*;
 use serde::{Deserialize, Serialize};
 
 /// Options for configuring the runtime environment.
 #[derive(Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RuntimeOptions {
-    /// Determines the initial size of the heap within the GC.
-    pub gc_size: GarbageCollectorSize,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GarbageCollectorSize {
-    /// Defines that the GC heap should have a fixed size, set to the given
-    /// value (in bytes). This is the preferred otion for user-defined sizes,
-    /// since the is explicitly defined without modification.
-    Static(usize),
-
-    /// Defines that the GC heap should have a size relative to the total amount
-    /// of system memory.
-    ///
-    /// When using the `Rooted` option, the total size of the GC heap will be
-    /// equal to the total amount of system memory, bit-shifted right by the
-    /// given amount.
-    ///
-    /// For example, passing `6` on a system with 16GB of total system memory,
-    /// the heap would allocate 256MB of memory, since
-    /// `16GB >> 6 = 256MB` (`17179869184 >> 6 = 268435456`).
-    Rooted(u8),
-}
-
-impl Default for GarbageCollectorSize {
-    fn default() -> Self {
-        Self::Rooted(6)
-    }
+    /// Determines the options for the GC
+    pub gc: GarbageCollectorOptions,
 }
 
 /// Converts the given [`RuntimeOptions`] instance into a vector of encoded
