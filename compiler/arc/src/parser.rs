@@ -29,6 +29,10 @@ pub struct Manifest {
     /// Defines the dependencies for the package.
     #[serde(default)]
     pub dependencies: HashMap<String, ManifestDependency>,
+
+    /// Defines the options for the runtime.
+    #[serde(default)]
+    pub runtime: lume_options::RuntimeOptions,
 }
 
 impl Manifest {
@@ -53,6 +57,7 @@ impl From<Manifest> for Package {
                 no_std: manifest.package.no_std,
                 ..Dependencies::default()
             },
+            runtime: manifest.runtime,
         }
     }
 }
