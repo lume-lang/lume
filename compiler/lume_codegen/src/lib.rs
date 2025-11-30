@@ -194,7 +194,7 @@ impl CraneliftBackend {
 
         let mut object = module.finish();
         self.declare_stack_maps(&mut object, function_metadata)?;
-        self.declare_runtime_options(&mut object, &self.context.options)?;
+        self.declare_runtime_options(&mut object, &self.context.package.runtime)?;
 
         if let Some(debug_ctx) = debug_ctx.take() {
             debug_ctx.finish(&mut object)?;
@@ -508,10 +508,12 @@ impl CraneliftBackend {
         Ok(())
     }
 
-    fn declare_runtime_options(&self, product: &mut ObjectProduct, _options: &lume_session::Options) -> Result<()> {
-        let runtime_options = lume_options::RuntimeOptions::default();
-
-        let encoded = lume_options::to_vec(&runtime_options).map_diagnostic()?;
+    fn declare_runtime_options(
+        &self,
+        product: &mut ObjectProduct,
+        options: &lume_options::RuntimeOptions,
+    ) -> Result<()> {
+        let encoded = lume_options::to_vec(options).map_diagnostic()?;
         let encoded_len = encoded.len() as u64;
 
         let section_id = product.object.section_id(object::write::StandardSection::Data);
