@@ -16,7 +16,7 @@ expression: "parse_expr(\"let _ = [];\")"
                 Array {
                     values: [],
                     location: Location(
-                        8..9,
+                        8..10,
                     ),
                 },
             ),

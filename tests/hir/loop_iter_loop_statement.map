@@ -75,9 +75,9 @@ Map {
                                             location: <internal>:0:0,
                                         },
                                         arguments: [],
-                                        location: loop_iter_loop_statement.lm:27:28,
+                                        location: loop_iter_loop_statement.lm:27:36,
                                     },
-                                    location: loop_iter_loop_statement.lm:27:28,
+                                    location: loop_iter_loop_statement.lm:27:36,
                                 },
                                 InstanceCall {
                                     name: Callable {
@@ -125,11 +125,11 @@ Map {
                                                     location: <internal>:0:0,
                                                 },
                                                 arguments: [],
-                                                location: loop_iter_loop_statement.lm:27:28,
+                                                location: loop_iter_loop_statement.lm:27:36,
                                             },
-                                            location: loop_iter_loop_statement.lm:27:28,
+                                            location: loop_iter_loop_statement.lm:27:36,
                                         },
-                                        location: loop_iter_loop_statement.lm:27:28,
+                                        location: loop_iter_loop_statement.lm:27:36,
                                     },
                                     arguments: [
                                         Literal {
@@ -140,7 +140,7 @@ Map {
                                             location: loop_iter_loop_statement.lm:28:29,
                                         },
                                     ],
-                                    location: loop_iter_loop_statement.lm:27:28,
+                                    location: loop_iter_loop_statement.lm:27:36,
                                 },
                                 InstanceCall {
                                     name: Callable {
@@ -188,11 +188,11 @@ Map {
                                                     location: <internal>:0:0,
                                                 },
                                                 arguments: [],
-                                                location: loop_iter_loop_statement.lm:27:28,
+                                                location: loop_iter_loop_statement.lm:27:36,
                                             },
-                                            location: loop_iter_loop_statement.lm:27:28,
+                                            location: loop_iter_loop_statement.lm:27:36,
                                         },
-                                        location: loop_iter_loop_statement.lm:27:28,
+                                        location: loop_iter_loop_statement.lm:27:36,
                                     },
                                     arguments: [
                                         Literal {
@@ -203,7 +203,7 @@ Map {
                                             location: loop_iter_loop_statement.lm:31:32,
                                         },
                                     ],
-                                    location: loop_iter_loop_statement.lm:27:28,
+                                    location: loop_iter_loop_statement.lm:27:36,
                                 },
                                 InstanceCall {
                                     name: Callable {
@@ -251,11 +251,11 @@ Map {
                                                     location: <internal>:0:0,
                                                 },
                                                 arguments: [],
-                                                location: loop_iter_loop_statement.lm:27:28,
+                                                location: loop_iter_loop_statement.lm:27:36,
                                             },
-                                            location: loop_iter_loop_statement.lm:27:28,
+                                            location: loop_iter_loop_statement.lm:27:36,
                                         },
-                                        location: loop_iter_loop_statement.lm:27:28,
+                                        location: loop_iter_loop_statement.lm:27:36,
                                     },
                                     arguments: [
                                         Literal {
@@ -266,7 +266,7 @@ Map {
                                             location: loop_iter_loop_statement.lm:34:35,
                                         },
                                     ],
-                                    location: loop_iter_loop_statement.lm:27:28,
+                                    location: loop_iter_loop_statement.lm:27:36,
                                 },
                                 Final {
                                     value: Variable {
@@ -306,16 +306,16 @@ Map {
                                                     location: <internal>:0:0,
                                                 },
                                                 arguments: [],
-                                                location: loop_iter_loop_statement.lm:27:28,
+                                                location: loop_iter_loop_statement.lm:27:36,
                                             },
-                                            location: loop_iter_loop_statement.lm:27:28,
+                                            location: loop_iter_loop_statement.lm:27:36,
                                         },
-                                        location: loop_iter_loop_statement.lm:27:28,
+                                        location: loop_iter_loop_statement.lm:27:36,
                                     },
-                                    location: loop_iter_loop_statement.lm:27:28,
+                                    location: loop_iter_loop_statement.lm:27:36,
                                 },
                             ],
-                            location: loop_iter_loop_statement.lm:27:28,
+                            location: loop_iter_loop_statement.lm:27:36,
                         },
                         block: Block {
                             statements: [

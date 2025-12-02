@@ -261,11 +261,10 @@ impl Parser<'_> {
     /// Parses an array expression on the current cursor position.
     #[libftrace::traced(level = Trace, err)]
     fn parse_array_expression(&mut self) -> Result<Expression> {
-        let token = self.token();
-        let location: Location = token.index.into();
-
-        let values = self.consume_comma_seq(TokenType::LeftBracket, TokenType::RightBracket, |p| {
-            p.parse_expression()
+        let (values, location) = self.consume_with_loc(|parser| {
+            parser.consume_comma_seq(TokenType::LeftBracket, TokenType::RightBracket, |p| {
+                p.parse_expression()
+            })
         })?;
 
         Ok(Expression::Array(Box::new(Array { values, location })))

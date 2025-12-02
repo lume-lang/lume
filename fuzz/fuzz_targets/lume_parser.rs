@@ -13,7 +13,7 @@ fuzz_target!(|data: &[u8]| {
         let mut lexer = lume_lexer::Lexer::new(source.clone());
         let tokens = lexer.lex().unwrap();
 
-        let mut parser = lume_parser::Parser::new(source, tokens, DiagCtxHandle::shim()).unwrap();
+        let mut parser = lume_parser::Parser::new(source, tokens, DiagCtxHandle::shim());
         parser.disable_recovery();
 
         let _ = parser.parse();

@@ -109,7 +109,7 @@ impl<'a> LowerState<'a> {
                 let mut lexer = Lexer::new(source_file.clone());
                 let tokens = lexer.lex()?;
 
-                let mut parser = Parser::new(source_file.clone(), tokens, handle)?;
+                let mut parser = Parser::new(source_file.clone(), tokens, handle);
                 parser.parse()
             })?;
 

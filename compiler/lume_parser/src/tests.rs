@@ -9,7 +9,7 @@ fn parse(input: &str) -> Vec<TopLevelExpression> {
     let mut lexer = lume_lexer::Lexer::new(source.clone());
     let tokens = lexer.lex().unwrap();
 
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim()).unwrap();
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim());
     parser.disable_recovery();
 
     parser.parse().unwrap()
@@ -22,7 +22,7 @@ fn parse_err(input: &str) -> Error {
     let mut lexer = lume_lexer::Lexer::new(source.clone());
     let tokens = lexer.lex().unwrap();
 
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim()).unwrap();
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim());
     parser.disable_recovery();
 
     parser.parse().unwrap_err()
@@ -35,7 +35,7 @@ fn parse_expr(input: &str) -> Vec<Statement> {
     let mut lexer = lume_lexer::Lexer::new(source.clone());
     let tokens = lexer.lex().unwrap();
 
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim()).unwrap();
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim());
     parser.parse_statements().unwrap()
 }
 
@@ -46,7 +46,7 @@ fn parse_expr_err(input: &str) -> Error {
     let mut lexer = lume_lexer::Lexer::new(source.clone());
     let tokens = lexer.lex().unwrap();
 
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim()).unwrap();
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim());
     parser.parse_statements().unwrap_err()
 }
 
