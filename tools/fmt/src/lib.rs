@@ -1,12 +1,23 @@
-use std::collections::{HashSet, VecDeque};
-use std::fmt::Display;
+//! Source code for the Lume formatter.
+//!
+//! This formatter is heavily based on the Gleam code formatter, found within
+//! their GitHub repository: https://github.com/gleam-lang/gleam/blob/main/compiler-core/src/format.rs
+
+pub(crate) mod doc;
+pub(crate) mod print;
+
+use std::collections::VecDeque;
 use std::ops::Range;
 use std::sync::Arc;
 
-use lume_ast::{Node as _, *};
-use lume_errors::{DiagCtx, Result};
+use iter_tools::Itertools;
+use lume_ast::*;
+use lume_errors::{DiagCtx, MapDiagnostic};
+use lume_parser::Parser;
 use lume_span::SourceFile;
 use serde::Deserialize;
+
+use crate::doc::*;
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(default, deny_unknown_fields)]
@@ -53,28 +64,18 @@ impl Default for Indentation {
     }
 }
 
-impl Display for Indentation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.use_tabs {
-            write!(f, "\t")
-        } else {
-            write!(f, "{: >n$}", "", n = self.tab_width)
-        }
-    }
-}
-
-pub fn format_src(content: &str, config: &Config) -> Result<String> {
-    let document = parse_document(content)?;
-    let root = Builder::build(content, document);
-
-    let renderer = Renderer::new(config);
-    let formatted = renderer.render(root);
+pub fn format_src(content: &str, config: &Config) -> lume_errors::Result<String> {
+    let source = parse_source(content)?;
+    let formatted = Formatter::new(config).source(&source).print(config).map_diagnostic()?;
 
     Ok(formatted)
 }
 
-#[derive(Default, Debug, Clone)]
-struct Document<'src> {
+#[derive(Debug, Clone)]
+struct Source<'src> {
+    /// Defines the content of the original source file.
+    pub source_file: Arc<SourceFile>,
+
     /// Defines all the top-level nodes within the original source file.
     pub items: Vec<TopLevelExpression>,
 
@@ -87,7 +88,7 @@ struct Document<'src> {
     pub comments: Vec<(Range<usize>, &'src str)>,
 }
 
-fn parse_document(content: &str) -> Result<Document<'_>> {
+fn parse_source(content: &str) -> lume_errors::Result<Source<'_>> {
     let dcx = DiagCtx::new();
     let source_file = Arc::new(SourceFile::internal(content));
 
@@ -104,1622 +105,1107 @@ fn parse_document(content: &str) -> Result<Document<'_>> {
         })
         .collect::<Vec<_>>();
 
-    let items = dcx.with(|handle| {
-        let mut parser = lume_parser::Parser::new(source_file, tokens, handle)?;
-        parser.parse()
-    })?;
+    let mut parser = Parser::new(source_file.clone(), tokens, dcx.handle());
+    let items = parser.parse()?;
 
-    Ok(Document { items, comments })
+    Ok(Source {
+        source_file,
+        items,
+        comments,
+    })
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Node {
-    pub kind: NodeKind,
-    pub leading_comment: Option<String>,
-    pub trailing_comment: Option<String>,
+#[derive(Default, Debug, Clone)]
+struct Comments<'src> {
+    /// Defines whether there should be a newline between the comment block and
+    /// any following documents.
+    pub trailing_newline: bool,
+
+    /// Defines all the comment lines within the comment block. All lines within
+    /// the block already have their corresponding `//` or `///` prefix
+    /// attached.
+    pub lines: Vec<(Range<usize>, &'src str)>,
 }
 
-impl Node {
-    #[inline]
-    pub fn empty() -> Node {
-        Self {
-            kind: NodeKind::Empty,
-            leading_comment: None,
-            trailing_comment: None,
-        }
-    }
-
-    #[inline]
-    pub fn text(text: String) -> Node {
-        Self {
-            kind: NodeKind::Text(text),
-            leading_comment: None,
-            trailing_comment: None,
-        }
-    }
-
-    #[inline]
-    pub fn text_str(text: &str) -> Node {
-        Self::text(text.into())
-    }
-
-    #[inline]
-    pub fn line() -> Node {
-        Self {
-            kind: NodeKind::Line,
-            leading_comment: None,
-            trailing_comment: None,
-        }
-    }
-
-    #[inline]
-    pub fn space() -> Node {
-        Self {
-            kind: NodeKind::Space,
-            leading_comment: None,
-            trailing_comment: None,
-        }
-    }
-
-    #[inline]
-    pub fn space_or_line() -> Node {
-        Self {
-            kind: NodeKind::SpaceOrLine,
-            leading_comment: None,
-            trailing_comment: None,
-        }
-    }
-
-    #[inline]
-    pub fn empty_line() -> Node {
-        Self {
-            kind: NodeKind::EmptyLine,
-            leading_comment: None,
-            trailing_comment: None,
-        }
-    }
-
-    #[inline]
-    pub fn forced_line() -> Node {
-        Self {
-            kind: NodeKind::ForcedLine,
-            leading_comment: None,
-            trailing_comment: None,
-        }
-    }
-
-    #[inline]
-    pub fn nodes(nodes: Vec<Node>) -> Node {
-        Self {
-            kind: NodeKind::Nodes(nodes),
-            leading_comment: None,
-            trailing_comment: None,
-        }
-    }
-
-    #[inline]
-    pub fn indent(nodes: Vec<Node>) -> Node {
-        Self {
-            kind: NodeKind::Indent(nodes),
-            leading_comment: None,
-            trailing_comment: None,
-        }
-    }
-
-    #[inline]
-    pub fn forced_indent(nodes: Vec<Node>) -> Node {
-        Self {
-            kind: NodeKind::ForcedIndent(nodes),
-            leading_comment: None,
-            trailing_comment: None,
-        }
-    }
-
-    #[inline]
-    pub fn group(id: usize, nodes: Vec<Node>) -> Node {
-        Self {
-            kind: NodeKind::Group(id, nodes),
-            leading_comment: None,
-            trailing_comment: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum NodeKind {
-    /// Empty node - prints nothing.
-    Empty,
-
-    /// A slice of UTF-8 text to display, such as `fn`, `return`, etc.
-    Text(String),
-
-    /// Renders a newline, if wrapping is needed. Otherwise, renders nothing.
-    Line,
-
-    /// Renders a single space, if wrapping is not needed. Otherwise, renders
-    /// nothing.
-    Space,
-
-    /// Renders a space or a line, depending on whether the surrounding
-    /// group needs to be wrapped.
-    SpaceOrLine,
-
-    /// Renders two newlines, so there's an empty line between lines.
-    EmptyLine,
-
-    /// Always renders a single newline.
-    ForcedLine,
-
-    /// A group of nodes where each node is indented, if wrapping is enabled.
-    Indent(Vec<Node>),
-
-    /// A group of nodes where each node must be indented.
-    ForcedIndent(Vec<Node>),
-
-    /// A group of nodes which we try to fit into a single line.
-    Group(usize, Vec<Node>),
-
-    /// A group of nodes without any special handling.
-    Nodes(Vec<Node>),
-
-    /// A conditional rendering node.
-    IfWrap(usize, Box<Node>, Box<Node>),
-}
-
-struct Builder<'src> {
-    source: Arc<SourceFile>,
-    comments: VecDeque<(Range<usize>, &'src str)>,
-
-    current_group: usize,
-}
-
-impl<'src> Builder<'src> {
-    pub fn new(source: &'src str, mut comments: Vec<(Range<usize>, &'src str)>) -> Self {
-        comments.sort_by_key(|c| c.0.start);
-
-        Self {
-            source: Arc::new(SourceFile::internal(source)),
-            comments: comments.into_iter().collect(),
-            current_group: 0,
-        }
-    }
-
-    pub fn build_root(&mut self, items: Vec<TopLevelExpression>) -> Node {
-        let items_len = items.len();
-        let mut nodes = Vec::with_capacity(items.len());
-
-        for (idx, item) in items.into_iter().enumerate() {
-            nodes.push(self.build_item(item));
-
-            if idx < items_len - 1 {
-                nodes.push(Node::empty_line());
-            }
-        }
-
-        Node::nodes(nodes)
-    }
-
-    pub fn build(source: &str, doc: Document) -> Node {
-        let mut builder = Builder::new(source, doc.comments);
-
-        builder.build_root(doc.items)
-    }
-
-    fn next_group(&mut self) -> usize {
-        let id = self.current_group;
-        self.current_group += 1;
-
-        id
-    }
-
-    fn leading_comment(&mut self, span: &Location) -> Option<String> {
-        if let Some((comment_span, _)) = self.comments.front()
-            && comment_span.start < span.0.start
-        {
-            let (_, slice) = self.comments.pop_front().unwrap();
-
-            return Some(slice.to_string());
-        }
-
-        None
-    }
-
-    fn trailing_comment(&mut self, span: &Location) -> Option<String> {
-        let span_coords = lume_span::source::Location {
-            file: self.source.clone(),
-            index: span.0.clone(),
-        };
-
-        if let Some((comment_span, _)) = self.comments.front() {
-            let comment_coords = lume_span::source::Location {
-                file: self.source.clone(),
-                index: comment_span.clone(),
-            };
-
-            if comment_coords.is_trailing(&span_coords) {
-                let (_, slice) = self.comments.pop_front().unwrap();
-
-                return Some(slice.to_string());
-            }
-        }
-
-        None
-    }
-
-    /// Creates a group of nodes, possibly wrapping, depending on the
-    /// surrounding group. In practice, it allows creating lists like this:
-    ///
-    /// ```ignore
-    /// (Int8, Int16, Int32, Int64)
-    /// ```
-    /// if not wrapping. If the group is wrapping:
-    ///
-    /// ```ignore
-    /// (
-    ///     Int8,
-    ///     Int16,
-    ///     Int32,
-    ///     Int64,
-    /// )
-    /// ```
-    ///
-    /// This can be used for parameter lists, arrays, blocks, etc.
-    ///
-    /// The method takes a list of items which should be contained within the
-    /// group, as well as a closure for creating each node within the group.
-    ///
-    /// # Spacing
-    ///
-    /// When wrapping, there is at least one line between each node in the list.
-    /// If two items in the given list have one-or-more lines between them,
-    /// the output node will put a single line between them.
-    fn idented<T: lume_ast::Node>(
-        &mut self,
-        items: Vec<T>,
-        open: &str,
-        close: &str,
-        mut f: impl FnMut(&mut Builder<'src>, &mut Vec<Node>, T, usize),
-    ) -> Node {
-        if items.is_empty() {
-            return Node::nodes(vec![Node::text_str(open), Node::space(), Node::text_str(close)]);
-        }
-
-        let mut nodes = vec![Node::text_str(open)];
-        let mut group_items = Vec::with_capacity(items.len());
-
-        let mut iter = items.into_iter().peekable();
-        let group_id = self.next_group();
-
-        while let Some(stmt) = iter.next() {
-            let stmt_loc = lume_span::source::Location {
-                file: self.source.clone(),
-                index: stmt.location().0.clone(),
-            };
-
-            f(self, &mut group_items, stmt, group_id);
-
-            if let Some(next) = iter.peek() {
-                let next_loc = lume_span::source::Location {
-                    file: self.source.clone(),
-                    index: next.location().0.clone(),
-                };
-
-                let sep = if next_loc.coordinates().0 - stmt_loc.coordinates().0 > 1 {
-                    Node::empty_line()
-                } else {
-                    Node::line()
-                };
-
-                group_items.push(sep);
-            }
-        }
-
-        nodes.push(Node::line());
-        nodes.push(Node::indent(group_items));
-        nodes.push(Node::line());
-        nodes.push(Node::text_str(close));
-
-        Node::group(group_id, nodes)
-    }
-
-    /// Creates a group of nodes which will always wrap, unless there are no
-    /// elements in the given list. For example, it can create nodes like:
-    ///
-    /// ```ignore
-    /// { }
-    /// ```
-    ///
-    /// ```ignore
-    /// {
-    ///     func();
-    ///
-    ///     let a = foo();
-    ///     a.bar();
-    /// }
-    /// ```
-    ///
-    /// This can be used for parameter lists, arrays, blocks, etc.
-    ///
-    /// The method takes a list of items which should be contained within the
-    /// group, as well as a closure for creating each node within the group.
-    ///
-    /// # Spacing
-    ///
-    /// When wrapping, there is at least one line between each node in the list.
-    /// If two items in the given list have one-or-more lines between them,
-    /// the output node will put a single line between them.
-    fn idented_force<T: lume_ast::Node>(
-        &mut self,
-        items: Vec<T>,
-        open: &str,
-        close: &str,
-        mut f: impl FnMut(&mut Builder<'src>, &mut Vec<Node>, T),
-    ) -> Node {
-        if items.is_empty() {
-            return Node::nodes(vec![Node::text_str(open), Node::space(), Node::text_str(close)]);
-        }
-
-        let mut nodes = vec![Node::text_str(open), Node::forced_line()];
-        let mut group_items = Vec::with_capacity(items.len());
-
-        let mut iter = items.into_iter().peekable();
-
-        while let Some(item) = iter.next() {
-            let item_span = item.location().0.clone();
-
-            f(self, &mut group_items, item);
-
-            if let Some(next) = iter.peek() {
-                let curr_loc = lume_span::source::Location {
-                    file: self.source.clone(),
-                    index: item_span,
-                };
-
-                let next_loc = lume_span::source::Location {
-                    file: self.source.clone(),
-                    index: next.location().0.clone(),
-                };
-
-                let sep = if next_loc.coordinates().0 - curr_loc.coordinates().0 > 1 {
-                    Node::empty_line()
-                } else {
-                    Node::forced_line()
-                };
-
-                group_items.push(sep);
-            }
-        }
-
-        nodes.push(Node::forced_indent(group_items));
-        nodes.push(Node::forced_line());
-        nodes.push(Node::text_str(close));
-
-        Node::group(self.next_group(), nodes)
-    }
-
-    /// Creates a group of nodes, possibly wrapping, depending on the
-    /// surrounding group. Between each node, there is a delimiter, defined in
-    /// `delim`, In practice, it allows creating lists like this:
-    ///
-    /// ```ignore
-    /// (Int8, Int16, Int32, Int64)
-    /// ```
-    /// if not wrapping. If the group is wrapping:
-    ///
-    /// ```ignore
-    /// (
-    ///     Int8,
-    ///     Int16,
-    ///     Int32,
-    ///     Int64,
-    /// )
-    /// ```
-    ///
-    /// This can be used for parameter lists, arrays, blocks, etc.
-    ///
-    /// The method takes a list of items which should be contained within the
-    /// group, as well as a closure for creating each node within the group.
-    ///
-    /// # Spacing
-    ///
-    /// When wrapping, there is at least one line between each node in the list.
-    /// If two items in the given list have one-or-more lines between them,
-    /// the output node will put a single line between them.
-    fn idented_delimited<T: lume_ast::Node>(
-        &mut self,
-        items: Vec<T>,
-        open: &str,
-        close: &str,
-        delim: &str,
-        mut f: impl FnMut(&mut Builder<'src>, &mut Vec<Node>, T),
-    ) -> Node {
-        let len = items.len();
-        let mut i = 0;
-
-        self.idented(items, open, close, |builder, nodes, value, group| {
-            f(builder, nodes, value);
-
-            if i < len - 1 {
-                nodes.push(Node::text_str(delim));
-                nodes.push(Node::space());
-            } else {
-                nodes.push(Node {
-                    kind: NodeKind::IfWrap(
-                        group,
-                        Box::new(Node::nodes(vec![Node::text_str(delim), Node::space()])),
-                        Box::new(Node::empty()),
-                    ),
-                    leading_comment: None,
-                    trailing_comment: None,
-                });
-            }
-
-            i += 1;
-        })
-    }
-}
-
-impl Builder<'_> {
-    fn build_item(&mut self, item: TopLevelExpression) -> Node {
-        match item {
-            TopLevelExpression::Import(item) => self.build_import(*item),
-            TopLevelExpression::Namespace(item) => build_namespace(*item),
-            TopLevelExpression::FunctionDefinition(item) => self.build_function_definition(*item),
-            TopLevelExpression::TypeDefinition(type_def) => match *type_def {
-                TypeDefinition::Struct(item) => self.build_struct_definition(*item),
-                TypeDefinition::Trait(item) => self.build_trait_definition(*item),
-                TypeDefinition::Enum(item) => self.build_enum_definition(*item),
-            },
-            TopLevelExpression::Impl(item) => self.build_implementation(*item),
-            TopLevelExpression::TraitImpl(item) => self.build_trait_implementation(*item),
-        }
-    }
-
-    fn build_import(&mut self, item: Import) -> Node {
-        let mut nodes = vec![Node::text_str("import"), Node::space()];
-        let path_len = item.path.path.len();
-
-        for (idx, path) in item.path.path.into_iter().enumerate() {
-            nodes.push(Node::text(path.name));
-
-            if idx < path_len - 1 {
-                nodes.push(Node::text_str("::"));
-            }
-        }
-
-        nodes.push(Node::space());
-        nodes.push(self.idented_delimited(item.names, "(", ")", ",", |_, nodes, name| {
-            nodes.push(Node::text(name.name));
-        }));
-
-        Node::nodes(nodes)
-    }
-
-    fn build_function_definition(&mut self, item: FunctionDefinition) -> Node {
-        let mut nodes = Vec::new();
-
-        if let Some(doc_comment) = item.documentation {
-            nodes.push(write_doc_comment(doc_comment));
-        }
-
-        nodes.push(build_visibility(item.visibility));
-        nodes.push(Node::text_str("fn"));
-        nodes.push(Node::space());
-
-        if item.external {
-            nodes.push(Node::text_str("external"));
-            nodes.push(Node::space());
-        }
-
-        nodes.push(Node::text(item.name.name));
-
-        nodes.push(self.build_type_parameters(item.type_parameters));
-        nodes.push(self.build_parameter_list(item.parameters));
-
-        if let Some(ret_ty) = item.return_type {
-            nodes.push(Node::nodes(vec![
-                Node::space(),
-                Node::text_str("->"),
-                Node::space(),
-                self.build_type(*ret_ty),
-            ]));
-        }
-
-        if let Some(block) = item.block {
-            nodes.push(Node::space());
-            nodes.push(self.build_block(block));
-        }
-
-        Node::nodes(nodes)
-    }
-
-    fn build_struct_definition(&mut self, item: StructDefinition) -> Node {
-        let mut nodes = Vec::new();
-
-        if let Some(doc_comment) = item.documentation {
-            nodes.push(write_doc_comment(doc_comment));
-        }
-
-        nodes.push(build_visibility(item.visibility));
-        nodes.push(Node::text_str("struct"));
-        nodes.push(Node::space());
-
-        if item.builtin {
-            nodes.push(Node::text_str("builtin"));
-            nodes.push(Node::space());
-        }
-
-        nodes.push(Node::text(item.name.name));
-        nodes.push(self.build_type_parameters(item.type_parameters));
-        nodes.push(Node::space());
-
-        let fields = self.idented_force(item.fields, "{", "}", |builder, nodes, field| {
-            if let Some(doc) = field.documentation {
-                nodes.push(write_doc_comment(doc));
-            }
-
-            nodes.push(build_visibility(field.visibility));
-
-            nodes.push(Node::text(field.name.name));
-            nodes.push(Node::text_str(":"));
-            nodes.push(Node::space());
-
-            nodes.push(builder.build_type(field.field_type));
-
-            if let Some(default_value) = field.default_value {
-                nodes.push(Node::space());
-                nodes.push(Node::text_str("="));
-                nodes.push(Node::space());
-
-                nodes.push(builder.build_expression(default_value));
-            }
-
-            nodes.push(Node::text_str(";"));
-        });
-
-        nodes.push(fields);
-
-        Node::nodes(nodes)
-    }
-
-    fn build_trait_definition(&mut self, item: TraitDefinition) -> Node {
-        let mut nodes = Vec::new();
-
-        if let Some(doc_comment) = item.documentation {
-            nodes.push(write_doc_comment(doc_comment));
-        }
-
-        nodes.push(build_visibility(item.visibility));
-        nodes.push(Node::text_str("trait"));
-        nodes.push(Node::space());
-
-        nodes.push(Node::text(item.name.name));
-        nodes.push(self.build_type_parameters(item.type_parameters));
-        nodes.push(Node::space());
-
-        let methods = self.idented_force(item.methods, "{", "}", |builder, nodes, method| {
-            nodes.push(builder.build_trait_method_definition(method));
-        });
-
-        nodes.push(methods);
-
-        Node::nodes(nodes)
-    }
-
-    fn build_trait_method_definition(&mut self, item: TraitMethodDefinition) -> Node {
-        let mut nodes = Vec::new();
-
-        if let Some(doc_comment) = item.documentation {
-            nodes.push(write_doc_comment(doc_comment));
-        }
-
-        nodes.push(Node::text_str("fn"));
-        nodes.push(Node::space());
-
-        nodes.push(Node::text(item.name.name));
-
-        nodes.push(self.build_type_parameters(item.type_parameters));
-        nodes.push(self.build_parameter_list(item.parameters));
-
-        if let Some(ret_ty) = item.return_type {
-            nodes.push(Node::nodes(vec![
-                Node::space(),
-                Node::text_str("->"),
-                Node::space(),
-                self.build_type(*ret_ty),
-            ]));
-        }
-
-        if let Some(block) = item.block {
-            nodes.push(Node::space());
-            nodes.push(self.build_block(block));
-        } else {
-            nodes.push(Node::text_str(";"));
-        }
-
-        Node::nodes(nodes)
-    }
-
-    fn build_enum_definition(&mut self, item: EnumDefinition) -> Node {
-        let mut nodes = Vec::new();
-
-        if let Some(doc_comment) = item.documentation {
-            nodes.push(write_doc_comment(doc_comment));
-        }
-
-        nodes.push(build_visibility(item.visibility));
-        nodes.push(Node::text_str("enum"));
-        nodes.push(Node::space());
-
-        nodes.push(Node::text(item.name.name));
-        nodes.push(self.build_type_parameters(item.type_parameters));
-        nodes.push(Node::space());
-
-        let cases = self.idented_force(item.cases, "{", "}", |builder, nodes, case| {
-            nodes.push(builder.build_enum_definition_case(case));
-        });
-
-        nodes.push(cases);
-
-        Node::nodes(nodes)
-    }
-
-    fn build_enum_definition_case(&mut self, item: EnumDefinitionCase) -> Node {
-        let mut nodes = Vec::new();
-
-        if let Some(doc_comment) = item.documentation {
-            nodes.push(write_doc_comment(doc_comment));
-        }
-
-        nodes.push(Node::text(item.name.name));
-
-        if !item.parameters.is_empty() {
-            let parameters = item.parameters.into_iter().map(|p| *p).collect();
-
-            nodes.push(
-                self.idented_delimited(parameters, "(", ")", ",", |builder, nodes, value| {
-                    nodes.push(builder.build_type(value));
-                }),
-            );
-        }
-
-        nodes.push(Node::text_str(","));
-
-        Node::nodes(nodes)
-    }
-
-    fn build_implementation(&mut self, item: Implementation) -> Node {
-        let mut nodes = vec![
-            Node::text_str("impl"),
-            self.build_type_parameters(item.type_parameters),
-            Node::space(),
-            self.build_type(*item.name),
-            Node::space(),
-        ];
-
-        let methods = self.idented_force(item.methods, "{", "}", |builder, nodes, method| {
-            nodes.push(builder.build_method_definition(method));
-        });
-
-        nodes.push(methods);
-
-        Node::nodes(nodes)
-    }
-
-    fn build_method_definition(&mut self, item: MethodDefinition) -> Node {
-        let mut nodes = Vec::new();
-
-        if let Some(doc_comment) = item.documentation {
-            nodes.push(write_doc_comment(doc_comment));
-        }
-
-        nodes.push(Node::text_str("fn"));
-        nodes.push(Node::space());
-
-        if item.external {
-            nodes.push(Node::text_str("external"));
-            nodes.push(Node::space());
-        }
-
-        nodes.push(Node::text(item.name.name));
-        nodes.push(self.build_type_parameters(item.type_parameters));
-        nodes.push(self.build_parameter_list(item.parameters));
-
-        if let Some(ret_ty) = item.return_type {
-            nodes.push(Node::nodes(vec![
-                Node::space(),
-                Node::text_str("->"),
-                Node::space(),
-                self.build_type(*ret_ty),
-            ]));
-        }
-
-        if let Some(block) = item.block {
-            nodes.push(Node::space());
-            nodes.push(self.build_block(block));
-        }
-
-        Node::nodes(nodes)
-    }
-
-    fn build_trait_implementation(&mut self, item: TraitImplementation) -> Node {
-        let mut nodes = vec![
-            Node::text_str("use"),
-            self.build_type_parameters(item.type_parameters),
-            Node::space(),
-            self.build_type(*item.name),
-            Node::space(),
-            Node::text_str("in"),
-            self.build_type(*item.target),
-            Node::space(),
-        ];
-
-        let methods = self.idented_force(item.methods, "{", "}", |builder, nodes, method| {
-            nodes.push(builder.build_trait_method_implementation(method));
-        });
-
-        nodes.push(methods);
-
-        Node::nodes(nodes)
-    }
-
-    fn build_trait_method_implementation(&mut self, item: TraitMethodImplementation) -> Node {
-        let mut nodes = Vec::new();
-
-        nodes.push(Node::text_str("fn"));
-        nodes.push(Node::space());
-
-        if item.external {
-            nodes.push(Node::text_str("external"));
-            nodes.push(Node::space());
-        }
-
-        nodes.push(Node::text(item.name.name));
-        nodes.push(self.build_type_parameters(item.type_parameters));
-        nodes.push(self.build_parameter_list(item.parameters));
-
-        if let Some(ret_ty) = item.return_type {
-            nodes.push(Node::nodes(vec![
-                Node::space(),
-                Node::text_str("->"),
-                Node::space(),
-                self.build_type(*ret_ty),
-            ]));
-        }
-
-        if let Some(block) = item.block {
-            nodes.push(Node::space());
-            nodes.push(self.build_block(block));
-        }
-
-        Node::nodes(nodes)
-    }
-
-    fn build_parameter_list(&mut self, params: Vec<Parameter>) -> Node {
-        self.idented_delimited(params, "(", ")", ",", |builder, nodes, value| {
-            nodes.push(builder.build_parameter(value));
-        })
-    }
-
-    fn build_parameter(&mut self, param: Parameter) -> Node {
-        let mut nodes = Vec::new();
-
-        if param.param_type.is_self() {
-            nodes.push(Node::text_str("self"));
-        } else {
-            if param.vararg {
-                nodes.push(Node::text_str("..."));
-            }
-
-            nodes.push(Node::text(param.name.name));
-            nodes.push(Node::text_str(":"));
-            nodes.push(Node::space());
-            nodes.push(self.build_type(param.param_type));
-        }
-
-        Node::nodes(nodes)
-    }
-}
-
-fn build_namespace(item: Namespace) -> Node {
-    let mut nodes = vec![Node::text_str("namespace"), Node::space()];
-    let path_len = item.path.path.len();
-
-    for (idx, path) in item.path.path.into_iter().enumerate() {
-        nodes.push(Node::text(path.name));
-
-        if idx < path_len - 1 {
-            nodes.push(Node::text_str("::"));
-        }
-    }
-
-    Node::nodes(nodes)
-}
-
-fn build_visibility(item: Option<Visibility>) -> Node {
-    match item {
-        Some(Visibility::Public { .. }) => Node::text_str("pub "),
-        Some(Visibility::Internal { .. }) => Node::text_str("pub(internal) "),
-        Some(Visibility::Private { .. }) => Node::text_str("priv "),
-        None => Node::empty(),
-    }
-}
-
-impl Builder<'_> {
-    fn build_path(&mut self, item: Path) -> Node {
-        let mut nodes = Vec::new();
-
-        for segment in item.root {
-            nodes.push(self.build_path_segment(segment));
-            nodes.push(Node::text_str("::"));
-        }
-
-        nodes.push(self.build_path_segment(item.name));
-
-        Node::nodes(nodes)
-    }
-
-    fn build_path_segment(&mut self, item: PathSegment) -> Node {
-        match item {
-            PathSegment::Namespace { name } | PathSegment::Variant { name, .. } => Node::text(name.name),
-            PathSegment::Type { name, bound_types, .. } | PathSegment::Callable { name, bound_types, .. } => {
-                if bound_types.is_empty() {
-                    Node::text(name.name)
-                } else {
-                    let mut nodes = vec![Node::text(name.name)];
-                    nodes.extend(self.build_type_arguments(bound_types));
-
-                    Node::nodes(nodes)
-                }
-            }
-        }
-    }
-}
-
-impl Builder<'_> {
-    fn build_pattern(&mut self, item: Pattern) -> Node {
-        match item {
-            Pattern::Literal(pat) => {
-                let index = pat.location().0.clone();
-                let slice = self.source.content.get(index).unwrap();
-
-                Node::text(slice.to_string())
-            }
-            Pattern::Identifier(pat) => Node::text(pat.name),
-            Pattern::Variant(pat) => {
-                if pat.fields.is_empty() {
-                    return self.build_path(pat.name);
-                }
-
-                let mut nodes = vec![self.build_path(pat.name), Node::text_str("("), Node::line()];
-                let mut fields = Vec::with_capacity(pat.fields.len());
-
-                for (idx, field) in pat.fields.into_iter().enumerate() {
-                    let node = self.build_pattern(field);
-
-                    if idx < fields.capacity() - 1 {
-                        fields.push(Node::nodes(vec![node, Node::text_str(","), Node::space_or_line()]));
-                    } else {
-                        fields.push(node);
-                    }
-                }
-
-                nodes.push(Node::indent(fields));
-                nodes.push(Node::line());
-                nodes.push(Node::text_str(")"));
-
-                Node::group(self.next_group(), nodes)
-            }
-            Pattern::Wildcard(_) => Node::text_str(".."),
-        }
-    }
-}
-
-impl Builder<'_> {
-    fn build_type(&mut self, ty: Type) -> Node {
-        match ty {
-            Type::Named(mut ty) => {
-                if ty.name.bound_types().is_empty() {
-                    return Node::text(format!("{}", ty.name));
-                }
-
-                let type_args = ty.name.take_bound_types();
-
-                let mut nodes = vec![Node::text(format!("{}", ty.name))];
-                nodes.extend(self.build_type_arguments(type_args));
-
-                Node::group(self.next_group(), nodes)
-            }
-            Type::Array(ty) => Node::nodes(vec![
-                Node::text_str("["),
-                self.build_type(*ty.element_type),
-                Node::text_str("]"),
-            ]),
-            Type::SelfType(_) => Node::text_str("self"),
-        }
-    }
-
-    fn build_type_arguments(&mut self, type_args: Vec<Type>) -> Vec<Node> {
-        let mut nodes = Vec::new();
-        nodes.push(Node::text_str("<"));
-
-        let type_arg_len = type_args.len();
-
-        for (idx, type_arg) in type_args.into_iter().enumerate() {
-            let node = self.build_type(type_arg);
-
-            if idx < type_arg_len - 1 {
-                nodes.push(Node::nodes(vec![node, Node::text_str(","), Node::space_or_line()]));
-            } else {
-                nodes.push(node);
-            }
-        }
-
-        nodes.push(Node::text_str(">"));
-
-        nodes
-    }
-
-    fn build_type_parameters(&mut self, type_params: Vec<TypeParameter>) -> Node {
-        if type_params.is_empty() {
-            return Node::empty();
-        }
-
-        self.idented_delimited(type_params, "<", ">", ",", |builder, nodes, value| {
-            nodes.push(builder.build_type_parameter(value));
-        })
-    }
-
-    fn build_type_parameter(&mut self, type_param: TypeParameter) -> Node {
-        if type_param.constraints.is_empty() {
-            return Node::text(type_param.name.name);
-        }
-
-        let mut nodes = vec![Node::text(type_param.name.name), Node::text_str(":"), Node::space()];
-        let constraint_len = type_param.constraints.len();
-
-        for (idx, constraint) in type_param.constraints.into_iter().enumerate() {
-            let node = self.build_type(*constraint);
-
-            if idx < constraint_len - 1 {
-                nodes.push(Node::nodes(vec![
-                    node,
-                    Node::space(),
-                    Node::text_str("+"),
-                    Node::space(),
-                ]));
-            } else {
-                nodes.push(node);
-            }
-        }
-
-        Node::nodes(nodes)
-    }
-}
-
-impl Builder<'_> {
-    fn build_block(&mut self, block: Block) -> Node {
-        self.idented_force(block.statements, "{", "}", |builder, nodes, stmt| {
-            nodes.push(builder.build_statement(stmt));
-        })
-    }
-
-    fn build_statement(&mut self, stmt: Statement) -> Node {
-        match stmt {
-            Statement::VariableDeclaration(decl) => {
-                let mut nodes = vec![Node::text_str("let"), Node::space(), Node::text(decl.name.name)];
-
-                if let Some(ty) = decl.variable_type {
-                    nodes.push(Node::text_str(":"));
-                    nodes.push(Node::space());
-                    nodes.push(self.build_type(ty));
-                }
-
-                nodes.push(Node::space());
-                nodes.push(Node::text_str("="));
-                nodes.push(Node::space());
-                nodes.push(self.build_expression(decl.value));
-                nodes.push(Node::text_str(";"));
-
-                Node::nodes(nodes)
-            }
-            Statement::Break(_) => Node::nodes(vec![Node::text_str("break"), Node::text_str(";")]),
-            Statement::Continue(_) => Node::nodes(vec![Node::text_str("continue"), Node::text_str(";")]),
-            Statement::Final(expr) => self.build_expression(expr.value),
-            Statement::Return(ret) => {
-                let mut nodes = vec![Node::text_str("return")];
-
-                if let Some(value) = ret.value {
-                    nodes.push(Node::space_or_line());
-                    nodes.push(self.build_expression(value));
-                }
-
-                nodes.push(Node::text_str(";"));
-
-                Node::nodes(nodes)
-            }
-            Statement::InfiniteLoop(stmt) => Node::nodes(vec![
-                Node::text_str("loop"),
-                Node::space(),
-                self.build_block(stmt.block),
-            ]),
-            Statement::IteratorLoop(stmt) => Node::nodes(vec![
-                Node::text_str("for"),
-                Node::space(),
-                Node::text(stmt.pattern.name),
-                Node::space(),
-                Node::text_str(" in "),
-                Node::space(),
-                self.build_expression(stmt.collection),
-                self.build_block(stmt.block),
-            ]),
-            Statement::PredicateLoop(stmt) => Node::nodes(vec![
-                Node::text_str("while"),
-                Node::space(),
-                self.build_expression(stmt.condition),
-                Node::space(),
-                self.build_block(stmt.block),
-            ]),
-            Statement::Expression(stmt) => {
-                let needs_semi = !matches!(*stmt, Expression::Switch(_) | Expression::If(_));
-                let expr = self.build_expression(*stmt);
-
-                if needs_semi {
-                    Node::nodes(vec![expr, Node::text_str(";")])
-                } else {
-                    expr
-                }
-            }
-        }
-    }
-}
-
-impl Builder<'_> {
-    #[allow(clippy::too_many_lines)]
-    fn build_expression(&mut self, expr: Expression) -> Node {
-        let leading_comment = self.leading_comment(expr.location());
-        let trailing_comment = self.trailing_comment(expr.location());
-
-        let mut node = match expr {
-            Expression::Array(expr) => self.idented_delimited(expr.values, "[", "]", ",", |builder, nodes, value| {
-                nodes.push(builder.build_expression(value));
-            }),
-            Expression::Assignment(expr) => Node::nodes(vec![
-                self.build_expression(expr.target),
-                Node::space(),
-                Node::text_str("="),
-                Node::space(),
-                self.build_expression(expr.value),
-            ]),
-            Expression::Call(expr) => {
-                let mut nodes = Vec::new();
-
-                if let Some(callee) = expr.callee {
-                    nodes.push(self.build_expression(callee));
-                    nodes.push(Node::text_str("."));
-                }
-
-                nodes.push(self.build_path(expr.name));
-                nodes.push(Node::text_str("("));
-                nodes.push(Node::line());
-
-                let mut arg_list = Vec::with_capacity(expr.arguments.len());
-
-                for (idx, arg) in expr.arguments.into_iter().enumerate() {
-                    let node = self.build_expression(arg);
-
-                    if idx < arg_list.capacity() - 1 {
-                        arg_list.push(Node::nodes(vec![node, Node::text_str(","), Node::space_or_line()]));
-                    } else {
-                        arg_list.push(node);
-                    }
-                }
-
-                nodes.push(Node::indent(arg_list));
-                nodes.push(Node::line());
-                nodes.push(Node::text_str(")"));
-
-                Node::group(self.next_group(), nodes)
-            }
-            Expression::Cast(expr) => Node::nodes(vec![
-                self.build_expression(expr.source),
-                Node::space(),
-                Node::text_str("as"),
-                Node::space(),
-                self.build_type(expr.target_type),
-            ]),
-            Expression::Construct(expr) => {
-                let mut nodes = vec![
-                    self.build_path(expr.path),
-                    Node::space(),
-                    Node::text_str("{"),
-                    Node::space_or_line(),
-                ];
-
-                let mut fields = Vec::with_capacity(expr.fields.len());
-
-                for (idx, field) in expr.fields.into_iter().enumerate() {
-                    let node = if let Some(value) = field.value {
-                        Node::nodes(vec![
-                            Node::text(field.name.name),
-                            Node::text_str(":"),
-                            Node::space(),
-                            self.build_expression(value),
-                        ])
-                    } else {
-                        Node::text(field.name.name)
-                    };
-
-                    if idx < fields.capacity() - 1 {
-                        fields.push(Node::nodes(vec![node, Node::text_str(","), Node::space_or_line()]));
-                    } else {
-                        fields.push(node);
-                    }
-                }
-
-                nodes.push(Node::indent(fields));
-                nodes.push(Node::space_or_line());
-                nodes.push(Node::text_str("}"));
-
-                Node::group(self.next_group(), nodes)
-            }
-            Expression::If(expr) => {
-                let mut cases = Vec::new();
-
-                for (idx, case) in expr.cases.into_iter().enumerate() {
-                    let node = if idx == 0 {
-                        Node::nodes(vec![
-                            Node::text_str("if"),
-                            Node::space(),
-                            self.build_expression(case.condition.unwrap()),
-                            Node::space(),
-                            self.build_block(case.block),
-                        ])
-                    } else if let Some(condition) = case.condition {
-                        Node::nodes(vec![
-                            Node::space(),
-                            Node::text_str("else"),
-                            Node::space(),
-                            Node::text_str("if"),
-                            Node::space(),
-                            self.build_expression(condition),
-                            Node::space(),
-                            self.build_block(case.block),
-                        ])
-                    } else {
-                        Node::nodes(vec![
-                            Node::space(),
-                            Node::text_str("else"),
-                            Node::space(),
-                            self.build_block(case.block),
-                        ])
-                    };
-
-                    cases.push(node);
-                }
-
-                Node::group(self.next_group(), cases)
-            }
-            Expression::IntrinsicCall(expr) => match expr.kind {
-                IntrinsicKind::Add { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("+"),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::Sub { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("-"),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::Mul { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("*"),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::Div { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("/"),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::And { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("&"),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::Or { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("|"),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::Negate { target } => {
-                    Node::nodes(vec![Node::text_str("-"), self.build_expression(*target)])
-                }
-                IntrinsicKind::Increment { target } => {
-                    Node::nodes(vec![self.build_expression(*target), Node::text_str("++")])
-                }
-                IntrinsicKind::Decrement { target } => {
-                    Node::nodes(vec![self.build_expression(*target), Node::text_str("--")])
-                }
-                IntrinsicKind::BinaryAnd { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("&&"),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::BinaryOr { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("||"),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::BinaryXor { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("^"),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::Not { target } => Node::nodes(vec![Node::text_str("!"), self.build_expression(*target)]),
-                IntrinsicKind::Equal { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("=="),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::NotEqual { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("!="),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::Less { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("<"),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::LessEqual { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str("<="),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::Greater { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str(">"),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-                IntrinsicKind::GreaterEqual { lhs, rhs } => Node::nodes(vec![
-                    self.build_expression(*lhs),
-                    Node::space(),
-                    Node::text_str(">="),
-                    Node::space(),
-                    self.build_expression(*rhs),
-                ]),
-            },
-            Expression::Is(expr) => Node::nodes(vec![
-                self.build_expression(expr.target),
-                Node::space(),
-                Node::text_str("is"),
-                Node::space(),
-                self.build_pattern(expr.pattern),
-            ]),
-            Expression::Literal(expr) => {
-                let index = expr.location().0.clone();
-                let slice = self.source.content.get(index).unwrap();
-
-                Node::text_str(slice)
-            }
-            Expression::Member(expr) => Node::nodes(vec![
-                self.build_expression(expr.callee),
-                Node::text_str("."),
-                Node::text(expr.name.name),
-            ]),
-            Expression::Range(expr) => {
-                if expr.inclusive {
-                    Node::nodes(vec![
-                        self.build_expression(expr.lower),
-                        Node::text_str(".."),
-                        Node::text_str("="),
-                        self.build_expression(expr.upper),
-                    ])
-                } else {
-                    Node::nodes(vec![
-                        self.build_expression(expr.lower),
-                        Node::text_str(".."),
-                        self.build_expression(expr.upper),
-                    ])
-                }
-            }
-            Expression::Scope(expr) => self.idented_force(expr.body, "{", "}", |builder, nodes, stmt| {
-                nodes.push(builder.build_statement(stmt));
-            }),
-            Expression::Switch(expr) => {
-                let mut nodes = vec![
-                    Node::text_str("switch"),
-                    Node::space(),
-                    self.build_expression(expr.operand),
-                    Node::space(),
-                    Node::text_str("{"),
-                    Node::forced_line(),
-                ];
-
-                let mut cases = Vec::with_capacity(expr.cases.len());
-                let mut iter = expr.cases.into_iter().peekable();
-
-                while let Some(case) = iter.next() {
-                    let stmt_index = case.location().0.clone();
-
-                    let node = Node::nodes(vec![
-                        self.build_pattern(case.pattern),
-                        Node::space(),
-                        Node::text_str("=>"),
-                        Node::space(),
-                        self.build_expression(case.branch),
-                        Node::text_str(","),
-                    ]);
-
-                    cases.push(node);
-
-                    if let Some(next) = iter.peek() {
-                        let stmt_loc = lume_span::source::Location {
-                            file: self.source.clone(),
-                            index: stmt_index,
-                        };
-
-                        let next_loc = lume_span::source::Location {
-                            file: self.source.clone(),
-                            index: next.location().0.clone(),
-                        };
-
-                        let sep = if next_loc.coordinates().0 - stmt_loc.coordinates().0 > 1 {
-                            Node::empty_line()
-                        } else {
-                            Node::forced_line()
-                        };
-
-                        cases.push(sep);
-                    }
-                }
-
-                nodes.push(Node::forced_indent(cases));
-                nodes.push(Node::forced_line());
-                nodes.push(Node::text_str("}"));
-
-                Node::nodes(nodes)
-            }
-            Expression::Variable(expr) => Node::text(expr.name.name),
-            Expression::Variant(expr) => {
-                if expr.arguments.is_empty() {
-                    return self.build_path(expr.name);
-                }
-
-                let mut nodes = vec![self.build_path(expr.name), Node::text_str("("), Node::line()];
-                let mut arg_list = Vec::with_capacity(expr.arguments.len());
-
-                for (idx, arg) in expr.arguments.into_iter().enumerate() {
-                    let node = self.build_expression(arg);
-
-                    if idx < arg_list.capacity() - 1 {
-                        arg_list.push(Node::nodes(vec![node, Node::text_str(","), Node::space_or_line()]));
-                    } else {
-                        arg_list.push(node);
-                    }
-                }
-
-                nodes.push(Node::indent(arg_list));
-                nodes.push(Node::line());
-                nodes.push(Node::text_str(")"));
-
-                Node::group(self.next_group(), nodes)
-            }
-        };
-
-        node.leading_comment = leading_comment;
-        node.trailing_comment = trailing_comment;
-
-        node
-    }
-}
-
-fn write_doc_comment(doc: String) -> Node {
-    let mut nodes = Vec::new();
-
-    for line in doc.lines() {
-        nodes.push(Node::text_str("/// "));
-        nodes.push(Node::text_str(line.trim()));
-        nodes.push(Node::forced_line());
-    }
-
-    Node::nodes(nodes)
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Wrap {
-    Enabled,
-    Detect,
-}
-
-impl Wrap {
-    pub fn enabled(self) -> bool {
-        self == Wrap::Enabled
-    }
-}
-
-struct Renderer<'cfg> {
+pub struct Formatter<'cfg, 'src> {
     config: &'cfg Config,
 
-    buf: String,
-    indent: usize,
-    line_size: usize,
+    /// Defines the content of the original source file being formatted.
+    pub source_file: Arc<SourceFile>,
 
-    wrapped: HashSet<usize>,
+    /// Defines a list of all comments from the original source file, which
+    /// were discarded during parsing.
+    ///
+    /// Each entry has a range, depicting the actual position of the comment in
+    /// the original source file, and a slice of the comment (including
+    /// backslashes).
+    pub comments: VecDeque<(Range<usize>, &'src str)>,
 }
 
-impl<'cfg> Renderer<'cfg> {
+impl<'cfg, 'src> Formatter<'cfg, 'src> {
     pub fn new(config: &'cfg Config) -> Self {
         Self {
             config,
-            buf: String::new(),
-            indent: 0,
-            line_size: 0,
-            wrapped: HashSet::new(),
+            source_file: Arc::new(SourceFile::empty()),
+            comments: VecDeque::new(),
         }
     }
 
-    pub fn render(mut self, root: Node) -> String {
-        self.node(root, Wrap::Enabled);
+    /// Gets the current indentation as a [`isize`].
+    #[inline]
+    fn indent(&self) -> isize {
+        self.config.indentation.width().cast_signed()
+    }
 
-        self.buf
+    fn source<'a>(mut self, source: &'a Source<'src>) -> Document<'a> {
+        let Source {
+            source_file,
+            items,
+            comments,
+        } = source;
+
+        self.source_file = source_file.clone();
+        self.comments = comments
+            .iter()
+            .map(|(span, content)| (span.clone(), *content))
+            .collect();
+
+        self.with_spacing(items.iter(), |fmt, item| fmt.top_level_expression(item))
+    }
+
+    /// Determines whether any current comments exist at or before the given
+    /// character index.
+    fn any_comments_before(&self, idx: usize) -> bool {
+        self.comments.iter().any(|(span, _)| span.start <= idx)
+    }
+
+    fn pop_comment_if<P: FnOnce(&Range<usize>, &str) -> bool>(
+        &mut self,
+        predicate: P,
+    ) -> Option<(Range<usize>, &'src str)> {
+        let (span, comment) = self.comments.front()?;
+
+        if predicate(span, *comment) {
+            self.comments.pop_front()
+        } else {
+            None
+        }
+    }
+
+    /// Pops off all comments which start at or before the given character index
+    /// and return them.
+    fn pop_comments_before(&mut self, idx: usize) -> Comments<'src> {
+        let mut comments = Vec::new();
+        while let Some(comment) = self.pop_comment_if(|span, _comment| span.start <= idx) {
+            comments.push(comment);
+        }
+
+        let Some(last) = comments.last() else {
+            return Comments::default();
+        };
+
+        let (comment_line, _) = self.coordinates_of(last.0.end);
+        let (index_line, _) = self.coordinates_of(idx);
+
+        let trailing_newline = index_line.saturating_sub(comment_line) > 1;
+
+        Comments {
+            trailing_newline,
+            lines: comments,
+        }
+    }
+
+    /// Pops off the first comment which start at the same line as the given
+    /// character index and returns it. If no comments were found on the line,
+    /// returns [`None`].
+    fn pop_comments_on_same_line(&mut self, idx: usize) -> Option<&'src str> {
+        let (idx_line, _) = self.coordinates_of(idx);
+
+        if let Some((span, _content)) = self.comments.front() {
+            let (comment_line, _) = self.coordinates_of(span.start);
+
+            if comment_line == idx_line {
+                let (_span, comment) = self.comments.pop_front().unwrap();
+                return Some(comment);
+            }
+        }
+
+        None
+    }
+
+    fn doc_comment<'a>(&self, doc: &str) -> Document<'a> {
+        let mut lines = Vec::new();
+
+        for doc_line in doc.lines() {
+            lines.push("/// ".as_doc().append(doc_line.to_string()).append(line()));
+        }
+
+        concat(lines)
+    }
+
+    /// Gets the file coordinates of the given character index in the current
+    /// source file.
+    ///
+    /// The returned tuple has the coordinates as `(line, column)`, both being
+    /// zero-indexed. If the given index is outside of the span of the file,
+    /// `(0, 0)` is returned.
+    fn coordinates_of(&self, idx: usize) -> (usize, usize) {
+        if idx > self.source_file.content.len() {
+            return (0, 0);
+        }
+
+        let src = &self.source_file.content;
+
+        let mut line = 0;
+        let mut col = 0;
+
+        for (i, c) in src.char_indices() {
+            if i == idx {
+                return (line, col);
+            }
+
+            if c == '\n' {
+                col = 0;
+                line += 1;
+            } else {
+                col += 1;
+            }
+        }
+
+        (line, col)
+    }
+
+    fn with_spacing<'a, T, I, F>(&mut self, iter: I, mut f: F) -> Document<'a>
+    where
+        T: lume_ast::Node + 'a,
+        I: Iterator<Item = &'a T>,
+        F: FnMut(&mut Self, &'a T) -> Document<'a>,
+    {
+        let mut prev_line = 0;
+        let mut items = Vec::<Document<'a>>::new();
+
+        for (idx, item) in iter.enumerate() {
+            let (curr_line, _) = self.coordinates_of(item.location().start());
+
+            if idx != 0 && curr_line.saturating_sub(prev_line) > 1 {
+                items.push(lines(2));
+            } else if idx != 0 {
+                items.push(line());
+            }
+
+            (prev_line, _) = self.coordinates_of(item.location().end());
+            items.push(f(self, item).group());
+        }
+
+        items.as_doc()
+    }
+
+    fn path<'a>(&mut self, path: &'a Path) -> Document<'a> {
+        let head = self.path_segment(&path.name);
+        let root = path.root.iter().map(|seg| self.path_segment(seg)).collect::<Vec<_>>();
+
+        if root.is_empty() {
+            head
+        } else {
+            join(root, "::").append("::").append(head)
+        }
+    }
+
+    fn path_segment<'a>(&mut self, segment: &'a PathSegment) -> Document<'a> {
+        match segment {
+            PathSegment::Namespace { name } | PathSegment::Variant { name, .. } => str(name.as_str()),
+            PathSegment::Type { name, bound_types, .. } | PathSegment::Callable { name, bound_types, .. } => {
+                let name = str(name.as_str());
+
+                if bound_types.is_empty() {
+                    name
+                } else {
+                    name.append(self.type_arguments(&bound_types))
+                }
+            }
+        }
+    }
+
+    fn top_level_expression<'a>(&mut self, item: &'a TopLevelExpression) -> Document<'a> {
+        match item {
+            TopLevelExpression::Namespace(namespace) => self.namespace(namespace),
+            TopLevelExpression::Import(import) => self.import(import),
+            TopLevelExpression::FunctionDefinition(func) => self.function_definition(func),
+            TopLevelExpression::TypeDefinition(type_def) => match type_def.as_ref() {
+                TypeDefinition::Struct(struct_def) => self.struct_definition(struct_def),
+                TypeDefinition::Trait(trait_def) => self.trait_definition(trait_def),
+                TypeDefinition::Enum(enum_def) => self.enum_definition(enum_def),
+            },
+            TopLevelExpression::TraitImpl(trait_impl) => self.trait_implementation(trait_impl),
+            TopLevelExpression::Impl(implementation) => self.implementation(implementation),
+        }
+    }
+
+    fn namespace<'a>(&mut self, namespace: &'a Namespace) -> Document<'a> {
+        let segments = namespace.path.path.iter().map(|seg| str(seg.as_str())).collect_vec();
+        let path = join(segments, "::");
+
+        str("namespace ").append(path)
+    }
+
+    fn import<'a>(&mut self, import: &'a Import) -> Document<'a> {
+        let segments = import.path.path.iter().map(|seg| str(seg.as_str())).collect_vec();
+        let root = join(segments, "::");
+
+        let import_name_docs = import.names.iter().map(|seg| str(seg.as_str())).collect_vec();
+
+        let nested_names = flex_break("", "")
+            .append(join(import_name_docs, flex_break(",", ", ")))
+            .group()
+            .nest_if_broken(self.indent());
+
+        let wrapped_names = str("(")
+            .append(nested_names)
+            .append(concat([flex_break(",", ""), str(")")]));
+
+        str("import ").append(root).space().append(wrapped_names)
+    }
+
+    fn function_definition<'a>(&mut self, func: &'a FunctionDefinition) -> Document<'a> {
+        let doc_comment = match &func.documentation {
+            Some(doc) => self.doc_comment(doc),
+            None => empty(),
+        };
+
+        let signature = doc_comment
+            .append(visibility(func.visibility.as_ref()))
+            .append("fn ")
+            .append(if func.external { "external " } else { "" })
+            .append(func.name.as_str())
+            .append(self.type_parameters(&func.type_parameters))
+            .append(self.parameters(&func.parameters));
+
+        let signature = match &func.return_type {
+            Some(ret_ty) => signature.append(" -> ").append(self.ty(ret_ty)),
+            None => signature,
+        }
+        .group();
+
+        let body = match &func.block {
+            Some(block) => self.block(block),
+            None => empty(),
+        };
+
+        signature.append(" ").append(body)
+    }
+
+    fn struct_definition<'a>(&mut self, def: &'a StructDefinition) -> Document<'a> {
+        let doc_comment = match &def.documentation {
+            Some(doc) => self.doc_comment(doc),
+            None => empty(),
+        };
+
+        let attributes = self.attributes(&def.attributes);
+
+        let header = doc_comment
+            .append(attributes)
+            .append(visibility(def.visibility.as_ref()))
+            .append("struct ")
+            .append(if def.builtin { str("builtin ") } else { empty() })
+            .append(def.name.as_str())
+            .append(self.type_parameters(&def.type_parameters))
+            .space();
+
+        let mut prev_line = 0;
+        let mut fields = Vec::with_capacity(def.fields.len());
+
+        for (idx, field) in def.fields.iter().enumerate() {
+            let (curr_line, _) = self.coordinates_of(field.location().start());
+
+            if idx != 0 && curr_line.saturating_sub(prev_line) > 1 {
+                fields.push(lines(2));
+            } else if idx != 0 {
+                fields.push(line());
+            }
+
+            (prev_line, _) = self.coordinates_of(field.location().end());
+
+            let doc_comment = match &field.documentation {
+                Some(doc) => self.doc_comment(doc),
+                None => empty(),
+            };
+
+            let visibility = visibility(field.visibility.as_ref());
+            let field_type = self.ty(&field.field_type);
+            let default_value = match &field.default_value {
+                Some(val) => str(" = ").append(self.expression(val)),
+                None => empty(),
+            };
+
+            let field_doc = doc_comment
+                .append(visibility)
+                .append(def.name.as_str())
+                .append(": ")
+                .append(field_type)
+                .append(default_value)
+                .append(";");
+
+            fields.push(field_doc);
+        }
+
+        if fields.is_empty() {
+            return header.append("{}");
+        }
+
+        let body = str("{")
+            .append(line().append(concat(fields)).nest(self.indent()).group())
+            .append(line())
+            .append("}");
+
+        header.append(body)
+    }
+
+    fn trait_definition<'a>(&mut self, def: &'a TraitDefinition) -> Document<'a> {
+        let doc_comment = match &def.documentation {
+            Some(doc) => self.doc_comment(doc),
+            None => empty(),
+        };
+
+        let attributes = self.attributes(&def.attributes);
+
+        let header = doc_comment
+            .append(attributes)
+            .append(visibility(def.visibility.as_ref()))
+            .append("trait ")
+            .append(def.name.as_str())
+            .append(self.type_parameters(&def.type_parameters))
+            .space();
+
+        if def.methods.is_empty() {
+            return header.append("{}");
+        }
+
+        let methods = self.with_spacing(def.methods.iter(), |fmt, method| fmt.trait_method_definition(method));
+
+        let body = str("{")
+            .append(line().append(methods).nest(self.indent()).group())
+            .append(line())
+            .append("}");
+
+        header.append(body)
+    }
+
+    fn trait_method_definition<'a>(&mut self, method: &'a TraitMethodDefinition) -> Document<'a> {
+        let doc_comment = match &method.documentation {
+            Some(doc) => self.doc_comment(doc),
+            None => empty(),
+        };
+
+        let signature = doc_comment
+            .append("fn ")
+            .append(method.name.as_str())
+            .append(self.type_parameters(&method.type_parameters))
+            .append(self.parameters(&method.parameters));
+
+        let signature = match &method.return_type {
+            Some(ret_ty) => signature.append(" -> ").append(self.ty(ret_ty)),
+            None => signature,
+        }
+        .group();
+
+        let body = match &method.block {
+            Some(block) => str(" ").append(self.block(block)),
+            None => str(";"),
+        };
+
+        signature.append(body)
+    }
+
+    fn enum_definition<'a>(&mut self, def: &'a EnumDefinition) -> Document<'a> {
+        let doc_comment = match &def.documentation {
+            Some(doc) => self.doc_comment(doc),
+            None => empty(),
+        };
+
+        let header = doc_comment
+            .append(visibility(def.visibility.as_ref()))
+            .append("enum ")
+            .append(def.name.as_str())
+            .append(self.type_parameters(&def.type_parameters))
+            .space();
+
+        if def.cases.is_empty() {
+            return header.append("{}");
+        }
+
+        let variants = self.with_spacing(def.cases.iter(), |fmt, variant| fmt.enum_variant_definition(variant));
+
+        let body = str("{")
+            .append(line().append(variants).nest(self.indent()).group())
+            .append(line())
+            .append("}");
+
+        header.append(body)
+    }
+
+    fn enum_variant_definition<'a>(&mut self, def: &'a EnumDefinitionCase) -> Document<'a> {
+        let doc_comment = match &def.documentation {
+            Some(doc) => self.doc_comment(doc),
+            None => empty(),
+        };
+
+        let identifier = doc_comment.append(def.name.as_str()).space();
+        let fields = def.parameters.iter().map(|param| self.ty(param)).collect_vec();
+
+        if fields.is_empty() {
+            return identifier;
+        }
+
+        identifier.append(self.wrap_comma_separated_of("(", ")", fields))
+    }
+
+    fn trait_implementation<'a>(&mut self, trait_impl: &'a TraitImplementation) -> Document<'a> {
+        let header = str("use")
+            .append(self.type_parameters(&trait_impl.type_parameters))
+            .space()
+            .append(self.ty(&trait_impl.name))
+            .append(" in ")
+            .append(self.ty(&trait_impl.target));
+
+        if trait_impl.methods.is_empty() {
+            return header.append("{}");
+        }
+
+        let methods = self.with_spacing(trait_impl.methods.iter(), |fmt, method| {
+            fmt.trait_method_implementation(method)
+        });
+
+        let body = str("{")
+            .append(line().append(methods).nest(self.indent()).group())
+            .append(line())
+            .append("}");
+
+        header.append(body)
+    }
+
+    fn trait_method_implementation<'a>(&mut self, method: &'a TraitMethodImplementation) -> Document<'a> {
+        let signature = str("fn ")
+            .append(if method.external { "external " } else { "" })
+            .append(method.name.as_str())
+            .append(self.type_parameters(&method.type_parameters))
+            .append(self.parameters(&method.parameters));
+
+        let signature = match &method.return_type {
+            Some(ret_ty) => signature.append(" -> ").append(self.ty(ret_ty)),
+            None => signature,
+        }
+        .group();
+
+        let body = match &method.block {
+            Some(block) => str(" ").append(self.block(block)),
+            None => empty(),
+        };
+
+        signature.append(body)
+    }
+
+    fn implementation<'a>(&mut self, implementation: &'a Implementation) -> Document<'a> {
+        let header = str("impl")
+            .append(self.type_parameters(&implementation.type_parameters))
+            .space()
+            .append(self.ty(&implementation.name));
+
+        if implementation.methods.is_empty() {
+            return header.append("{}");
+        }
+
+        let methods = self.with_spacing(implementation.methods.iter(), |fmt, method| {
+            fmt.method_implementation(method)
+        });
+
+        let body = str("{")
+            .append(line().append(methods).nest(self.indent()).group())
+            .append(line())
+            .append("}");
+
+        header.append(body)
+    }
+
+    fn method_implementation<'a>(&mut self, method: &'a MethodDefinition) -> Document<'a> {
+        let doc_comment = match &method.documentation {
+            Some(doc) => self.doc_comment(doc),
+            None => empty(),
+        };
+
+        let attributes = self.attributes(&method.attributes);
+
+        let signature = doc_comment
+            .append(attributes)
+            .append(visibility(method.visibility.as_ref()))
+            .append(str("fn "))
+            .append(if method.external { "external " } else { "" })
+            .append(method.name.as_str())
+            .append(self.type_parameters(&method.type_parameters))
+            .append(self.parameters(&method.parameters));
+
+        let signature = match &method.return_type {
+            Some(ret_ty) => signature.append(" -> ").append(self.ty(ret_ty)),
+            None => signature,
+        }
+        .group();
+
+        let body = match &method.block {
+            Some(block) => str(" ").append(self.block(block)),
+            None => empty(),
+        };
+
+        signature.append(body)
+    }
+
+    fn attributes<'a>(&mut self, attrs: &'a [Attribute]) -> Document<'a> {
+        if attrs.is_empty() {
+            return empty();
+        }
+
+        concat(attrs.iter().map(|attr| self.attribute(attr)).collect_vec())
+    }
+
+    fn attribute<'a>(&mut self, attr: &'a Attribute) -> Document<'a> {
+        let name = str(attr.name.as_str());
+
+        let mut arguments = Vec::with_capacity(attr.arguments.len());
+        for arg in &attr.arguments {
+            let name = str(arg.key.as_str());
+            let value = self.literal(&arg.value);
+
+            arguments.push(name.append(" = ").append(value));
+        }
+
+        if arguments.is_empty() {
+            str("![").append(name).append("]").append(line())
+        } else {
+            str("![")
+                .append(name)
+                .append("(")
+                .append(join(arguments, ", "))
+                .append(")]")
+                .append(line())
+        }
+    }
+
+    fn parameters<'a>(&mut self, params: &'a [Parameter]) -> Document<'a> {
+        if params.is_empty() {
+            return str("()");
+        }
+
+        let parameters = params.iter().map(|param| self.parameter(param)).collect_vec();
+        self.wrap_comma_separated_of("(", ")", parameters)
+    }
+
+    fn parameter<'a>(&mut self, param: &'a Parameter) -> Document<'a> {
+        if param.name.as_str() == "self" {
+            return str("self");
+        }
+
+        if param.vararg { str("...") } else { empty() }
+            .append(param.name.as_str())
+            .append(": ")
+            .append(self.ty(&param.param_type))
+            .group()
+    }
+
+    fn type_parameters<'a>(&mut self, params: &'a [TypeParameter]) -> Document<'a> {
+        if params.is_empty() {
+            return empty();
+        }
+
+        let type_params = params
+            .iter()
+            .map(|type_param| self.type_parameter(type_param))
+            .collect_vec();
+
+        self.wrap_comma_separated_of("<", ">", type_params)
+    }
+
+    fn type_parameter<'a>(&mut self, param: &'a TypeParameter) -> Document<'a> {
+        let name = str(param.name.as_str());
+        let constraints = param
+            .constraints
+            .iter()
+            .map(|constraint| self.ty(constraint))
+            .collect_vec();
+
+        if constraints.is_empty() {
+            name
+        } else {
+            name.append(": ").append(join(constraints, " + "))
+        }
+    }
+
+    fn block<'a>(&mut self, block: &'a Block) -> Document<'a> {
+        self.statements(&block.statements, &block.location)
+    }
+
+    fn statements<'a>(&mut self, body: &'a [Statement], loc: &Location) -> Document<'a> {
+        if body.is_empty() && !self.any_comments_before(loc.end()) {
+            return str("{}");
+        }
+
+        let body = self.with_spacing(body.iter(), |fmt, stmt| fmt.statement(stmt));
+        let body = match printed_comments(self.pop_comments_before(loc.end()), true) {
+            Some(comments) => body.append(line()).append(comments),
+            None => body,
+        };
+
+        str("{")
+            .append(line().append(body).nest(self.indent()).group())
+            .append(line())
+            .append("}")
+    }
+
+    fn statement<'a>(&mut self, stmt: &'a Statement) -> Document<'a> {
+        let comments = self.pop_comments_before(stmt.location().start());
+        let doc = match stmt {
+            Statement::VariableDeclaration(stmt) => {
+                let name = str(stmt.name.as_str());
+                let declared_type = match &stmt.variable_type {
+                    Some(ty) => str(": ").append(self.ty(ty)),
+                    None => empty(),
+                };
+
+                let value = self.expression(&stmt.value);
+
+                str("let ")
+                    .append(name)
+                    .append(declared_type)
+                    .append(" = ")
+                    .append(value.group())
+                    .append(";")
+            }
+            Statement::Break(_) => str("break").append(';'),
+            Statement::Continue(_) => str("continue").append(';'),
+            Statement::Final(stmt) => self.expression(&stmt.value),
+            Statement::Return(stmt) => match &stmt.value {
+                Some(val) => str("return ").append(self.expression(val)).append(';'),
+                None => str("return").append(';'),
+            },
+            Statement::InfiniteLoop(stmt) => str("loop ").append(self.block(&stmt.block)),
+            Statement::IteratorLoop(stmt) => {
+                let collection = self.expression(&stmt.collection);
+                let body = self.block(&stmt.block);
+
+                str("for ")
+                    .append(stmt.pattern.as_str())
+                    .space()
+                    .append(collection)
+                    .space()
+                    .append(body)
+            }
+            Statement::PredicateLoop(stmt) => {
+                let predicate = self.expression(&stmt.condition);
+                let body = self.block(&stmt.block);
+
+                str("while ").append(predicate).space().append(body)
+            }
+            Statement::Expression(expr) => self.expression(expr).append(';'),
+        };
+
+        with_comments(doc, comments)
+    }
+
+    fn expression<'a>(&mut self, expr: &'a Expression) -> Document<'a> {
+        let comments = self.pop_comments_before(expr.location().start());
+        let doc = match expr {
+            Expression::Array(expr) => self.array(expr),
+            Expression::Assignment(expr) => self.assignment(expr),
+            Expression::Call(expr) => self.call(expr),
+            Expression::Cast(expr) => self.cast(expr),
+            Expression::Construct(expr) => self.construct(expr),
+            Expression::If(expr) => self.if_cond(expr),
+            Expression::IntrinsicCall(expr) => self.intrinsic(expr, false),
+            Expression::Is(expr) => self.is(expr),
+            Expression::Literal(lit) => self.literal(lit),
+            Expression::Member(expr) => self.member(expr),
+            Expression::Range(expr) => self.range(expr),
+            Expression::Scope(expr) => self.scope(expr),
+            Expression::Switch(expr) => self.switch(expr),
+            Expression::Variable(expr) => str(expr.name.as_str()),
+            Expression::Variant(expr) => self.variant(expr),
+        };
+
+        with_comments(doc, comments)
+    }
+
+    fn array<'a>(&mut self, expr: &'a Array) -> Document<'a> {
+        if expr.values.is_empty() {
+            let comments = self.pop_comments_before(expr.location.end());
+
+            return match printed_comments(comments, false) {
+                Some(comments) => str("[")
+                    .append(break_("", "").nest(self.indent()))
+                    .append(comments.nest(self.indent()))
+                    .append(break_("", ""))
+                    .append("]")
+                    .force_break(),
+                None => str("[]"),
+            };
+        }
+
+        let has_comments = self.any_comments_before(expr.location.end());
+        let mut values = Vec::with_capacity(expr.values.len());
+
+        for value in &expr.values {
+            let leading_comment = self.pop_comments_on_same_line(value.location().start());
+            let value_doc = self.expression(value);
+
+            let commented = match leading_comment {
+                Some(comment) => Document::String(comment.to_string()).append(line()).append(value_doc),
+                None => value_doc,
+            };
+
+            values.push(commented);
+        }
+
+        let doc = self.wrap_comma_separated_of("[", "]", values);
+        if has_comments { doc.force_break() } else { doc }
+    }
+
+    fn assignment<'a>(&mut self, expr: &'a Assignment) -> Document<'a> {
+        let target = self.expression(&expr.target).group();
+        let value = self.expression(&expr.value).group();
+
+        target.append(" = ").append(value)
+    }
+
+    fn call<'a>(&mut self, expr: &'a Call) -> Document<'a> {
+        let arguments = expr.arguments.iter().map(|arg| self.expression(arg)).collect_vec();
+        let wrapped_arguments = self.wrap_comma_separated_of("(", ")", arguments);
+
+        let name = self.path(&expr.name);
+
+        match &expr.callee {
+            Some(callee) => {
+                let callee = self.expression(callee);
+
+                callee.append(".").append(name).append(wrapped_arguments)
+            }
+            None => name.append(wrapped_arguments),
+        }
+    }
+
+    fn cast<'a>(&mut self, expr: &'a Cast) -> Document<'a> {
+        let source = self.expression(&expr.source);
+        let target_type = self.ty(&expr.target_type);
+
+        source.append(" as ").append(target_type)
+    }
+
+    fn construct<'a>(&mut self, expr: &'a Construct) -> Document<'a> {
+        let name = self.path(&expr.path);
+
+        let mut fields = Vec::with_capacity(expr.fields.len());
+        for field in &expr.fields {
+            let field_name = str(field.name.as_str());
+
+            let field_doc = match &field.value {
+                Some(value) => field_name.append(": ").append(self.expression(value)),
+                None => field_name,
+            };
+
+            fields.push(field_doc);
+        }
+
+        let fields = self.wrap_comma_separated_of(cond("{", "{ "), cond("}", " }"), fields);
+
+        name.space().append(fields)
+    }
+
+    fn if_cond<'a>(&mut self, expr: &'a IfCondition) -> Document<'a> {
+        let mut conditions = Vec::new();
+
+        for (idx, case) in expr.cases.iter().enumerate() {
+            let body = self.block(&case.block);
+
+            let condition = match &case.condition {
+                Some(cond) => {
+                    let keyword = if idx == 0 { "if " } else { " else if " };
+                    let cond = self.expression(cond).group();
+
+                    str(keyword).append(cond).space()
+                }
+                None => str(" else "),
+            };
+
+            conditions.push(condition.append(body));
+        }
+
+        if conditions.len() > 1 {
+            concat(conditions).force_break()
+        } else {
+            concat(conditions)
+        }
+    }
+
+    fn intrinsic<'a>(&mut self, expr: &'a IntrinsicCall, nested: bool) -> Document<'a> {
+        let operator = match &expr.kind {
+            IntrinsicKind::Add { .. } => "+",
+            IntrinsicKind::Sub { .. } | IntrinsicKind::Negate { .. } => "-",
+            IntrinsicKind::Mul { .. } => "*",
+            IntrinsicKind::Div { .. } => "/",
+            IntrinsicKind::And { .. } => "&&",
+            IntrinsicKind::Or { .. } => "||",
+            IntrinsicKind::BinaryAnd { .. } => "&",
+            IntrinsicKind::BinaryOr { .. } => "|",
+            IntrinsicKind::BinaryXor { .. } => "^",
+            IntrinsicKind::Equal { .. } => "==",
+            IntrinsicKind::NotEqual { .. } => "!=",
+            IntrinsicKind::Less { .. } => "<",
+            IntrinsicKind::LessEqual { .. } => "<=",
+            IntrinsicKind::Greater { .. } => ">",
+            IntrinsicKind::GreaterEqual { .. } => ">=",
+            IntrinsicKind::Decrement { .. } => "--",
+            IntrinsicKind::Increment { .. } => "++",
+            IntrinsicKind::Not { .. } => "!",
+        };
+
+        match &expr.kind {
+            IntrinsicKind::Add { lhs, rhs }
+            | IntrinsicKind::Sub { lhs, rhs }
+            | IntrinsicKind::Mul { lhs, rhs }
+            | IntrinsicKind::Div { lhs, rhs }
+            | IntrinsicKind::And { lhs, rhs }
+            | IntrinsicKind::Or { lhs, rhs }
+            | IntrinsicKind::BinaryAnd { lhs, rhs }
+            | IntrinsicKind::BinaryOr { lhs, rhs }
+            | IntrinsicKind::BinaryXor { lhs, rhs }
+            | IntrinsicKind::Equal { lhs, rhs }
+            | IntrinsicKind::NotEqual { lhs, rhs }
+            | IntrinsicKind::Less { lhs, rhs }
+            | IntrinsicKind::LessEqual { lhs, rhs }
+            | IntrinsicKind::Greater { lhs, rhs }
+            | IntrinsicKind::GreaterEqual { lhs, rhs } => {
+                let lhs = match lhs.as_ref() {
+                    Expression::IntrinsicCall(lhs) => self.intrinsic(lhs, true),
+                    _ => self.expression(lhs),
+                };
+
+                let rhs = match rhs.as_ref() {
+                    Expression::IntrinsicCall(rhs) => self.intrinsic(rhs, true),
+                    _ => self.expression(rhs),
+                };
+
+                let block = lhs
+                    .append(break_("", " "))
+                    .append(str(operator).space().append(rhs))
+                    .group();
+
+                if nested {
+                    block
+                } else {
+                    block.nest_if_broken(self.indent())
+                }
+            }
+            IntrinsicKind::Decrement { target } | IntrinsicKind::Increment { target } => {
+                self.expression(target).append(operator)
+            }
+            IntrinsicKind::Negate { target } | IntrinsicKind::Not { target } => {
+                operator.as_doc().append(self.expression(target))
+            }
+        }
+    }
+
+    fn is<'a>(&mut self, expr: &'a Is) -> Document<'a> {
+        let target = self.expression(&expr.target);
+        let pattern = self.pattern(&expr.pattern);
+
+        target.append(" is ").append(pattern)
+    }
+
+    fn literal<'a>(&mut self, lit: &'a Literal) -> Document<'a> {
+        // Since most information abot the actual literal content isn't encoded in the
+        // AST, it's easier for us to copy the source span, which the literal
+        // occupies in the source text.
+        //
+        // For example, writing `0xDEAD_BEEF` would be converted into `3735928559` since
+        // we don't encode the radix or underscores.
+        let range = lit.location().0.clone();
+        let span = self.source_file.content[range].to_string();
+
+        span.as_doc()
+    }
+
+    fn member<'a>(&mut self, expr: &'a Member) -> Document<'a> {
+        let callee = self.expression(&expr.callee);
+        let name = str(expr.name.as_str());
+
+        callee.append(".").append(name)
+    }
+
+    fn range<'a>(&mut self, expr: &'a lume_ast::Range) -> Document<'a> {
+        let lower = self.expression(&expr.lower);
+        let upper = self.expression(&expr.upper);
+
+        let upper = if expr.inclusive { str("=").append(upper) } else { upper };
+
+        lower
+            .append(break_("", ""))
+            .append(str("..").append(upper))
+            .group()
+            .nest_if_broken(self.indent())
+    }
+
+    fn scope<'a>(&mut self, expr: &'a Scope) -> Document<'a> {
+        self.statements(&expr.body, &expr.location)
+    }
+
+    fn switch<'a>(&mut self, expr: &'a Switch) -> Document<'a> {
+        let operand = self.expression(&expr.operand);
+
+        let mut cases = Vec::with_capacity(expr.cases.len());
+        for case in &expr.cases {
+            let pattern = self.pattern(&case.pattern);
+            let branch = self.expression(&case.branch);
+
+            let case = pattern.append(" => ").append(branch).append(",").append(line());
+            cases.push(case);
+        }
+
+        let header = str("switch ").append(operand).space();
+        if cases.is_empty() {
+            return header.append("{}");
+        }
+
+        let body = str("{")
+            .append(line().append(concat(cases)).nest(self.indent()).group())
+            .append(line())
+            .append("}");
+
+        header.append(body)
+    }
+
+    fn variant<'a>(&mut self, expr: &'a Variant) -> Document<'a> {
+        let name = self.path(&expr.name);
+
+        let arguments = expr.arguments.iter().map(|arg| self.expression(arg)).collect_vec();
+        let wrapped_arguments = self.wrap_comma_separated_of("(", ")", arguments);
+
+        name.append(wrapped_arguments)
+    }
+
+    fn pattern<'a>(&mut self, pattern: &'a Pattern) -> Document<'a> {
+        match pattern {
+            Pattern::Literal(lit) => self.literal(lit),
+            Pattern::Identifier(ident) => ident.as_str().as_doc(),
+            Pattern::Variant(variant) => {
+                let name = self.path(&variant.name);
+
+                let fields = variant.fields.iter().map(|field| self.pattern(field)).collect_vec();
+                let wrapped_fields = self.wrap_comma_separated_of("(", ")", fields);
+
+                name.append(wrapped_fields)
+            }
+            Pattern::Wildcard(_) => str(".."),
+        }
+    }
+
+    fn ty<'a>(&mut self, ty: &'a Type) -> Document<'a> {
+        match ty {
+            Type::Named(ty) => self.path(&ty.name),
+            Type::SelfType(_) => str("self"),
+            Type::Array(ty) => concat(vec![str("["), self.ty(&ty.element_type), str("]")]),
+        }
+    }
+
+    fn type_arguments<'a>(&mut self, type_args: &'a [Type]) -> Document<'a> {
+        if type_args.is_empty() {
+            return empty();
+        }
+
+        let types = type_args.iter().map(|ty| self.ty(ty)).collect::<Vec<_>>();
+
+        concat(vec![str("<"), join(types, ", "), str(">")])
+    }
+
+    fn wrap_comma_separated_of<'a, I>(
+        &mut self,
+        open: impl AsDocument<'a>,
+        close: impl AsDocument<'a>,
+        values: I,
+    ) -> Document<'a>
+    where
+        I: IntoIterator<Item = Document<'a>>,
+    {
+        let open_doc = open.as_doc();
+        let close_doc = close.as_doc();
+
+        let values = values.into_iter().collect_vec();
+        if values.is_empty() {
+            return open_doc.append(close_doc);
+        }
+
+        let values = break_("", "")
+            .append(join(values, break_(",", ", ")))
+            .nest_if_broken(self.indent());
+
+        open_doc.append(values).append(concat([break_(",", ""), close_doc]))
     }
 }
 
-impl Renderer<'_> {
-    fn node(&mut self, node: Node, wrap: Wrap) {
-        match node.kind {
-            NodeKind::Empty => {}
-            NodeKind::Text(text) => {
-                self.text(&text);
-            }
-            NodeKind::Line => {
-                if wrap.enabled() {
-                    self.new_line();
-                }
-            }
-            NodeKind::Space => self.space(),
-            NodeKind::SpaceOrLine => {
-                if wrap.enabled() {
-                    self.new_line();
-                } else {
-                    self.space();
-                }
-            }
-            NodeKind::ForcedLine => {
-                self.new_line();
-            }
-            NodeKind::EmptyLine => {
-                self.new_line();
-                self.new_line();
-            }
-            NodeKind::Indent(nodes) => {
-                if wrap.enabled() {
-                    self.indent += 1;
-                    self.line_size += self.config.indentation.width();
-                    self.buf.push_str(&self.config.indentation.to_string());
+fn with_comments<'a, 'src>(doc: Document<'a>, comments: Comments<'src>) -> Document<'a> {
+    match printed_comments(comments, true) {
+        Some(comments) => comments.append(doc),
+        None => doc,
+    }
+}
 
-                    for node in nodes {
-                        self.node(node, wrap);
-                    }
+fn printed_comments<'a, 'src>(comments: Comments<'src>, last_newline: bool) -> Option<Document<'a>> {
+    let trailing_newline = comments.trailing_newline;
 
-                    self.indent -= 1;
-                } else {
-                    for node in nodes {
-                        self.node(node, wrap);
-                    }
-                }
+    let mut comments = comments.lines.into_iter().peekable();
+    let _ = comments.peek()?;
+
+    let mut doc = Vec::new();
+    while let Some((_span, c)) = comments.next() {
+        // If the last line in the comment block is empty (i.e. has no actual text
+        // content), we skip over it.
+        if c.trim() == "//" && comments.peek().is_none() {
+            continue;
+        }
+
+        doc.push(String::from(c).as_doc());
+
+        match comments.peek() {
+            Some(_) => {
+                doc.push(line());
             }
-            NodeKind::ForcedIndent(nodes) => {
-                self.indent += 1;
-                self.line_size += self.config.indentation.width();
-                self.buf.push_str(&self.config.indentation.to_string());
-
-                for node in nodes {
-                    self.node(node, wrap);
-                }
-
-                self.indent -= 1;
-            }
-            NodeKind::Group(group, nodes) => {
-                let width: usize = nodes.iter().map(|n| self.width_of(n)).sum();
-
-                let wrap = if self.line_size + width > self.config.max_width {
-                    self.wrapped.insert(group);
-
-                    Wrap::Enabled
-                } else {
-                    Wrap::Detect
-                };
-
-                for node in nodes {
-                    self.node(node, wrap);
-                }
-            }
-            NodeKind::Nodes(nodes) => {
-                for node in nodes {
-                    self.node(node, wrap);
-                }
-            }
-            NodeKind::IfWrap(group, a, b) => {
-                if self.wrapped.contains(&group) {
-                    self.node(*a, wrap);
-                } else {
-                    self.node(*b, wrap);
+            None => {
+                if last_newline {
+                    doc.push(line());
                 }
             }
         }
     }
 
-    fn text(&mut self, text: &str) {
-        self.line_size += text.len();
-        self.buf.push_str(text);
+    if trailing_newline {
+        doc.push(line());
     }
 
-    fn new_line(&mut self) {
-        self.line_size = self.config.indentation.width() * self.indent;
-        self.buf.push('\n');
+    Some(concat(doc))
+}
 
-        for _ in 0..self.indent {
-            self.buf.push_str(&self.config.indentation.to_string());
-        }
+fn visibility<'a>(vis: Option<&'a Visibility>) -> Document<'a> {
+    match vis {
+        Some(Visibility::Public { .. }) => str("pub "),
+        Some(Visibility::Internal { .. }) => str("pub(internal) "),
+        Some(Visibility::Private { .. }) => str("priv "),
+        None => empty(),
     }
+}
 
-    #[inline]
-    fn space(&mut self) {
-        self.line_size += 1;
-        self.buf.push(' ');
-    }
+impl Document<'_> {
+    pub fn print(&self, config: &Config) -> Result<String, std::fmt::Error> {
+        let mut buffer = String::new();
+        crate::print::format(&mut buffer, config.max_width.cast_signed(), im::vector![(
+            0,
+            crate::print::Mode::Unbroken,
+            self
+        )])?;
 
-    fn width_of(&self, node: &Node) -> usize {
-        match &node.kind {
-            NodeKind::Nodes(n) | NodeKind::Group(_, n) | NodeKind::Indent(n) | NodeKind::ForcedIndent(n) => {
-                n.iter().map(|n| self.width_of(n)).sum()
-            }
-            NodeKind::Text(v) => {
-                if v.contains('\n') {
-                    v.lines().map(|l| l.len()).max().unwrap_or(v.len())
-                } else {
-                    v.len()
-                }
-            }
-            NodeKind::IfWrap(group, a, b) => {
-                if self.wrapped.contains(group) {
-                    self.width_of(a)
-                } else {
-                    self.width_of(b)
-                }
-            }
-            NodeKind::Space | NodeKind::SpaceOrLine => 1,
-            NodeKind::Empty | NodeKind::Line | NodeKind::EmptyLine | NodeKind::ForcedLine => 0,
-        }
+        Ok(buffer)
     }
 }

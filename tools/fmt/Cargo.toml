@@ -18,6 +18,8 @@ lume_parser = { path = "../../compiler/lume_parser" }
 
 error_snippet = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+iter_tools = "0.43.0"
+im = "15.1.0"
 
 [lints]
 workspace = true
