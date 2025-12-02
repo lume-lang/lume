@@ -27,7 +27,7 @@ expression: "parse_expr(\"let _ = [a, ];\")"
                         ),
                     ],
                     location: Location(
-                        8..9,
+                        8..13,
                     ),
                 },
             ),

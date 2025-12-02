@@ -52,11 +52,11 @@ pub struct Parser<'src> {
 impl<'src> Parser<'src> {
     /// Creates a new [`Parser`] instance with the given source file as
     /// it's input to parse.
-    pub fn new(source: Arc<SourceFile>, mut tokens: Vec<Token<'src>>, dcx: DiagCtxHandle) -> Result<Self> {
+    pub fn new(source: Arc<SourceFile>, mut tokens: Vec<Token<'src>>, dcx: DiagCtxHandle) -> Self {
         // Filter away any comment tokens, if present.
         tokens.retain(|t| t.as_type() != TokenType::Comment);
 
-        Ok(Parser {
+        Parser {
             source,
             dcx,
             index: 0,
@@ -65,7 +65,7 @@ impl<'src> Parser<'src> {
             doc_token: None,
             attributes: None,
             attempt_recovery: true,
-        })
+        }
     }
 
     /// Disables the parser from attempting to recover from errors.
@@ -512,7 +512,7 @@ impl<'src> Parser<'src> {
         self.doc_token = Some(
             doc_comments
                 .into_iter()
-                .map(|c| c.trim_start_matches("///").trim_start().to_string())
+                .map(|c| c.trim_start_matches("/// ").trim_start_matches("///").to_string())
                 .collect::<Vec<String>>()
                 .join("\n"),
         );

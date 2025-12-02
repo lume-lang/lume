@@ -49,7 +49,7 @@ expression: "parse_expr(\"for pattern in [1, 2, 3] { }\")"
                         ),
                     ],
                     location: Location(
-                        15..16,
+                        15..24,
                     ),
                 },
             ),
