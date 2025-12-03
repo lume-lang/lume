@@ -30,6 +30,15 @@ pub struct Config {
     /// Defines what indentation to use.
     #[serde(flatten)]
     pub indentation: Indentation,
+
+    /// Defines whether doc-comments should be wrapped.
+    pub wrap_comments: bool,
+
+    /// If wrapping of comments is enabled, defines the maximum line length.
+    ///
+    /// If not specified, uses `max_width`.
+    #[serde(default)]
+    pub max_comment_width: Option<usize>,
 }
 
 impl Default for Config {
@@ -37,6 +46,8 @@ impl Default for Config {
         Self {
             max_width: 120,
             indentation: Indentation::default(),
+            wrap_comments: true,
+            max_comment_width: None,
         }
     }
 }
@@ -236,9 +247,10 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
     }
 
     fn doc_comment<'a>(&self, doc: &str) -> Document<'a> {
+        let max_comment_width = self.config.max_comment_width.unwrap_or(self.config.max_width);
         let mut lines = Vec::new();
 
-        for doc_line in wrap_text_block(String::from(doc), self.config.max_width).lines() {
+        for doc_line in wrap_text_block(String::from(doc), max_comment_width).lines() {
             lines.push("/// ".as_doc().append(doc_line.to_string()).append(line()));
         }
 
