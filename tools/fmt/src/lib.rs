@@ -38,6 +38,10 @@ pub struct Config {
     ///
     /// If not specified, uses `max_width`.
     pub max_comment_width: Option<usize>,
+
+    /// Defines whether to add an empty trailing line at the bottom of every
+    /// file.
+    pub trailing_line: bool,
 }
 
 impl Default for Config {
@@ -47,6 +51,7 @@ impl Default for Config {
             indentation: Indentation::default(),
             wrap_comments: true,
             max_comment_width: None,
+            trailing_line: true,
         }
     }
 }
@@ -1251,6 +1256,10 @@ impl Document<'_> {
             crate::print::Mode::Unbroken,
             self
         )])?;
+
+        if config.trailing_line {
+            buffer.push('\n');
+        }
 
         Ok(buffer)
     }
