@@ -258,7 +258,11 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         };
 
         for doc_line in wrapped_line_str.lines() {
-            lines.push("/// ".as_doc().append(doc_line.to_string()).append(line()));
+            if doc_line.trim().is_empty() {
+                lines.push("///".as_doc().append(line()));
+            } else {
+                lines.push("/// ".as_doc().append(doc_line.trim_end().to_string()).append(line()));
+            }
         }
 
         concat(lines)
@@ -408,11 +412,11 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         .group();
 
         let body = match &func.block {
-            Some(block) => self.block(block),
+            Some(block) => str(" ").append(self.block(block)),
             None => empty(),
         };
 
-        signature.append(" ").append(body)
+        signature.append(body)
     }
 
     fn struct_definition<'a>(&mut self, def: &'a StructDefinition) -> Document<'a> {
@@ -570,14 +574,16 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             None => empty(),
         };
 
-        let identifier = doc_comment.append(def.name.as_str()).space();
+        let identifier = doc_comment.append(def.name.as_str());
         let fields = def.parameters.iter().map(|param| self.ty(param)).collect_vec();
 
         if fields.is_empty() {
             return identifier;
         }
 
-        identifier.append(self.wrap_comma_separated_of("(", ")", fields))
+        identifier
+            .append(self.wrap_comma_separated_of("(", ")", fields))
+            .append(",")
     }
 
     fn trait_implementation<'a>(&mut self, trait_impl: &'a TraitImplementation) -> Document<'a> {
@@ -586,7 +592,8 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             .space()
             .append(self.ty(&trait_impl.name))
             .append(" in ")
-            .append(self.ty(&trait_impl.target));
+            .append(self.ty(&trait_impl.target))
+            .space();
 
         if trait_impl.methods.is_empty() {
             return header.append("{}");
@@ -629,7 +636,8 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         let header = str("impl")
             .append(self.type_parameters(&implementation.type_parameters))
             .space()
-            .append(self.ty(&implementation.name));
+            .append(self.ty(&implementation.name))
+            .space();
 
         if implementation.methods.is_empty() {
             return header.append("{}");
@@ -1082,7 +1090,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             let pattern = self.pattern(&case.pattern);
             let branch = self.expression(&case.branch);
 
-            let case = pattern.append(" => ").append(branch).append(",").append(line());
+            let case = pattern.append(" => ").append(branch).append(",");
             cases.push(case);
         }
 
@@ -1092,7 +1100,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         }
 
         let body = str("{")
-            .append(line().append(concat(cases)).nest(self.indent()).group())
+            .append(line().append(join(cases, line())).nest(self.indent()).group())
             .append(line())
             .append("}");
 
