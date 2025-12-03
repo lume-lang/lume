@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use iter_tools::Itertools;
 use lume_ast::*;
-use lume_errors::{DiagCtx, MapDiagnostic};
+use lume_errors::{DiagCtxHandle, MapDiagnostic};
 use lume_parser::Parser;
 use lume_span::SourceFile;
 use serde::Deserialize;
@@ -77,8 +77,8 @@ impl Default for Indentation {
     }
 }
 
-pub fn format_src(content: &str, config: &Config) -> lume_errors::Result<String> {
-    let source = parse_source(content)?;
+pub fn format_src(content: &str, config: &Config, dcx: DiagCtxHandle) -> lume_errors::Result<String> {
+    let source = parse_source(content, dcx)?;
     let formatted = Formatter::new(config).source(&source).print(config).map_diagnostic()?;
 
     Ok(formatted)
@@ -101,8 +101,7 @@ struct Source<'src> {
     pub comments: Vec<(Range<usize>, &'src str)>,
 }
 
-fn parse_source(content: &str) -> lume_errors::Result<Source<'_>> {
-    let dcx = DiagCtx::new();
+fn parse_source(content: &str, dcx: DiagCtxHandle) -> lume_errors::Result<Source<'_>> {
     let source_file = Arc::new(SourceFile::internal(content));
 
     let mut tokens = lume_lexer::Lexer::lex_ref(content)?;
@@ -120,6 +119,8 @@ fn parse_source(content: &str) -> lume_errors::Result<Source<'_>> {
 
     let mut parser = Parser::new(source_file.clone(), tokens, dcx.handle());
     let items = parser.parse()?;
+
+    dcx.ensure_untainted()?;
 
     Ok(Source {
         source_file,

@@ -19,6 +19,7 @@ lume_span = { path = "../../crates/lume_span" }
 clap = { workspace = true }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
+glob = { version = "^0" }
 libftrace = { workspace = true }
 toml = { version = "0.9.6" }
 
