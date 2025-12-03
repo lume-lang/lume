@@ -4,7 +4,7 @@ import std::ops (Add, Sub, Mul, Div, BitAnd, BitOr, BitXor)
 import std::ops (Equal, Compare, Negate)
 
 /// Represents an 8-bit signed integer, which can store values from `-128` to `127`.
-pub struct builtin Int8 { }
+pub struct builtin Int8 {}
 
 use Add<Int8> in Int8 {
     fn external add(self, other: Int8) -> Int8
@@ -51,7 +51,7 @@ use Negate<Int8> in Int8 {
 }
 
 /// Represents an 16-bit signed integer, which can store values from `-32768` to `32767`.
-pub struct builtin Int16 { }
+pub struct builtin Int16 {}
 
 use Add<Int16> in Int16 {
     fn external add(self, other: Int16) -> Int16
@@ -98,7 +98,7 @@ use Negate<Int16> in Int16 {
 }
 
 /// Represents an 32-bit signed integer, which can store values from `-2147483648` to `2147483647`.
-pub struct builtin Int32 { }
+pub struct builtin Int32 {}
 
 use Add<Int32> in Int32 {
     fn external add(self, other: Int32) -> Int32
@@ -145,7 +145,7 @@ use Negate<Int32> in Int32 {
 }
 
 /// Represents an 64-bit signed integer, which can store values from `-9223372036854775808` to `9223372036854775807`.
-pub struct builtin Int64 { }
+pub struct builtin Int64 {}
 
 use Add<Int64> in Int64 {
     fn external add(self, other: Int64) -> Int64
@@ -192,7 +192,7 @@ use Negate<Int64> in Int64 {
 }
 
 /// Represents an 8-bit unsigned integer, which can store values from `0` to `255`.
-pub struct builtin UInt8 { }
+pub struct builtin UInt8 {}
 
 use Add<UInt8> in UInt8 {
     fn external add(self, other: UInt8) -> UInt8
@@ -239,7 +239,7 @@ use Negate<UInt8> in UInt8 {
 }
 
 /// Represents an 16-bit unsigned integer, which can store values from `0` to `65535`.
-pub struct builtin UInt16 { }
+pub struct builtin UInt16 {}
 
 use Add<UInt16> in UInt16 {
     fn external add(self, other: UInt16) -> UInt16
@@ -286,7 +286,7 @@ use Negate<UInt16> in UInt16 {
 }
 
 /// Represents an 32-bit unsigned integer, which can store values from `0` to `4294967295`.
-pub struct builtin UInt32 { }
+pub struct builtin UInt32 {}
 
 use Add<UInt32> in UInt32 {
     fn external add(self, other: UInt32) -> UInt32
@@ -333,7 +333,7 @@ use Negate<UInt32> in UInt32 {
 }
 
 /// Represents an 64-bit unsigned integer, which can store values from `0` to `18446744073709551615`.
-pub struct builtin UInt64 { }
+pub struct builtin UInt64 {}
 
 use Add<UInt64> in UInt64 {
     fn external add(self, other: UInt64) -> UInt64

@@ -26,8 +26,7 @@ import std::ops (Dispose)
 /// let a: [Int32] = [10, 20, 30];
 /// ```
 ![lang_item(name = "array")]
-pub struct Array<T>
-{
+pub struct Array<T> {
     /// Defines the amount of items currently stored within the array.
     pub length: UInt64;
 
@@ -40,10 +39,7 @@ impl<T> Array<T> {
     pub fn new() -> Array<T> {
         let mem = Block<T>::new(0_u64);
 
-        return Array<T> {
-            length: 0_u64,
-            mem
-        };
+        return Array<T> { length: 0_u64, mem };
     }
 
     /// Allocates a new, empty array with at least the given capacity.
@@ -52,10 +48,7 @@ impl<T> Array<T> {
         let type_size = std::type_of<Pointer<T>>().size;
         let mem = Block<T>::new(type_size * capacity);
 
-        return Array<T> {
-            length: 0_u64,
-            mem
-        };
+        return Array<T> { length: 0_u64, mem };
     }
 
     /// Gets the capacity of the array.

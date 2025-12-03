@@ -20,7 +20,7 @@ namespace std::process
 /// }
 /// ```
 ![lang_item(name = "never")]
-pub struct Never { }
+pub struct Never {}
 
 /// Terminates the process immediately.
 ///

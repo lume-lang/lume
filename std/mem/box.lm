@@ -14,9 +14,7 @@ impl<T> Box<T> {
         let size = std::type_of<T>().size;
         let ptr = std::mem::alloc<T>(size);
 
-        Box<T> {
-            ptr
-        }
+        Box<T> { ptr }
     }
 
     /// Gets the inner pointer, which the box is referring to.
