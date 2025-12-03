@@ -37,7 +37,6 @@ pub struct Config {
     /// If wrapping of comments is enabled, defines the maximum line length.
     ///
     /// If not specified, uses `max_width`.
-    #[serde(default)]
     pub max_comment_width: Option<usize>,
 }
 
@@ -53,6 +52,7 @@ impl Default for Config {
 }
 
 #[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(default)]
 pub struct Indentation {
     /// Defines whether to use tabs for identation (or spaces).
     pub use_tabs: bool,
@@ -250,7 +250,13 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         let max_comment_width = self.config.max_comment_width.unwrap_or(self.config.max_width);
         let mut lines = Vec::new();
 
-        for doc_line in wrap_text_block(String::from(doc), max_comment_width).lines() {
+        let wrapped_line_str = if self.config.wrap_comments {
+            wrap_text_block(String::from(doc), max_comment_width)
+        } else {
+            doc.to_string()
+        };
+
+        for doc_line in wrapped_line_str.lines() {
             lines.push("/// ".as_doc().append(doc_line.to_string()).append(line()));
         }
 
