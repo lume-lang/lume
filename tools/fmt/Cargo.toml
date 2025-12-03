@@ -17,9 +17,9 @@ lume_span = { path = "../../crates/lume_span" }
 lume_parser = { path = "../../compiler/lume_parser" }
 
 error_snippet = { workspace = true }
+im = { version = "15.1.0" }
+iter_tools = { version = "0.43.0" }
 serde = { workspace = true, features = ["derive"] }
-iter_tools = "0.43.0"
-im = "15.1.0"
 
 [lints]
 workspace = true

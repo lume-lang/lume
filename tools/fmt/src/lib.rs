@@ -5,6 +5,7 @@
 
 pub(crate) mod doc;
 pub(crate) mod print;
+pub(crate) mod wrap;
 
 use std::collections::VecDeque;
 use std::ops::Range;
@@ -18,6 +19,7 @@ use lume_span::SourceFile;
 use serde::Deserialize;
 
 use crate::doc::*;
+use crate::wrap::wrap_text_block;
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(default, deny_unknown_fields)]
@@ -236,7 +238,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
     fn doc_comment<'a>(&self, doc: &str) -> Document<'a> {
         let mut lines = Vec::new();
 
-        for doc_line in doc.lines() {
+        for doc_line in wrap_text_block(String::from(doc), self.config.max_width).lines() {
             lines.push("/// ".as_doc().append(doc_line.to_string()).append(line()));
         }
 
