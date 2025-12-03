@@ -831,7 +831,16 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
 
                 str("while ").append(predicate).space().append(body)
             }
-            Statement::Expression(expr) => self.expression(expr).append(';'),
+            Statement::Expression(expr) => {
+                let needs_semicolon = match expr.as_ref() {
+                    Expression::If(_) | Expression::Switch(_) => false,
+                    _ => true,
+                };
+
+                let expr = self.expression(expr);
+
+                if needs_semicolon { expr.append(';') } else { expr }
+            }
         };
 
         with_comments(doc, comments)
@@ -1110,6 +1119,10 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
     fn variant<'a>(&mut self, expr: &'a Variant) -> Document<'a> {
         let name = self.path(&expr.name);
 
+        if expr.arguments.is_empty() {
+            return name;
+        }
+
         let arguments = expr.arguments.iter().map(|arg| self.expression(arg)).collect_vec();
         let wrapped_arguments = self.wrap_comma_separated_of("(", ")", arguments);
 
@@ -1122,6 +1135,10 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             Pattern::Identifier(ident) => ident.as_str().as_doc(),
             Pattern::Variant(variant) => {
                 let name = self.path(&variant.name);
+
+                if variant.fields.is_empty() {
+                    return name;
+                }
 
                 let fields = variant.fields.iter().map(|field| self.pattern(field)).collect_vec();
                 let wrapped_fields = self.wrap_comma_separated_of("(", ")", fields);
