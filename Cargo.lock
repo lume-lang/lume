@@ -1308,6 +1308,7 @@ dependencies = [
  "clap",
  "error_snippet",
  "error_snippet_derive",
+ "glob",
  "libftrace",
  "lume_driver",
  "lume_errors",

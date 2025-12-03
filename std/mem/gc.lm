@@ -1,6 +1,6 @@
 namespace std::mem
 
-pub struct GC { }
+pub struct GC {}
 
 impl GC {
     /// Invokes the garbage collector and deallocates all unused objects,

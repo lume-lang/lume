@@ -17,10 +17,7 @@ impl<T> Block<T> {
     pub fn new(size: UInt64) -> Block<T> {
         let ptr = std::mem::alloc<T>(size);
 
-        Block<T> {
-            size,
-            ptr
-        }
+        Block<T> { size, ptr }
     }
 
     /// Gets the size of the memory block in bytes.
