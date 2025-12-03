@@ -464,7 +464,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
 
             let field_doc = doc_comment
                 .append(visibility)
-                .append(def.name.as_str())
+                .append(field.name.as_str())
                 .append(": ")
                 .append(field_type)
                 .append(default_value)
