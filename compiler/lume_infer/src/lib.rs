@@ -315,7 +315,7 @@ impl TyInferCtx {
         }
 
         // The `Never` type is inherently compatible with everything.
-        if self.is_type_never(from) {
+        if self.is_type_never(from) || self.is_type_never(to) {
             return Ok(());
         }
 
