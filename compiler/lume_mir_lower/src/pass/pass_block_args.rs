@@ -60,19 +60,19 @@ impl Pass for PassBlockArguments {
 
             if let Some(terminator) = block.terminator_mut() {
                 match &mut terminator.kind {
-                    TerminatorKind::Branch(target) => Self::update_branch_terminator(block_id, target, &func_immut),
+                    TerminatorKind::Branch(target) => update_branch_terminator(block_id, target, &func_immut),
                     TerminatorKind::ConditionalBranch {
                         then_block, else_block, ..
                     } => {
-                        Self::update_branch_terminator(block_id, then_block, &func_immut);
-                        Self::update_branch_terminator(block_id, else_block, &func_immut);
+                        update_branch_terminator(block_id, then_block, &func_immut);
+                        update_branch_terminator(block_id, else_block, &func_immut);
                     }
                     TerminatorKind::Switch { arms, fallback, .. } => {
                         for arm in arms {
-                            Self::update_branch_terminator(block_id, &mut arm.1, &func_immut);
+                            update_branch_terminator(block_id, &mut arm.1, &func_immut);
                         }
 
-                        Self::update_branch_terminator(block_id, fallback, &func_immut);
+                        update_branch_terminator(block_id, fallback, &func_immut);
                     }
                     TerminatorKind::Return(_) | TerminatorKind::Unreachable => {}
                 }
@@ -81,23 +81,21 @@ impl Pass for PassBlockArguments {
     }
 }
 
-impl PassBlockArguments {
-    fn update_branch_terminator(block: BasicBlockId, call_site: &mut BlockBranchSite, func: &Function) {
-        let source_block = func.block(block);
-        let target_block = func.block(call_site.block);
+fn update_branch_terminator(block: BasicBlockId, call_site: &mut BlockBranchSite, func: &Function) {
+    let source_block = func.block(block);
+    let target_block = func.block(call_site.block);
 
-        call_site.arguments.reserve(target_block.parameters.len());
+    if target_block.parameters.len() < call_site.arguments.len() {
+        call_site.arguments.drain(target_block.parameters.len()..);
+    }
 
-        for param in &target_block.parameters {
-            let arg = if let Some(phi_source) = source_block.resolve_phi_source(*param) {
-                phi_source
-            } else {
-                *param
-            };
+    call_site.arguments.reserve(target_block.parameters.len());
 
-            if !call_site.arguments.iter().any(|a| a.is_reference_of(arg)) {
-                call_site.arguments.push(Operand::reference_of(arg));
-            }
+    for param in &target_block.parameters {
+        let arg = source_block.resolve_phi_source(*param).unwrap_or(*param);
+
+        if !call_site.arguments.iter().any(|a| a.is_reference_of(arg)) {
+            call_site.arguments.push(Operand::reference_of(arg));
         }
     }
 }
