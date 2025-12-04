@@ -366,6 +366,31 @@ impl TyCheckCtx {
     /// different types, the method returns [`Err`].
     #[libftrace::traced(level = Trace, err, ret)]
     pub(crate) fn type_of_block_ret(&self, block: &lume_hir::Block) -> Result<TypeRef> {
+        // If there's any `break`, `continue` or `return` statement directly within the
+        // block, we need to return the value of those.
+        //
+        // For example, the following block should always return `Never`, since it has a
+        // `break` statement in the middle:
+        // ```lm
+        // loop {
+        //     // should return type of `Never` instead of `Boolean`
+        //     let _ = {
+        //         break;
+        //         false
+        //     };
+        // }
+        // ```
+        for id in &block.statements {
+            let stmt = self.hir_expect_stmt(*id);
+
+            if let lume_hir::StatementKind::Break(_) | lume_hir::StatementKind::Continue(_) = &stmt.kind {
+                return Ok(self
+                    .never_type()
+                    .expect("expected `Never` type to exist")
+                    .with_location(stmt.location));
+            }
+        }
+
         let last_statement = block.statements.last();
 
         if let Some(stmt) = last_statement {
@@ -439,7 +464,7 @@ impl TyCheckCtx {
         for case in cases {
             let found_type = self.type_of_condition_scope(case)?;
 
-            if found_type != expected_type {
+            if !self.check_type_compatibility(&found_type, &expected_type)? {
                 let found = self.new_named_type(&found_type, false)?;
                 let expected = self.new_named_type(&expected_type, false)?;
 
