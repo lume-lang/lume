@@ -110,7 +110,7 @@ impl TyInferCtx {
                     .into());
                 }
 
-                TypeRef::void()
+                TypeRef::void().with_location(e.location)
             }
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target)?,
             lume_hir::ExpressionKind::Construct(e) => {
@@ -137,7 +137,7 @@ impl TyInferCtx {
                 self.type_of_call(lume_hir::CallExpression::Intrinsic(call))?
             }
             lume_hir::ExpressionKind::If(cond) => self.type_of_if_conditional(cond)?,
-            lume_hir::ExpressionKind::Is(_) => TypeRef::bool(),
+            lume_hir::ExpressionKind::Is(_) => TypeRef::bool().with_location(expr.location),
             lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e)?,
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(expr.callee)?;
@@ -162,7 +162,7 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Scope(scope) => self.type_of_scope(scope)?,
             lume_hir::ExpressionKind::Switch(switch) => match switch.cases.first() {
                 Some(case) => self.type_of(case.branch)?,
-                None => TypeRef::void(),
+                None => TypeRef::void().with_location(switch.location),
             },
             lume_hir::ExpressionKind::Variable(var) => match &var.reference {
                 lume_hir::VariableSource::Parameter(param) => self.mk_type_ref_from(&param.param_type, var.id)?,
@@ -281,19 +281,29 @@ impl TyInferCtx {
     #[cached_query(result)]
     #[libftrace::traced(level = Trace, err)]
     pub fn type_of_scope(&self, scope: &lume_hir::Scope) -> Result<TypeRef> {
-        if let Some(stmt) = scope.body.last() {
+        self.type_of_body(&scope.body, scope.location)
+    }
+
+    /// Returns the return type of the given body of nodes.
+    #[cached_query(result)]
+    #[libftrace::traced(level = Trace, err)]
+    pub fn type_of_body(&self, body: &[NodeId], loc: Location) -> Result<TypeRef> {
+        if let Some(stmt) = body.last() {
             let stmt = self.hir_expect_stmt(*stmt);
 
             match &stmt.kind {
                 lume_hir::StatementKind::Final(fin) => return self.type_of(fin.value),
                 lume_hir::StatementKind::Break(_) | lume_hir::StatementKind::Continue(_) => {
-                    return Ok(self.never_type().expect("expected `Never` type to exist"));
+                    return Ok(self
+                        .never_type()
+                        .expect("expected `Never` type to exist")
+                        .with_location(stmt.location));
                 }
                 _ => {}
             }
         }
 
-        Ok(TypeRef::void())
+        Ok(TypeRef::void().with_location(loc))
     }
 
     /// Returns the *type* of the given [`lume_hir::Statement`].
@@ -312,7 +322,7 @@ impl TyInferCtx {
             lume_hir::StatementKind::IteratorLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::InfiniteLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::Return(ret) => self.type_of_return(ret),
-            _ => Ok(TypeRef::void()),
+            _ => Ok(TypeRef::void().with_location(stmt.location)),
         }
     }
 
@@ -336,17 +346,7 @@ impl TyInferCtx {
     #[cached_query(result)]
     #[libftrace::traced(level = Trace, err)]
     pub fn type_of_condition_scope(&self, cond: &lume_hir::Condition) -> Result<TypeRef> {
-        let Some(last_statement) = cond.block.statements.last() else {
-            return Ok(TypeRef::void());
-        };
-
-        let stmt = self.hir_expect_stmt(*last_statement);
-
-        if let lume_hir::StatementKind::Final(fin) = &stmt.kind {
-            self.type_of(fin.value)
-        } else {
-            Ok(TypeRef::void())
-        }
+        self.type_of_body(&cond.block.statements, cond.block.location)
     }
 
     /// Returns the *type* of the given [`lume_hir::VariableDeclaration`].
@@ -367,7 +367,7 @@ impl TyInferCtx {
         if let Some(expr) = stmt.value {
             self.type_of(expr)
         } else {
-            Ok(TypeRef::void())
+            Ok(TypeRef::void().with_location(stmt.location))
         }
     }
 
@@ -385,7 +385,7 @@ impl TyInferCtx {
     #[libftrace::traced(level = Trace, err)]
     pub fn type_of_block(&self, block: &lume_hir::Block) -> Result<TypeRef> {
         let Some(last_statement) = block.statements.last() else {
-            return Ok(TypeRef::void());
+            return Ok(TypeRef::void().with_location(block.location));
         };
 
         let stmt = self.hir_expect_stmt(*last_statement);
@@ -845,7 +845,7 @@ impl TyInferCtx {
                 lume_hir::ExpressionKind::StaticCall(call) => {
                     self.expected_type_of_call(id, CallExpression::Static(call))
                 }
-                lume_hir::ExpressionKind::If(_) => Ok(Some(TypeRef::bool())),
+                lume_hir::ExpressionKind::If(_) => Ok(Some(TypeRef::bool().with_location(expr.location))),
                 lume_hir::ExpressionKind::Is(expr) => {
                     if id == expr.pattern.id
                         && let Some(lume_hir::Node::Pattern(_)) = self.hir_node(id)
@@ -853,7 +853,7 @@ impl TyInferCtx {
                         return self.type_of(expr.target).map(Some);
                     }
 
-                    Ok(Some(TypeRef::bool()))
+                    Ok(Some(TypeRef::bool().with_location(expr.location)))
                 }
                 lume_hir::ExpressionKind::Literal(_) => unreachable!("literals cannot have sub expressions"),
                 lume_hir::ExpressionKind::Switch(switch) => {
@@ -909,7 +909,11 @@ impl TyInferCtx {
                 lume_hir::StatementKind::Return(ret) => self.return_type_within(ret.id).map(Some),
                 lume_hir::StatementKind::InfiniteLoop(_) => unreachable!("infinite loops cannot have sub expressions"),
                 lume_hir::StatementKind::IteratorLoop(_) => todo!("expected_type_of IteratorLoop statement"),
-                lume_hir::StatementKind::Expression(_) => Ok(Some(TypeRef::void())),
+                lume_hir::StatementKind::Expression(expr) => {
+                    let location = self.hir_span_of_node(*expr);
+
+                    Ok(Some(TypeRef::void().with_location(location)))
+                }
             },
             lume_hir::Node::Field(field) => {
                 let type_ref = self.mk_type_ref_from(&field.field_type, field.id)?;

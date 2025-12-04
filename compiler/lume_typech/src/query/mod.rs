@@ -373,7 +373,7 @@ impl TyCheckCtx {
 
             self.matching_type_of_stmt(stmt)
         } else {
-            Ok(TypeRef::void())
+            Ok(TypeRef::void().with_location(block.location))
         }
     }
 
