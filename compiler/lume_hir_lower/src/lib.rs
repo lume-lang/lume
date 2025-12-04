@@ -329,35 +329,14 @@ impl<'a> LowerModule<'a> {
             return Ok(symbol.clone());
         }
 
-        // Since variant paths never have an empty root - since it'll contain the
-        // variant type itself - the root might not resolve correctly without this
-        // handling.
-        if path.is_variant() {
-            return self.resolve_variant_name(path);
-        }
+        let has_namespace_root = path
+            .root
+            .iter()
+            .any(|root| matches!(root, lume_ast::PathSegment::Namespace { .. }));
 
-        let root = if let Some(namespace) = &self.namespace
-            && path.root.is_empty()
+        let mut root = if let Some(namespace) = &self.namespace
+            && !has_namespace_root
         {
-            namespace.clone().as_root()
-        } else {
-            self.path_root(path.root.clone())?
-        };
-
-        // Since all names hash to the same value, we can compute what the item ID
-        // would be, if the symbol is registered within the module.
-        Ok(Path {
-            root,
-            name: self.path_segment(path.name.clone())?,
-            location: self.location(path.location.clone()),
-        })
-    }
-
-    /// Gets the [`lume_hir::Path`] for the item with the given variant path.
-    fn resolve_variant_name(&mut self, path: &lume_ast::Path) -> Result<Path> {
-        debug_assert!(path.is_variant(), "expected path to be variant");
-
-        let mut root = if let Some(namespace) = &self.namespace {
             namespace.clone().as_root()
         } else {
             Vec::new()
