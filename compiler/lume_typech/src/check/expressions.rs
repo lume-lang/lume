@@ -9,7 +9,7 @@ use crate::check::errors::*;
 impl TyCheckCtx {
     /// Type checker pass to check whether expressions yield
     /// their expected type, depending on the surrounding context.
-    #[libftrace::traced(level = Debug, err)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn typech_expressions(&mut self) {
         for (id, item) in &self.hir().nodes {
             if !self.hir_is_local_node(*id) {
