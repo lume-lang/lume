@@ -95,12 +95,13 @@ impl LowerModule<'_> {
 
         let mut body = vec![var.id];
 
-        let var_ref_id = self.next_node_id();
-        let var_ref = lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), decl.clone(), location);
-        self.map.nodes.insert(var_ref_id, lume_hir::Node::Expression(var_ref));
-
         for value in expr.values {
             let value = self.expression(value)?;
+
+            let var_ref_id = self.next_node_id();
+            let var_ref =
+                lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), decl.clone(), location);
+            self.map.nodes.insert(var_ref_id, lume_hir::Node::Expression(var_ref));
 
             let val_id = self.next_node_id();
             let val = lume_hir::Expression::call(val_id, ARRAY_PUSH_PATH.clone(), var_ref_id, vec![value], location);
