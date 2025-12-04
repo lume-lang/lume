@@ -494,7 +494,7 @@ impl<'src> Parser<'src> {
 
     /// Reads the current documentation comment into the parser's state, if any
     /// is present.
-    #[libftrace::traced(level = Debug, err)]
+    #[libftrace::traced(level = Debug)]
     fn read_doc_comment(&mut self) {
         let mut doc_comments = Vec::new();
 
