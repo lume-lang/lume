@@ -224,7 +224,7 @@ impl TyCheckCtx {
 
         let actual = match stmt.value {
             Some(val) => self.type_of(val)?,
-            None => TypeRef::void(),
+            None => TypeRef::void().with_location(stmt.location),
         };
 
         if !self.check_type_compatibility(&actual, &expected)? {

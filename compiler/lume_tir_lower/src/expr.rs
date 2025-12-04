@@ -521,6 +521,8 @@ impl LowerFunction<'_> {
             let condition = if is_last_case {
                 None
             } else {
+                let branch_location = self.lower.tcx.hir_span_of_node(case.branch);
+
                 Some(lume_tir::Expression {
                     kind: lume_tir::ExpressionKind::Is(Box::new(lume_tir::Is {
                         id: NodeId::empty(case.branch.package),
@@ -528,7 +530,7 @@ impl LowerFunction<'_> {
                         pattern,
                         location: case.location,
                     })),
-                    ty: TypeRef::bool(),
+                    ty: TypeRef::bool().with_location(branch_location),
                 })
             };
 
