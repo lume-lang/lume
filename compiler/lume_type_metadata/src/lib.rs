@@ -152,6 +152,10 @@ pub struct ParameterMetadata {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TypeParameterMetadata {
+    /// Gets the unique ID of the type parameter, used mostly for internal
+    /// referencing.
+    pub id: NodeId,
+
     /// Gets the name of the type parameter.
     pub name: String,
 
