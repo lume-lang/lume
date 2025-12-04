@@ -1,0 +1,10 @@
+//# test-return = 3
+
+pub fn main() -> Int32 {
+    let _ = switch std::Optional<Int32>::None {
+        std::Optional<Int32>::Some(value) => 1_i32,
+        std::Optional<Int32>::None => 2_i32,
+    };
+
+    3_i32
+}
