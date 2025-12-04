@@ -284,8 +284,12 @@ impl TyInferCtx {
         if let Some(stmt) = scope.body.last() {
             let stmt = self.hir_expect_stmt(*stmt);
 
-            if let lume_hir::StatementKind::Final(fin) = &stmt.kind {
-                return self.type_of(fin.value);
+            match &stmt.kind {
+                lume_hir::StatementKind::Final(fin) => return self.type_of(fin.value),
+                lume_hir::StatementKind::Break(_) | lume_hir::StatementKind::Continue(_) => {
+                    return Ok(self.never_type().expect("expected `Never` type to exist"));
+                }
+                _ => {}
             }
         }
 

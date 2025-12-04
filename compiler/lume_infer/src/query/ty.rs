@@ -134,6 +134,13 @@ impl TyInferCtx {
         Ok(false)
     }
 
+    /// Gets the current `Never` type as a [`TypeRef`].
+    #[cached_query]
+    #[libftrace::traced(level = Trace)]
+    pub fn never_type(&self) -> Option<TypeRef> {
+        self.lang_item_type("never")
+    }
+
     /// Determines whether the given [`TypeRef`] is the `Never` type.
     #[cached_query]
     #[libftrace::traced(level = Trace)]
