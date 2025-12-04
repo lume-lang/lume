@@ -244,6 +244,6 @@ impl ReificationPass<'_> {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        Ok(TypeParameterMetadata { name, constraints })
+        Ok(TypeParameterMetadata { id, name, constraints })
     }
 }

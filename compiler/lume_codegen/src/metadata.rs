@@ -172,6 +172,7 @@ impl CraneliftBackend {
     fn metadata_name_of_type_param(&self, param: &TypeParameterMetadata, mut owner_name: String) -> String {
         owner_name.push('`');
         owner_name.push_str(&param.name);
+        owner_name.push_str(&format!("{}", param.id));
         owner_name
     }
 
