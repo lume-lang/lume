@@ -100,7 +100,6 @@ impl MarkObjectReferences {
                         self.find_object_references_operand(func, block.id, value);
                     }
                     InstructionKind::ObjectRegister { .. }
-                    | InstructionKind::Assign { .. }
                     | InstructionKind::CreateSlot { .. }
                     | InstructionKind::StoreSlot { .. } => {
                         self.offset += 1;

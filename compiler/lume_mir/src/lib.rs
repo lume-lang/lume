@@ -602,14 +602,6 @@ impl BasicBlock {
         });
     }
 
-    /// Assigns a new value to an existing register.
-    pub fn assign(&mut self, target: RegisterId, value: Operand, loc: Location) {
-        self.instructions.push(Instruction {
-            kind: InstructionKind::Assign { target, value },
-            location: loc,
-        });
-    }
-
     /// Declares a new stack-allocated slot with the given value.
     pub fn create_slot(&mut self, slot: SlotId, ty: Type, loc: Location) {
         self.instructions.push(Instruction {
@@ -939,9 +931,6 @@ pub enum InstructionKind {
         ty: Type,
     },
 
-    /// Assigns the value into the target register.
-    Assign { target: RegisterId, value: Operand },
-
     /// Declares a stack-allocated slot within the current function.
     CreateSlot { slot: SlotId, ty: Type },
 
@@ -977,8 +966,7 @@ impl Instruction {
     pub fn register_def(&self) -> Option<RegisterId> {
         match &self.kind {
             InstructionKind::Let { register, .. } | InstructionKind::Allocate { register, .. } => Some(*register),
-            InstructionKind::Assign { .. }
-            | InstructionKind::CreateSlot { .. }
+            InstructionKind::CreateSlot { .. }
             | InstructionKind::Store { .. }
             | InstructionKind::StoreSlot { .. }
             | InstructionKind::StoreField { .. }
@@ -989,9 +977,7 @@ impl Instruction {
     pub fn register_refs(&self) -> Vec<RegisterId> {
         match &self.kind {
             InstructionKind::Let { decl, .. } => decl.register_refs(),
-            InstructionKind::Assign { target, value }
-            | InstructionKind::Store { target, value }
-            | InstructionKind::StoreField { target, value, .. } => {
+            InstructionKind::Store { target, value } | InstructionKind::StoreField { target, value, .. } => {
                 let mut refs = vec![*target];
                 refs.extend(value.register_refs());
 
@@ -1009,7 +995,6 @@ impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.kind {
             InstructionKind::Let { register, decl, ty } => write!(f, "let {register}: {ty} = {decl}"),
-            InstructionKind::Assign { target, value } => write!(f, "{target} = {value}"),
             InstructionKind::CreateSlot { slot, ty } => write!(f, "{slot} = slot ({} bytes)", ty.bytesize()),
             InstructionKind::Allocate { register, ty, .. } => write!(f, "{register} = alloc {ty}"),
             InstructionKind::Store { target, value } => write!(f, "*{target} = {value}"),

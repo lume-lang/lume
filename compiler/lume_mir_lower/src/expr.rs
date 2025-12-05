@@ -47,29 +47,31 @@ impl FunctionTransformer<'_, '_> {
 
         match &target_expr.kind {
             lume_mir::OperandKind::Reference { id } => {
-                self.func
-                    .current_block_mut()
-                    .assign(*id, value, expr.location.clone_inner());
+                let reassign_id = self.reassign_register(*id, value.clone());
 
                 lume_mir::Operand {
-                    kind: lume_mir::OperandKind::Reference { id: *id },
+                    kind: lume_mir::OperandKind::Reference { id: reassign_id },
                     location: expr.location.clone_inner(),
                 }
             }
             lume_mir::OperandKind::Load { id } => {
+                let id = self.reassigned_of(*id);
+
                 self.func
                     .current_block_mut()
-                    .store(*id, value, expr.location.clone_inner());
+                    .store(id, value, expr.location.clone_inner());
 
                 lume_mir::Operand {
-                    kind: lume_mir::OperandKind::Load { id: *id },
+                    kind: lume_mir::OperandKind::Load { id },
                     location: expr.location.clone_inner(),
                 }
             }
             lume_mir::OperandKind::LoadField { target, offset, .. } => {
+                let target = self.reassigned_of(*target);
+
                 self.func
                     .current_block_mut()
-                    .store_field(*target, *offset, value, expr.location.clone_inner());
+                    .store_field(target, *offset, value, expr.location.clone_inner());
 
                 target_expr
             }
@@ -109,17 +111,14 @@ impl FunctionTransformer<'_, '_> {
             unreachable!()
         };
 
-        let decl = lume_mir::Declaration {
+        let intrinsic_decl = lume_mir::Declaration {
             kind: Box::new(lume_mir::DeclarationKind::Intrinsic { name, args }),
             location: expr.location.clone_inner(),
         };
 
-        let reg = self.declare(decl);
+        let declaration_reg = self.declare(intrinsic_decl);
 
-        lume_mir::Operand {
-            kind: lume_mir::OperandKind::Load { id: reg },
-            location: expr.location.clone_inner(),
-        }
+        self.load_register(declaration_reg, expr.location.clone_inner())
     }
 
     fn cast(&mut self, expr: &lume_tir::Bitcast) -> lume_mir::Operand {
@@ -602,16 +601,13 @@ impl FunctionTransformer<'_, '_> {
         }
 
         if let Some(return_reg) = return_reg {
-            lume_mir::Operand {
-                kind: lume_mir::OperandKind::Reference { id: return_reg },
-                location: expr.location.clone_inner(),
-            }
+            self.use_register(return_reg, expr.location.clone_inner())
         } else {
             self.null_operand()
         }
     }
 
-    fn build_conditional_graph(
+    pub(crate) fn build_conditional_graph(
         &mut self,
         expr: &lume_tir::Expression,
         then_block: lume_mir::BasicBlockId,
@@ -947,10 +943,7 @@ impl FunctionTransformer<'_, '_> {
             lume_tir::VariableSource::Variable => *self.variables.get(&expr.reference).unwrap(),
         };
 
-        lume_mir::Operand {
-            kind: lume_mir::OperandKind::Reference { id },
-            location: expr.location.clone_inner(),
-        }
+        self.use_register(id, expr.location.clone_inner())
     }
 
     fn variant(&mut self, expr: &lume_tir::Variant) -> lume_mir::Operand {
@@ -1114,11 +1107,13 @@ impl FunctionTransformer<'_, '_> {
     }
 
     fn load_operand(&mut self, op: &lume_mir::Operand) -> lume_mir::RegisterId {
-        if let lume_mir::OperandKind::Reference { id } = &op.kind {
+        let loaded_id = if let lume_mir::OperandKind::Reference { id } = &op.kind {
             *id
         } else {
             self.declare_value(op.clone())
-        }
+        };
+
+        self.reassigned_of(loaded_id)
     }
 
     fn field_offset(&self, field: &lume_hir::Field) -> usize {
