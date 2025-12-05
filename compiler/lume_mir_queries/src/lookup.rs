@@ -10,11 +10,4 @@ impl<'tcx> MirQueryCtx<'tcx> {
     pub fn function(&'tcx self, id: NodeId) -> Option<&'tcx Function> {
         self.mir().functions.values().find(move |func| func.id == id)
     }
-
-    /// Attempts to find the function definition with the given name
-    /// within the MIR.
-    #[inline]
-    pub fn find_function(&'tcx self, name: &str) -> Option<&'tcx Function> {
-        self.mir().functions.values().find(move |func| func.name == name)
-    }
 }

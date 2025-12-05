@@ -9,8 +9,8 @@ use std::collections::HashMap;
 use lume_mir::{Function, ModuleMap, RegisterId};
 use lume_mir_queries::MirQueryCtx;
 use lume_session::{Options, Package};
-use lume_span::NodeId;
 use lume_span::source::Location;
+use lume_span::{Internable, NodeId};
 use lume_type_metadata::{StaticMetadata, TypeMetadata, TypeMetadataId};
 use lume_typech::TyCheckCtx;
 
@@ -43,7 +43,12 @@ impl<'tcx> ModuleTransformer<'tcx> {
             let mangle_version = lume_mangle::Version::default();
             let mangled_name = lume_mangle::mangled(self.mcx.tcx(), func.id, mangle_version).unwrap();
 
-            let mut func = Function::new(func.id, func.name_as_str(), mangled_name, func.location.clone_inner());
+            let mut func = Function::new(
+                func.id,
+                func.name_as_str().intern(),
+                mangled_name,
+                func.location.clone_inner(),
+            );
             func.signature = signature;
 
             // Offset the register counter by the number of parameters.
@@ -223,7 +228,10 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         ret_ty: lume_mir::Type,
         location: Location,
     ) -> lume_mir::Operand {
-        let func_sig = self.mcx.mir().function(func_id).signature.clone();
+        let func_decl = self.mcx.mir().function(func_id);
+        let func_name = func_decl.name;
+        let func_sig = func_decl.signature.clone();
+
         let args = self.normalize_call_argumets(&func_sig.parameters, &args, func_sig.vararg);
 
         #[cfg(debug_assertions)]
@@ -236,7 +244,11 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         }
 
         let call_inst = self.func.declare(ret_ty, lume_mir::Declaration {
-            kind: Box::new(lume_mir::DeclarationKind::Call { func_id, args }),
+            kind: Box::new(lume_mir::DeclarationKind::Call {
+                func_id,
+                name: func_name,
+                args,
+            }),
             location: location.clone(),
         });
 
@@ -337,6 +349,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             .declare(array_alloc_func.signature.return_type.clone(), lume_mir::Declaration {
                 kind: Box::new(lume_mir::DeclarationKind::Call {
                     func_id: array_alloc_func.id,
+                    name: array_alloc_func.name,
                     args: vec![
                         lume_mir::Operand::integer(64, false, args.len().cast_signed() as i64),
                         lume_mir::Operand::reference_of(metadata_reg),

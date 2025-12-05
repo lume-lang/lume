@@ -1,3 +1,5 @@
+use lume_span::Interned;
+
 use super::*;
 
 /// Some backend implementations, specifically Cranelift, does not allow using
@@ -271,14 +273,14 @@ impl RenameSsaVariables {
 }
 
 struct RegisterMapping {
-    func: String,
+    pub func_name: Interned<String>,
     pub mapping: IndexMap<(RegisterId, BasicBlockId), RegisterId>,
 }
 
 impl RegisterMapping {
-    pub fn new(func: String) -> Self {
+    pub fn new(func_name: Interned<String>) -> Self {
         Self {
-            func,
+            func_name,
             mapping: IndexMap::new(),
         }
     }
@@ -287,7 +289,7 @@ impl RegisterMapping {
         *self
             .mapping
             .get(&(id, block))
-            .unwrap_or_else(|| panic!("could not find register {id} in {block} in {}", self.func))
+            .unwrap_or_else(|| panic!("could not find register {id} in {block} in {}", self.func_name))
     }
 
     pub fn insert(&mut self, block: BasicBlockId, old: RegisterId, new: RegisterId) {
