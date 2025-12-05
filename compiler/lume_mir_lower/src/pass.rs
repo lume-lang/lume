@@ -10,7 +10,6 @@ pub(crate) mod pass_block_args;
 pub(crate) mod remove_orphans;
 pub(crate) mod remove_unreachable;
 pub(crate) mod rename_ssa;
-pub(crate) mod ssa_assign;
 
 use crate::FunctionTransformer;
 
@@ -38,7 +37,6 @@ impl FunctionTransformer<'_, '_> {
         self.run_pass::<remove_orphans::RemoveOrphanBlocks>();
         self.run_pass::<define_block_params::DefineBlockParameters>();
         self.run_pass::<pass_block_args::PassBlockArguments>();
-        self.run_pass::<ssa_assign::ConvertAssignmentExpressions>();
         self.run_pass::<rename_ssa::RenameSsaVariables>();
         self.run_pass::<mark_gc_refs::MarkObjectReferences>();
     }

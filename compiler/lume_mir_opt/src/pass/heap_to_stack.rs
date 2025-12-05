@@ -118,8 +118,7 @@ fn replace_reg_with_slot(
                     replace_reg_in_op(value, register, slot);
                 }
             }
-            InstructionKind::Assign { .. }
-            | InstructionKind::CreateSlot { .. }
+            InstructionKind::CreateSlot { .. }
             | InstructionKind::Allocate { .. }
             | InstructionKind::Store { .. }
             | InstructionKind::StoreSlot { .. }

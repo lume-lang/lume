@@ -122,6 +122,7 @@ pub(crate) struct FunctionTransformer<'mir, 'tcx> {
     func: Function,
 
     variables: HashMap<lume_tir::VariableId, RegisterId>,
+    reassigned_values: HashMap<RegisterId, RegisterId>,
 }
 
 impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
@@ -130,6 +131,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             mcx,
             func,
             variables: HashMap::new(),
+            reassigned_values: HashMap::new(),
         }
     }
 
@@ -218,6 +220,43 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             location: value.location.clone(),
             kind: Box::new(lume_mir::DeclarationKind::Operand(value)),
         })
+    }
+
+    /// Gets the reassigned register ID of the given register. If the register
+    /// has not been reassigned, returns `id`.
+    fn reassigned_of(&self, id: RegisterId) -> RegisterId {
+        *self.reassigned_values.get(&id).unwrap_or(&id)
+    }
+
+    fn use_register(&self, id: RegisterId, location: Location) -> lume_mir::Operand {
+        let id = self.reassigned_of(id);
+
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id },
+            location,
+        }
+    }
+
+    fn load_register(&self, id: RegisterId, location: Location) -> lume_mir::Operand {
+        let id = self.reassigned_of(id);
+
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Load { id },
+            location,
+        }
+    }
+
+    /// Reassigns the value of the register `id` with the given value.
+    ///
+    /// Any following uses of the register will be implicitly replaced with a
+    /// newly-created register, which will hold the new value.
+    fn reassign_register(&mut self, id: RegisterId, value: lume_mir::Operand) -> RegisterId {
+        let value_type = self.type_of_value(&value);
+        let reassigned_id = self.func.declare_value_raw(value_type, value);
+
+        self.reassigned_values.insert(id, reassigned_id);
+
+        reassigned_id
     }
 
     /// Defines a new call instruction in the current function block.

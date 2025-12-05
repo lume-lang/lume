@@ -143,7 +143,6 @@ impl MirQueryCtx<'_> {
                 }
                 InstructionKind::Allocate { .. }
                 | InstructionKind::ObjectRegister { .. }
-                | InstructionKind::Assign { .. }
                 | InstructionKind::CreateSlot { .. }
                 | InstructionKind::StoreSlot { .. } => {}
             }

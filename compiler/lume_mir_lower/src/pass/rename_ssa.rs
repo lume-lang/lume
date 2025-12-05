@@ -166,7 +166,6 @@ impl RenameSsaVariables {
 
                 Self::update_regs_decl(decl, block, mapping);
             }
-            InstructionKind::Assign { .. } => unreachable!("bug!: assignments should be removed in previous SSA pass"),
             InstructionKind::Allocate { register, metadata, .. } => {
                 self.rename_register_index_mut(register, block, mapping);
                 *metadata = mapping.get(block, *metadata);

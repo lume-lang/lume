@@ -58,9 +58,6 @@ impl LowerFunction<'_> {
 
                 self.builder.def_var(var, value);
             }
-            lume_mir::InstructionKind::Assign { .. } => {
-                panic!("bug!: assignment instructions should not be present in codegen")
-            }
             lume_mir::InstructionKind::CreateSlot { slot, ty } => {
                 #[expect(clippy::cast_possible_truncation)]
                 let size = ty.bytesize() as u32;
