@@ -45,9 +45,7 @@ impl FunctionTransformer<'_, '_> {
     pub(crate) fn run_pass<P: Pass>(&mut self) {
         let name = P::name();
 
-        if let Some(dump_mir) = self.tcx().gcx().session.options.dump_mir.as_ref()
-            && dump_mir.contains(&String::from(name))
-        {
+        if self.mcx.should_dump_func(&self.func, Some(name)) {
             println!("{}", self.func);
         }
 
