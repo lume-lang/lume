@@ -22,9 +22,6 @@ pub struct Options {
     /// it's been inferred and type checked.
     pub print_type_context: bool,
 
-    /// Defines whether the generated MIR should be printed to `stdio`.
-    pub dump_mir: Option<Vec<String>>,
-
     /// Defines the optimization level for the generated LLVM IR.
     pub optimize: OptimizationLevel,
 
@@ -39,6 +36,12 @@ pub struct Options {
 
     /// Defines the absolute path to the runtime library.
     pub runtime_path: Option<PathBuf>,
+
+    /// Defines whether the generated MIR should be printed to `stdio`.
+    pub dump_mir: Option<Vec<String>>,
+
+    /// Defines which MIR functions to dump, if any.
+    pub dump_mir_func: Vec<String>,
 
     /// Defines an optional list of overrides for source files.
     ///

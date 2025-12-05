@@ -91,13 +91,18 @@ pub struct DevelopmentBuildOptions {
         num_args = 0..=1
     )]
     pub dump_mir: Option<Vec<String>>,
+
+    /// Filters the dumped MIR functions
+    ///
+    /// Comma-separated list of the unmangled function names to dump.
+    #[arg(long, value_name = "FUNC", value_delimiter = ',')]
+    pub dump_mir_func: Vec<String>,
 }
 
 impl BuildOptions {
     pub fn options(&self) -> lume_session::Options {
         lume_session::Options {
             print_type_context: self.dev.print_type_ctx,
-            dump_mir: self.dev.dump_mir.clone(),
             enable_incremental: !self.no_incremental,
             optimize: match self.optimize.as_str() {
                 "0" => OptimizationLevel::O0,
@@ -119,6 +124,8 @@ impl BuildOptions {
                 None => None,
             },
             runtime_path: self.codegen.runtime_path.clone(),
+            dump_mir: self.dev.dump_mir.clone(),
+            dump_mir_func: self.dev.dump_mir_func.clone(),
             source_overrides: None,
         }
     }
