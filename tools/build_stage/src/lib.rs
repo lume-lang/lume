@@ -97,12 +97,12 @@ impl ManifoldDriver {
     /// Builds the MIR map from the current [`ManifoldDriver`] instance.
     pub fn build_mir(&self) -> Result<ModuleMap> {
         let (tcx, tir) = self.build_tir()?;
-        let mir = lume_mir_lower::ModuleTransformer::transform(
-            self.package.clone(),
-            &tcx,
-            tir,
-            self.gcx.session.options.clone(),
-        );
+
+        let package = self.package.clone();
+        let opts = self.gcx.session.options.clone();
+
+        let mut transformer = lume_mir_lower::ModuleTransformer::create(package, &tcx, tir.metadata, opts);
+        let mir = transformer.transform(&tir.functions.into_values().collect::<Vec<_>>());
 
         Ok(mir)
     }
@@ -110,14 +110,7 @@ impl ManifoldDriver {
     /// Compiles the MIR map from the current [`ManifoldDriver`] instance
     /// in-memory.
     pub fn compile(&self) -> Result<()> {
-        let (tcx, tir) = self.build_tir()?;
-        let mir = lume_mir_lower::ModuleTransformer::transform(
-            self.package.clone(),
-            &tcx,
-            tir,
-            self.gcx.session.options.clone(),
-        );
-
+        let mir = self.build_mir()?;
         lume_codegen::generate(mir).unwrap();
 
         Ok(())
@@ -125,13 +118,7 @@ impl ManifoldDriver {
 
     /// Compiles  from the current [`ManifoldDriver`] instance.
     pub fn link(&self) -> Result<PathBuf> {
-        let (tcx, tir) = self.build_tir()?;
-        let mir = lume_mir_lower::ModuleTransformer::transform(
-            self.package.clone(),
-            &tcx,
-            tir,
-            self.gcx.session.options.clone(),
-        );
+        let mir = self.build_mir()?;
 
         let object_data = lume_codegen::generate(mir)?;
         let output_file_path = self.gcx.binary_output_path(&self.package.name);

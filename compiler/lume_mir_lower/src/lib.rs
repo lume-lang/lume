@@ -11,10 +11,11 @@ use lume_mir_queries::MirQueryCtx;
 use lume_session::{Options, Package};
 use lume_span::NodeId;
 use lume_span::source::Location;
-use lume_type_metadata::{TypeMetadata, TypeMetadataId};
+use lume_type_metadata::{StaticMetadata, TypeMetadata, TypeMetadataId};
 use lume_typech::TyCheckCtx;
 
 use crate::dynamic::DynamicShimBuilder;
+use crate::ty::lower_type;
 
 /// Defines a transformer which will lower a typed HIR map into an MIR map.
 pub struct ModuleTransformer<'tcx> {
@@ -23,40 +24,94 @@ pub struct ModuleTransformer<'tcx> {
 }
 
 impl<'tcx> ModuleTransformer<'tcx> {
+    pub fn create(package: Package, tcx: &'tcx TyCheckCtx, metadata: StaticMetadata, options: Options) -> Self {
+        Self {
+            mcx: MirQueryCtx::new(tcx, ModuleMap::new(package, options, metadata)),
+        }
+    }
+
     /// Transforms the supplied context into a MIR map.
-    pub fn transform(package: Package, tcx: &'tcx TyCheckCtx, tir: lume_tir::TypedIR, options: Options) -> ModuleMap {
-        let mut transformer = Self {
-            mcx: MirQueryCtx::new(tcx, ModuleMap::new(package, options, tir.metadata)),
-        };
+    pub fn transform(&mut self, functions: &[lume_tir::Function]) -> ModuleMap {
+        // Declare all the TIR functions into the MIR before lowering any of
+        // them.
+        //
+        // This ensures that any functions called *before* they are defined
+        // within the source file still resolve correctly.
+        for func in functions {
+            let signature = self.signature_of(func);
 
-        for func in tir.functions.values() {
-            transformer.define_callable(func);
+            let mangle_version = lume_mangle::Version::default();
+            let mangled_name = lume_mangle::mangled(self.mcx.tcx(), func.id, mangle_version).unwrap();
+
+            let mut func = Function::new(func.id, func.name_as_str(), mangled_name, func.location.clone_inner());
+            func.signature = signature;
+
+            // Offset the register counter by the number of parameters.
+            for parameter in &func.signature.parameters {
+                func.registers.allocate_param(parameter.ty.clone());
+            }
+
+            self.mcx.mir_mut().functions.insert(func.id, func);
         }
 
-        for func in tir.functions.values() {
-            transformer.transform_callable(func);
+        for func in functions {
+            let func_decl = self.mcx.mir().functions.get(&func.id).unwrap().clone();
+            let func_transformer = FunctionTransformer::new_from(&mut self.mcx, func_decl);
+
+            let defined_func = func_transformer.lower_function(func);
+            self.mcx.mir_mut().functions.insert(func.id, defined_func);
         }
 
-        transformer.mcx.take_mir()
+        self.mcx.take_mir()
     }
 
-    fn define_callable(&mut self, func: &lume_tir::Function) {
-        let id = func.id;
-        let func = FunctionTransformer::define(self, id, func);
+    /// Creates a MIR signature from the given function.
+    fn signature_of(&self, func: &lume_tir::Function) -> lume_mir::Signature {
+        let mut signature = lume_mir::Signature::default();
 
-        self.mcx.mir_mut().functions.insert(id, func);
-    }
+        for param in &func.parameters {
+            let param_ty = lower_type(&self.mcx, &param.ty);
 
-    fn transform_callable(&mut self, func: &lume_tir::Function) {
-        let id = func.id;
-        let func = FunctionTransformer::transform(self, id, func);
+            signature.parameters.push(lume_mir::Parameter {
+                name: param.name,
+                ty: param_ty,
+                type_ref: param.ty.clone(),
+                location: param.location.clone_inner(),
+            });
 
-        self.mcx.mir_mut().functions.insert(id, func);
+            if param.vararg {
+                signature.vararg = true;
+            }
+        }
+
+        // Limit symbol visibility according to the visiblity of the function.
+        //
+        // Unless it's the entrypoint - that should *always* be visible outside the
+        // object.
+        if !self.mcx.tcx().is_visible_outside_package(func.id) && !self.mcx.tcx().is_entrypoint(func.id) {
+            signature.internal = true;
+        }
+
+        if matches!(
+            func.kind,
+            lume_tir::FunctionKind::Static | lume_tir::FunctionKind::Dropper
+        ) && func.block.is_none()
+        {
+            signature.external = true;
+        }
+
+        if func.kind == lume_tir::FunctionKind::Dropper {
+            signature.is_dropper = true;
+        }
+
+        signature.return_type = lower_type(&self.mcx, &func.return_type);
+
+        signature
     }
 }
 
 pub(crate) struct FunctionTransformer<'mir, 'tcx> {
-    transformer: &'mir mut ModuleTransformer<'tcx>,
+    mcx: &'mir mut MirQueryCtx<'tcx>,
 
     /// Defines the MIR function which is being created.
     func: Function,
@@ -65,96 +120,38 @@ pub(crate) struct FunctionTransformer<'mir, 'tcx> {
 }
 
 impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
-    /// Defines the MIR function which is being created.
-    pub fn define(transformer: &'mir mut ModuleTransformer<'tcx>, id: NodeId, func: &lume_tir::Function) -> Function {
-        let mangle_version = lume_mangle::Version::default();
-        let mangled_name = lume_mangle::mangled(transformer.mcx.tcx(), id, mangle_version).unwrap();
-
-        let mut transformer = Self {
-            transformer,
-            func: Function::new(id, func.name_as_str(), mangled_name, func.location.clone_inner()),
+    pub(crate) fn new_from(mcx: &'mir mut MirQueryCtx<'tcx>, func: lume_mir::Function) -> Self {
+        Self {
+            mcx,
+            func,
             variables: HashMap::new(),
-        };
-
-        transformer.lower_signature(func);
-
-        transformer.func
+        }
     }
 
-    /// Transforms the supplied context into a MIR map.
-    pub fn transform(
-        transformer: &'mir mut ModuleTransformer<'tcx>,
-        id: NodeId,
-        func: &lume_tir::Function,
-    ) -> Function {
-        let mangle_version = lume_mangle::Version::default();
-        let mangled_name = lume_mangle::mangled(transformer.mcx.tcx(), id, mangle_version).unwrap();
-
-        let mut transformer = Self {
-            transformer,
-            func: Function::new(id, func.name_as_str(), mangled_name, func.location.clone_inner()),
-            variables: HashMap::new(),
-        };
-
-        transformer.lower_signature(func);
-
+    /// Lowers the given TIR function into a single MIR function.
+    pub fn lower_function(mut self, func: &lume_tir::Function) -> Function {
         match func.kind {
             lume_tir::FunctionKind::Static | lume_tir::FunctionKind::Dropper => {
                 if let Some(body) = &func.block {
-                    transformer.lower(body);
-                    transformer.run_passes();
-                } else {
-                    transformer.func.signature.external = true;
+                    self.lower_block(body);
+                    self.run_passes();
                 }
             }
             lume_tir::FunctionKind::Dynamic => {
-                DynamicShimBuilder::new(&mut transformer, id).build();
+                DynamicShimBuilder::new(&mut self, func.id).build();
 
-                transformer.run_pass::<pass::rename_ssa::RenameSsaVariables>();
+                self.run_pass::<pass::rename_ssa::RenameSsaVariables>();
             }
             lume_tir::FunctionKind::Unreachable => {
-                let _entry_block = transformer.func.new_active_block();
-                transformer
-                    .func
-                    .current_block_mut()
-                    .unreachable(func.location.clone_inner());
+                let _entry_block = self.func.new_active_block();
+                self.func.current_block_mut().unreachable(func.location.clone_inner());
             }
         }
 
-        transformer.func
+        self.func
     }
 
-    fn lower_signature(&mut self, func: &lume_tir::Function) {
-        for param in &func.parameters {
-            let param_ty = self.lower_type(&param.ty);
-
-            self.func.signature.parameters.push(lume_mir::Parameter {
-                name: param.name,
-                ty: param_ty.clone(),
-                type_ref: param.ty.clone(),
-                location: param.location.clone_inner(),
-            });
-
-            // Offset the register counter by the number of parameters
-            self.func.registers.allocate_param(param_ty);
-
-            if param.vararg {
-                self.func.signature.vararg = true;
-            }
-        }
-
-        if !self.tcx().is_visible_outside_package(func.id) && !self.tcx().is_entrypoint(func.id) {
-            self.func.signature.internal = true;
-        }
-
-        if func.kind == lume_tir::FunctionKind::Dropper {
-            self.func.signature.is_dropper = true;
-        }
-
-        self.func.signature.return_type = self.lower_type(&func.return_type);
-    }
-
-    fn lower(&mut self, block: &lume_tir::Block) {
+    fn lower_block(&mut self, block: &lume_tir::Block) {
         let _entry_block = self.func.new_active_block();
         let return_value = self.block(block);
 
@@ -182,11 +179,11 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     }
 
     pub(crate) fn tcx(&self) -> &TyCheckCtx {
-        self.transformer.mcx.tcx()
+        self.mcx.tcx()
     }
 
     pub(crate) fn function(&self, func_id: NodeId) -> &Function {
-        self.transformer.mcx.mir().function(func_id)
+        self.mcx.mir().function(func_id)
     }
 
     /// Defines a new declaration in the current function block.
@@ -226,7 +223,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         ret_ty: lume_mir::Type,
         location: Location,
     ) -> lume_mir::Operand {
-        let func_sig = self.transformer.mcx.mir().function(func_id).signature.clone();
+        let func_sig = self.mcx.mir().function(func_id).signature.clone();
         let args = self.normalize_call_argumets(&func_sig.parameters, &args, func_sig.vararg);
 
         #[cfg(debug_assertions)]
@@ -331,7 +328,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         let metadata_reg = self.declare_metadata_of(vararg_type, vararg_loc.clone());
 
         let array_alloc_func_id = self.tcx().lang_item("array_with_capacity").unwrap();
-        let array_alloc_func = self.transformer.mcx.function(array_alloc_func_id).unwrap();
+        let array_alloc_func = self.mcx.function(array_alloc_func_id).unwrap();
 
         let array_push_func_id = self.tcx().lang_item("array_push").unwrap();
 
@@ -369,7 +366,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     fn metadata_entry_of(&self, type_ref: &lume_types::TypeRef) -> &TypeMetadata {
         let metadata_id = TypeMetadataId::from(type_ref);
 
-        self.transformer.mcx.mir().metadata.metadata.get(&metadata_id).unwrap()
+        self.mcx.mir().metadata.metadata.get(&metadata_id).unwrap()
     }
 
     /// Gets the metadata MIR type of the given type.
