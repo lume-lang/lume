@@ -98,6 +98,7 @@ impl MirQueryCtx<'_> {
                     DeclarationKind::Call {
                         func_id: callee_id,
                         args,
+                        ..
                     } => {
                         for (idx, arg) in args.iter().enumerate() {
                             if arg.stores_register(reg) {

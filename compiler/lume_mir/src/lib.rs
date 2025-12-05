@@ -157,7 +157,7 @@ impl std::fmt::Display for Parameter {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Function {
     pub id: NodeId,
-    pub name: String,
+    pub name: Interned<String>,
     pub mangled_name: String,
     pub signature: Signature,
 
@@ -173,7 +173,7 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(id: NodeId, name: String, mangled_name: String, location: Location) -> Self {
+    pub fn new(id: NodeId, name: Interned<String>, mangled_name: String, location: Location) -> Self {
         Function {
             id,
             name,
@@ -385,11 +385,11 @@ impl Function {
 impl std::fmt::Display for Function {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.signature.external {
-            writeln!(f, "@{} extern fn {:?} {}", self.id, self.name, self.signature)?;
+            writeln!(f, "extern fn {:?} {}", self.name, self.signature)?;
             return writeln!(f);
         }
 
-        writeln!(f, "@{} fn {:?} {} {{", self.id, self.name, self.signature)?;
+        writeln!(f, "fn {:?} {} {{", self.name, self.signature)?;
 
         for block in self.blocks.values() {
             write!(f, "{block}")?;
@@ -1039,7 +1039,11 @@ pub enum DeclarationKind {
     Intrinsic { name: Intrinsic, args: Vec<Operand> },
 
     /// Represents a call to a function.
-    Call { func_id: NodeId, args: Vec<Operand> },
+    Call {
+        func_id: NodeId,
+        name: Interned<String>,
+        args: Vec<Operand>,
+    },
 
     /// Represents an indirect call to a function.
     IndirectCall {
@@ -1077,14 +1081,14 @@ impl std::fmt::Display for Declaration {
                 "{name}({})",
                 args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
             ),
-            DeclarationKind::Call { func_id, args } => write!(
+            DeclarationKind::Call { name, args, .. } => write!(
                 f,
-                "(call {func_id})({})",
+                "call {name}({})",
                 args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
             ),
             DeclarationKind::IndirectCall { ptr, args, .. } => write!(
                 f,
-                "(call {ptr})({})",
+                "call indirect {ptr}({})",
                 args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
             ),
         }

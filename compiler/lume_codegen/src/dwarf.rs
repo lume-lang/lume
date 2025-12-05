@@ -146,7 +146,7 @@ impl<'ctx> RootDebugContext<'ctx> {
         let entry = compile_unit.get_mut(entry_id);
 
         // DW_AT_name
-        let name = self.dwarf.strings.add(func.name.clone());
+        let name = self.dwarf.strings.add(func.name.clone_inner());
         entry.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
 
         // DW_AT_external
