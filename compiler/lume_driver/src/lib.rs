@@ -131,7 +131,9 @@ impl Compiler {
     #[libftrace::traced(level = Debug)]
     fn codegen(self, tcx: &TyCheckCtx, tir: TypedIR) -> lume_mir::ModuleMap {
         let opts = self.gcx.session.options.clone();
-        let mir = lume_mir_lower::ModuleTransformer::transform(self.package, tcx, tir, opts);
+
+        let mut transformer = lume_mir_lower::ModuleTransformer::create(self.package, tcx, tir.metadata, opts);
+        let mir = transformer.transform(&tir.functions.into_values().collect::<Vec<_>>());
 
         lume_mir_opt::Optimizer::optimize(tcx, mir)
     }
