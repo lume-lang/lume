@@ -437,7 +437,7 @@ impl LowerFunction<'_> {
         let mut entries = Vec::with_capacity(expr.cases.len());
 
         let operand_var = self.mark_variable(lume_tir::VariableSource::Variable);
-        self.variable_mapping.insert(expr.operand, operand_var);
+        self.variables.add_mapping(expr.operand, operand_var);
 
         for (idx, case) in expr.cases.iter().enumerate() {
             let is_last_case = idx >= expr.cases.len() - 1;
@@ -490,7 +490,7 @@ impl LowerFunction<'_> {
         let switch_ret_type = self.lower.tcx.type_of(expr.id)?;
 
         let operand_var = self.mark_variable(lume_tir::VariableSource::Variable);
-        self.variable_mapping.insert(expr.operand, operand_var);
+        self.variables.add_mapping(expr.operand, operand_var);
 
         for (idx, case) in expr.cases.iter().enumerate() {
             let is_last_case = idx >= expr.cases.len() - 1;
@@ -558,8 +558,8 @@ impl LowerFunction<'_> {
     fn variable_expression(&self, expr: &lume_hir::Variable) -> lume_tir::ExpressionKind {
         let reference = match &expr.reference {
             lume_hir::VariableSource::Parameter(param) => VariableId(param.index),
-            lume_hir::VariableSource::Variable(var) => *self.variable_mapping.get(&var.id).unwrap(),
-            lume_hir::VariableSource::Pattern(pat) => *self.variable_mapping.get(&pat.id).unwrap(),
+            lume_hir::VariableSource::Variable(var) => self.variables.mapping_of(var.id).unwrap(),
+            lume_hir::VariableSource::Pattern(pat) => self.variables.mapping_of(pat.id).unwrap(),
         };
 
         let source = match expr.reference {

@@ -16,7 +16,7 @@ impl LowerFunction<'_> {
             }
             lume_hir::PatternKind::Identifier(_) => {
                 let var = self.mark_variable(lume_tir::VariableSource::Variable);
-                self.variable_mapping.insert(pattern.id, var);
+                self.variables.add_mapping(pattern.id, var);
 
                 Ok(lume_tir::Pattern {
                     id: pattern.id,

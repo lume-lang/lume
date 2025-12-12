@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use indexmap::IndexMap;
 use lume_span::{Interned, Location, NodeId};
 use lume_type_metadata::{StaticMetadata, TypeMetadataId};
@@ -154,8 +156,14 @@ impl std::fmt::Display for Path {
     }
 }
 
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Default, Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct VariableId(pub usize);
+
+impl Display for VariableId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "v{}", self.0)
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FunctionKind {
