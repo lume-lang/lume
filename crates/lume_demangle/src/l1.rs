@@ -31,7 +31,7 @@ pub fn try_demangle(mangled: &str) -> Result<String> {
     } else if demangler.check_str("_Tt") {
         demangler.parse_trait_def()
     } else {
-        return Err(SimpleDiagnostic::new("invalid symbol identifier").into());
+        Err(SimpleDiagnostic::new("invalid symbol identifier").into())
     }
 }
 
@@ -143,11 +143,11 @@ impl Demangler<'_> {
                 constraints.push(self.parse_path_name()?);
             }
 
-            if constraints.is_empty() {
-                return Ok(format!("<{type_param_name}>"));
+            return if constraints.is_empty() {
+                Ok(format!("<{type_param_name}>"))
             } else {
-                return Ok(format!("<{type_param_name}: {}>", constraints.join(" + ")));
-            }
+                Ok(format!("<{type_param_name}: {}>", constraints.join(" + ")))
+            };
         }
 
         self.parse_path_name()

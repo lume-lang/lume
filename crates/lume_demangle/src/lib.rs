@@ -7,6 +7,6 @@ pub fn try_demangle(mangled: &str) -> Result<String> {
         l1::try_demangle(mangled)
     } else {
         // If the given string isn't mangled, we have nothing to demangle.
-        return Ok(mangled.to_string());
+        Ok(mangled.to_string())
     }
 }

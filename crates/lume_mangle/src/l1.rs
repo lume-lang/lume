@@ -60,21 +60,21 @@ pub const ENUM_TYPE_SYM: &str = "_E";
 /// mangling scheme.
 pub fn mangled_name_of(tcx: &TyCheckCtx, id: NodeId) -> Result<String> {
     match tcx.hir_expect_node(id) {
-        lume_hir::Node::Function(func) => mangled_name_of_function(tcx, func),
+        lume_hir::Node::Function(func) => Ok(mangled_name_of_function(tcx, func)),
         lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(struct_def)) => {
-            mangled_name_of_struct_definition(tcx, struct_def)
+            Ok(mangled_name_of_struct_definition(tcx, struct_def))
         }
         lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(trait_def)) => {
-            mangled_name_of_trait_definition(tcx, trait_def)
+            Ok(mangled_name_of_trait_definition(tcx, trait_def))
         }
         lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(enum_def)) => {
-            mangled_name_of_enum_definition(tcx, enum_def)
+            Ok(mangled_name_of_enum_definition(tcx, enum_def))
         }
         lume_hir::Node::Type(lume_hir::TypeDefinition::TypeParameter(type_param)) => {
-            mangled_name_of_type_parameter(type_param)
+            Ok(mangled_name_of_type_parameter(type_param))
         }
-        lume_hir::Node::Method(method) => mangled_name_of_method(tcx, method),
-        lume_hir::Node::TraitMethodDef(method_def) => mangled_name_of_trait_method_def(tcx, method_def),
+        lume_hir::Node::Method(method) => Ok(mangled_name_of_method(tcx, method)),
+        lume_hir::Node::TraitMethodDef(method_def) => Ok(mangled_name_of_trait_method_def(tcx, method_def)),
         lume_hir::Node::TraitMethodImpl(method_impl) => mangled_name_of_trait_method_impl(tcx, method_impl),
         lume_hir::Node::Impl(_) => Err(SimpleDiagnostic::new("cannot get mangled name of implementation").into()),
         lume_hir::Node::TraitImpl(_) => {
@@ -87,51 +87,45 @@ pub fn mangled_name_of(tcx: &TyCheckCtx, id: NodeId) -> Result<String> {
     }
 }
 
-fn mangled_name_of_function(tcx: &TyCheckCtx, func: &lume_hir::FunctionDefinition) -> Result<String> {
+fn mangled_name_of_function(tcx: &TyCheckCtx, func: &lume_hir::FunctionDefinition) -> String {
     if func.block.is_none() {
-        return Ok(format!("{:+}", func.name));
+        return format!("{:+}", func.name);
     }
 
     // If the function is the package entrypoint, give it a specific name so we can
     // reference it in the runtime.
     if tcx.is_entrypoint(func.id) {
-        return Ok(String::from("__lume_entry"));
+        return String::from("__lume_entry");
     }
 
     let package_segment = mangled_package_segment(tcx, func.id.package);
     let path_segment = mangled_path_segment(&func.name);
 
-    Ok(format!("{MANGLED_PREFIX}{FUNCTION_SYM}{package_segment}{path_segment}"))
+    format!("{MANGLED_PREFIX}{FUNCTION_SYM}{package_segment}{path_segment}")
 }
 
-fn mangled_name_of_struct_definition(tcx: &TyCheckCtx, struct_def: &lume_hir::StructDefinition) -> Result<String> {
+fn mangled_name_of_struct_definition(tcx: &TyCheckCtx, struct_def: &lume_hir::StructDefinition) -> String {
     let package_segment = mangled_package_segment(tcx, struct_def.id.package);
     let path_segment = mangled_path_segment(&struct_def.name);
 
-    Ok(format!(
-        "{MANGLED_PREFIX}{STRUCT_TYPE_SYM}{package_segment}{path_segment}"
-    ))
+    format!("{MANGLED_PREFIX}{STRUCT_TYPE_SYM}{package_segment}{path_segment}")
 }
 
-fn mangled_name_of_trait_definition(tcx: &TyCheckCtx, trait_def: &lume_hir::TraitDefinition) -> Result<String> {
+fn mangled_name_of_trait_definition(tcx: &TyCheckCtx, trait_def: &lume_hir::TraitDefinition) -> String {
     let package_segment = mangled_package_segment(tcx, trait_def.id.package);
     let path_segment = mangled_path_segment(&trait_def.name);
 
-    Ok(format!(
-        "{MANGLED_PREFIX}{TRAIT_TYPE_SYM}{package_segment}{path_segment}"
-    ))
+    format!("{MANGLED_PREFIX}{TRAIT_TYPE_SYM}{package_segment}{path_segment}")
 }
 
-fn mangled_name_of_enum_definition(tcx: &TyCheckCtx, enum_def: &lume_hir::EnumDefinition) -> Result<String> {
+fn mangled_name_of_enum_definition(tcx: &TyCheckCtx, enum_def: &lume_hir::EnumDefinition) -> String {
     let package_segment = mangled_package_segment(tcx, enum_def.id.package);
     let path_segment = mangled_path_segment(&enum_def.name);
 
-    Ok(format!(
-        "{MANGLED_PREFIX}{ENUM_TYPE_SYM}{package_segment}{path_segment}"
-    ))
+    format!("{MANGLED_PREFIX}{ENUM_TYPE_SYM}{package_segment}{path_segment}")
 }
 
-fn mangled_name_of_type_parameter(type_param: &lume_hir::TypeParameter) -> Result<String> {
+fn mangled_name_of_type_parameter(type_param: &lume_hir::TypeParameter) -> String {
     let type_param_name = type_param.name.as_str();
     let mut name = format!("{TYPE_INDICATOR}{}{type_param_name}", type_param_name.len());
 
@@ -140,12 +134,12 @@ fn mangled_name_of_type_parameter(type_param: &lume_hir::TypeParameter) -> Resul
         name.push_str(&mangled_path_name(&constraint.name));
     }
 
-    Ok(name)
+    name
 }
 
-fn mangled_name_of_method(tcx: &TyCheckCtx, method: &lume_hir::MethodDefinition) -> Result<String> {
+fn mangled_name_of_method(tcx: &TyCheckCtx, method: &lume_hir::MethodDefinition) -> String {
     if method.block.is_none() {
-        return Ok(format!("{:+}", tcx.hir_path_of_node(method.id)));
+        return format!("{:+}", tcx.hir_path_of_node(method.id));
     }
 
     let parent = tcx.hir_parent_of(method.id).unwrap();
@@ -154,23 +148,19 @@ fn mangled_name_of_method(tcx: &TyCheckCtx, method: &lume_hir::MethodDefinition)
     };
 
     let package_segment = mangled_package_segment(tcx, method.id.package);
-    let impl_segment = mangled_impl_segment(tcx, &implementation.target)?;
+    let impl_segment = mangled_impl_segment(tcx, &implementation.target);
     let path_segment = mangled_name_segment(method.name.as_str());
 
-    Ok(format!(
-        "{MANGLED_PREFIX}{METHOD_SYM}{package_segment}{impl_segment}{path_segment}"
-    ))
+    format!("{MANGLED_PREFIX}{METHOD_SYM}{package_segment}{impl_segment}{path_segment}")
 }
 
-fn mangled_name_of_trait_method_def(tcx: &TyCheckCtx, method_def: &lume_hir::TraitMethodDefinition) -> Result<String> {
+fn mangled_name_of_trait_method_def(tcx: &TyCheckCtx, method_def: &lume_hir::TraitMethodDefinition) -> String {
     let method_name = tcx.hir_path_of_node(method_def.id);
 
     let package_segment = mangled_package_segment(tcx, method_def.id.package);
     let path_segment = mangled_path_segment(&method_name);
 
-    Ok(format!(
-        "{MANGLED_PREFIX}{TRAIT_METHOD_DEF_SYM}{package_segment}{path_segment}"
-    ))
+    format!("{MANGLED_PREFIX}{TRAIT_METHOD_DEF_SYM}{package_segment}{path_segment}")
 }
 
 fn mangled_name_of_trait_method_impl(
@@ -191,7 +181,7 @@ fn mangled_name_of_trait_method_impl(
     let package_segment = mangled_package_segment(tcx, method_impl.id.package);
     let path_segment = mangled_path_segment(&trait_def.name);
     let name_segment = mangled_name_segment(method_impl.name.as_str());
-    let impl_segment = mangled_impl_segment(tcx, &trait_impl.target)?;
+    let impl_segment = mangled_impl_segment(tcx, &trait_impl.target);
 
     Ok(format!(
         "{MANGLED_PREFIX}{TRAIT_METHOD_IMPL_SYM}{package_segment}{path_segment}{name_segment}{impl_segment}"
@@ -215,14 +205,14 @@ fn mangled_name_segment(name: &str) -> String {
     format!("{NAME_INDICATOR}{len}{name}")
 }
 
-fn mangled_impl_segment(tcx: &TyCheckCtx, ty: &lume_hir::Type) -> Result<String> {
+fn mangled_impl_segment(tcx: &TyCheckCtx, ty: &lume_hir::Type) -> String {
     let type_name = if let Some(type_param) = tcx.as_type_param(ty.id.as_node_id()) {
-        mangled_name_of_type_parameter(type_param)?
+        mangled_name_of_type_parameter(type_param)
     } else {
         mangled_path_name(&ty.name)
     };
 
-    Ok(format!("{IMPL_INDICATOR}{type_name}"))
+    format!("{IMPL_INDICATOR}{type_name}")
 }
 
 fn mangled_path_name(name: &lume_hir::Path) -> String {
@@ -238,7 +228,7 @@ fn mangled_path_name(name: &lume_hir::Path) -> String {
                 let str = name.as_str();
                 let len = str.len();
 
-                name_str.push(format!("{len}{str}"))
+                name_str.push(format!("{len}{str}"));
             }
         }
     }

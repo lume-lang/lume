@@ -40,12 +40,12 @@ fn internal_format_ffi(fmt: *const c_char, args: *const Array<*const c_char>) ->
         args_strings.push(arg_str);
     }
 
-    internal_format_str(fmt_str, &args_strings)
+    internal_format_str(&fmt_str, &args_strings)
 }
 
 /// Formats the given Rust strings into a formatted [`String`], which can be
 /// printed or sent back to the Lume application.
-fn internal_format_str(fmt: String, args: &[String]) -> String {
+fn internal_format_str(fmt: &str, args: &[String]) -> String {
     let mut idx = 0;
     let mut formatted = String::with_capacity(fmt.len());
 
