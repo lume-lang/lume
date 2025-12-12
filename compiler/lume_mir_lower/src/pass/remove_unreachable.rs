@@ -32,7 +32,7 @@ impl Pass for RemoveUnreachable {
 
         for (block, last_reachable) in unreachable {
             let block = func.block_mut(block);
-            let location = block.instructions[last_reachable].location.clone();
+            let location = block.instructions[last_reachable].location;
 
             block.instructions.drain(last_reachable + 1..);
             block.set_terminator_full(Terminator {

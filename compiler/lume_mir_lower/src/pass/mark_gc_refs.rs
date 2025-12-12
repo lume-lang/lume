@@ -1,4 +1,4 @@
-use lume_span::source::Location;
+use lume_span::Location;
 
 use super::*;
 
@@ -46,7 +46,7 @@ impl Pass for MarkObjectReferences {
                 .instructions
                 .get(offset.saturating_sub(1))
                 .or_else(|| block.instructions.get(offset))
-                .map_or(Location::empty(), |inst| inst.location.clone());
+                .map_or(Location::empty(), |inst| inst.location);
 
             let inst = lume_mir::Instruction {
                 kind: lume_mir::InstructionKind::ObjectRegister { register },

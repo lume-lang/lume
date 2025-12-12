@@ -47,7 +47,7 @@ impl LowerFunction<'_> {
 
     #[libftrace::traced(level = Trace, fields(func = self.func.name))]
     pub(crate) fn cg_instruction(&mut self, inst: &lume_mir::Instruction) {
-        self.set_srcloc(inst.location.clone());
+        self.set_srcloc(inst.location.clone_inner());
 
         match &inst.kind {
             lume_mir::InstructionKind::Let { register, decl, ty } => {
@@ -115,7 +115,7 @@ impl LowerFunction<'_> {
 
     #[libftrace::traced(level = Trace, fields(func = self.func.name))]
     pub(crate) fn cg_terminator(&mut self, term: &lume_mir::Terminator) {
-        self.set_srcloc(term.location.clone());
+        self.set_srcloc(term.location.clone_inner());
 
         match &term.kind {
             lume_mir::TerminatorKind::Return(operand) => {

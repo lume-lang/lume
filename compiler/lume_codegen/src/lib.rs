@@ -194,7 +194,7 @@ impl CraneliftBackend {
 
         let mut object = module.finish();
         self.declare_stack_maps(&mut object, function_metadata)?;
-        self.declare_runtime_options(&mut object, &self.context.package.runtime)?;
+        declare_runtime_options(&mut object, &self.context.package.runtime)?;
 
         if let Some(debug_ctx) = debug_ctx.take() {
             debug_ctx.finish(&mut object)?;
@@ -522,39 +522,6 @@ impl CraneliftBackend {
 
         Ok(())
     }
-
-    fn declare_runtime_options(
-        &self,
-        product: &mut ObjectProduct,
-        options: &lume_options::RuntimeOptions,
-    ) -> Result<()> {
-        let encoded = lume_options::to_vec(options).map_diagnostic()?;
-        let encoded_len = encoded.len() as u64;
-
-        let section_id = product.object.section_id(object::write::StandardSection::Data);
-        let section_offset = product
-            .object
-            .append_section_data(section_id, &u64::to_ne_bytes(encoded_len), 8);
-
-        // Size of the symbol must include the length of the encoded data.
-        let symbol_size = size_of::<u64>() + encoded.len();
-
-        product.object.add_symbol(object::write::Symbol {
-            name: b"__lume_options".to_vec(),
-            value: section_offset,
-            size: symbol_size as u64,
-            kind: object::write::SymbolKind::Data,
-            scope: object::write::SymbolScope::Linkage,
-            weak: false,
-            section: object::write::SymbolSection::Section(section_id),
-            flags: object::SymbolFlags::None,
-        });
-
-        // Write the rest of the symbol content.
-        product.object.append_section_data(section_id, &encoded, 1);
-
-        Ok(())
-    }
 }
 
 #[libftrace::traced(level = Trace, fields(name, params, ret))]
@@ -591,6 +558,35 @@ pub(crate) fn address_for_func(func_id: FuncId) -> Address {
     }
 }
 
+fn declare_runtime_options(product: &mut ObjectProduct, options: &lume_options::RuntimeOptions) -> Result<()> {
+    let encoded = lume_options::to_vec(options).map_diagnostic()?;
+    let encoded_len = encoded.len() as u64;
+
+    let section_id = product.object.section_id(object::write::StandardSection::Data);
+    let section_offset = product
+        .object
+        .append_section_data(section_id, &u64::to_ne_bytes(encoded_len), 8);
+
+    // Size of the symbol must include the length of the encoded data.
+    let symbol_size = size_of::<u64>() + encoded.len();
+
+    product.object.add_symbol(object::write::Symbol {
+        name: b"__lume_options".to_vec(),
+        value: section_offset,
+        size: symbol_size as u64,
+        kind: object::write::SymbolKind::Data,
+        scope: object::write::SymbolScope::Linkage,
+        weak: false,
+        section: object::write::SymbolSection::Section(section_id),
+        flags: object::SymbolFlags::None,
+    });
+
+    // Write the rest of the symbol content.
+    product.object.append_section_data(section_id, &encoded, 1);
+
+    Ok(())
+}
+
 struct LowerFunction<'ctx> {
     backend: &'ctx CraneliftBackend,
     func: &'ctx lume_mir::Function,
@@ -622,7 +618,7 @@ impl<'ctx> LowerFunction<'ctx> {
     }
 
     pub fn define(mut self) {
-        self.set_srcloc(self.func.location.clone());
+        self.set_srcloc(self.func.location.clone_inner());
 
         // Allocate all blocks, so they can be referenced by earlier blocks
         for (idx, block) in self.func.blocks.values().enumerate() {
