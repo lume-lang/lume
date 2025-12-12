@@ -43,12 +43,7 @@ impl<'tcx> ModuleTransformer<'tcx> {
             let mangle_version = lume_mangle::Version::default();
             let mangled_name = lume_mangle::mangled(self.mcx.tcx(), func.id, mangle_version).unwrap();
 
-            let mut func = Function::new(
-                func.id,
-                func.name_as_str().intern(),
-                mangled_name,
-                func.location.clone_inner(),
-            );
+            let mut func = Function::new(func.id, func.name_as_str().intern(), mangled_name, func.location);
             func.signature = signature;
 
             // Offset the register counter by the number of parameters.
@@ -81,7 +76,7 @@ impl<'tcx> ModuleTransformer<'tcx> {
                 name: param.name,
                 ty: param_ty,
                 type_ref: param.ty.clone(),
-                location: param.location.clone_inner(),
+                location: param.location,
             });
 
             if param.vararg {

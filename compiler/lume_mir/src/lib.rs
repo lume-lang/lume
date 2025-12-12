@@ -293,14 +293,14 @@ impl Function {
     /// Declares a new local with the given value in the current block.
     pub fn declare_value(&mut self, ty: Type, value: Operand) -> RegisterId {
         self.declare(ty, Declaration {
-            location: value.location.clone(),
+            location: value.location,
             kind: Box::new(DeclarationKind::Operand(value)),
         })
     }
 
     /// Declares a new local with the given declaration in the current block.
     pub fn declare_raw(&mut self, ty: Type, decl: Declaration) -> RegisterId {
-        let loc = decl.location.clone();
+        let loc = decl.location;
 
         let ptr = self.add_register(ty.clone());
         self.current_block_mut().declare(ptr, decl, ty, loc);
@@ -311,7 +311,7 @@ impl Function {
     /// Declares a new local with the given declaration in the current block.
     pub fn declare_value_raw(&mut self, ty: Type, value: Operand) -> RegisterId {
         self.declare_raw(ty, Declaration {
-            location: value.location.clone(),
+            location: value.location,
             kind: Box::new(DeclarationKind::Operand(value)),
         })
     }
@@ -591,7 +591,7 @@ impl BasicBlock {
     /// Attempts to resolve the source of a phi node from the given destination
     /// node.
     pub fn resolve_phi_source(&self, dst: RegisterId) -> Option<RegisterId> {
-        self.phi_registers().find(|(phi, _)| *phi == dst).map(|(_, src)| src)
+        self.phi_registers.get(&dst).copied()
     }
 
     /// Declares a new stack-allocated register with the given value.

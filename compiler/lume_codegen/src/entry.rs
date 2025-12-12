@@ -45,7 +45,7 @@ impl CraneliftBackend {
 
         let entry_has_own_return = !entry_decl.sig.returns.is_empty();
         let entry_return_type = if let Some(ret_ty) = entry_decl.sig.returns.first() {
-            ret_ty.clone()
+            *ret_ty
         } else {
             AbiParam::new(types::I8)
         };
@@ -71,11 +71,11 @@ impl CraneliftBackend {
         // Call the `__lume_start` function, initializing the standard library and
         // memory heaps.
         let lm_start_id = self.intrinsics.lume_start;
-        let lm_start_ref = self.module_mut().declare_func_in_func(lm_start_id, &mut builder.func);
+        let lm_start_ref = self.module_mut().declare_func_in_func(lm_start_id, builder.func);
         builder.ins().call(lm_start_ref, &[]);
 
         // Call into the actual `main` entrypoint.
-        let entry_ref = self.module_mut().declare_func_in_func(entry_func_id, &mut builder.func);
+        let entry_ref = self.module_mut().declare_func_in_func(entry_func_id, builder.func);
         let entry_call = builder.ins().call(entry_ref, &[]);
 
         let exit_code = if entry_has_own_return {
@@ -86,7 +86,7 @@ impl CraneliftBackend {
 
         // Call the `__lume_end` function, cleaning up the allocated objects and memory.
         let lm_end_id = self.intrinsics.lume_end;
-        let lm_end_ref = self.module_mut().declare_func_in_func(lm_end_id, &mut builder.func);
+        let lm_end_ref = self.module_mut().declare_func_in_func(lm_end_id, builder.func);
         builder.ins().call(lm_end_ref, &[]);
 
         // Return the exit code from the entry point.

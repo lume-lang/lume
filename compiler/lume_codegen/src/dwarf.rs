@@ -216,7 +216,7 @@ impl<'ctx> RootDebugContext<'ctx> {
                     compile_unit.line_program.row().address_offset = u64::from(start);
 
                     let location = if loc.is_default() {
-                        self.ctx.function(func.id).location.clone()
+                        self.ctx.function(func.id).location.clone_inner()
                     } else {
                         backend.lookup_source_loc(loc)
                     };
@@ -236,7 +236,7 @@ impl<'ctx> RootDebugContext<'ctx> {
                 compile_unit.line_program.end_sequence(u64::from(range_end));
 
                 // DW_AT_decl_*
-                let (file_id, line, column) = self.get_source_span(func.location.clone(), compile_unit_id);
+                let (file_id, line, column) = self.get_source_span(func.location.clone_inner(), compile_unit_id);
 
                 let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
                 let entry = compile_unit.get_mut(entry_id);
