@@ -5,6 +5,7 @@ expression: "parse(\"priv fn foo {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
+            attributes: [],
             visibility: Some(
                 Private {
                     location: Location(

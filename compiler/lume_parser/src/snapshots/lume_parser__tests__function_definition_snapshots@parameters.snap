@@ -5,6 +5,7 @@ expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
 [
     FunctionDefinition(
         FunctionDefinition {
+            attributes: [],
             visibility: None,
             external: false,
             name: Identifier {

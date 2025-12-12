@@ -5,6 +5,7 @@ expression: "parse(\"pub(internal) fn foo {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
+            attributes: [],
             visibility: Some(
                 Internal {
                     location: Location(

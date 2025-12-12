@@ -5,6 +5,7 @@ expression: "parse(\"fn test<>() -> void {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
+            attributes: [],
             visibility: None,
             external: false,
             name: Identifier {

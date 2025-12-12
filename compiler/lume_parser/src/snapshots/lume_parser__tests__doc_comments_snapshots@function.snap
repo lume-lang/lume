@@ -5,6 +5,7 @@ expression: "parse(\"/// This is a doc comment\n        fn foo() -> void { }\")"
 [
     FunctionDefinition(
         FunctionDefinition {
+            attributes: [],
             visibility: None,
             external: false,
             name: Identifier {
