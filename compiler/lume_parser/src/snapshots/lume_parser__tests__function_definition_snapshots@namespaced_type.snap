@@ -5,6 +5,7 @@ expression: "parse(\"fn main() -> std::Int32 {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
+            attributes: [],
             visibility: None,
             external: false,
             name: Identifier {

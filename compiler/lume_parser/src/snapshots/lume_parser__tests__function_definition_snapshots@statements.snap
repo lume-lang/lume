@@ -5,6 +5,7 @@ expression: "parse(\"fn main() -> void { let a = 0; let b = 1; }\")"
 [
     FunctionDefinition(
         FunctionDefinition {
+            attributes: [],
             visibility: None,
             external: false,
             name: Identifier {
