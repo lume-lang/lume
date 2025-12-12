@@ -326,7 +326,8 @@ impl TyInferCtx {
         }
     }
 
-    /// Returns the *type* of the given [`lume_hir::If`] statement.
+    /// Returns the *type* of the value which is returned within the given
+    /// [`lume_hir::If`] statement.
     #[cached_query(result)]
     #[libftrace::traced(level = Trace, err)]
     pub fn type_of_if_conditional(&self, cond: &lume_hir::If) -> Result<TypeRef> {
