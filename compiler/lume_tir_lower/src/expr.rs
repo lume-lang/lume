@@ -215,12 +215,19 @@ impl LowerFunction<'_> {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        let return_type = self.lower.tcx.type_of_if_conditional(expr)?;
+        let primary_case = expr.cases.first().unwrap();
+        let return_type = self.lower.tcx.type_of_condition_scope(primary_case)?;
+
+        let normalized_return_type = if return_type.is_void() || self.lower.tcx.is_type_never(&return_type) {
+            None
+        } else {
+            Some(return_type)
+        };
 
         Ok(lume_tir::ExpressionKind::If(lume_tir::If {
             id: expr.id,
             cases,
-            return_type: if return_type.is_void() { None } else { Some(return_type) },
+            return_type: normalized_return_type,
             location: expr.location,
         }))
     }
