@@ -106,34 +106,13 @@ impl Builder<'_, '_> {
         alloc_ptr
     }
 
-    /// Declares a new register with the value of loading the given register
-    /// from it's contained memory address.
-    pub(crate) fn load(&mut self, ty: Type, source: RegisterId) -> RegisterId {
-        self.declare_operand_as(
-            ty,
-            Operand {
-                kind: OperandKind::Load { id: source },
-                location: Location::empty(),
-            },
-            OperandRef::Implicit,
-        )
-    }
+    /// Creates a new instruction for a stack-allocation slot and returns it's
+    /// ID.
+    pub(crate) fn alloc_slot(&mut self, ty: Type, location: Location) -> SlotId {
+        let slot = self.func.add_slot(ty.clone());
+        self.func.current_block_mut().create_slot(slot, ty, location);
 
-    /// Declares a new register with the value of loading the given register
-    /// from it's contained memory address plus the given field offset.
-    pub(crate) fn load_field(&mut self, target: RegisterId, offset: usize, field_type: Type) -> RegisterId {
-        self.declare_operand_as(
-            field_type.clone(),
-            Operand {
-                kind: OperandKind::LoadField {
-                    target,
-                    offset,
-                    field_type,
-                },
-                location: Location::empty(),
-            },
-            OperandRef::Implicit,
-        )
+        slot
     }
 
     /// Stores the given value into an existing register.
@@ -155,6 +134,20 @@ impl Builder<'_, '_> {
             .current_block_mut()
             .store_slot(target, offset, value, location);
     }
+
+    /// Gets the address of an existing slot, plus some offset.
+    pub(crate) fn slot_address(&mut self, id: SlotId, offset: usize, location: Location) -> RegisterId {
+        let slot_type = self.func.slots.get(&id).unwrap();
+
+        self.declare_operand_as(
+            Type::pointer(slot_type.clone()),
+            Operand {
+                kind: OperandKind::SlotAddress { id, offset },
+                location,
+            },
+            OperandRef::Implicit,
+        )
+    }
 }
 
 impl Builder<'_, '_> {
@@ -173,26 +166,6 @@ impl Builder<'_, '_> {
             kind: lume_mir::OperandKind::Reference { id: reg },
             location: Location::empty(),
         }
-    }
-
-    /// Declares a new register with the value of the given immediate integer
-    /// value.
-    pub(crate) fn iconst(&mut self, imm: impl Into<i64>, ty: Type) -> RegisterId {
-        let bits = u8::try_from(ty.bytesize()).unwrap() * 8;
-        let signed = ty.is_signed();
-
-        self.declare_operand_as(
-            ty,
-            Operand {
-                kind: OperandKind::Integer {
-                    bits,
-                    signed,
-                    value: imm.into(),
-                },
-                location: Location::empty(),
-            },
-            OperandRef::Implicit,
-        )
     }
 
     /// Declares a new register with the comparison result of the two given
@@ -234,6 +207,14 @@ impl Builder<'_, '_> {
                 args: vec![val, imm_op],
             }),
             location: Location::empty(),
+        })
+    }
+
+    /// Bitcasts the given register to the given amount of bits.
+    pub(crate) fn bitcast(&mut self, operand: RegisterId, bits: u8, location: Location) -> RegisterId {
+        self.declare(lume_mir::Declaration {
+            kind: Box::new(lume_mir::DeclarationKind::Cast { operand, bits }),
+            location,
         })
     }
 

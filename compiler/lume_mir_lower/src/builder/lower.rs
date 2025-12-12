@@ -172,18 +172,18 @@ fn infinite_loop(builder: &mut Builder<'_, '_>, stmt: &lume_tir::InfiniteLoop) {
 pub(crate) fn expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Expression) -> lume_mir::Operand {
     let op = match &expr.kind {
         lume_tir::ExpressionKind::Assignment(expr) => assignment(builder, expr),
-        lume_tir::ExpressionKind::Binary(_) => todo!("mir: Binary"),
-        lume_tir::ExpressionKind::Bitcast(_) => todo!("mir: Bitcast"),
+        lume_tir::ExpressionKind::Binary(expr) => binary(builder, expr),
+        lume_tir::ExpressionKind::Bitcast(expr) => bitcast(builder, expr),
         lume_tir::ExpressionKind::Construct(expr) => construct(builder, expr),
         lume_tir::ExpressionKind::Call(expr) => call_expression(builder, expr),
         lume_tir::ExpressionKind::If(expr) => if_condition(builder, expr),
         lume_tir::ExpressionKind::Is(expr) => is_condition(builder, expr),
         lume_tir::ExpressionKind::IntrinsicCall(expr) => intrinsic_expression(builder, expr),
         lume_tir::ExpressionKind::Literal(expr) => literal(&expr.kind, expr.location),
-        lume_tir::ExpressionKind::Logical(_) => todo!("mir: Logical"),
+        lume_tir::ExpressionKind::Logical(expr) => logical(builder, expr),
         lume_tir::ExpressionKind::Member(expr) => member_field(builder, expr),
-        lume_tir::ExpressionKind::Scope(_) => todo!("mir: Scope"),
-        lume_tir::ExpressionKind::Switch(_) => todo!("mir: Switch"),
+        lume_tir::ExpressionKind::Scope(expr) => scope(builder, expr),
+        lume_tir::ExpressionKind::Switch(expr) => switch(builder, expr),
         lume_tir::ExpressionKind::Variable(expr) => variable_reference(builder, expr),
         lume_tir::ExpressionKind::Variant(expr) => variant_expression(builder, expr),
     };
@@ -248,6 +248,38 @@ fn assignment(builder: &mut Builder<'_, '_>, expr: &lume_tir::Assignment) -> lum
             | lume_mir::OperandKind::Float { .. }
             | lume_mir::OperandKind::String { .. } => panic!("bug!: attempted to assign literal"),
         }
+    })
+}
+
+fn binary(builder: &mut Builder<'_, '_>, expr: &lume_tir::Binary) -> lume_mir::Operand {
+    builder.with_current_block(|builder, _| {
+        let bits = expr.lhs.ty.bitwidth();
+        let signed = expr.lhs.ty.signed();
+
+        let name = match expr.op {
+            lume_tir::BinaryOperator::And => lume_mir::Intrinsic::IntAnd { bits, signed },
+            lume_tir::BinaryOperator::Or => lume_mir::Intrinsic::IntOr { bits, signed },
+            lume_tir::BinaryOperator::Xor => lume_mir::Intrinsic::IntXor { bits, signed },
+        };
+
+        let args = vec![builder.use_value(&expr.lhs).1, builder.use_value(&expr.rhs).1];
+
+        let return_value = builder.declare(lume_mir::Declaration {
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic { name, args }),
+            location: expr.location,
+        });
+
+        builder.use_register(return_value, expr.location)
+    })
+}
+
+fn bitcast(builder: &mut Builder<'_, '_>, expr: &lume_tir::Bitcast) -> lume_mir::Operand {
+    builder.with_current_block(|builder, _| {
+        let operand = builder.use_value(&expr.source).0;
+        let bits = expr.target.bitwidth();
+
+        let result = builder.bitcast(operand, bits, expr.location);
+        builder.use_register(result, expr.location)
     })
 }
 
@@ -530,6 +562,24 @@ fn literal(expr: &lume_tir::LiteralKind, location: Location) -> lume_mir::Operan
     }
 }
 
+fn logical(builder: &mut Builder<'_, '_>, expr: &lume_tir::Logical) -> lume_mir::Operand {
+    builder.with_current_block(|builder, _| {
+        let name = match expr.op {
+            lume_tir::LogicalOperator::And => lume_mir::Intrinsic::BooleanAnd,
+            lume_tir::LogicalOperator::Or => lume_mir::Intrinsic::BooleanOr,
+        };
+
+        let args = vec![builder.use_value(&expr.lhs).1, builder.use_value(&expr.rhs).1];
+
+        let return_value = builder.declare(lume_mir::Declaration {
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic { name, args }),
+            location: expr.location,
+        });
+
+        builder.use_register(return_value, expr.location)
+    })
+}
+
 fn member_field(builder: &mut Builder<'_, '_>, expr: &lume_tir::Member) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
         let callee = expression(builder, &expr.callee);
@@ -544,6 +594,85 @@ fn member_field(builder: &mut Builder<'_, '_>, expr: &lume_tir::Member) -> lume_
                 offset,
                 field_type,
             },
+            location: expr.location,
+        }
+    })
+}
+
+fn scope(builder: &mut Builder<'_, '_>, expr: &lume_tir::Scope) -> lume_mir::Operand {
+    builder.with_current_block(|builder, _| {
+        let mut val: Option<lume_mir::Operand> = None;
+
+        for stmt in &expr.body {
+            val = statement(builder, stmt);
+        }
+
+        val.unwrap_or_else(|| builder.null_const())
+    })
+}
+
+fn switch(builder: &mut Builder<'_, '_>, expr: &lume_tir::Switch) -> lume_mir::Operand {
+    let entry_block = builder.func.current_block().id;
+    let merge_block = builder.new_block();
+
+    let result_type = builder.lower_type(&expr.fallback.ty);
+    let result_slot = builder.alloc_slot(result_type, expr.location);
+
+    let operand = builder.with_current_block(|builder, block| {
+        let operand = if expr.operand.ty.is_float() {
+            let (operand, _) = builder.use_value(&expr.operand);
+            let bits = expr.operand.ty.bitwidth();
+
+            builder.bitcast(operand, bits, expr.location)
+        } else {
+            let (operand, _) = builder.use_value(&expr.operand);
+
+            operand
+        };
+
+        builder.declare_var(block, expr.operand_var, operand);
+
+        operand
+    });
+
+    let mut arms = Vec::new();
+
+    for (pattern, branch) in &expr.entries {
+        builder.with_new_block(|builder, block| {
+            let arm_pattern = match pattern {
+                lume_tir::SwitchConstantPattern::Literal(lit) => match lit {
+                    lume_tir::SwitchConstantLiteral::Boolean(lit) => i64::from(*lit),
+                    lume_tir::SwitchConstantLiteral::Float(lit) => lit.to_bits().cast_signed(),
+                    lume_tir::SwitchConstantLiteral::Integer(lit) => *lit,
+                },
+                lume_tir::SwitchConstantPattern::Variable(_) => unreachable!(),
+            };
+
+            let (_, branch_value) = builder.use_value(branch);
+            builder.store_slot(result_slot, branch_value, 0, branch.location());
+            builder.branch_to(merge_block, branch.location());
+
+            arms.push((arm_pattern, lume_mir::BlockBranchSite::new(block)));
+        });
+    }
+
+    let fallback = builder.with_new_block(|builder, block| {
+        let (_, branch_value) = builder.use_value(&expr.fallback);
+        builder.store_slot(result_slot, branch_value, 0, expr.fallback.location());
+        builder.branch_to(merge_block, expr.fallback.location());
+
+        lume_mir::BlockBranchSite::new(block)
+    });
+
+    builder.with_block(entry_block, |builder, _| {
+        builder.switch(operand, arms, fallback, expr.location);
+    });
+
+    builder.with_block(merge_block, |builder, _| {
+        let slot_address = builder.slot_address(result_slot, 0, expr.location);
+
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Load { id: slot_address },
             location: expr.location,
         }
     })
