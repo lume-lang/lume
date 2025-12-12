@@ -1,0 +1,13 @@
+//# test-return = 120
+
+fn factorial(num: UInt64) -> UInt64 {
+    if num == 1_u64 {
+        return 1_u64;
+    }
+
+    return factorial(num - 1_u64) * num;
+}
+
+pub fn main() -> UInt64 {
+    factorial(5_u64)
+}
