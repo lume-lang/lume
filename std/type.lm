@@ -92,3 +92,6 @@ pub struct TypeParameter {
 }
 
 pub fn external type_of<T>() -> Type
+
+![lang_item(name = "lookup_method")]
+pub fn external find_method_on<T>(method_id: UInt64) -> UInt64

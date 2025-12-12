@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use lume_span::Location;
 
 use super::*;
@@ -36,7 +38,7 @@ impl Pass for MarkObjectReferences {
     }
 
     /// Executes the pass on the given function.
-    fn execute(&mut self, func: &mut Function) {
+    fn execute(&mut self, _mcx: &MirQueryCtx, func: &mut Function) {
         self.find_object_references(func);
 
         while let Some((block, offset, register)) = self.reference_inst.pop() {
@@ -67,8 +69,8 @@ impl Pass for MarkObjectReferences {
 impl MarkObjectReferences {
     fn find_object_references(&mut self, func: &Function) {
         for block in func.blocks.values() {
-            for param in &block.parameters {
-                if self.register_gc_object(func, block.id, *param) {
+            for param in block.parameters() {
+                if self.register_gc_object(func, block.id, param) {
                     self.offset += 1;
                 }
             }
