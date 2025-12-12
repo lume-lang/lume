@@ -21,6 +21,11 @@ pub struct Lower<'tcx> {
 
     /// Defines the `TypedIR` being built.
     ir: TypedIR,
+
+    /// Saved variable mappings between function-declaration and -definition.
+    ///
+    /// See [`Lower::lower_block`] for more information.
+    mappings: IndexMap<NodeId, Variables>,
 }
 
 impl<'tcx> Lower<'tcx> {
@@ -28,6 +33,7 @@ impl<'tcx> Lower<'tcx> {
         Self {
             tcx,
             ir: TypedIR::default(),
+            mappings: IndexMap::new(),
         }
     }
 
@@ -87,6 +93,7 @@ impl<'tcx> Lower<'tcx> {
             let mut func_lower = LowerFunction::new(self);
             let func = func_lower.define(method.id, &method.name, signature.as_ref(), kind, location)?;
 
+            self.mappings.insert(method.id, func_lower.variables);
             self.ir.functions.insert(func.id, func);
         }
 
@@ -105,6 +112,7 @@ impl<'tcx> Lower<'tcx> {
                 location,
             )?;
 
+            self.mappings.insert(func.id, func_lower.variables);
             self.ir.functions.insert(func.id, func);
         }
 
@@ -138,8 +146,16 @@ impl<'tcx> Lower<'tcx> {
 
     #[libftrace::traced(level = Debug, fields(id), err)]
     fn lower_block(&mut self, id: NodeId) -> Result<()> {
+        // We need to conserve the variable mappings between function-declaration and
+        // -definition, since we likely declared some variables in the function
+        // declaration (specifically parameters and type parameters).
+        //
+        // If we skip this, the definition might have duplicate variables.
+        let mappings = self.mappings.swap_remove(&id).unwrap_or_default();
+
         let block = if let Some(body) = self.tcx.hir_body_of_node(id) {
             let mut func_lower = LowerFunction::new(self);
+            func_lower.variables = mappings;
 
             Some(func_lower.lower_block(body)?)
         } else {
@@ -217,20 +233,52 @@ impl<'tcx> Lower<'tcx> {
     }
 }
 
+/// General mappings between nodes and variables.
+#[derive(Default, Clone)]
+struct Variables {
+    /// Maps each variable declaration ID to its corresponding variable ID.
+    ///
+    /// Note: the ID of the node does not necessarily correspond to the ID of a
+    /// `VariableDeclaration` node, since other expressions or nodes may declare
+    /// variables.
+    pub(crate) mapping: IndexMap<lume_span::NodeId, VariableId>,
+
+    /// Maps each variable ID to it's corresponding source.
+    pub(crate) sources: IndexMap<VariableId, VariableSource>,
+}
+
+impl Variables {
+    /// Adds a mapping between a node ID and a variable ID.
+    pub(crate) fn add_mapping(&mut self, node_id: lume_span::NodeId, variable_id: VariableId) {
+        self.mapping.insert(node_id, variable_id);
+    }
+
+    /// Adds a mapping between a node ID and a variable ID.
+    pub(crate) fn mapping_of(&self, node_id: lume_span::NodeId) -> Option<VariableId> {
+        self.mapping.get(&node_id).copied()
+    }
+
+    /// Allocates a new variable in the function with the given source and
+    /// returns it's ID.
+    pub(crate) fn mark_variable(&mut self, source: VariableSource) -> VariableId {
+        let id = VariableId(self.sources.len());
+        self.sources.insert(id, source);
+
+        id
+    }
+}
+
 struct LowerFunction<'tcx> {
     /// Defines the parent lowering context.
     lower: &'tcx Lower<'tcx>,
-
-    variable_mapping: IndexMap<lume_span::NodeId, VariableId>,
-    variable_source: IndexMap<VariableId, VariableSource>,
+    variables: Variables,
 }
 
 impl<'tcx> LowerFunction<'tcx> {
     pub fn new(lower: &'tcx Lower<'tcx>) -> Self {
         Self {
             lower,
-            variable_mapping: IndexMap::new(),
-            variable_source: IndexMap::new(),
+            variables: Variables::default(),
         }
     }
 
@@ -278,10 +326,9 @@ impl<'tcx> LowerFunction<'tcx> {
 
     /// Allocates a new variable in the function with the given source and
     /// returns it's ID.
+    #[inline]
     fn mark_variable(&mut self, source: VariableSource) -> VariableId {
-        let id = VariableId(self.variable_source.len());
-        self.variable_source.insert(id, source);
-        id
+        self.variables.mark_variable(source)
     }
 
     fn parameters(&mut self, params: &[lume_types::Parameter]) -> Vec<lume_tir::Parameter> {
