@@ -177,6 +177,9 @@ impl Parser<'_> {
 
     #[libftrace::traced(level = Debug, err)]
     fn parse_function_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
+        let documentation = self.doc_token.take();
+        let attributes = self.attributes.take().unwrap_or_default();
+
         let start = visibility
             .as_ref()
             .map_or(self.expect_fn()?.start(), |vis| vis.location().start());
@@ -198,6 +201,7 @@ impl Parser<'_> {
         let end = self.previous_token().end();
 
         let function_def = FunctionDefinition {
+            attributes,
             visibility,
             external,
             name,
@@ -206,7 +210,7 @@ impl Parser<'_> {
             return_type,
             block,
             location: (start..end).into(),
-            documentation: self.doc_token.take(),
+            documentation,
         };
 
         Ok(TopLevelExpression::FunctionDefinition(Box::new(function_def)))

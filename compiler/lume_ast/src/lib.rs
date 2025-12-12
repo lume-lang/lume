@@ -613,6 +613,7 @@ node_location!(Namespace);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
+    pub attributes: Vec<Attribute>,
     pub visibility: Option<Visibility>,
     pub external: bool,
     pub name: Identifier,
