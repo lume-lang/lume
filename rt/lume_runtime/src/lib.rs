@@ -23,11 +23,13 @@ pub extern "C" fn type_of(metadata: *const ()) -> *const () {
 pub unsafe extern "C" fn find_method_on(method_id: lume_rt_metadata::FunctionId, metadata: *const ()) -> *const () {
     let metadata = unsafe { metadata.cast::<lume_rt_metadata::TypeMetadata>().read() };
 
-    println!(
-        "Looking for method !{} on {}",
-        method_id.0,
-        crate::string::cstr_to_string(metadata.full_name)
-    );
+    for method_ptr in metadata.methods.items() {
+        let method = unsafe { method_ptr.read() };
+
+        if method.func_id == method_id {
+            return method.func_ptr as *const _;
+        }
+    }
 
     std::ptr::null()
 }
