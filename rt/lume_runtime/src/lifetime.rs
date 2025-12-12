@@ -40,5 +40,5 @@ static RUNTIME_OPTIONS: LazyLock<RuntimeOptions> = LazyLock::new(parse_runtime_o
 pub fn parse_runtime_options() -> RuntimeOptions {
     let ptr = &raw const __LUME_OPTIONS;
 
-    lume_options::from_ptr(ptr).unwrap()
+    unsafe { lume_options::from_ptr(ptr).unwrap() }
 }

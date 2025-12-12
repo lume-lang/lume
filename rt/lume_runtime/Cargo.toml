@@ -15,8 +15,15 @@ lume_rt_metadata = { path = "../lume_rt_metadata" }
 
 owo-colors = { version = "4.2", optional = true, features = ["supports-colors"] }
 
-[lints]
-workspace = true
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+must_use_candidate = "allow"
+wildcard_imports = "allow"
+range_plus_one = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+missing_safety_doc = "allow"
+disallowed_macros = "allow"
 
 [features]
 default = ["color"]

@@ -63,11 +63,16 @@ impl DiagCtxInner {
             return;
         }
 
+        #[allow(clippy::disallowed_macros, reason = "used for debugging")]
         if self.track_diagnostics {
             eprintln!("[track_diagnostics] pushed from {}", std::panic::Location::caller());
         }
 
-        assert!(!self.panic_on_error, "error emitted with `panic_on_error` enabled: {}", diag.message());
+        assert!(
+            !self.panic_on_error,
+            "error emitted with `panic_on_error` enabled: {}",
+            diag.message()
+        );
 
         self.emitted.push(diag);
     }

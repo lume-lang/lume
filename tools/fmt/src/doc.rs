@@ -128,7 +128,7 @@ pub fn lines<'a>(num: usize) -> Document<'a> {
 }
 
 /// Returns a node with the given text content.
-pub fn str<'a>(s: &'a str) -> Document<'a> {
+pub fn str(s: &str) -> Document<'_> {
     Document::Text(s)
 }
 
@@ -173,7 +173,7 @@ pub fn concat<'a, I: IntoIterator<Item = Document<'a>>>(iter: I) -> Document<'a>
 /// Concatenates all the documents from the given iterator into a single
 /// document, where the given separator is interspersed between each document.
 pub fn join<'a, I: IntoIterator<Item = Document<'a>>, S: AsDocument<'a>>(iter: I, sep: S) -> Document<'a> {
-    Document::Vec(iter_tools::intersperse(iter.into_iter(), sep.as_doc()).collect())
+    Document::Vec(iter_tools::intersperse(iter, sep.as_doc()).collect())
 }
 
 pub trait AsDocument<'a> {

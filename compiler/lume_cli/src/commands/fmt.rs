@@ -68,6 +68,7 @@ impl FormatCommand {
         let content = std::fs::read_to_string(&input_path).map_diagnostic()?;
         let formatted = lume_fmt::format_src(&content, config, dcx)?;
 
+        #[allow(clippy::disallowed_macros)]
         if self.write {
             std::fs::write(&input_path, &formatted).map_diagnostic()?;
         } else {

@@ -1,5 +1,5 @@
 //! Most of this file is copied directly from the Gleam code formatter:
-//! https://github.com/gleam-lang/gleam/blob/main/compiler-core/src/pretty.rs
+//! <https://github.com/gleam-lang/gleam/blob/main/compiler-core/src/pretty.rs>
 
 use std::fmt::Write;
 
@@ -57,14 +57,14 @@ pub(crate) fn format(
             // Conditional documents change their output content depending on whether
             // the surround group is broken or not.
             Document::Conditional { broken, unbroken } => {
-                let unbroken_width = width + unbroken.len() as isize;
+                let unbroken_width = width + unbroken.len().cast_signed();
 
                 if mode == Mode::Unbroken || fits(limit, unbroken_width, docs.clone()) {
                     writer.write_str(unbroken)?;
                     width = unbroken_width;
                 } else {
                     writer.write_str(broken)?;
-                    width += broken.len() as isize;
+                    width += broken.len().cast_signed();
                 }
             }
 
@@ -79,7 +79,7 @@ pub(crate) fn format(
                 unbroken,
                 kind: BreakKind::Flex,
             } => {
-                let unbroken_width = width + unbroken.len() as isize;
+                let unbroken_width = width + unbroken.len().cast_signed();
                 // Every time we need to check again if the remaining piece can
                 // fit. If it does, the flexible break is not broken.
                 if mode == Mode::Unbroken || fits(limit, unbroken_width, docs.clone()) {
@@ -127,7 +127,7 @@ pub(crate) fn format(
                 // also updating the width of the current line.
                 Mode::Unbroken => {
                     writer.write_str(unbroken)?;
-                    width += unbroken.len() as isize
+                    width += unbroken.len().cast_signed();
                 }
             },
 
@@ -165,11 +165,13 @@ pub(crate) fn format(
                 // - or the condition is `IfBroken` and the group was actually broken (that is, the current mode is
                 //   `Broken`).
                 (NestCondition::Always, _) | (NestCondition::IfBroken, Mode::Broken) => {
-                    docs.push_front((indent + i, mode, doc))
+                    docs.push_front((indent + i, mode, doc));
                 }
                 // If none of the above conditions is met, then the nesting is
                 // not applied.
-                _ => docs.push_front((indent, mode, doc)),
+                _ => {
+                    docs.push_front((indent, mode, doc));
+                }
             },
 
             Document::Group(doc) => {
@@ -228,14 +230,13 @@ fn fits(limit: isize, mut current_width: isize, mut docs: im::Vector<(isize, Mod
         // break the loop.
         if current_width > limit {
             return false;
-        };
+        }
 
         // We start by checking the first document of the queue. If there's no
         // documents then we can safely say that it fits (if reached this point
         // it means that the limit wasn't exceeded).
-        let (indent, mode, document) = match docs.pop_front() {
-            Some(x) => x,
-            None => return true,
+        let Some((indent, mode, document)) = docs.pop_front() else {
+            return true;
         };
 
         match document {
@@ -272,7 +273,7 @@ fn fits(limit: isize, mut current_width: isize, mut docs: im::Vector<(isize, Mod
                 // Any other mode is preserved as-is: if the mode is forced it
                 // has to be left unchanged, and if the mode is already unbroken
                 // there's no need to change it.
-                _ => docs.push_front((indent, mode, doc)),
+                Mode::Unbroken => docs.push_front((indent, mode, doc)),
             },
 
             // When we run into a string we increase the current_width; looping
@@ -280,16 +281,9 @@ fn fits(limit: isize, mut current_width: isize, mut docs: im::Vector<(isize, Mod
             Document::String(str) => current_width += str.len().cast_signed(),
             Document::Text(str) => current_width += str.len().cast_signed(),
 
-            // If we get to a conditional we need to first see if it has to be
-            // rendered as its unbroken or broken string, depending on the mode.
-            Document::Conditional { unbroken, .. } => match mode {
-                Mode::Broken => return true,
-                Mode::Unbroken => current_width += unbroken.len() as isize,
-            },
-
             // If we get to a break we need to first see if it has to be
             // rendered as its unbroken or broken string, depending on the mode.
-            Document::Break { unbroken, .. } => match mode {
+            Document::Break { unbroken, .. } | Document::Conditional { unbroken, .. } => match mode {
                 // [tag:break-fit] If the break has to be broken we're done!
                 // We haven't exceeded the maximum length (otherwise the loop
                 // iteration would have stopped with one of the earlier checks),
@@ -298,10 +292,13 @@ fn fits(limit: isize, mut current_width: isize, mut docs: im::Vector<(isize, Mod
                 // This means that the document inspected so far will fit on a
                 // single line, thus we return true.
                 Mode::Broken => return true,
+
                 // If the break is not broken then it will be rendered inline as
                 // its unbroken string, so we treat it exactly as if it were a
                 // normal string.
-                Mode::Unbroken => current_width += unbroken.len() as isize,
+                Mode::Unbroken => {
+                    current_width += unbroken.len().cast_signed();
+                }
             },
 
             // If there's a sequence of documents we will check each one, one

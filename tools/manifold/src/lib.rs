@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_macros, reason = "only used in test suites")]
+
 mod binary;
 mod diff;
 mod hir;
@@ -225,6 +227,8 @@ fn collect_tests(root: &PathBuf, config: &Config) -> Result<Vec<ManifoldCollecte
 
 fn run_test_file(test_case: ManifoldCollectedTest, dcx: DiagCtx) -> Result<TestResult> {
     panic::set_capture_buf(Arc::default());
+
+    println!(" manifold test {} ... ", test_case.relative_path.display());
 
     if let Ok(result) =
         std::panic::catch_unwind(|| run_single_test(test_case.test_type, test_case.absolute_path.clone(), dcx))
