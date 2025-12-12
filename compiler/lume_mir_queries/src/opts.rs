@@ -49,9 +49,6 @@ impl MirQueryCtx<'_> {
             // only dump the requested functions.
             (_, None) if !include_all_funcs => opts.dump_mir_func.contains(&func_name),
 
-            // `--dump-mir` was not defined - nothing to dump.
-            (None, Some(_)) => false,
-
             // If neither `--dump-mir` nor `--dump-mir-func` was passed, dump nothing.
             (_, _) => false,
         }

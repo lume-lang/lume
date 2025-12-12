@@ -15,3 +15,19 @@ pub use lume_gc::*;
 pub extern "C" fn type_of(metadata: *const ()) -> *const () {
     metadata
 }
+
+/// Finds the method with the given ID on the given type metadata.
+///
+/// If the method is not found, returns `null` pointer.
+#[unsafe(export_name = "std::find_method_on")]
+pub unsafe extern "C" fn find_method_on(method_id: lume_rt_metadata::FunctionId, metadata: *const ()) -> *const () {
+    let metadata = unsafe { metadata.cast::<lume_rt_metadata::TypeMetadata>().read() };
+
+    println!(
+        "Looking for method !{} on {}",
+        method_id.0,
+        crate::string::cstr_to_string(metadata.full_name)
+    );
+
+    std::ptr::null()
+}

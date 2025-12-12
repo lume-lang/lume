@@ -1,3 +1,5 @@
+pub mod liveness;
+
 use std::ops::ControlFlow;
 
 use lume_architect::cached_query;

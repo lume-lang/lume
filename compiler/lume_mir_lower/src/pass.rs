@@ -1,18 +1,13 @@
-use std::collections::HashSet;
-
-use indexmap::{IndexMap, IndexSet};
 use lume_mir::*;
 use lume_mir_queries::MirQueryCtx;
 
-pub(crate) mod define_block_params;
-pub(crate) mod define_edges;
+pub(crate) mod liveness;
 pub(crate) mod mark_gc_refs;
-pub(crate) mod pass_block_args;
 pub(crate) mod remove_orphans;
 pub(crate) mod remove_unreachable;
 pub(crate) mod rename_ssa;
 
-use crate::FunctionTransformer;
+use crate::builder::Builder;
 
 /// Defines a MIR pass which can be executed over a function, during MIR
 /// lowering.
@@ -31,13 +26,11 @@ pub(crate) trait Pass {
     fn execute(&mut self, mcx: &MirQueryCtx, func: &mut Function);
 }
 
-impl FunctionTransformer<'_, '_> {
+impl Builder<'_, '_> {
     pub(crate) fn run_passes(&mut self) {
         self.run_pass::<remove_unreachable::RemoveUnreachable>();
-        self.run_pass::<define_edges::DefineBlockEdges>();
         self.run_pass::<remove_orphans::RemoveOrphanBlocks>();
-        self.run_pass::<define_block_params::DefineBlockParameters>();
-        self.run_pass::<pass_block_args::PassBlockArguments>();
+        self.run_pass::<liveness::DefineLiveness>();
         self.run_pass::<rename_ssa::RenameSsaVariables>();
         self.run_pass::<mark_gc_refs::MarkObjectReferences>();
     }
