@@ -306,7 +306,7 @@ impl Function {
     /// Declares a new local with the given declaration in the current block.
     pub fn declare(&mut self, ty: Type, decl: Declaration) -> RegisterId {
         if let DeclarationKind::Operand(op) = decl.kind.as_ref()
-            && let OperandKind::Load { id } | OperandKind::Reference { id } = &op.kind
+            && let OperandKind::Reference { id } = &op.kind
         {
             *id
         } else {
@@ -1169,18 +1169,6 @@ pub enum InstructionKind {
 }
 
 impl Instruction {
-    /// Returns all the registers within the given instruction, including
-    /// defined registers and referenced registers.
-    pub fn registers(&self) -> Vec<RegisterId> {
-        let mut registers = self.register_refs();
-
-        if let Some(def) = self.register_def() {
-            registers.push(def);
-        }
-
-        registers
-    }
-
     pub fn register_def(&self) -> Option<RegisterId> {
         match &self.kind {
             InstructionKind::Let { register, .. } | InstructionKind::Allocate { register, .. } => Some(*register),
@@ -1409,7 +1397,6 @@ pub enum OperandKind {
     LoadField {
         target: RegisterId,
         offset: usize,
-        index: usize,
         field_type: Type,
     },
 
