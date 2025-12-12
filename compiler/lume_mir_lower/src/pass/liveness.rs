@@ -53,12 +53,6 @@ impl Pass for DefineLiveness {
 
     /// Executes the pass on the given function.
     fn execute(&mut self, mcx: &MirQueryCtx, func: &mut Function) {
-        let liveness = mcx.liveness(func);
-
-        if mcx.gcx().session.options.dump_mir_func.contains(&func.name) {
-            dump_liveness(func, &liveness);
-        }
-
         for (block_id, BlockLiveness { live_in, live_out }) in mcx.liveness(func) {
             let block = func.blocks.get_mut(&block_id).unwrap();
 
