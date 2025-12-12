@@ -1,9 +1,10 @@
+use std::collections::HashMap;
+use std::fmt::Display;
 use std::hash::Hash;
 
 use indexmap::{IndexMap, IndexSet};
 use lume_session::{Options, Package};
-use lume_span::source::Location;
-use lume_span::{Interned, NodeId, SourceFile};
+use lume_span::{Interned, Location, NodeId, SourceFile};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
 use lume_types::TypeRef;
 use serde::{Deserialize, Serialize};
@@ -169,6 +170,7 @@ pub struct Function {
     #[serde(skip)]
     scope: Box<Scope>,
 
+    pub variables: BoundVariables,
     pub location: Location,
 }
 
@@ -184,6 +186,7 @@ impl Function {
             signature: Signature::default(),
             current_block: BasicBlockId(0),
             scope: Box::new(Scope::root_scope()),
+            variables: BoundVariables::default(),
             location,
         }
     }
@@ -247,9 +250,30 @@ impl Function {
     /// Panics if the given ID is invalid or out of bounds.
     pub fn add_block_parameter(&mut self, block: BasicBlockId, ty: Type) -> RegisterId {
         let reg = self.add_register_in(block, ty);
-        self.block_mut(block).parameters.push(reg);
+        self.block_mut(block).add_parameter(reg);
 
         reg
+    }
+
+    /// Gets a reference to the register with the given ID.
+    pub fn register(&self, id: RegisterId) -> &Register {
+        self.registers.register(id)
+    }
+
+    /// Gets a reference to the block that the register with the given ID is
+    /// defined in, if any.
+    pub fn register_block(&self, id: RegisterId) -> Option<BasicBlockId> {
+        self.register(id).block
+    }
+
+    /// Returns an iterator over all parameters of the current function.
+    pub fn parameters(&self) -> impl Iterator<Item = &Register> {
+        self.registers.iter_params()
+    }
+
+    /// Returns an iterator over all parameters of the current function.
+    pub fn parameter_registers(&self) -> impl Iterator<Item = RegisterId> {
+        self.parameters().map(|reg| reg.id)
     }
 
     /// Adds the given instruction to the basic block with the given ID.
@@ -353,6 +377,17 @@ impl Function {
         }
     }
 
+    /// Reassigns the given register with a new register.
+    pub fn reassign_register(&mut self, old: RegisterId, new: RegisterId) {
+        self.variables.reassign_register(self.current_block, old, new);
+    }
+
+    /// Gets the moved register ID of the given register. If the register
+    /// has not been reassigned, returns `id`.
+    pub fn moved_register(&self, id: RegisterId) -> RegisterId {
+        self.variables.moved_register(self.current_block, id)
+    }
+
     /// Finds the loop target of the current scope.
     pub fn loop_target(&self) -> Option<(BasicBlockId, BasicBlockId)> {
         let mut scope = Some(&self.scope);
@@ -434,8 +469,101 @@ impl Default for Scope {
     }
 }
 
+/// Represents a register which is variable within a basic block.
+#[derive(Serialize, Deserialize, Default, Debug, Hash, Clone, Copy, PartialEq, Eq)]
+pub struct VariableId(pub usize);
+
+impl Display for VariableId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "v{}", self.0)
+    }
+}
+
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
+pub struct BoundVariables {
+    /// Maps variable definitions to the register and block in which they are
+    /// defined.
+    defined: HashMap<VariableId, LocalRegister>,
+
+    /// For each block, contains the set of referenced variables.
+    referenced: IndexMap<BasicBlockId, IndexSet<VariableId>>,
+
+    /// Contains all reassigned registers.
+    ///
+    /// Maps the source register and reassigning block to the new register,
+    /// which replaces the existing register.
+    reassigned: IndexMap<LocalRegister, RegisterId>,
+}
+
+impl BoundVariables {
+    /// Adds a binding for the given register to define the variable `var`
+    /// inside the block `block`.
+    pub fn define(&mut self, block: BasicBlockId, register: RegisterId, var: VariableId) {
+        let local = LocalRegister { block, register };
+        assert!(self.defined.insert(var, local).is_none_or(|e| e == local));
+    }
+
+    /// Adds a reference to the variable `var` inside the block `block`.
+    pub fn reference(&mut self, block: BasicBlockId, var: VariableId) -> RegisterId {
+        self.referenced.entry(block).or_default().insert(var);
+        self.bound_variable(var).register
+    }
+
+    /// Gets the local register that defines the given variable.
+    pub fn bound_variable(&self, var: VariableId) -> LocalRegister {
+        self.defined.get(&var).copied().unwrap()
+    }
+
+    /// Returns an iterator of IDs of all variables defined within the given
+    /// block, along with their corresponding register.
+    pub fn definitions_in(&self, block: BasicBlockId) -> impl Iterator<Item = (RegisterId, VariableId)> {
+        self.defined.iter().filter_map(move |(&var, &local)| {
+            if local.block == block {
+                Some((local.register, var))
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Returns an iterator of IDs of all variables referenced within the given
+    /// block.
+    pub fn references_in(&self, id: BasicBlockId) -> impl Iterator<Item = VariableId> {
+        static EMPTY: &indexmap::set::Slice<VariableId> = indexmap::set::Slice::new();
+
+        self.referenced
+            .get(&id)
+            .map_or(EMPTY, |vars| vars.as_slice())
+            .iter()
+            .copied()
+    }
+
+    /// Reassigns the given register with a new register.
+    pub fn reassign_register(&mut self, block: BasicBlockId, old: RegisterId, new: RegisterId) {
+        let local = LocalRegister { block, register: old };
+
+        self.reassigned.insert(local, new);
+    }
+
+    /// Gets the moved register ID of the given register. If the register
+    /// has not been reassigned, returns `id`.
+    pub fn moved_register(&self, block: BasicBlockId, id: RegisterId) -> RegisterId {
+        let local = LocalRegister { block, register: id };
+
+        *self.reassigned.get(&local).unwrap_or(&id)
+    }
+}
+
 #[derive(Serialize, Deserialize, Hash, Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct BasicBlockId(pub usize);
+
+impl BasicBlockId {
+    /// Determines whether the block ID refers to an entry block.
+    #[inline]
+    pub fn is_entry(self) -> bool {
+        self.0 == 0
+    }
+}
 
 impl std::fmt::Display for BasicBlockId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -462,7 +590,7 @@ pub struct BasicBlock {
 
     /// Defines all the input registers, which the block takes
     /// as input from predecessor blocks.
-    pub parameters: Vec<RegisterId>,
+    parameters: IndexSet<RegisterId>,
 
     /// Defines all non-terminator instructions in the block.
     pub instructions: Vec<Instruction>,
@@ -492,7 +620,7 @@ impl BasicBlock {
     pub fn new(id: BasicBlockId) -> Self {
         BasicBlock {
             id,
-            parameters: Vec::new(),
+            parameters: IndexSet::new(),
             instructions: Vec::new(),
             terminator: None,
             predecessors: IndexSet::new(),
@@ -500,6 +628,36 @@ impl BasicBlock {
             phi_registers: IndexMap::new(),
             usage: BlockUsage::default(),
         }
+    }
+
+    /// Determines if the block is an entry block.
+    pub fn is_entry(&self) -> bool {
+        self.id.is_entry()
+    }
+
+    /// Determines if the block is an output block, depending on whether the
+    /// terminator is a `Return` instruction.
+    ///
+    /// If the block doesn't have any terminator set, returns `false`.
+    pub fn is_output(&self) -> bool {
+        self.terminator()
+            .is_some_and(|term| matches!(&term.kind, TerminatorKind::Return { .. }))
+    }
+
+    /// Gets the parameter with the given index.
+    pub fn parameter(&self, idx: usize) -> RegisterId {
+        self.parameters[idx]
+    }
+
+    /// Gets the parameters of the block.
+    pub fn parameters(&self) -> impl Iterator<Item = RegisterId> {
+        self.parameters.iter().copied()
+    }
+
+    /// Replaces all parameters of the block with the given iterator.
+    pub fn parameter_replace_all(&mut self, iter: impl Iterator<Item = RegisterId>) {
+        self.parameters.clear();
+        self.parameters.extend(iter);
     }
 
     /// Gets the instructions of the block.
@@ -540,6 +698,39 @@ impl BasicBlock {
         self.terminator = Some(term);
     }
 
+    /// Adds a argument to the terminator, which branches to the given
+    /// successor block.
+    pub fn add_terminator_arg(&mut self, arg: Operand, successor: BasicBlockId) {
+        match &mut self.terminator_mut().unwrap().kind {
+            TerminatorKind::Return(_) | TerminatorKind::Unreachable => {}
+            TerminatorKind::Branch(branch_site) => {
+                if branch_site.block == successor {
+                    branch_site.arguments.push(arg);
+                }
+            }
+            TerminatorKind::ConditionalBranch {
+                then_block, else_block, ..
+            } => {
+                if then_block.block == successor {
+                    then_block.arguments.push(arg);
+                } else if else_block.block == successor {
+                    else_block.arguments.push(arg);
+                }
+            }
+            TerminatorKind::Switch { arms, fallback, .. } => {
+                for (_, arm) in arms {
+                    if arm.block == successor {
+                        arm.arguments.push(arg.clone());
+                    }
+                }
+
+                if fallback.block == successor {
+                    fallback.arguments.push(arg);
+                }
+            }
+        }
+    }
+
     /// Sets the usage of the block.
     pub fn set_usage(&mut self, usage: BlockUsage) {
         self.usage = usage;
@@ -570,6 +761,19 @@ impl BasicBlock {
     pub fn push_successor(&mut self, block: BasicBlockId) {
         self.successors.reserve_exact(1);
         self.successors.insert(block);
+    }
+
+    /// Adds the given register as a parameter to the block.
+    pub fn add_parameter(&mut self, register: RegisterId) {
+        self.parameters.insert(register);
+    }
+
+    /// Adds the given registers as parameters to the block.
+    pub fn add_parameters<I>(&mut self, iter: I)
+    where
+        I: Iterator<Item = RegisterId>,
+    {
+        iter.for_each(|reg| self.add_parameter(reg));
     }
 
     /// Gets the phi registers of the block.
@@ -800,6 +1004,13 @@ impl std::fmt::Display for RegisterId {
     }
 }
 
+/// Represents a register which is local within a basic block.
+#[derive(Serialize, Deserialize, Default, Debug, Hash, Clone, Copy, PartialEq, Eq)]
+pub struct LocalRegister {
+    pub block: BasicBlockId,
+    pub register: RegisterId,
+}
+
 /// Defines a register within a block, which can hold a value of a specific
 /// type.
 ///
@@ -875,11 +1086,6 @@ impl Registers {
     /// Iterates over all registers.
     pub fn iter(&self) -> impl Iterator<Item = &Register> {
         self.regs.iter()
-    }
-
-    /// Iterates over all registers.
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Register> {
-        self.regs.iter_mut()
     }
 
     /// Iterates over all parameter registers.
@@ -963,6 +1169,18 @@ pub enum InstructionKind {
 }
 
 impl Instruction {
+    /// Returns all the registers within the given instruction, including
+    /// defined registers and referenced registers.
+    pub fn registers(&self) -> Vec<RegisterId> {
+        let mut registers = self.register_refs();
+
+        if let Some(def) = self.register_def() {
+            registers.push(def);
+        }
+
+        registers
+    }
+
     pub fn register_def(&self) -> Option<RegisterId> {
         match &self.kind {
             InstructionKind::Let { register, .. } | InstructionKind::Allocate { register, .. } => Some(*register),
@@ -1156,16 +1374,6 @@ impl Operand {
         Self {
             kind: OperandKind::Reference { id: register },
             location: Location::empty(),
-        }
-    }
-
-    pub fn is_reference_of(&self, register: RegisterId) -> bool {
-        if let OperandKind::Reference { id } = &self.kind
-            && *id == register
-        {
-            true
-        } else {
-            false
         }
     }
 
@@ -1627,6 +1835,10 @@ impl Type {
             kind: TypeKind::Float { bits: 64 },
             is_generic: false,
         }
+    }
+
+    pub fn void_ptr() -> Self {
+        Self::pointer(Self::void())
     }
 
     pub fn structure(name: String, fields: Vec<Type>) -> Self {
