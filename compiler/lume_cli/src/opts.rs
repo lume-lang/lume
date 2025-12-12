@@ -97,6 +97,10 @@ pub struct DevelopmentBuildOptions {
     /// Comma-separated list of the unmangled function names to dump.
     #[arg(long, value_name = "FUNC", value_delimiter = ',')]
     pub dump_mir_func: Vec<String>,
+
+    /// Dumps the generated codegen IR
+    #[arg(long)]
+    pub dump_codegen_ir: bool,
 }
 
 impl BuildOptions {
@@ -126,6 +130,7 @@ impl BuildOptions {
             runtime_path: self.codegen.runtime_path.clone(),
             dump_mir: self.dev.dump_mir.clone(),
             dump_mir_func: self.dev.dump_mir_func.clone(),
+            dump_codegen_ir: self.dev.dump_codegen_ir,
             source_overrides: None,
         }
     }

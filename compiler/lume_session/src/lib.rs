@@ -43,6 +43,9 @@ pub struct Options {
     /// Defines which MIR functions to dump, if any.
     pub dump_mir_func: Vec<String>,
 
+    /// Defines whether the generated codegen IR should be printed to `stdio`.
+    pub dump_codegen_ir: bool,
+
     /// Defines an optional list of overrides for source files.
     ///
     /// Currently, only the source files of the root package are attempted
