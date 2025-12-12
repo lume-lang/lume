@@ -26,8 +26,14 @@ pub fn from_bytes<B: AsRef<[u8]>>(s: B) -> Result<RuntimeOptions, ciborium::de::
 
 /// Reads an encoded sequence of bytes from the given pointer into an instance
 /// of [`RuntimeOptions`].
-pub fn from_ptr(ptr: *const u8) -> Result<RuntimeOptions, ciborium::de::Error<std::io::Error>> {
-    let encoded_len = unsafe { ptr.cast::<u64>().read() } as usize;
+pub unsafe fn from_ptr(ptr: *const u8) -> Result<RuntimeOptions, ciborium::de::Error<std::io::Error>> {
+    #[allow(clippy::cast_ptr_alignment)]
+    {
+        assert!(ptr.cast::<u64>().is_aligned());
+    }
+
+    #[allow(clippy::cast_ptr_alignment, reason = "assertion ensures alignment")]
+    let encoded_len = usize::try_from(unsafe { ptr.cast::<u64>().read() }).unwrap();
     let encoded_ptr = unsafe { ptr.byte_add(size_of::<u64>()) };
 
     assert!(!encoded_ptr.is_null());

@@ -117,6 +117,7 @@ impl Compiler {
         tccx.typecheck()?;
         libftrace::info!("finished type checking");
 
+        #[allow(clippy::disallowed_macros, reason = "only used in debugging")]
         if self.gcx.session.options.print_type_context {
             println!("{:#?}", tccx.tdb());
         }

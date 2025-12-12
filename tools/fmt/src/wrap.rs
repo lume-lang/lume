@@ -10,7 +10,7 @@ use iter_tools::Itertools;
 pub(crate) fn wrap_text_block(str: String, line_length: usize) -> String {
     let mut lines = split_lines(str);
 
-    for line in lines.iter_mut() {
+    for line in &mut lines {
         // Don't wrap any code inside of code blocks.
         if line.kind == LineKind::Code {
             continue;
@@ -67,7 +67,7 @@ fn split_lines(str: String) -> Vec<Line> {
             if let Some(prev_line) = lines.last_mut()
                 && prev_line.kind == LineKind::Standard
             {
-                prev_line.content.push_str("\n");
+                prev_line.content.push('\n');
             }
 
             continue;

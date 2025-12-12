@@ -1,7 +1,7 @@
 //! Source code for the Lume formatter.
 //!
 //! This formatter is heavily based on the Gleam code formatter, found within
-//! their GitHub repository: https://github.com/gleam-lang/gleam/blob/main/compiler-core/src/format.rs
+//! their GitHub repository: <https://github.com/gleam-lang/gleam/blob/main/compiler-core/src/format.rs>
 
 pub(crate) mod doc;
 pub(crate) mod print;
@@ -92,7 +92,7 @@ pub fn format_src(content: &str, config: &Config, dcx: DiagCtxHandle) -> lume_er
 #[derive(Debug, Clone)]
 struct Source<'src> {
     /// Defines the content of the original source file.
-    pub source_file: Arc<SourceFile>,
+    pub file: Arc<SourceFile>,
 
     /// Defines all the top-level nodes within the original source file.
     pub items: Vec<TopLevelExpression>,
@@ -128,7 +128,7 @@ fn parse_source(content: &str, dcx: DiagCtxHandle) -> lume_errors::Result<Source
     dcx.ensure_untainted()?;
 
     Ok(Source {
-        source_file,
+        file: source_file,
         items,
         comments,
     })
@@ -178,7 +178,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
 
     fn source<'a>(mut self, source: &'a Source<'src>) -> Document<'a> {
         let Source {
-            source_file,
+            file: source_file,
             items,
             comments,
         } = source;
@@ -204,7 +204,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
     ) -> Option<(Range<usize>, &'src str)> {
         let (span, comment) = self.comments.front()?;
 
-        if predicate(span, *comment) {
+        if predicate(span, comment) {
             self.comments.pop_front()
         } else {
             None
@@ -350,7 +350,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
                 if bound_types.is_empty() {
                     name
                 } else {
-                    name.append(self.type_arguments(&bound_types))
+                    name.append(self.type_arguments(bound_types))
                 }
             }
         }
@@ -358,7 +358,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
 
     fn top_level_expression<'a>(&mut self, item: &'a TopLevelExpression) -> Document<'a> {
         match item {
-            TopLevelExpression::Namespace(namespace) => self.namespace(namespace),
+            TopLevelExpression::Namespace(ns) => namespace(ns),
             TopLevelExpression::Import(import) => self.import(import),
             TopLevelExpression::FunctionDefinition(func) => self.function_definition(func),
             TopLevelExpression::TypeDefinition(type_def) => match type_def.as_ref() {
@@ -369,13 +369,6 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             TopLevelExpression::TraitImpl(trait_impl) => self.trait_implementation(trait_impl),
             TopLevelExpression::Impl(implementation) => self.implementation(implementation),
         }
-    }
-
-    fn namespace<'a>(&mut self, namespace: &'a Namespace) -> Document<'a> {
-        let segments = namespace.path.path.iter().map(|seg| str(seg.as_str())).collect_vec();
-        let path = join(segments, "::");
-
-        str("namespace ").append(path)
     }
 
     fn import<'a>(&mut self, import: &'a Import) -> Document<'a> {
@@ -837,11 +830,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
                 str("while ").append(predicate).space().append(body)
             }
             Statement::Expression(expr) => {
-                let needs_semicolon = match expr.as_ref() {
-                    Expression::If(_) | Expression::Switch(_) => false,
-                    _ => true,
-                };
-
+                let needs_semicolon = !matches!(expr.as_ref(), Expression::If(_) | Expression::Switch(_));
                 let expr = self.expression(expr);
 
                 if needs_semicolon { expr.append(';') } else { expr }
@@ -1197,14 +1186,21 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
     }
 }
 
-fn with_comments<'a, 'src>(doc: Document<'a>, comments: Comments<'src>) -> Document<'a> {
+fn namespace(namespace: &Namespace) -> Document<'_> {
+    let segments = namespace.path.path.iter().map(|seg| str(seg.as_str())).collect_vec();
+    let path = join(segments, "::");
+
+    str("namespace ").append(path)
+}
+
+fn with_comments<'a>(doc: Document<'a>, comments: Comments<'_>) -> Document<'a> {
     match printed_comments(comments, true) {
         Some(comments) => comments.append(doc),
         None => doc,
     }
 }
 
-fn printed_comments<'a, 'src>(comments: Comments<'src>, last_newline: bool) -> Option<Document<'a>> {
+fn printed_comments<'a>(comments: Comments<'_>, last_newline: bool) -> Option<Document<'a>> {
     let trailing_newline = comments.trailing_newline;
 
     let mut comments = comments.lines.into_iter().peekable();
@@ -1239,7 +1235,7 @@ fn printed_comments<'a, 'src>(comments: Comments<'src>, last_newline: bool) -> O
     Some(concat(doc))
 }
 
-fn visibility<'a>(vis: Option<&'a Visibility>) -> Document<'a> {
+fn visibility(vis: Option<&Visibility>) -> Document<'_> {
     match vis {
         Some(Visibility::Public { .. }) => str("pub "),
         Some(Visibility::Internal { .. }) => str("pub(internal) "),
