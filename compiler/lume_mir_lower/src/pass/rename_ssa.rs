@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use lume_span::Interned;
 
 use super::*;
@@ -76,7 +77,7 @@ impl Pass for RenameSsaVariables {
     }
 
     /// Executes the pass on the given function.
-    fn execute(&mut self, func: &mut Function) {
+    fn execute(&mut self, _mcx: &MirQueryCtx, func: &mut Function) {
         let mut new_registers = func
             .registers
             .iter()
@@ -95,9 +96,12 @@ impl Pass for RenameSsaVariables {
                 self.rename_register_index(param_reg.id, block_id, &mut register_mapping);
             }
 
-            for param in &mut block.parameters {
+            let mut block_parameters = block.parameters().collect::<Vec<RegisterId>>();
+            for param in &mut block_parameters {
                 self.rename_register_index_mut(param, block_id, &mut register_mapping);
             }
+
+            block.parameter_replace_all(block_parameters.into_iter());
 
             for inst in block.instructions_mut() {
                 self.update_regs_inst(inst, block_id, &mut register_mapping);

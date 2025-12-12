@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use indexmap::{IndexMap, IndexSet};
 use lume_mir::*;
+use lume_mir_queries::MirQueryCtx;
 
 pub(crate) mod define_block_params;
 pub(crate) mod define_edges;
@@ -27,7 +28,7 @@ pub(crate) trait Pass {
     fn new() -> Self;
 
     /// Executes the pass on the given function.
-    fn execute(&mut self, func: &mut Function);
+    fn execute(&mut self, mcx: &MirQueryCtx, func: &mut Function);
 }
 
 impl FunctionTransformer<'_, '_> {
@@ -51,6 +52,6 @@ impl FunctionTransformer<'_, '_> {
         }
 
         let mut pass = P::new();
-        pass.execute(&mut self.func);
+        pass.execute(self.mcx, &mut self.func);
     }
 }

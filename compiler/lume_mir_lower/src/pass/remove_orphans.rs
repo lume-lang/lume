@@ -19,7 +19,7 @@ impl Pass for RemoveOrphanBlocks {
     }
 
     /// Executes the pass on the given function.
-    fn execute(&mut self, func: &mut Function) {
+    fn execute(&mut self, _mcx: &MirQueryCtx, func: &mut Function) {
         let mut orphan_blocks = Vec::new();
 
         for block in func.blocks.values() {

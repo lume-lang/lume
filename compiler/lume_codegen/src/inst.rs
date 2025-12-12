@@ -22,12 +22,12 @@ impl LowerFunction<'_> {
     pub(crate) fn cg_block_alloc(&mut self, mir_block: &lume_mir::BasicBlock) {
         let cg_block = self.builder.create_block();
 
-        for reg_id in &mir_block.parameters {
-            let reg_ty = self.func.registers.register_ty(*reg_id);
+        for reg_id in mir_block.parameters() {
+            let reg_ty = self.func.registers.register_ty(reg_id);
             let param_ty = self.backend.cl_type_of(reg_ty);
 
             let param_value = self.builder.append_block_param(cg_block, param_ty);
-            self.parameters.insert(*reg_id, param_value);
+            self.parameters.insert(reg_id, param_value);
         }
 
         self.blocks.insert(mir_block.id, cg_block);

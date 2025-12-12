@@ -15,7 +15,7 @@ impl Pass for RemoveUnreachable {
         Self
     }
 
-    fn execute(&mut self, func: &mut Function) {
+    fn execute(&mut self, _mcx: &MirQueryCtx, func: &mut Function) {
         let mut unreachable = Vec::<(BasicBlockId, usize)>::new();
 
         for block in func.blocks.values() {

@@ -190,7 +190,7 @@ impl MirQueryCtx<'_> {
         for (idx, arg) in call_site.arguments.iter().enumerate() {
             if arg.stores_register(reg) {
                 let block = func.block(call_site.block);
-                let param = block.parameters[idx];
+                let param = block.parameter(idx);
 
                 self.does_register_escape_inner(func, call_site.block, param, call_stack)?;
             }
