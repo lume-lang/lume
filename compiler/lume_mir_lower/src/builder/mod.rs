@@ -255,6 +255,36 @@ impl Builder<'_, '_> {
         );
     }
 
+    /// Creates a `switch` terminator on the current block, branching to the
+    /// block within the matching arm.
+    ///
+    /// If the current block already has a terminator, the existing terminator
+    /// is left untouched.
+    pub(crate) fn switch(
+        &mut self,
+        operand: RegisterId,
+        arms: Vec<(i64, BlockBranchSite)>,
+        fallback: BlockBranchSite,
+        location: Location,
+    ) {
+        if !self.func.current_block().has_terminator() {
+            for (_, branch) in &arms {
+                self.add_edge_from_current(branch.block);
+            }
+
+            self.add_edge_from_current(fallback.block);
+        }
+
+        self.func.current_block_mut().set_terminator(Terminator {
+            kind: TerminatorKind::Switch {
+                operand,
+                arms,
+                fallback,
+            },
+            location,
+        });
+    }
+
     /// Creates a return terminator on the current block, optionally returning
     /// the given operand, if any.
     ///

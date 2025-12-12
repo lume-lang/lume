@@ -18,9 +18,12 @@ impl Builder<'_, '_> {
             lume_mir::OperandKind::String { .. } => lume_mir::Type::string(),
             lume_mir::OperandKind::Bitcast { target, .. } => target.to_owned(),
             lume_mir::OperandKind::Load { id } => {
-                let elemental = self.func.registers.register_ty(*id).clone();
+                let register_type = self.func.registers.register_ty(*id).clone();
+                let lume_mir::TypeKind::Pointer { elemental } = &register_type.kind else {
+                    panic!("bug!: attempted to load non-pointer type: {id}, {register_type}");
+                };
 
-                lume_mir::Type::pointer(elemental)
+                elemental.as_ref().clone()
             }
             lume_mir::OperandKind::LoadField { field_type, .. } => field_type.clone(),
             lume_mir::OperandKind::LoadSlot { loaded_type, .. } => loaded_type.clone(),
