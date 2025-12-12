@@ -280,8 +280,23 @@ impl CraneliftBackend {
             };
 
             if let Err(err) = verify_function(&ctx.func, foi) {
-                let diagnostic = SimpleDiagnostic::new(format!("function verification failed ({})", func.name))
-                    .add_cause(SimpleDiagnostic::new(err.to_string()));
+                let cause = if self.context.options.dump_codegen_ir {
+                    let disassembly = ctx.func.display().to_string();
+                    let disassembly_len = disassembly.len();
+
+                    let disassembly_label = lume_errors::Label::note(
+                        Some(Arc::new(disassembly)),
+                        0..disassembly_len,
+                        "disassembly of Cranelift function",
+                    );
+
+                    SimpleDiagnostic::new(err.to_string()).with_label(disassembly_label)
+                } else {
+                    SimpleDiagnostic::new(err.to_string())
+                };
+
+                let diagnostic =
+                    SimpleDiagnostic::new(format!("function verification failed ({})", func.name)).add_cause(cause);
 
                 return Err(diagnostic.into());
             }
