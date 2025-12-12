@@ -1555,6 +1555,7 @@ name = "lume_mir_lower"
 version = "0.1.1"
 dependencies = [
  "indexmap",
+ "libftrace",
  "lume_hir",
  "lume_mangle",
  "lume_mir",

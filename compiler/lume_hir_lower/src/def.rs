@@ -294,6 +294,7 @@ impl LowerModule<'_> {
     #[libftrace::traced(level = Debug)]
     pub(super) fn def_function(&mut self, expr: lume_ast::FunctionDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
+        self.add_lang_items(id, &expr.attributes)?;
 
         let visibility = lower_visibility(expr.visibility.as_ref());
         let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
