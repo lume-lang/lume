@@ -6,14 +6,15 @@ use crate::builder::Builder;
 pub(crate) struct DynamicShimBuilder<'shim, 'mir, 'tcx> {
     builder: &'shim mut Builder<'mir, 'tcx>,
 
-    /// Defines the ID of the method to be called.
-    target: NodeId,
+    /// Defines the function to be called.
+    function: &'shim lume_tir::Function,
+
     signature: Signature,
     parameters: Vec<RegisterId>,
 }
 
 impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
-    pub(crate) fn new(builder: &'shim mut Builder<'mir, 'tcx>, func_id: NodeId) -> Self {
+    pub(crate) fn new(builder: &'shim mut Builder<'mir, 'tcx>, function: &'shim lume_tir::Function) -> Self {
         builder.func.mangled_name = format!("_dyn_{}", builder.func.mangled_name);
 
         // The last parameter in dynamic function declarations contains the type
@@ -30,43 +31,34 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
             builder,
             signature,
             parameters: params,
-            target: func_id,
+            function,
         }
     }
 
     /// Returns the signature of the target function.
     fn target_signature(&self) -> Signature {
         let mut signature = self.signature.clone();
-        signature.return_type = self.builder.function_ret_type(self.target);
+        signature.return_type = self.builder.function_ret_type(self.function.id);
 
         signature
-    }
-
-    /// Returns the non-dynamic parameters of the function as operands.
-    fn parameters_as_operands(&self) -> Vec<lume_mir::Operand> {
-        self.parameters
-            .iter()
-            .map(|id| lume_mir::Operand::reference_of(*id))
-            .collect()
     }
 
     /// Creates the shim function around the function with the given ID and
     /// returns the ID if the created shim.
     pub(crate) fn build(self) -> NodeId {
-        let entry_block = self.builder.new_block();
         let method_found = self.builder.new_block();
         let method_missing = self.builder.new_block();
 
         let signature = self.target_signature();
-        let method_arguments = self.parameters_as_operands();
 
-        self.builder.with_block(entry_block, |builder, _| {
+        self.builder.with_current_block(|builder, _| {
             let parameters = builder.func.parameters().collect::<Vec<_>>();
             let type_metadata_reg = parameters.last().unwrap().id;
 
             let lookup_method_id = builder.tcx().lang_item("lookup_method").unwrap();
 
-            let method_id_arg = lume_mir::Operand::integer(64, false, self.target.as_usize().cast_signed() as i64);
+            let method_id = self.function.id;
+            let method_id_arg = lume_mir::Operand::integer(64, false, method_id.as_usize().cast_signed() as i64);
             let metadata_arg = lume_mir::Operand::reference_of(type_metadata_reg);
 
             let method_ptr = builder.call(lookup_method_id, vec![method_id_arg, metadata_arg], Location::empty());
@@ -84,24 +76,32 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
             );
         });
 
-        self.builder.with_block(method_missing, |builder, _| {
-            builder.unreachable(Location::empty());
-        });
-
         self.builder.with_block(method_found, |builder, block_id| {
             // Add parameter for the returned method pointer.
             let method_ptr = builder.func.add_block_parameter(block_id, lume_mir::Type::void_ptr());
 
+            let mut arguments = Vec::with_capacity(self.parameters.len());
+
             for &param in &self.parameters {
                 let parameter_type = &builder.func.register(param).ty;
-                builder.func.add_block_parameter(block_id, parameter_type.clone());
+                let parameter = builder.func.add_block_parameter(block_id, parameter_type.clone());
+
+                arguments.push(lume_mir::Operand::reference_of(parameter));
             }
 
-            let return_value = builder.call_indirect(method_ptr, signature, method_arguments, Location::empty());
+            let return_value = builder.call_indirect(method_ptr, signature, arguments, Location::empty());
 
             builder.return_(Some(lume_mir::Operand::reference_of(return_value)), Location::empty());
         });
 
-        self.target
+        self.builder.with_block(method_missing, |builder, _| {
+            if let Some(block) = self.function.block.as_ref() {
+                crate::builder::lower::lower_block(builder, block);
+            } else {
+                builder.unreachable(Location::empty());
+            }
+        });
+
+        self.function.id
     }
 }

@@ -183,7 +183,7 @@ impl<'tcx> Lower<'tcx> {
 
         // Trait method definitions without any default implementation have no reason to
         // be in the binary, since they have no body to codegen from.
-        if self.is_dynamic_dispatch(method, has_body) {
+        if self.is_dynamic_dispatch(method) {
             return lume_tir::FunctionKind::Dynamic;
         }
 
@@ -209,7 +209,7 @@ impl<'tcx> Lower<'tcx> {
 
         // Trait method definitions without any default implementation have no reason to
         // be in the binary, since they have no body to codegen from.
-        if self.is_dynamic_dispatch(method, has_body) {
+        if self.is_dynamic_dispatch(method) && !has_body {
             return false;
         }
 
@@ -217,6 +217,7 @@ impl<'tcx> Lower<'tcx> {
         // methods with default implementations.
         if let Some(declaration) = self.ir.functions.get(&method.id)
             && !declaration.kind.should_be_lowered()
+            && !has_body
         {
             return false;
         }
@@ -228,8 +229,8 @@ impl<'tcx> Lower<'tcx> {
     /// via dynamic dispatch.
     #[inline]
     #[must_use]
-    pub(crate) fn is_dynamic_dispatch(&self, method: &lume_types::Method, has_body: bool) -> bool {
-        method.kind == lume_types::MethodKind::TraitDefinition && self.tcx.is_instanced_method(method.id) && !has_body
+    pub(crate) fn is_dynamic_dispatch(&self, method: &lume_types::Method) -> bool {
+        method.kind == lume_types::MethodKind::TraitDefinition && self.tcx.is_instanced_method(method.id)
     }
 }
 

@@ -10,18 +10,8 @@ pub(crate) fn lower_function(mut builder: Builder<'_, '_>, func: &lume_tir::Func
     match func.kind {
         lume_tir::FunctionKind::Static | lume_tir::FunctionKind::Dropper => {
             if let Some(body) = &func.block {
-                builder.with_new_block(|builder, entry_block| {
-                    let zipped_parameters = func
-                        .parameters
-                        .iter()
-                        .zip(builder.func.parameters())
-                        .map(|(param, reg)| (param.var, reg.id))
-                        .collect::<Vec<_>>();
-
-                    for (variable, register) in zipped_parameters {
-                        builder.declare_var(entry_block, variable, register);
-                    }
-
+                builder.with_new_block(|builder, _| {
+                    declare_parameters(builder, func);
                     lower_block(builder, body);
                 });
 
@@ -29,7 +19,13 @@ pub(crate) fn lower_function(mut builder: Builder<'_, '_>, func: &lume_tir::Func
             }
         }
         lume_tir::FunctionKind::Dynamic => {
-            DynamicShimBuilder::new(&mut builder, func.id).build();
+            builder.with_new_block(|builder, _| {
+                declare_parameters(builder, func);
+
+                DynamicShimBuilder::new(builder, func).build();
+            });
+
+            builder.run_passes();
         }
         lume_tir::FunctionKind::Unreachable => {
             builder.with_new_block(|builder, _| {
@@ -39,6 +35,23 @@ pub(crate) fn lower_function(mut builder: Builder<'_, '_>, func: &lume_tir::Func
     }
 
     builder.func
+}
+
+/// Declares all parameters of the function as valid variables within the
+/// function.
+pub(crate) fn declare_parameters(builder: &mut Builder<'_, '_>, func: &lume_tir::Function) {
+    let entry_block = builder.func.current_block().id;
+
+    let zipped_parameters = func
+        .parameters
+        .iter()
+        .zip(builder.func.parameters())
+        .map(|(param, reg)| (param.var, reg.id))
+        .collect::<Vec<_>>();
+
+    for (variable, register) in zipped_parameters {
+        builder.declare_var(entry_block, variable, register);
+    }
 }
 
 pub(crate) fn lower_block(builder: &mut Builder<'_, '_>, body: &lume_tir::Block) {
