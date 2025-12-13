@@ -22,6 +22,13 @@ pub enum EscapeResult {
     Unescaped,
 }
 
+impl EscapeResult {
+    #[inline]
+    pub fn escapes(&self) -> bool {
+        matches!(self, EscapeResult::Escaped { .. })
+    }
+}
+
 /// Represents the reason why a specific register escaped the containing parent.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EscapeReason {
