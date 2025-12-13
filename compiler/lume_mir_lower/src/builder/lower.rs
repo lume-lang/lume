@@ -338,9 +338,8 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
 
         let prop_sizes = field_types.iter().map(lume_mir::Type::bytesize).collect::<Vec<_>>();
         let struct_type = lume_mir::Type::structure(struct_name, field_types);
-        let struct_ptr = lume_mir::Type::pointer(struct_type.clone());
 
-        let struct_alloc_reg = builder.alloca(struct_ptr, &expr.ty, expr.location);
+        let struct_alloc_reg = builder.alloca(struct_type.clone(), &expr.ty, expr.location);
 
         // Store the metadata reference in the first element in the structure.
         let metadata_value = lume_mir::Operand {
@@ -705,7 +704,7 @@ fn variant_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Variant) -
         let metadata_register = builder.declare_metadata_of(&expr.ty, expr.location);
 
         let enum_union_type = builder.union_of(&expr.ty);
-        let variant_alloc = builder.alloca(enum_union_type.clone(), &expr.ty, expr.location);
+        let variant_alloc = builder.alloca(enum_union_type, &expr.ty, expr.location);
 
         // Store the metadata reference in the first element in the union.
         let metadata_value = lume_mir::Operand {

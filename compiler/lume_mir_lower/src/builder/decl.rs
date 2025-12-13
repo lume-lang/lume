@@ -96,7 +96,7 @@ impl Builder<'_, '_> {
     /// Creates a new instruction for a heap-allocation type and returns the
     /// register which contains the allocation pointer.
     pub(crate) fn alloca(&mut self, ty: Type, type_ref: &TypeRef, location: Location) -> RegisterId {
-        let alloc_ptr = self.func.add_register(ty.clone());
+        let alloc_ptr = self.func.add_register(Type::pointer(ty.clone()));
         let metadata_reg = self.declare_metadata_of(type_ref, location);
 
         self.func
@@ -291,12 +291,13 @@ impl Builder<'_, '_> {
 
             // If the passed type is already a reference type, we can pass it without
             // allocating room for it.
-            if self.type_of_value(arg).kind.is_reference_type() {
+            let argument_type = self.type_of_value(arg);
+
+            if argument_type.kind.is_reference_type() {
                 continue;
             }
 
-            let arg_ty = self.type_of_value(arg);
-            let slot = self.func.alloc_slot(arg_ty, arg.location);
+            let slot = self.func.alloc_slot(argument_type, arg.location);
             self.func
                 .current_block_mut()
                 .store_slot(slot, 0, arg.clone(), arg.location);

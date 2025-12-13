@@ -314,6 +314,13 @@ impl CraneliftBackend {
             return Err(diagnostic.into());
         }
 
+        let opts = &self.context.options;
+        let should_dump_function = opts.dump_mir_func.is_empty() || opts.dump_mir_func.contains(&func.name);
+
+        if opts.dump_codegen_ir && should_dump_function {
+            println!("{}", ctx.func.display());
+        }
+
         if let Some(debug_ctx) = debug_ctx.as_mut() {
             debug_ctx.define_function(func.id, ctx);
         }
