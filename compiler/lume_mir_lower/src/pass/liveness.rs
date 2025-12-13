@@ -28,12 +28,12 @@ use super::*;
 /// ```mir
 /// B0:
 ///     #0 = 4_i32
-///     goto B1
-/// B1(#0):       <-- notice the added block parameters
+///     goto B1(#0)
+/// B1(#0):              <-- notice the added block parameters..
 ///     #1 = 7_i32
 ///     #2: i32 = +(#0, #1)
-///     goto B2
-/// B2(#2, #0):   <-- notice the added block parameters
+///     goto B2(#2, #0)  <-- ..and the added block arguments
+/// B2(#2, #0):
 ///     #3: i32 = *(#2, #0)
 ///     return #3
 /// ```
