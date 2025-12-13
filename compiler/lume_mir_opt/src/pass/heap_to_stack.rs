@@ -23,7 +23,7 @@ impl OptimizerPass for HeapToStack {
         level.speed_level() >= 2
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[libftrace::traced(level = Debug, fields(name = mcx.mir().function(func_id).name))]
     fn execute(&mut self, mcx: &mut MirQueryCtx, func_id: NodeId) {
         let mut replacements = Vec::new();
 
@@ -36,6 +36,8 @@ impl OptimizerPass for HeapToStack {
                 };
 
                 if mcx.does_register_escape(func, block.id, *register) == EscapeResult::Unescaped {
+                    libftrace::debug!("moving heap alloc to stack: {}.{}, {register}", func.name, block.id);
+
                     replacements.push((block.id, idx));
                 }
             }

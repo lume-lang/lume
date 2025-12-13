@@ -39,7 +39,7 @@ impl Builder<'_, '_> {
     pub(crate) fn type_of_decl(&self, decl: &lume_mir::Declaration) -> lume_mir::Type {
         match decl.kind.as_ref() {
             lume_mir::DeclarationKind::Operand(val) => self.type_of_value(val),
-            lume_mir::DeclarationKind::Intrinsic { name, .. } => match name {
+            lume_mir::DeclarationKind::Intrinsic { name, args } => match name {
                 lume_mir::Intrinsic::IntEq { .. }
                 | lume_mir::Intrinsic::IntNe { .. }
                 | lume_mir::Intrinsic::IntGt { .. }
@@ -64,7 +64,10 @@ impl Builder<'_, '_> {
                 | lume_mir::Intrinsic::IntAnd { bits, signed }
                 | lume_mir::Intrinsic::IntOr { bits, signed }
                 | lume_mir::Intrinsic::IntXor { bits, signed }
-                | lume_mir::Intrinsic::IntNegate { bits, signed } => lume_mir::Type::integer(*bits, *signed),
+                | lume_mir::Intrinsic::IntNegate { bits, signed } => match args.first() {
+                    Some(first_arg) => self.type_of_value(first_arg),
+                    None => lume_mir::Type::integer(*bits, *signed),
+                },
                 lume_mir::Intrinsic::FloatAdd { bits }
                 | lume_mir::Intrinsic::FloatSub { bits }
                 | lume_mir::Intrinsic::FloatMul { bits }
