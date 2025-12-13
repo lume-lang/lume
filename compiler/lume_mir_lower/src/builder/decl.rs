@@ -289,23 +289,7 @@ impl Builder<'_, '_> {
                 continue;
             }
 
-            // If the passed type is already a reference type, we can pass it without
-            // allocating room for it.
-            let argument_type = self.type_of_value(arg);
-
-            if argument_type.kind.is_reference_type() {
-                continue;
-            }
-
-            let slot = self.func.alloc_slot(argument_type, arg.location);
-            self.func
-                .current_block_mut()
-                .store_slot(slot, 0, arg.clone(), arg.location);
-
-            *arg = lume_mir::Operand {
-                kind: lume_mir::OperandKind::SlotAddress { id: slot, offset: 0 },
-                location: arg.location,
-            };
+            *arg = self.ref_or_box(arg.clone(), &param.type_ref);
         }
 
         if vararg && args.len() >= params.len() - 1 {
@@ -361,5 +345,56 @@ impl Builder<'_, '_> {
 
         new_args.push(lume_mir::Operand::reference_of(vararg_arr_reg));
         new_args
+    }
+
+    /// Either references or boxes the given value, depending on the type of the
+    /// given value.
+    ///
+    /// If the value is a reference type, it is returned as-is. Otherwise, it is
+    /// boxed on either the heap or the stack, depending on whether it
+    /// escapes the current function.
+    ///
+    /// | Type      | Escapes | Result        |
+    /// |-----------|---------|---------------|
+    /// | Reference | N/A     | Referenced    |
+    /// | Value     | No      | Boxed (stack) |
+    /// | Value     | Yes     | Boxed (heap)  |
+    fn ref_or_box(&mut self, value: lume_mir::Operand, ty: &TypeRef) -> lume_mir::Operand {
+        let location = value.location;
+        let operand_type = self.type_of_value(&value);
+
+        // If the operand is already a reference type, return it as-is.
+        if operand_type.is_reference_type() {
+            return value;
+        }
+
+        let does_escape = match &value.kind {
+            // Scalar types always get stored on the heap, since they are
+            // declared inline (i.e. have no backing static memory address).
+            lume_mir::OperandKind::Boolean { .. }
+            | lume_mir::OperandKind::Integer { .. }
+            | lume_mir::OperandKind::Float { .. } => true,
+
+            // Strings are put on the stack, since they always have a backing
+            // static memory address - either from an allocation or it's stored in the binary.
+            lume_mir::OperandKind::String { .. } => false,
+
+            // Slot operands already exist on the stack, so they don't need to be put on the heap.
+            lume_mir::OperandKind::SlotAddress { .. } | lume_mir::OperandKind::LoadSlot { .. } => false,
+
+            lume_mir::OperandKind::Bitcast { source: id, .. }
+            | lume_mir::OperandKind::Load { id }
+            | lume_mir::OperandKind::LoadField { target: id, .. }
+            | lume_mir::OperandKind::Reference { id } => self
+                .mcx
+                .does_register_escape(&self.func, self.func.current_block().id, *id)
+                .escapes(),
+        };
+
+        if !does_escape {
+            self.store_on_stack(value, location)
+        } else {
+            self.store_on_heap(value, ty, location)
+        }
     }
 }

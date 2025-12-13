@@ -11,6 +11,7 @@ use lume_mir_queries::MirQueryCtx;
 use lume_span::{Location, NodeId};
 use lume_type_metadata::{TypeMetadata, TypeMetadataId};
 use lume_typech::TyCheckCtx;
+use lume_types::TypeRef;
 
 use crate::builder::decl::OperandRef;
 
@@ -163,6 +164,32 @@ impl Builder<'_, '_> {
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id },
+            location,
+        }
+    }
+
+    /// Stores the given value in a stack-allocated space.
+    pub(crate) fn store_on_stack(&mut self, value: Operand, location: Location) -> Operand {
+        let operand_type = self.type_of_value(&value);
+
+        let slot = self.alloc_slot(operand_type, location);
+        self.func.current_block_mut().store_slot(slot, 0, value, location);
+
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::SlotAddress { id: slot, offset: 0 },
+            location,
+        }
+    }
+
+    /// Stores the given value in a heap-allocated space.
+    pub(crate) fn store_on_heap(&mut self, value: Operand, ty: &TypeRef, location: Location) -> Operand {
+        let operand_type = self.type_of_value(&value);
+
+        let alloc = self.alloca(operand_type, ty, location);
+        self.func.current_block_mut().store(alloc, value, location);
+
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: alloc },
             location,
         }
     }
