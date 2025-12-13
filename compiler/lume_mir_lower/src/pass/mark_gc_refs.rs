@@ -4,27 +4,45 @@ use lume_span::Location;
 
 use super::*;
 
+#[derive(Debug, Clone)]
+struct ObjectReference {
+    /// The block in which the instruction was found.
+    pub block: BasicBlockId,
+
+    /// The ID of the target instruction, which referenced the object.
+    pub target: InstructionId,
+
+    /// The placement of the GC reference instruction.
+    pub placement: Placement,
+
+    /// The register which needs to marked as an object.
+    pub register: RegisterId,
+
+    /// The location to use for the GC reference instruction.
+    pub location: Location,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Placement {
+    /// The reference should be placed before the target instruction.
+    Before,
+
+    /// The reference should be placed after the target instruction.
+    After,
+}
+
 /// Attempts to mark managed objects as GC references, by adding
 /// [`InstructionKind::ObjectRegister`] instructions to the MIR, wherever
 /// fitting. These instructions are used when the garbage collector
 /// looks for live objects in any given location.
 #[derive(Default, Debug)]
 pub(crate) struct MarkObjectReferences {
-    /// Current offset into the current block where the instruction
-    /// should be placed.
-    offset: usize,
-
     /// Defines all the currently marked objects, to prevent multiple
     /// instructions from being inserted, all referencing the same register.
     marked: HashSet<RegisterId>,
 
-    /// List of all instructions which require an object register instruction.
-    ///
-    /// The tuple in each list entry is:
-    ///  - the block in which the instruction was found,
-    ///  - the offset of where to place the instruction
-    ///  - and the register which needs to marked as an object.
-    reference_inst: Vec<(BasicBlockId, usize, RegisterId)>,
+    /// List of all places which require an object register instruction.
+    references: Vec<ObjectReference>,
 }
 
 impl Pass for MarkObjectReferences {
@@ -41,26 +59,30 @@ impl Pass for MarkObjectReferences {
     fn execute(&mut self, _mcx: &MirQueryCtx, func: &mut Function) {
         self.find_object_references(func);
 
-        while let Some((block, offset, register)) = self.reference_inst.pop() {
-            let block = func.block_mut(block);
-
-            let location = block
-                .instructions
-                .get(offset.saturating_sub(1))
-                .or_else(|| block.instructions.get(offset))
-                .map_or(Location::empty(), |inst| inst.location);
+        while let Some(reference) = self.references.pop() {
+            let block = func.block_mut(reference.block);
 
             let inst = lume_mir::Instruction {
-                kind: lume_mir::InstructionKind::ObjectRegister { register },
-                location,
+                kind: lume_mir::InstructionKind::ObjectRegister {
+                    register: reference.register,
+                },
+                location: reference.location,
             };
 
-            // Even though it's valid for the offset to be the same length
-            // as the instruction list, `insert` will panic if that's the case.
-            if block.instructions.len() + 1 == offset {
-                block.instructions.push(inst);
-            } else {
-                block.instructions.insert(offset, inst);
+            let key = InstructionId(block.instructions.len());
+            let offset = block.instructions.get_index_of(&reference.target).unwrap_or(0);
+
+            match reference.placement {
+                Placement::Before => {
+                    block.instructions.insert_before(offset, key, inst);
+                }
+                Placement::After => {
+                    if offset == block.instructions.len() {
+                        block.instructions.insert(key, inst);
+                    } else {
+                        block.instructions.insert_before(offset + 1, key, inst);
+                    }
+                }
             }
         }
     }
@@ -70,61 +92,79 @@ impl MarkObjectReferences {
     fn find_object_references(&mut self, func: &Function) {
         for block in func.blocks.values() {
             for param in block.parameters() {
-                if self.register_gc_object(func, block.id, param) {
-                    self.offset += 1;
-                }
+                self.register_gc_object(func, block.id, InstructionId(0), param, Placement::After, func.location);
             }
 
-            for inst in block.instructions() {
+            for (&inst_id, inst) in &block.instructions {
+                let location = inst.location;
+
                 match &inst.kind {
                     InstructionKind::Let { register, decl, .. } => {
                         match decl.kind.as_ref() {
-                            DeclarationKind::Operand(op) => self.find_object_references_operand(func, block.id, op),
+                            DeclarationKind::Operand(op) => self.find_object_references_operand(
+                                func,
+                                block.id,
+                                inst_id,
+                                op,
+                                Placement::Before,
+                                location,
+                            ),
                             DeclarationKind::Call { args, .. } | DeclarationKind::IndirectCall { args, .. } => {
                                 for arg in args {
-                                    self.find_object_references_operand(func, block.id, arg);
+                                    self.find_object_references_operand(
+                                        func,
+                                        block.id,
+                                        inst_id,
+                                        arg,
+                                        Placement::Before,
+                                        location,
+                                    );
                                 }
                             }
                             DeclarationKind::Cast { .. } | DeclarationKind::Intrinsic { .. } => {}
                         }
 
-                        self.offset += 1;
-                        self.register_gc_object(func, block.id, *register);
+                        self.register_gc_object(func, block.id, inst_id, *register, Placement::After, location);
                     }
                     InstructionKind::Allocate { register, .. } => {
-                        self.offset += 1;
-                        self.register_gc_object(func, block.id, *register);
+                        self.register_gc_object(func, block.id, inst_id, *register, Placement::After, location);
                     }
                     InstructionKind::Store { target, value } | InstructionKind::StoreField { target, value, .. } => {
-                        self.offset += 1;
-                        self.register_gc_object(func, block.id, *target);
-
-                        self.find_object_references_operand(func, block.id, value);
+                        self.register_gc_object(func, block.id, inst_id, *target, Placement::Before, location);
+                        self.find_object_references_operand(
+                            func,
+                            block.id,
+                            inst_id,
+                            value,
+                            Placement::Before,
+                            location,
+                        );
                     }
                     InstructionKind::ObjectRegister { .. }
                     | InstructionKind::CreateSlot { .. }
-                    | InstructionKind::StoreSlot { .. } => {
-                        self.offset += 1;
-                    }
+                    | InstructionKind::StoreSlot { .. } => {}
                 }
             }
 
             self.marked.clear();
-            self.offset = 0;
         }
     }
 
-    fn find_object_references_operand(&mut self, func: &Function, block: BasicBlockId, op: &Operand) {
+    fn find_object_references_operand(
+        &mut self,
+        func: &Function,
+        block: BasicBlockId,
+        inst_id: InstructionId,
+        op: &Operand,
+        placement: Placement,
+        location: Location,
+    ) {
         match &op.kind {
             OperandKind::Load { id } | OperandKind::Reference { id } => {
-                if self.register_gc_object(func, block, *id) {
-                    self.offset += 1;
-                }
+                self.register_gc_object(func, block, inst_id, *id, placement, location);
             }
             OperandKind::LoadField { target, .. } => {
-                if self.register_gc_object(func, block, *target) {
-                    self.offset += 1;
-                }
+                self.register_gc_object(func, block, inst_id, *target, placement, location);
             }
             OperandKind::Bitcast { .. }
             | OperandKind::Boolean { .. }
@@ -136,13 +176,27 @@ impl MarkObjectReferences {
         }
     }
 
-    fn register_gc_object(&mut self, func: &Function, block: BasicBlockId, register: RegisterId) -> bool {
+    fn register_gc_object(
+        &mut self,
+        func: &Function,
+        block: BasicBlockId,
+        inst: InstructionId,
+        register: RegisterId,
+        placement: Placement,
+        location: Location,
+    ) -> bool {
         if self.marked.contains(&register) || !func.registers.register_ty(register).requires_stack_map() {
             return false;
         }
 
         self.marked.insert(register);
-        self.reference_inst.push((block, self.offset, register));
+        self.references.push(ObjectReference {
+            block,
+            target: inst,
+            placement,
+            location,
+            register,
+        });
 
         true
     }

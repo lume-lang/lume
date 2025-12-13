@@ -282,7 +282,7 @@ impl Function {
     ///
     /// Panics if the given ID is invalid or out of bounds.
     pub fn add_instruction(&mut self, block: BasicBlockId, inst: Instruction) {
-        self.block_mut(block).instructions.push(inst);
+        self.block_mut(block).push_instruction(inst);
     }
 
     /// Allocates a new register with the given type and returns its ID.
@@ -593,7 +593,7 @@ pub struct BasicBlock {
     parameters: IndexSet<RegisterId>,
 
     /// Defines all non-terminator instructions in the block.
-    pub instructions: Vec<Instruction>,
+    pub instructions: IndexMap<InstructionId, Instruction>,
 
     /// Defines the terminator of the block.
     ///
@@ -621,7 +621,7 @@ impl BasicBlock {
         BasicBlock {
             id,
             parameters: IndexSet::new(),
-            instructions: Vec::new(),
+            instructions: IndexMap::new(),
             terminator: None,
             predecessors: IndexSet::new(),
             successors: IndexSet::new(),
@@ -662,12 +662,18 @@ impl BasicBlock {
 
     /// Gets the instructions of the block.
     pub fn instructions(&self) -> impl Iterator<Item = &Instruction> {
-        self.instructions.iter()
+        self.instructions.values()
     }
 
     /// Gets the instructions of the block.
     pub fn instructions_mut(&mut self) -> impl Iterator<Item = &mut Instruction> {
-        self.instructions.iter_mut()
+        self.instructions.values_mut()
+    }
+
+    /// Pushes the given instruction to the block.
+    pub fn push_instruction(&mut self, inst: Instruction) {
+        let id = InstructionId(self.instructions.len());
+        self.instructions.insert(id, inst);
     }
 
     /// Gets the terminator of the block if one has been set.
@@ -800,7 +806,7 @@ impl BasicBlock {
 
     /// Declares a new stack-allocated register with the given value.
     pub fn declare(&mut self, register: RegisterId, decl: Declaration, ty: Type, loc: Location) {
-        self.instructions.push(Instruction {
+        self.push_instruction(Instruction {
             kind: InstructionKind::Let { register, decl, ty },
             location: loc,
         });
@@ -808,7 +814,7 @@ impl BasicBlock {
 
     /// Declares a new stack-allocated slot with the given value.
     pub fn create_slot(&mut self, slot: SlotId, ty: Type, loc: Location) {
-        self.instructions.push(Instruction {
+        self.push_instruction(Instruction {
             kind: InstructionKind::CreateSlot { slot, ty },
             location: loc,
         });
@@ -816,7 +822,7 @@ impl BasicBlock {
 
     /// Declares a new heap-allocated register with the given type.
     pub fn allocate(&mut self, register: RegisterId, ty: Type, metadata: RegisterId, loc: Location) {
-        self.instructions.push(Instruction {
+        self.push_instruction(Instruction {
             kind: InstructionKind::Allocate { register, ty, metadata },
             location: loc,
         });
@@ -824,7 +830,7 @@ impl BasicBlock {
 
     /// Stores a value in an existing register.
     pub fn store(&mut self, target: RegisterId, value: Operand, loc: Location) {
-        self.instructions.push(Instruction {
+        self.push_instruction(Instruction {
             kind: InstructionKind::Store { target, value },
             location: loc,
         });
@@ -832,7 +838,7 @@ impl BasicBlock {
 
     /// Stores a value in an existing slot.
     pub fn store_slot(&mut self, target: SlotId, offset: usize, value: Operand, loc: Location) {
-        self.instructions.push(Instruction {
+        self.push_instruction(Instruction {
             kind: InstructionKind::StoreSlot { target, value, offset },
             location: loc,
         });
@@ -840,7 +846,7 @@ impl BasicBlock {
 
     /// Stores a value in a field of an existing register.
     pub fn store_field(&mut self, target: RegisterId, offset: usize, value: Operand, location: Location) {
-        self.instructions.push(Instruction {
+        self.push_instruction(Instruction {
             kind: InstructionKind::StoreField { target, offset, value },
             location,
         });
@@ -973,7 +979,7 @@ impl std::fmt::Display for BasicBlock {
                 .join(", ")
         )?;
 
-        for stmt in &self.instructions {
+        for stmt in self.instructions() {
             writeln!(f, "    {stmt}")?;
         }
 
@@ -1115,6 +1121,16 @@ impl SlotId {
 impl std::fmt::Display for SlotId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "@{}", self.0)
+    }
+}
+
+/// Unique ID for an instruction within a basic block.
+#[derive(Serialize, Deserialize, Default, Debug, Hash, Clone, Copy, PartialEq, Eq)]
+pub struct InstructionId(pub usize);
+
+impl std::fmt::Display for InstructionId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -1866,8 +1882,6 @@ impl Type {
     }
 
     pub fn requires_stack_map(&self) -> bool {
-        // void-pointers are only really used for type arguments, which do not
-        // require a stack map.
         if let TypeKind::Pointer { elemental } = &self.kind
             && let TypeKind::Void = &elemental.kind
         {
