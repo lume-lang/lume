@@ -30,7 +30,7 @@ impl OptimizerPass for HeapToStack {
         let func = mcx.mir().function(func_id);
 
         for block in func.blocks.values() {
-            for (idx, inst) in block.instructions().enumerate() {
+            for (&idx, inst) in &block.instructions {
                 let InstructionKind::Allocate { register, .. } = &inst.kind else {
                     continue;
                 };
@@ -47,7 +47,7 @@ impl OptimizerPass for HeapToStack {
 
         for (block_id, offset) in replacements {
             let block = func.block(block_id);
-            let inst = block.instructions.get(offset).unwrap();
+            let inst = block.instructions.get(&offset).unwrap();
 
             let InstructionKind::Allocate { register, ty, .. } = inst.kind.clone() else {
                 unreachable!();
@@ -55,7 +55,7 @@ impl OptimizerPass for HeapToStack {
 
             let slot = func.add_slot(ty.clone());
             let block = func.block_mut(block_id);
-            let inst = block.instructions.get_mut(offset).unwrap();
+            let inst = block.instructions.get_mut(&offset).unwrap();
 
             inst.kind = InstructionKind::CreateSlot { slot, ty };
 
@@ -76,10 +76,12 @@ fn replace_reg_with_slot(
     block_id: BasicBlockId,
     register: RegisterId,
     slot: SlotId,
-    offset: usize,
+    after: InstructionId,
 ) {
     let func = mcx.mir_mut().function_mut(func_id);
     let block = func.block_mut(block_id);
+
+    let offset = block.instructions.get_index_of(&after).unwrap_or(0);
 
     for inst in block.instructions_mut().skip(offset) {
         match &mut inst.kind {
@@ -153,7 +155,7 @@ fn replace_reg_with_slot(
 
     // Remove any object register instructions which point to the register,
     // since it is now no longer a register.
-    block.instructions.retain(|ins| {
+    block.instructions.retain(|_id, ins| {
         if let InstructionKind::ObjectRegister { register: target } = &ins.kind
             && *target == register
         {
