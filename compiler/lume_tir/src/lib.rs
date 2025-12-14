@@ -762,6 +762,7 @@ pub struct Variant {
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Pattern {
     pub id: NodeId,
+    pub ty: TypeRef,
     pub kind: PatternKind,
     pub location: Location,
 }

@@ -4,12 +4,15 @@ use crate::LowerFunction;
 
 impl LowerFunction<'_> {
     pub(crate) fn pattern(&mut self, pattern: &lume_hir::Pattern) -> Result<lume_tir::Pattern> {
+        let pattern_type = self.lower.tcx.type_of_pattern(pattern)?;
+
         match &pattern.kind {
             lume_hir::PatternKind::Literal(lit) => {
                 let literal = self.literal(&lit.literal);
 
                 Ok(lume_tir::Pattern {
                     id: pattern.id,
+                    ty: pattern_type,
                     kind: lume_tir::PatternKind::Literal(literal),
                     location: pattern.location,
                 })
@@ -20,6 +23,7 @@ impl LowerFunction<'_> {
 
                 Ok(lume_tir::Pattern {
                     id: pattern.id,
+                    ty: pattern_type,
                     kind: lume_tir::PatternKind::Variable(var),
                     location: pattern.location,
                 })
@@ -37,11 +41,11 @@ impl LowerFunction<'_> {
                     .map(|field| self.pattern(field))
                     .collect::<Result<Vec<_>>>()?;
 
-                #[allow(clippy::cast_possible_truncation)]
                 Ok(lume_tir::Pattern {
                     id: pattern.id,
+                    ty: pattern_type,
                     kind: lume_tir::PatternKind::Variant(lume_tir::VariantPattern {
-                        index: index as u8,
+                        index: u8::try_from(index).unwrap(),
                         ty,
                         name,
                         fields,
@@ -51,6 +55,7 @@ impl LowerFunction<'_> {
             }
             lume_hir::PatternKind::Wildcard(_) => Ok(lume_tir::Pattern {
                 id: pattern.id,
+                ty: pattern_type,
                 kind: lume_tir::PatternKind::Wildcard,
                 location: pattern.location,
             }),
