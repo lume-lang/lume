@@ -1,0 +1,16 @@
+fn "identity" (value: box void #0, $T: ptr std::Type #1) -> box void {
+B0:
+    let #2: box void = #0
+    return #2
+}
+
+fn "main" () -> void {
+B0:
+    let #0: metadata std::Int32 = metadata std::Int32()
+    let #1: metadata identity::T = metadata identity::T()
+    #2 = alloc i32
+    *#2 = 42_i32
+    let #3: box i32 = call identity(#2, #0)
+    let #4: i32 = *#3
+    return
+}

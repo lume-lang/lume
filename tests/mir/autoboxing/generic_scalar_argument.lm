@@ -1,0 +1,7 @@
+fn foo<T>(value: T) {
+    // ...
+}
+
+pub fn main() {
+    foo(42_i32);
+}
