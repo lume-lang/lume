@@ -147,17 +147,13 @@ impl LowerFunction<'_> {
             } => {
                 let ty = self.backend.cl_type_of(loaded_type);
                 let stack = self.retrieve_slot(*target);
-
-                #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
-                let offset = *offset as i32;
+                let offset = i32::try_from(*offset).unwrap();
 
                 self.builder.ins().stack_load(ty, stack, offset)
             }
             lume_mir::OperandKind::SlotAddress { id, offset } => {
                 let slot = self.retrieve_slot(*id);
-
-                #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
-                let offset = *offset as i32;
+                let offset = i32::try_from(*offset).unwrap();
 
                 self.builder.ins().stack_addr(self.backend.cl_ptr_type(), slot, offset)
             }

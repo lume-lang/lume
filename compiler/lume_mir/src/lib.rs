@@ -1714,6 +1714,15 @@ impl Type {
         }
     }
 
+    pub fn boxed(elemental: Type) -> Self {
+        Self {
+            kind: TypeKind::Box {
+                elemental: Box::new(elemental),
+            },
+            is_generic: false,
+        }
+    }
+
     pub fn pointer(elemental: Type) -> Self {
         Self {
             kind: TypeKind::Pointer {
@@ -1725,7 +1734,7 @@ impl Type {
 
     pub fn type_param() -> Self {
         Self {
-            kind: TypeKind::Pointer {
+            kind: TypeKind::Box {
                 elemental: Box::new(Type::void()),
             },
             is_generic: true,
@@ -1929,7 +1938,9 @@ impl Type {
             TypeKind::Tuple { items } => items.iter().map(Type::bytesize).sum(),
             TypeKind::Integer { bits, .. } | TypeKind::Float { bits } => (*bits / 8) as usize,
             TypeKind::Boolean => 1,
-            TypeKind::String | TypeKind::Pointer { .. } | TypeKind::Metadata { .. } => POINTER_SIZE,
+            TypeKind::String | TypeKind::Box { .. } | TypeKind::Pointer { .. } | TypeKind::Metadata { .. } => {
+                POINTER_SIZE
+            }
             TypeKind::Void | TypeKind::Never => 0,
         }
     }
@@ -1973,6 +1984,9 @@ pub enum TypeKind {
     /// lowering into a pointer to a [`TypeKind::Integer`] type.
     String,
 
+    /// Defines a type which is boxed.
+    Box { elemental: Box<Type> },
+
     /// Defines a pointer type.
     Pointer { elemental: Box<Type> },
 
@@ -1990,7 +2004,12 @@ impl TypeKind {
     pub fn is_reference_type(&self) -> bool {
         matches!(
             self,
-            Self::Struct { .. } | Self::Union { .. } | Self::String | Self::Pointer { .. } | Self::Metadata { .. }
+            Self::Struct { .. }
+                | Self::Union { .. }
+                | Self::String
+                | Self::Box { .. }
+                | Self::Pointer { .. }
+                | Self::Metadata { .. }
         )
     }
 }
@@ -2021,6 +2040,7 @@ impl std::fmt::Display for TypeKind {
             Self::Float { bits } => write!(f, "f{bits}"),
             Self::Boolean => write!(f, "bool"),
             Self::String => write!(f, "string"),
+            Self::Box { elemental } => write!(f, "box {elemental}"),
             Self::Pointer { elemental } => write!(f, "ptr {elemental}"),
             Self::Metadata { inner } => write!(f, "metadata {}", inner.full_name),
             Self::Void => write!(f, "void"),

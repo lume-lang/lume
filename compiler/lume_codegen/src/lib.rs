@@ -730,8 +730,9 @@ impl<'ctx> LowerFunction<'ctx> {
             return types::I8;
         }
 
-        let lume_mir::TypeKind::Pointer { elemental } = &reg_ty.kind else {
-            panic!("bug!: attempting to load non-pointer register");
+        let elemental = match &reg_ty.kind {
+            lume_mir::TypeKind::Box { elemental } | lume_mir::TypeKind::Pointer { elemental } => elemental,
+            _ => panic!("bug!: attempting to load non-pointer register"),
         };
 
         if let lume_mir::TypeKind::Union { .. } = &elemental.kind {
