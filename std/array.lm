@@ -60,7 +60,7 @@ impl<T> Array<T> {
     ///
     /// If `index` is outside of the bounds of the array, returns `Optional::None`.
     pub fn get(self, index: UInt64) -> Optional<T> {
-        if index > self.length {
+        if index >= self.length {
             return Optional<T>::None;
         }
 
