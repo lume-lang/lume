@@ -1882,6 +1882,10 @@ impl Type {
         self.kind == TypeKind::Never
     }
 
+    pub fn is_scalar_type(&self) -> bool {
+        self.kind.is_scalar_type()
+    }
+
     pub fn is_reference_type(&self) -> bool {
         self.kind.is_reference_type()
     }
@@ -2001,6 +2005,11 @@ pub enum TypeKind {
 }
 
 impl TypeKind {
+    #[inline]
+    pub fn is_scalar_type(&self) -> bool {
+        !self.is_reference_type()
+    }
+
     pub fn is_reference_type(&self) -> bool {
         matches!(
             self,

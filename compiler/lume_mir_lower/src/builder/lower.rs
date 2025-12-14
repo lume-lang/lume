@@ -201,23 +201,7 @@ pub(crate) fn expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Express
         lume_tir::ExpressionKind::Variant(expr) => variant_expression(builder, expr),
     };
 
-    if expr.ty.is_scalar_type() && builder.type_of_value(&op).is_reference_type() {
-        let return_ty = builder.lower_type(&expr.ty);
-
-        let target_reg = builder.declare_operand(op, OperandRef::Implicit);
-        let loaded_reg = builder.declare_operand_as(
-            return_ty,
-            lume_mir::Operand {
-                kind: lume_mir::OperandKind::Load { id: target_reg },
-                location: expr.location(),
-            },
-            OperandRef::Implicit,
-        );
-
-        return builder.use_register(loaded_reg, expr.location());
-    }
-
-    op
+    builder.unbox_value_if_needed(op, &expr.ty)
 }
 
 fn assignment(builder: &mut Builder<'_, '_>, expr: &lume_tir::Assignment) -> lume_mir::Operand {
