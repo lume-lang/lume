@@ -601,6 +601,11 @@ impl TypeRef {
     pub fn is_scalar_type(&self) -> bool {
         self.is_bool() || self.is_integer() || self.is_float()
     }
+
+    /// Determines if the type is a reference type.
+    pub fn is_reference_type(&self) -> bool {
+        !self.is_scalar_type()
+    }
 }
 
 impl PartialEq for TypeRef {

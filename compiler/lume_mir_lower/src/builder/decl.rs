@@ -115,6 +115,19 @@ impl Builder<'_, '_> {
         slot
     }
 
+    /// Loads the given register into a new register, where the type of the
+    /// loaded value is explicitly specified.
+    pub(crate) fn load_as(&mut self, loaded_type: Type, id: RegisterId, location: Location) -> RegisterId {
+        self.declare_operand_as(
+            loaded_type,
+            lume_mir::Operand {
+                kind: lume_mir::OperandKind::Load { id },
+                location,
+            },
+            OperandRef::Implicit,
+        )
+    }
+
     /// Stores the given value into an existing register.
     pub(crate) fn store(&mut self, target: RegisterId, value: Operand, location: Location) {
         self.func.current_block_mut().store(target, value, location);
@@ -284,12 +297,7 @@ impl Builder<'_, '_> {
         // lowering these arguments, we create a slot in the stack to store the
         // argument, then we pass the address of the stack slot to the function.
         for (arg, param) in args.iter_mut().zip(params.iter()) {
-            // If the parameter isn't generic, we let it be.
-            if !param.ty.is_generic && !param.ty.kind.is_reference_type() {
-                continue;
-            }
-
-            *arg = self.ref_or_box(arg.clone(), &param.type_ref);
+            *arg = self.box_value_if_needed(arg.clone(), &param.type_ref);
         }
 
         if vararg && args.len() >= params.len() - 1 {
@@ -346,29 +354,42 @@ impl Builder<'_, '_> {
         new_args.push(lume_mir::Operand::reference_of(vararg_arr_reg));
         new_args
     }
+}
+
+impl Builder<'_, '_> {
+    /// Determines whether the given value needs to be boxed, given the
+    /// expected type of the value.
+    pub(crate) fn needs_boxing(&self, value: &lume_mir::Operand, expected_type: &TypeRef) -> bool {
+        let expected_type = self.lower_type(expected_type);
+        let value_type = self.type_of_value(value);
+
+        expected_type.is_reference_type() && value_type.is_scalar_type()
+    }
+
+    /// Determines whether the given value needs to be unboxed, given the
+    /// expected type of the value.
+    pub(crate) fn needs_unboxing(&self, value: &lume_mir::Operand, expected_type: &TypeRef) -> bool {
+        let value_type = self.type_of_value(value);
+
+        expected_type.is_scalar_type() && value_type.is_reference_type()
+    }
 
     /// Either references or boxes the given value, depending on the type of the
-    /// given value.
+    /// given value. This method does not check whether the value needs to be
+    /// boxed; to only box a value if it's necessary, use
+    /// [`Self::box_value_if_needed`].
     ///
-    /// If the value is a reference type, it is returned as-is. Otherwise, it is
-    /// boxed on either the heap or the stack, depending on whether it
-    /// escapes the current function.
+    /// Whether the value is allocated on the heap or stack depends on whether
+    /// it escapes the current function.
     ///
-    /// | Type      | Escapes | Result        |
-    /// |-----------|---------|---------------|
-    /// | Reference | N/A     | Referenced    |
-    /// | Value     | No      | Boxed (stack) |
-    /// | Value     | Yes     | Boxed (heap)  |
-    fn ref_or_box(&mut self, value: lume_mir::Operand, ty: &TypeRef) -> lume_mir::Operand {
+    /// | Escapes | Result        |
+    /// |---------|---------------|
+    /// | No      | Boxed (stack) |
+    /// | Yes     | Boxed (heap)  |
+    pub(crate) fn box_value(&mut self, value: lume_mir::Operand, expected_type: &TypeRef) -> lume_mir::Operand {
         let location = value.location;
-        let operand_type = self.type_of_value(&value);
 
-        // If the operand is already a reference type, return it as-is.
-        if operand_type.is_reference_type() {
-            return value;
-        }
-
-        let does_escape = match &value.kind {
+        let allocate_on_heap = match &value.kind {
             // Scalar types always get stored on the heap, since they are
             // declared inline (i.e. have no backing static memory address).
             lume_mir::OperandKind::Boolean { .. }
@@ -391,10 +412,59 @@ impl Builder<'_, '_> {
                 .escapes(),
         };
 
-        if !does_escape {
-            self.store_on_stack(value, location)
+        if allocate_on_heap {
+            self.store_on_heap(value, expected_type, location)
         } else {
-            self.store_on_heap(value, ty, location)
+            self.store_on_stack(value, location)
+        }
+    }
+
+    /// Boxes the given operand value, if needed by the expected type. If the
+    /// value does not need to be boxed, it returns the original value.
+    ///
+    /// This method checks whether the value should be boxed, as opposed to
+    /// [`Self::box_value`].
+    pub(crate) fn box_value_if_needed(
+        &mut self,
+        value: lume_mir::Operand,
+        expected_type: &TypeRef,
+    ) -> lume_mir::Operand {
+        if self.needs_boxing(&value, expected_type) {
+            self.box_value(value, expected_type)
+        } else {
+            value
+        }
+    }
+
+    /// Unboxes the given operand value.
+    ///
+    /// This method does not check whether the value should be unboxed or not -
+    /// it assumes that the value is a boxed value and should be unboxed.
+    pub(crate) fn unbox_value(&mut self, value: lume_mir::Operand, expected_type: &TypeRef) -> lume_mir::Operand {
+        let location = value.location;
+        let return_type = self.lower_type(expected_type);
+
+        let declared_operand = self.declare_operand(value, OperandRef::Implicit);
+        let loaded_operand = self.load_as(return_type, declared_operand, location);
+
+        self.use_register(loaded_operand, location)
+    }
+
+    /// Unboxes the given operand value, if needed by the expected type. If the
+    /// value is not boxed or does not need to be unboxed, it returns the
+    /// original value.
+    ///
+    /// This method checks whether the value should be unboxed, as opposed to
+    /// [`Self::unbox_value`].
+    pub(crate) fn unbox_value_if_needed(
+        &mut self,
+        value: lume_mir::Operand,
+        expected_type: &TypeRef,
+    ) -> lume_mir::Operand {
+        if self.needs_unboxing(&value, expected_type) {
+            self.unbox_value(value, expected_type)
+        } else {
+            value
         }
     }
 }
