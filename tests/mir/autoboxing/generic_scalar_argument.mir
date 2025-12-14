@@ -1,0 +1,14 @@
+fn "foo" (value: box void #0, $T: ptr std::Type #1) -> void {
+B0:
+    return
+}
+
+fn "main" () -> void {
+B0:
+    let #0: metadata std::Int32 = metadata std::Int32()
+    let #1: metadata foo::T = metadata foo::T()
+    #2 = alloc i32
+    *#2 = 42_i32
+    let #3: void = call foo(#2, #0)
+    return
+}
