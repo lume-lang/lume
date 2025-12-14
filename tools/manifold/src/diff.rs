@@ -22,6 +22,8 @@ pub(crate) fn diff_output_of(output: String, path: PathBuf, output_path: PathBuf
     let mut output_path_new = output_path.clone();
     output_path_new.set_extension(new_extension);
 
+    let output = normalize_output(&output);
+
     if output_path.is_file() {
         let expected_output = std::fs::read_to_string(&output_path).map_err(IntoDiagnostic::into_diagnostic)?;
         let expected_output = normalize_output(&expected_output);
