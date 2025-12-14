@@ -489,6 +489,14 @@ fn if_condition(builder: &mut Builder<'_, '_>, expr: &lume_tir::If) -> lume_mir:
 
 fn intrinsic_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::IntrinsicCall) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
+        // Niche for metadata intrinsics - tries to prevent cluttering up the MIR
+        // with metadata intrinsics.
+        if let lume_tir::IntrinsicKind::Metadata { id } = &expr.kind {
+            let metadata_reg = builder.declare_metadata_with_id(*id, expr.location);
+
+            return builder.use_register(metadata_reg, expr.location);
+        }
+
         let name = builder.intrinsic_of(&expr.kind);
 
         let mut call_arguments = Vec::with_capacity(expr.arguments.len());
