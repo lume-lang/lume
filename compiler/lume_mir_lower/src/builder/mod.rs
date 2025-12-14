@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use lume_mir::*;
 use lume_mir_queries::MirQueryCtx;
 use lume_span::{Location, NodeId};
-use lume_type_metadata::{TypeMetadata, TypeMetadataId};
+use lume_type_metadata::TypeMetadataId;
 use lume_typech::TyCheckCtx;
 use lume_types::TypeRef;
 
@@ -477,36 +477,29 @@ impl Builder<'_, '_> {
         }
     }
 
-    /// Gets the metadata entry of the given type.
-    pub(crate) fn metadata_entry_of(&self, type_ref: &lume_types::TypeRef) -> &TypeMetadata {
-        let metadata_id = TypeMetadataId::from(type_ref);
-
-        self.mcx.mir().metadata.metadata.get(&metadata_id).unwrap()
-    }
-
-    /// Gets the metadata MIR type of the given type.
-    pub(crate) fn metadata_type_of(&self, type_ref: &lume_types::TypeRef) -> Type {
-        let metadata_entry = self.metadata_entry_of(type_ref);
-
-        Type {
-            kind: TypeKind::Metadata {
-                inner: Box::new(metadata_entry.to_owned()),
-            },
-            is_generic: false,
-        }
-    }
-
     /// Declares a new register with the metadata entry of the given type.
     pub(crate) fn declare_metadata_of(&mut self, type_ref: &lume_types::TypeRef, location: Location) -> RegisterId {
-        let current_block = self.func.current_block().id;
         let metadata_id = TypeMetadataId::from(type_ref);
+
+        self.declare_metadata_with_id(metadata_id, location)
+    }
+
+    /// Declares a new register with the metadata entry of the given metadata
+    /// ID.
+    pub(crate) fn declare_metadata_with_id(&mut self, metadata_id: TypeMetadataId, location: Location) -> RegisterId {
+        let current_block = self.func.current_block().id;
 
         if let Some(existing_register) = self.metadata_registers.get(&(current_block, metadata_id)) {
             return *existing_register;
         }
 
-        let metadata_entry = self.metadata_entry_of(type_ref);
-        let metadata_type = self.metadata_type_of(type_ref);
+        let metadata_entry = self.mcx.mir().metadata.metadata.get(&metadata_id).unwrap();
+        let metadata_type = Type {
+            kind: TypeKind::Metadata {
+                inner: Box::new(metadata_entry.to_owned()),
+            },
+            is_generic: false,
+        };
 
         let metadata_register = self.declare_as(metadata_type, lume_mir::Declaration {
             kind: Box::new(lume_mir::DeclarationKind::Intrinsic {
