@@ -72,8 +72,10 @@ impl<T> Array<T> {
 
     /// Sets an element at position `index` within the array to the given value `value`.
     pub fn set(self, index: UInt64, value: T) {
-        // TODO: panic if index > len
-        let value = std::mem::ref_or_box<T>(value);
+        if index >= self.length {
+            std::process::bail("index out of bounds");
+        }
+
         let offset = std::type_of<Pointer<T>>().size * index;
 
         self.mem.write(value, offset);
@@ -86,8 +88,10 @@ impl<T> Array<T> {
             self.reserve(self.capacity() + 1_u64);
         }
 
-        self.set(self.length, value);
+        let length = self.length;
+
         self.length = self.length + 1_u64;
+        self.set(length, value);
     }
 
     /// Ensures that the array has the capacity for at least the given
