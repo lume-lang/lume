@@ -150,6 +150,13 @@ impl TyInferCtx {
         never_type.instance_of == ty.instance_of
     }
 
+    /// Determines whether the given [`TypeRef`] can have any value.
+    #[cached_query]
+    #[libftrace::traced(level = Trace)]
+    pub fn does_type_have_value(&self, ty: &TypeRef) -> bool {
+        !ty.is_void() && !self.is_type_never(ty)
+    }
+
     /// Gets the `lang_item` with the given name from the HIR map.
     #[cached_query]
     #[libftrace::traced(level = Trace)]
