@@ -491,7 +491,7 @@ pub struct Call {
 pub struct If {
     pub id: NodeId,
     pub cases: Vec<Conditional>,
-    pub return_type: Option<TypeRef>,
+    pub return_type: TypeRef,
     pub location: Location,
 }
 

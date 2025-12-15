@@ -420,9 +420,9 @@ fn if_condition(builder: &mut Builder<'_, '_>, expr: &lume_tir::If) -> lume_mir:
         };
 
         let merge_parameter = if let Some(merge_block) = merge_block
-            && let Some(return_type) = expr.return_type.as_ref()
+            && builder.tcx().does_type_have_value(&expr.return_type)
         {
-            let expr_ty = builder.lower_type(return_type);
+            let expr_ty = builder.lower_type(&expr.return_type);
             let parameter = builder.func.add_block_parameter(merge_block, expr_ty);
 
             Some(parameter)
