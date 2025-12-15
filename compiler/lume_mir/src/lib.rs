@@ -548,9 +548,13 @@ impl BoundVariables {
     /// Gets the moved register ID of the given register. If the register
     /// has not been reassigned, returns `id`.
     pub fn moved_register(&self, block: BasicBlockId, id: RegisterId) -> RegisterId {
-        let local = LocalRegister { block, register: id };
+        let mut local = LocalRegister { block, register: id };
 
-        *self.reassigned.get(&local).unwrap_or(&id)
+        while let Some(moved) = self.reassigned.get(&local) {
+            local.register = *moved;
+        }
+
+        local.register
     }
 }
 
