@@ -160,7 +160,7 @@ impl MarkObjectReferences {
         location: Location,
     ) {
         match &op.kind {
-            OperandKind::Load { id } | OperandKind::Reference { id } => {
+            OperandKind::Load { id, .. } | OperandKind::Reference { id } => {
                 self.register_gc_object(func, block, inst_id, *id, placement, location);
             }
             OperandKind::LoadField { target, .. } => {

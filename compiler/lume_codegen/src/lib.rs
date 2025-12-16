@@ -704,13 +704,13 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.use_var(var)
     }
 
-    pub(crate) fn load_var(&mut self, register: RegisterId) -> Value {
+    pub(crate) fn load_variable(&mut self, register: RegisterId, ty: Type) -> Value {
         let val = self.use_var(register);
-        let ty = self.retrieve_load_type(register);
+        let loaded = self.builder.ins().load(ty, MemFlags::new(), val, 0);
 
-        libftrace::debug!("loading {val} from {register}, type {ty}");
+        libftrace::debug!("loading {loaded} from {register}({val}), type {ty}");
 
-        self.builder.ins().load(ty, MemFlags::new(), val, 0)
+        loaded
     }
 
     #[libftrace::traced(level = Trace, fields(name = self.func.name, register, offset, ty))]
@@ -721,25 +721,6 @@ impl<'ctx> LowerFunction<'ctx> {
         libftrace::debug!("load_field", ptr = ptr, ty = ty, register = register);
 
         self.builder.ins().load(ty, MemFlags::new(), ptr, offset as i32)
-    }
-
-    pub(crate) fn retrieve_load_type(&self, register: RegisterId) -> Type {
-        let reg_ty = self.func.registers.register_ty(register);
-
-        if let lume_mir::TypeKind::Union { .. } = &reg_ty.kind {
-            return types::I8;
-        }
-
-        let elemental = match &reg_ty.kind {
-            lume_mir::TypeKind::Box { elemental } | lume_mir::TypeKind::Pointer { elemental } => elemental,
-            _ => panic!("bug!: attempting to load non-pointer register"),
-        };
-
-        if let lume_mir::TypeKind::Union { .. } = &elemental.kind {
-            return types::I8;
-        }
-
-        self.backend.cl_type_of(elemental)
     }
 
     pub(crate) fn retrieve_slot(&self, slot: SlotId) -> StackSlot {

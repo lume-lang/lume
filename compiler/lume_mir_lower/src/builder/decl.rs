@@ -119,9 +119,9 @@ impl Builder<'_, '_> {
     /// loaded value is explicitly specified.
     pub(crate) fn load_as(&mut self, loaded_type: Type, id: RegisterId, location: Location) -> RegisterId {
         self.declare_operand_as(
-            loaded_type,
+            loaded_type.clone(),
             lume_mir::Operand {
-                kind: lume_mir::OperandKind::Load { id },
+                kind: lume_mir::OperandKind::Load { id, loaded_type },
                 location,
             },
             OperandRef::Implicit,
@@ -404,7 +404,7 @@ impl Builder<'_, '_> {
             lume_mir::OperandKind::SlotAddress { .. } | lume_mir::OperandKind::LoadSlot { .. } => false,
 
             lume_mir::OperandKind::Bitcast { source: id, .. }
-            | lume_mir::OperandKind::Load { id }
+            | lume_mir::OperandKind::Load { id, .. }
             | lume_mir::OperandKind::LoadField { target: id, .. }
             | lume_mir::OperandKind::Reference { id } => self
                 .mcx

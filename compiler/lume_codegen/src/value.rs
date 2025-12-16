@@ -133,7 +133,9 @@ impl LowerFunction<'_> {
 
                 self.builder.ins().bitcast(target_type, MemFlags::new(), source)
             }
-            lume_mir::OperandKind::Load { id } => self.load_var(*id),
+            lume_mir::OperandKind::Load { id, loaded_type } => {
+                self.load_variable(*id, self.backend.cl_type_of(loaded_type))
+            }
             lume_mir::OperandKind::LoadField {
                 target,
                 offset,

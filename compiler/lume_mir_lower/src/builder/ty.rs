@@ -17,16 +17,10 @@ impl Builder<'_, '_> {
             lume_mir::OperandKind::Float { bits, .. } => lume_mir::Type::float(*bits),
             lume_mir::OperandKind::String { .. } => lume_mir::Type::string(),
             lume_mir::OperandKind::Bitcast { target, .. } => target.to_owned(),
-            lume_mir::OperandKind::Load { id } => {
-                let register_type = self.func.registers.register_ty(*id).clone();
-                let lume_mir::TypeKind::Pointer { elemental } = &register_type.kind else {
-                    panic!("bug!: attempted to load non-pointer type: {id}, {register_type}");
-                };
-
-                elemental.as_ref().clone()
-            }
             lume_mir::OperandKind::LoadField { field_type, .. } => field_type.clone(),
-            lume_mir::OperandKind::LoadSlot { loaded_type, .. } => loaded_type.clone(),
+            lume_mir::OperandKind::Load { loaded_type, .. } | lume_mir::OperandKind::LoadSlot { loaded_type, .. } => {
+                loaded_type.clone()
+            }
             lume_mir::OperandKind::SlotAddress { id, .. } => {
                 let slot_ty = self.func.slots.get(id).unwrap();
 
