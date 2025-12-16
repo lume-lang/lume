@@ -214,7 +214,7 @@ fn variant_field_type(builder: &Builder<'_, '_>, id: lume_span::NodeId, field_id
 
     let field_type = builder
         .tcx()
-        .type_of_variant_field(&variant_pattern.name, field_idx)
+        .type_of_variant_field_uninstantiated(&variant_pattern.name, field_idx)
         .unwrap();
 
     builder.lower_type(&field_type)

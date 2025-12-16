@@ -472,6 +472,26 @@ impl TyInferCtx {
         Ok(ty.with_location(pat.location))
     }
 
+    /// Returns the uninstantiated *type* of the field within the enum
+    /// definition with the given name.
+    #[cached_query(result)]
+    #[libftrace::traced(level = Trace, err)]
+    pub fn type_of_variant_field_uninstantiated(&self, variant_name: &Path, field: usize) -> Result<TypeRef> {
+        let enum_def = self.enum_def_with_name(&variant_name.clone().parent().unwrap())?;
+        let enum_case_def = self.enum_case_with_name(variant_name)?;
+
+        let Some(enum_field) = enum_case_def.parameters.get(field) else {
+            return Err(diagnostics::ArgumentCountMismatch {
+                source: variant_name.location,
+                expected: enum_case_def.parameters.len(),
+                actual: field,
+            }
+            .into());
+        };
+
+        self.mk_type_ref_from(enum_field, enum_def.id)
+    }
+
     /// Returns the *type* of the field within the enum definition with the
     /// given name.
     #[cached_query(result)]
