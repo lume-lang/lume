@@ -5,8 +5,10 @@ use serde::{Deserialize, Serialize};
 pub mod map;
 pub mod pretty;
 pub mod symbols;
+pub mod visitor;
 
 pub use map::Map;
+pub use visitor::{Visitor, traverse};
 
 pub const SELF_TYPE_NAME: &str = "self";
 
