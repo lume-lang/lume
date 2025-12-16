@@ -1,0 +1,29 @@
+fn "force_or_zero" (opt: ptr (u8, ) #0) -> i32 {
+B0:
+    let #1: ptr (u8, ) = #0
+    let #2: u8 = *#0[+x0]
+    let #3: bool = ==(#2, 0_u8)
+    let #4: box void = *#0[+x1]
+    let #5: bool = &&(#3, true)
+    if #5 goto B1(#4) else B2
+B1(#7):  B0
+    let #8: i32 = *#7
+    let #9: i32 = #8
+    return #8
+B2:  B0
+    let #11: i32 = 0_i32
+    let #12: bool = false
+    return 0_i32
+}
+
+fn "main" () -> void {
+B0:
+    let #0: metadata std::Optional = metadata std::Optional()
+    #1 = alloc (u8, (box void), ())
+    *#1[+x0] = #0
+    *#1[+x8] = 0_u8
+    *#1[+x9] = 42_i32
+    let #2: ptr (u8, (box void), ()) = +(#1, 8_u64)
+    let #3: i32 = call force_or_zero(#2)
+    return
+}

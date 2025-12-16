@@ -1,0 +1,11 @@
+fn force_or_zero(opt: std::Optional<Int32>) -> Int32 {
+    if opt is std::Optional<Int32>::Some(value) {
+        return value;
+    } else {
+        return 0_i32;
+    }
+}
+
+pub fn main() {
+    force_or_zero(std::Optional<Int32>::Some(42_i32));
+}
