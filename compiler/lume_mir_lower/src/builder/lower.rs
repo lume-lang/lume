@@ -218,12 +218,15 @@ fn assignment(builder: &mut Builder<'_, '_>, expr: &lume_tir::Assignment) -> lum
                     location: expr.location,
                 }
             }
-            lume_mir::OperandKind::Load { id } => {
+            lume_mir::OperandKind::Load { id, loaded_type } => {
                 let id = builder.func.moved_register(*id);
                 builder.store(id, value_operand, expr.location);
 
                 lume_mir::Operand {
-                    kind: lume_mir::OperandKind::Load { id },
+                    kind: lume_mir::OperandKind::Load {
+                        id,
+                        loaded_type: loaded_type.clone(),
+                    },
                     location: expr.location,
                 }
             }
@@ -620,7 +623,7 @@ fn switch(builder: &mut Builder<'_, '_>, expr: &lume_tir::Switch) -> lume_mir::O
     let merge_block = builder.new_block();
 
     let result_type = builder.lower_type(&expr.fallback.ty);
-    let result_slot = builder.alloc_slot(result_type, expr.location);
+    let result_slot = builder.alloc_slot(result_type.clone(), expr.location);
 
     let operand = builder.with_current_block(|builder, block| {
         let operand = if expr.operand.ty.is_float() {
@@ -676,7 +679,10 @@ fn switch(builder: &mut Builder<'_, '_>, expr: &lume_tir::Switch) -> lume_mir::O
         let slot_address = builder.slot_address(result_slot, 0, expr.location);
 
         lume_mir::Operand {
-            kind: lume_mir::OperandKind::Load { id: slot_address },
+            kind: lume_mir::OperandKind::Load {
+                id: slot_address,
+                loaded_type: result_type,
+            },
             location: expr.location,
         }
     })

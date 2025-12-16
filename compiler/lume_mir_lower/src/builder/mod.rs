@@ -470,8 +470,8 @@ impl Builder<'_, '_> {
             lume_mir::OperandKind::Reference { .. }
             | lume_mir::OperandKind::SlotAddress { .. }
             | lume_mir::OperandKind::String { .. } => POINTER_SIZE,
-            lume_mir::OperandKind::Load { id } => self.func.registers.register_ty(*id).bytesize(),
             lume_mir::OperandKind::Bitcast { target: ty, .. }
+            | lume_mir::OperandKind::Load { loaded_type: ty, .. }
             | lume_mir::OperandKind::LoadField { field_type: ty, .. }
             | lume_mir::OperandKind::LoadSlot { loaded_type: ty, .. } => ty.bytesize(),
         }

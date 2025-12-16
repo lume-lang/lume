@@ -256,7 +256,7 @@ impl RenameSsaVariables {
 
     fn update_regs_op(op: &mut Operand, block: BasicBlockId, mapping: &mut RegisterMapping) {
         match &mut op.kind {
-            OperandKind::Load { id } | OperandKind::Reference { id } => {
+            OperandKind::Load { id, .. } | OperandKind::Reference { id } => {
                 *id = mapping.get(block, *id);
             }
             OperandKind::LoadField { target, .. } => {

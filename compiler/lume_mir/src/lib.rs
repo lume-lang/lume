@@ -1411,7 +1411,7 @@ pub enum OperandKind {
     Bitcast { source: RegisterId, target: Type },
 
     /// Represents a loaded value from an existing register.
-    Load { id: RegisterId },
+    Load { id: RegisterId, loaded_type: Type },
 
     /// Represents a loaded value from an existing register.
     LoadField {
@@ -1454,7 +1454,7 @@ impl Operand {
 
     pub fn register_refs(&self) -> Vec<RegisterId> {
         match &self.kind {
-            OperandKind::Load { id } | OperandKind::Reference { id } => {
+            OperandKind::Load { id, .. } | OperandKind::Reference { id } => {
                 vec![*id]
             }
             OperandKind::LoadField { target, .. } => {
@@ -1482,7 +1482,7 @@ impl Operand {
             | OperandKind::Bitcast { .. }
             | OperandKind::LoadSlot { .. }
             | OperandKind::SlotAddress { .. } => false,
-            OperandKind::Reference { id } | OperandKind::Load { id } => *id == register,
+            OperandKind::Reference { id } | OperandKind::Load { id, .. } => *id == register,
             OperandKind::LoadField { target, .. } => *target == register,
         }
     }
@@ -1497,7 +1497,7 @@ impl Operand {
             | OperandKind::Bitcast { .. }
             | OperandKind::LoadSlot { .. }
             | OperandKind::SlotAddress { .. } => false,
-            OperandKind::Reference { id } | OperandKind::Load { id } => *id == register,
+            OperandKind::Reference { id } | OperandKind::Load { id, .. } => *id == register,
             OperandKind::LoadField { target, field_type, .. } => *target == register && field_type.is_reference_type(),
         }
     }
@@ -1513,7 +1513,7 @@ impl std::fmt::Display for Operand {
             OperandKind::Float { bits, value } => write!(f, "{value}_f{bits}"),
             OperandKind::Bitcast { source, target } => write!(f, "{source} as {target}"),
             OperandKind::Reference { id } => write!(f, "{id}"),
-            OperandKind::Load { id } => write!(f, "*{id}"),
+            OperandKind::Load { id, .. } => write!(f, "*{id}"),
             OperandKind::LoadField { target, offset, .. } => write!(f, "*{target}[+x{offset:X}]"),
             OperandKind::LoadSlot { target, offset, .. } => write!(f, "*{target}[+x{offset:X}]"),
             OperandKind::SlotAddress { id, offset } => write!(f, "{id}[+x{offset:X}]"),
