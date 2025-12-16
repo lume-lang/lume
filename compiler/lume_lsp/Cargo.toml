@@ -1,0 +1,33 @@
+[package]
+name = "lume_lsp"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+lume_driver = { path = "../lume_driver", default-features = false }
+lume_errors = { path = "../../crates/lume_errors" }
+lume_hir = { path = "../lume_hir" }
+lume_infer = { path = "../lume_infer" }
+lume_parser = { path = "../lume_parser" }
+lume_session = { path = "../lume_session", features = ["cli"] }
+lume_span = { path = "../../crates/lume_span" }
+
+clap = { workspace = true }
+crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
+error_snippet = { workspace = true }
+error_snippet_derive = { workspace = true }
+indexmap = { workspace = true }
+log = { version = "0.4" }
+lsp-server = { version = "=0.7.9" }
+lsp-types = { version = "=0.97.0" }
+serde = { workspace = true }
+serde_json = { version = "=1.0.140" }
+simple-logging = { version = "=2.0.2" }
+
+[lints]
+workspace = true

@@ -30,6 +30,9 @@ pub enum LumeSubcommands {
     Build(commands::BuildCommand),
     Format(commands::FormatCommand),
     Run(commands::RunCommand),
+
+    #[cfg(feature = "lsp")]
+    Lsp(commands::LanguageServerCommand),
 }
 
 #[cfg(debug_assertions)]
@@ -79,6 +82,9 @@ pub fn lume_cli_entry() {
         LumeSubcommands::Build(cmd) => cmd.run(dcx),
         LumeSubcommands::Format(cmd) => cmd.run(dcx),
         LumeSubcommands::Run(cmd) => cmd.run(dcx),
+
+        #[cfg(feature = "lsp")]
+        LumeSubcommands::Lsp(mut cmd) => cmd.run(dcx),
     });
 
     let mut renderer = error_snippet::GraphicalRenderer::new();

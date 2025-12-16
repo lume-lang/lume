@@ -13,6 +13,7 @@ arc = { path = "../arc" }
 lume_driver = { path = "../lume_driver" }
 lume_fmt = { path = "../../tools/fmt" }
 lume_errors = { path = "../../crates/lume_errors" }
+lume_lsp = { path = "../lume_lsp", optional = true }
 lume_session = { path = "../lume_session", features = ["cli"] }
 lume_span = { path = "../../crates/lume_span" }
 
@@ -24,7 +25,10 @@ libftrace = { workspace = true }
 toml = { version = "0.9.6" }
 
 [features]
+default = ["lsp"]
+
 tracing = []
+lsp = ["dep:lume_lsp"]
 
 [lints]
 workspace = true

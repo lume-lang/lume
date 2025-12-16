@@ -1,6 +1,8 @@
 pub(crate) mod arc;
 pub(crate) mod build;
 pub(crate) mod fmt;
+#[cfg(feature = "lsp")]
+pub(crate) mod lsp;
 pub(crate) mod run;
 
 use std::env::current_dir;
@@ -9,6 +11,8 @@ use std::path::PathBuf;
 pub(crate) use arc::ArcCommand;
 pub(crate) use build::BuildCommand;
 pub(crate) use fmt::FormatCommand;
+#[cfg(feature = "lsp")]
+pub(crate) use lsp::LanguageServerCommand;
 use lume_errors::{IntoDiagnostic, Result};
 pub(crate) use run::RunCommand;
 
