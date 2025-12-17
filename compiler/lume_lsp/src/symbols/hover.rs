@@ -1,6 +1,7 @@
+use lume_driver::CheckedPackage;
 use lume_errors::Result;
 use lume_hir::Identifier;
-use lume_infer::query::CallReference;
+use lume_infer::query::{CallReference, Callable};
 use lume_span::{Location, NodeId};
 
 use crate::state::State;
@@ -72,25 +73,78 @@ pub(crate) fn hover_content_of_callable(state: &State, location: Location, refer
     let package = state.checked.graph.packages.get(&location.file.package).unwrap();
     let callable = package.tcx.callable_of(reference)?;
 
-    let identifier = lume_hir::Identifier {
-        name: format!("{:+}", callable.name()),
-        location: callable.name().location,
+    match callable {
+        Callable::Function(func) => hover_content_of_function(package, func),
+        Callable::Method(method) => hover_content_of_method(package, method),
+    }
+}
+
+pub(crate) fn hover_content_of_function(package: &CheckedPackage, function: &lume_types::Function) -> Result<String> {
+    let namespace = match function.name.clone().parent() {
+        Some(parent) => format!("{parent:+}\n\n"),
+        None => String::new(),
     };
 
-    let signature = package.tcx.signature_of(callable)?;
+    let identifier = lume_hir::Identifier {
+        name: format!("{:+}", function.name.name),
+        location: function.name.location,
+    };
+
+    let signature = package.tcx.signature_of(Callable::Function(function))?;
     let signature = package.tcx.sig_to_string(&identifier, signature.as_ref(), false)?;
 
-    let visibility = match package.tcx.visibility_of(callable.id()) {
+    let visibility = match package.tcx.visibility_of(function.id) {
         Some(visibility) => format!("{visibility} "),
         None => String::new(),
     };
 
-    let documentation = match package.tcx.documentation_string_of(callable.id()) {
+    let documentation = match package.tcx.documentation_string_of(function.id) {
         Some(str) => format!("\n\n{str}"),
         None => String::new(),
     };
 
-    Ok(format!("```lm\n{visibility}{signature}\n```{documentation}"))
+    let contents = format!(
+        "```lm
+{namespace}{visibility}{signature}
+```
+{documentation}"
+    );
+
+    Ok(contents)
+}
+
+pub(crate) fn hover_content_of_method(package: &CheckedPackage, method: &lume_types::Method) -> Result<String> {
+    let parent = match method.name.clone().parent() {
+        Some(parent) => format!("{parent:+}\n\n"),
+        None => String::new(),
+    };
+
+    let identifier = lume_hir::Identifier {
+        name: format!("{:+}", method.name.name),
+        location: method.name.location,
+    };
+
+    let signature = package.tcx.signature_of(Callable::Method(method))?;
+    let signature = package.tcx.sig_to_string(&identifier, signature.as_ref(), false)?;
+
+    let visibility = match package.tcx.visibility_of(method.id) {
+        Some(visibility) => format!("{visibility} "),
+        None => String::new(),
+    };
+
+    let documentation = match package.tcx.documentation_string_of(method.id) {
+        Some(str) => format!("\n\n{str}"),
+        None => String::new(),
+    };
+
+    let contents = format!(
+        "```lm
+{parent}{visibility}{signature}
+```
+{documentation}"
+    );
+
+    Ok(contents)
 }
 
 pub(crate) fn hover_content_of_member(

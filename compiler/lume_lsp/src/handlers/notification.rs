@@ -7,12 +7,10 @@ use lume_span::SourceFile;
 
 use crate::state::State;
 
-pub(crate) fn open_document(state: &mut State, params: DidOpenTextDocumentParams) {
-    log::info!("added document {}", params.text_document.uri.as_str());
+pub(crate) fn open_document(state: &mut State, uri: Uri, content: String) {
+    log::info!("added document {}", uri.as_str());
 
-    fn find_workspace_root(state: &mut State, params: &DidOpenTextDocumentParams) -> Option<Arc<SourceFile>> {
-        let uri = &params.text_document.uri;
-
+    fn find_workspace_root(state: &mut State, uri: &Uri) -> Option<Arc<SourceFile>> {
         if let Some(source_file) = state.source_of_uri(&uri) {
             return Some(source_file);
         }
@@ -39,19 +37,17 @@ pub(crate) fn open_document(state: &mut State, params: DidOpenTextDocumentParams
         None
     }
 
-    let Some(source_file) = find_workspace_root(state, &params) else {
+    let Some(source_file) = find_workspace_root(state, &uri) else {
         log::error!("could not find any matching package");
         return;
     };
-
-    let TextDocumentItem { uri, text, .. } = params.text_document;
 
     state.vfs.add_document(
         uri,
         Arc::new(SourceFile {
             id: source_file.id,
             name: source_file.name.clone(),
-            content: text,
+            content,
             package: source_file.package,
         }),
     );
@@ -59,29 +55,23 @@ pub(crate) fn open_document(state: &mut State, params: DidOpenTextDocumentParams
     state.compile_workspace();
 }
 
-pub(crate) fn close_document(state: &mut State, params: DidCloseTextDocumentParams) {
-    log::info!("removed document {}", params.text_document.uri.as_str());
+pub(crate) fn close_document(state: &mut State, uri: Uri) {
+    log::info!("removed document {}", uri.as_str());
 
-    state.vfs.remove_document(&params.text_document.uri);
-
+    state.vfs.remove_document(&uri);
     state.compile_workspace();
 }
 
-pub(crate) fn save_document(state: &mut State, params: DidSaveTextDocumentParams) {
-    log::info!("updated document {} (via save)", params.text_document.uri.as_str());
+pub(crate) fn save_document(state: &mut State, uri: Uri, content: String) {
+    log::info!("updated document {} (via save)", uri.as_str());
 
-    state
-        .vfs
-        .change_document(&params.text_document.uri, params.text.unwrap());
-
+    state.vfs.change_document(&uri, content);
     state.compile_workspace();
 }
 
-pub(crate) fn change_document(state: &mut State, params: DidChangeTextDocumentParams) {
-    log::info!("updated document {} (via change)", params.text_document.uri.as_str());
+pub(crate) fn change_document(state: &mut State, uri: Uri, content: String) {
+    log::info!("updated document {} (via change)", uri.as_str());
 
-    let source = params.content_changes.first().unwrap().text.clone();
-    state.vfs.change_document(&params.text_document.uri, source);
-
+    state.vfs.change_document(&uri, content);
     state.compile_workspace();
 }
