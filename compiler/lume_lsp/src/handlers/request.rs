@@ -4,13 +4,11 @@ use lsp_server::RequestId;
 use lsp_types::*;
 use lume_errors::Result;
 
+use crate::listen::FileLocation;
 use crate::state::State;
 
-pub(crate) fn on_hover(state: &State, id: RequestId, params: HoverParams) -> Result<()> {
-    let uri = &params.text_document_position_params.text_document.uri;
-    let Position { line, character } = params.text_document_position_params.position;
-
-    let Some(location) = state.location_of(uri, line as usize, character as usize) else {
+pub(crate) fn on_hover(state: &State, id: RequestId, location: FileLocation) -> Result<()> {
+    let Some(location) = state.location_of(&location) else {
         state.err(id, lsp_server::ErrorCode::InvalidParams, "document not available")?;
         return Ok(());
     };
@@ -40,11 +38,8 @@ pub(crate) fn on_hover(state: &State, id: RequestId, params: HoverParams) -> Res
     Ok(())
 }
 
-pub(crate) fn go_to_definition(state: &State, id: RequestId, params: GotoDefinitionParams) -> Result<()> {
-    let uri = &params.text_document_position_params.text_document.uri;
-    let Position { line, character } = params.text_document_position_params.position;
-
-    let Some(location) = state.location_of(uri, line as usize, character as usize) else {
+pub(crate) fn go_to_definition(state: &State, id: RequestId, location: FileLocation) -> Result<()> {
+    let Some(location) = state.location_of(&location) else {
         state.err(id, lsp_server::ErrorCode::RequestFailed, "document not available")?;
         return Ok(());
     };

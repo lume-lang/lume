@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
-use crossbeam::channel::Sender;
+use crossbeam::channel::{Receiver, Sender};
 use indexmap::IndexMap;
 use lsp_server::*;
 use lsp_types::Uri;
@@ -10,10 +10,12 @@ use lume_driver::CheckedPackageGraph;
 use lume_errors::{DiagCtx, IntoDiagnostic, Result};
 use lume_span::{FileName, Internable, Location, SourceFile};
 
+use crate::handlers;
+use crate::listen::{FileLocation, Handling, Listener, Message, Notification, Request};
 use crate::symbols::lookup::SymbolLookup;
 
 pub(crate) struct State {
-    pub dispatcher: Sender<Message>,
+    pub dispatcher: Sender<lsp_server::Message>,
 
     pub vfs: Vfs,
 
@@ -26,7 +28,7 @@ pub(crate) struct State {
 }
 
 impl State {
-    pub fn new(dispatcher: Sender<Message>, root: Uri) -> Self {
+    pub fn new(dispatcher: Sender<lsp_server::Message>, root: Uri) -> Self {
         Self {
             dispatcher,
             vfs: Vfs::new(root),
@@ -70,6 +72,70 @@ impl State {
         }
     }
 
+    /// Starts listening on the given [`Connection`] for LSP requests and
+    /// notifications.
+    pub fn listen(&mut self, mut receiver: Receiver<lsp_server::Message>) -> Result<()> {
+        let mut listener = Listener::default();
+
+        loop {
+            match listener.receive(&mut receiver) {
+                Handling::Shutdown(req_id) => {
+                    log::info!("received shutdown request");
+
+                    let resp = lsp_server::Response::new_ok(req_id, ());
+                    let _ = self.dispatcher.send(resp.into());
+
+                    break;
+                }
+
+                Handling::Message(message) => {
+                    if let Err(err) = self.handle_message(message) {
+                        log::error!("error handling message: {}", err);
+                    }
+                }
+
+                Handling::Empty => {}
+            }
+        }
+
+        Ok(())
+    }
+
+    fn handle_message(&mut self, message: Message) -> Result<()> {
+        match message {
+            Message::Request(id, request) => self.handle_request(id, request),
+            Message::Notification(notification) => self.handle_notification(notification),
+        }
+    }
+
+    fn handle_request(&mut self, id: lsp_server::RequestId, request: Request) -> Result<()> {
+        match request {
+            Request::Hover(location) => handlers::request::on_hover(self, id, location),
+            Request::GoToDefinition(location) => handlers::request::go_to_definition(self, id, location),
+            Request::Unknown => Ok(()),
+        }
+    }
+
+    fn handle_notification(&mut self, notification: Notification) -> Result<()> {
+        match notification {
+            Notification::OpenDocument { uri, text } => {
+                handlers::notification::open_document(self, uri, text);
+            }
+            Notification::CloseDocument { uri } => {
+                handlers::notification::close_document(self, uri);
+            }
+            Notification::SaveDocument { uri, content } => {
+                handlers::notification::save_document(self, uri, content);
+            }
+            Notification::ChangeDocument { uri, content } => {
+                handlers::notification::change_document(self, uri, content);
+            }
+            Notification::Unknown => {}
+        }
+
+        Ok(())
+    }
+
     pub(crate) fn source_of_uri(&self, uri: &Uri) -> Option<Arc<SourceFile>> {
         let file_path = PathBuf::from(uri.path().as_str());
 
@@ -84,12 +150,13 @@ impl State {
         None
     }
 
-    pub(crate) fn location_of(&self, uri: &Uri, line: usize, column: usize) -> Option<Location> {
-        let source_file = self.vfs.get_document(uri)?;
+    pub(crate) fn location_of(&self, location: &FileLocation) -> Option<Location> {
+        let source_file = self.vfs.get_document(&location.uri)?;
+        let position = location.position;
 
-        let mut index = column;
+        let mut index = position.character as usize;
         for (line_idx, line_str) in source_file.file.content.lines().enumerate() {
-            if line_idx >= line {
+            if line_idx >= position.line as usize {
                 break;
             }
 
@@ -116,7 +183,7 @@ impl State {
 
         let resp = Response::new_ok(id, value);
 
-        match self.dispatcher.send(Message::Response(resp)) {
+        match self.dispatcher.send(lsp_server::Message::Response(resp)) {
             Ok(()) => Ok(()),
             Err(err) => Err(err.into_diagnostic()),
         }
@@ -125,7 +192,7 @@ impl State {
     pub(crate) fn err(&self, id: RequestId, code: ErrorCode, message: &str) -> Result<()> {
         let resp = Response::new_err(id, code as i32, message.into());
 
-        match self.dispatcher.send(Message::Response(resp)) {
+        match self.dispatcher.send(lsp_server::Message::Response(resp)) {
             Ok(()) => Ok(()),
             Err(err) => Err(err.into_diagnostic()),
         }

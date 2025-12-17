@@ -16,6 +16,7 @@ lume_infer = { path = "../lume_infer" }
 lume_parser = { path = "../lume_parser" }
 lume_session = { path = "../lume_session", features = ["cli"] }
 lume_span = { path = "../../crates/lume_span" }
+lume_types = { path = "../lume_types" }
 
 clap = { workspace = true }
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
@@ -27,7 +28,7 @@ lsp-server = { version = "=0.7.9" }
 lsp-types = { version = "=0.97.0" }
 serde = { workspace = true }
 serde_json = { version = "=1.0.140" }
-simple-logging = { version = "=2.0.2" }
+env_logger = { version = "=0.11.8" }
 
 [lints]
 workspace = true
