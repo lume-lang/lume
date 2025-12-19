@@ -846,17 +846,17 @@ impl TyInferCtx {
         match callable {
             Callable::Method(method) => match self.hir_expect_node(method.id) {
                 lume_hir::Node::Method(method) => Ok(FunctionSigOwned {
-                    params: params_of(self, method.id, &method.parameters),
+                    params: params_of(self, method.id, &method.parameters)?,
                     type_params: method.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                 }),
                 lume_hir::Node::TraitMethodDef(method) => Ok(FunctionSigOwned {
-                    params: params_of(self, method.id, &method.parameters),
+                    params: params_of(self, method.id, &method.parameters)?,
                     type_params: method.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                 }),
                 lume_hir::Node::TraitMethodImpl(method) => Ok(FunctionSigOwned {
-                    params: params_of(self, method.id, &method.parameters),
+                    params: params_of(self, method.id, &method.parameters)?,
                     type_params: method.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                 }),
@@ -868,7 +868,7 @@ impl TyInferCtx {
                 };
 
                 Ok(FunctionSigOwned {
-                    params: params_of(self, func.id, &func.parameters),
+                    params: params_of(self, func.id, &func.parameters)?,
                     type_params: func.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&func.return_type, func.id)?,
                 })
@@ -887,17 +887,17 @@ impl TyInferCtx {
             Callable::Method(method) => {
                 let mut signature = match self.hir_expect_node(method.id) {
                     lume_hir::Node::Method(method) => FunctionSigOwned {
-                        params: params_of(self, method.id, &method.parameters),
+                        params: params_of(self, method.id, &method.parameters)?,
                         type_params: method.type_parameters.clone(),
                         ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                     },
                     lume_hir::Node::TraitMethodDef(method) => FunctionSigOwned {
-                        params: params_of(self, method.id, &method.parameters),
+                        params: params_of(self, method.id, &method.parameters)?,
                         type_params: method.type_parameters.clone(),
                         ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                     },
                     lume_hir::Node::TraitMethodImpl(method) => FunctionSigOwned {
-                        params: params_of(self, method.id, &method.parameters),
+                        params: params_of(self, method.id, &method.parameters)?,
                         type_params: method.type_parameters.clone(),
                         ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                     },
@@ -916,7 +916,7 @@ impl TyInferCtx {
                 };
 
                 Ok(FunctionSigOwned {
-                    params: params_of(self, func.id, &func.parameters),
+                    params: params_of(self, func.id, &func.parameters)?,
                     type_params: func.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&func.return_type, func.id)?,
                 })
@@ -1027,18 +1027,18 @@ impl TyInferCtx {
     }
 }
 
-fn param_of(tcx: &TyInferCtx, parent: NodeId, param: &lume_hir::Parameter) -> lume_types::Parameter {
-    let param_ty = tcx.mk_type_ref_from(&param.param_type, parent).unwrap();
+fn param_of(tcx: &TyInferCtx, parent: NodeId, param: &lume_hir::Parameter) -> Result<lume_types::Parameter> {
+    let param_ty = tcx.mk_type_ref_from(&param.param_type, parent)?;
 
-    lume_types::Parameter {
+    Ok(lume_types::Parameter {
         idx: param.index,
         name: param.name.to_string(),
         ty: param_ty,
         vararg: param.vararg,
         location: param.location,
-    }
+    })
 }
 
-fn params_of(tcx: &TyInferCtx, parent: NodeId, params: &[lume_hir::Parameter]) -> Vec<lume_types::Parameter> {
+fn params_of(tcx: &TyInferCtx, parent: NodeId, params: &[lume_hir::Parameter]) -> Result<Vec<lume_types::Parameter>> {
     params.iter().map(|param| param_of(tcx, parent, param)).collect()
 }
