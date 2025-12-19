@@ -98,8 +98,6 @@ impl<'a> LowerState<'a> {
         let mut item_idx = NodeId::empty(self.package.id);
         let mut defined_items = HashSet::<DefinedItem>::new();
 
-        let use_std = !self.package.dependencies.no_std;
-
         for (_, source_file) in self.package.files.clone() {
             // Register source file in the state.
             self.source_map.insert(source_file.clone());
@@ -122,7 +120,6 @@ impl<'a> LowerState<'a> {
                     source_file,
                     handle,
                     expressions,
-                    use_std,
                 )
             })?;
         }
@@ -213,14 +210,11 @@ impl<'a> LowerModule<'a> {
         file: Arc<SourceFile>,
         dcx: DiagCtxHandle,
         expressions: Vec<lume_ast::TopLevelExpression>,
-        import_std: bool,
     ) -> Result<()> {
         let mut lower = LowerModule::new(map, *node_idx, file, dcx);
         std::mem::swap(&mut lower.defined, defined);
 
-        if import_std {
-            lower.insert_implicit_imports()?;
-        }
+        lower.insert_implicit_imports()?;
 
         for expr in expressions {
             if let Err(err) = lower.top_level_expression(expr) {
