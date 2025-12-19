@@ -9,7 +9,7 @@ pub(crate) struct TypeArgumentCountMismatch {
         source,
         "expected type {type_name:+} to have {expected} type arguments, but got {actual}"
     )]
-    pub source: Location,
+    pub location: Location,
 
     pub type_name: Path,
     pub expected: usize,

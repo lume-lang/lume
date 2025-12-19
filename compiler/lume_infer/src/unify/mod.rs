@@ -90,7 +90,7 @@ impl TyInferCtx {
                     if let lume_hir::StatementKind::Variable(decl) = &stmt.kind
                         && let Some(declared_type) = &decl.declared_type
                     {
-                        verify::verify_type_name(self, &declared_type.name);
+                        verify::verify_type_name(self, &declared_type.name, declared_type.location);
                     }
                 }
                 lume_hir::Node::Expression(expr) => match &expr.kind {
