@@ -22,7 +22,6 @@ impl LanguageServerCommand {
 
         let options = lume_lsp::Options {
             log_file: self.log_file.take(),
-            log_stdout,
             verbosity,
         };
 
