@@ -6,6 +6,31 @@ use lume_types::TypeRef;
 use crate::TyInferCtx;
 
 impl TyInferCtx {
+    /// Returns an iterator over all traits which are implemented on the given
+    /// type.
+    #[libftrace::traced(level = Trace, err)]
+    pub fn implementations_on_type(&self, ty: &TypeRef) -> impl Iterator<Item = &TypeRef> {
+        self.tdb().traits.implementations_on(ty).filter_map(|implementation| {
+            self.check_type_compatibility(ty, &implementation.implemented)
+                .unwrap_or(false)
+                .then_some(&implementation.trait_type)
+        })
+    }
+
+    /// Returns an iterator over all types which implement the given
+    /// trait.
+    #[libftrace::traced(level = Trace, err)]
+    pub fn implementations_of_trait(&self, trait_type: &TypeRef) -> impl Iterator<Item = &TypeRef> {
+        self.tdb()
+            .traits
+            .implementations_of(trait_type)
+            .filter_map(|implementation| {
+                self.check_type_compatibility(trait_type, &implementation.trait_type)
+                    .unwrap_or(false)
+                    .then_some(&implementation.implemented)
+            })
+    }
+
     /// Returns the [`lume_hir::TraitDefinition`] definition, which matches the
     /// [`lume_hir::TraitImplementation`] with the given ID.
     #[libftrace::traced(level = Trace, err)]
@@ -37,13 +62,13 @@ impl TyInferCtx {
         }
 
         // Check for direct trait implementations on the target type.
-        for trait_impl in self.tdb().traits.implementations_on(ty) {
-            if trait_impl.instance_of != trait_id.instance_of {
+        for implemented_trait in self.implementations_on_type(ty) {
+            if implemented_trait.instance_of != trait_id.instance_of {
                 continue;
             }
 
             // Make sure the given "trait" is actually a trait.
-            self.hir_expect_trait(trait_impl.instance_of);
+            self.hir_expect_trait(implemented_trait.instance_of);
 
             return Ok(true);
         }
@@ -63,8 +88,8 @@ impl TyInferCtx {
     /// implemented anywhere.
     #[libftrace::traced(level = Trace, err, ret)]
     pub fn is_trait_blanket_impl(&self, trait_type: &TypeRef) -> Result<bool> {
-        for target_type in self.tdb().traits.implementations_of(trait_type) {
-            if self.is_type_parameter(target_type)? {
+        for implementing_type in self.implementations_of_trait(trait_type) {
+            if self.is_type_parameter(implementing_type)? {
                 return Ok(true);
             }
         }
@@ -75,10 +100,8 @@ impl TyInferCtx {
     /// Returns an iterator of all trait implementations of the given trait
     /// [`TypeRef`], which are blanket implementations.
     pub fn trait_blanket_impls(&self, trait_type: &TypeRef) -> impl Iterator<Item = &TypeRef> {
-        self.tdb()
-            .traits
-            .implementations_of(trait_type)
-            .filter(|target_type| self.is_type_parameter(target_type).unwrap_or(false))
+        self.implementations_of_trait(trait_type)
+            .filter(|implementing_type| self.is_type_parameter(implementing_type).unwrap_or(false))
     }
 
     /// Gets the trait implementation of `trait_type` on the type `source`.

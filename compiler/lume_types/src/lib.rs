@@ -329,7 +329,7 @@ impl Type {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct TypeRef {
     pub instance_of: NodeId,
     pub bound_types: Vec<TypeRef>,
