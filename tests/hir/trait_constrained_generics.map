@@ -9,58 +9,7 @@ Map {
                         name: "Add",
                         location: trait_constrained_generics.lm:6:9,
                     },
-                    bound_types: [
-                        Type {
-                            id: TypeId(
-                                NodeId {
-                                    package: PackageId(
-                                        1881,
-                                    ),
-                                    index: Idx(
-                                        2,
-                                    ),
-                                },
-                            ),
-                            name: Path {
-                                root: [],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "T1",
-                                        location: trait_constrained_generics.lm:0:0,
-                                    },
-                                    bound_types: [],
-                                    location: trait_constrained_generics.lm:0:0,
-                                },
-                                location: trait_constrained_generics.lm:0:0,
-                            },
-                            location: trait_constrained_generics.lm:0:0,
-                        },
-                        Type {
-                            id: TypeId(
-                                NodeId {
-                                    package: PackageId(
-                                        1881,
-                                    ),
-                                    index: Idx(
-                                        3,
-                                    ),
-                                },
-                            ),
-                            name: Path {
-                                root: [],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "T2",
-                                        location: trait_constrained_generics.lm:0:0,
-                                    },
-                                    bound_types: [],
-                                    location: trait_constrained_generics.lm:0:0,
-                                },
-                                location: trait_constrained_generics.lm:0:0,
-                            },
-                            location: trait_constrained_generics.lm:0:0,
-                        },
-                    ],
+                    bound_types: [],
                     location: trait_constrained_generics.lm:6:9,
                 },
                 location: trait_constrained_generics.lm:6:9,
