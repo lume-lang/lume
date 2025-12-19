@@ -160,10 +160,8 @@ impl CraneliftBackend {
     #[allow(clippy::unused_self)]
     #[libftrace::traced(level = Trace, fields(name = param.name, method = method.full_name))]
     fn metadata_name_of_param(&self, param: &ParameterMetadata, method: &MethodMetadata) -> String {
-        let mut metadata_name = method.full_name.clone();
-        metadata_name.push('_');
-        metadata_name.push_str(&param.name);
-
+        let mut metadata_name = String::new();
+        write!(metadata_name, "{}_{}", method.symbol_name(), param.name).unwrap();
         metadata_name
     }
 
