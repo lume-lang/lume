@@ -5,6 +5,12 @@ use lume_span::NodeId;
 
 use crate::TypeRef;
 
+#[derive(Hash, Default, Debug, Clone, PartialEq, Eq)]
+pub struct Implementation {
+    pub trait_type: TypeRef,
+    pub implemented: TypeRef,
+}
+
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TraitImplKey(usize);
 
@@ -20,8 +26,8 @@ pub struct TraitImplementationMetadata {
 /// types being implemented by a specific trait.
 #[derive(Default, Debug)]
 pub struct TraitLookup {
-    impls_of: HashMap<TypeRef, IndexSet<TypeRef>>,
-    impls_on: HashMap<TypeRef, IndexSet<TypeRef>>,
+    impls_of: HashMap<NodeId, IndexSet<Implementation>>,
+    impls_on: HashMap<NodeId, IndexSet<Implementation>>,
 
     metadata: HashMap<TraitImplKey, TraitImplementationMetadata>,
 }
@@ -29,15 +35,20 @@ pub struct TraitLookup {
 impl TraitLookup {
     /// Adds a new trait implementation to the container.
     pub fn add_impl(&mut self, id: NodeId, trait_type: &TypeRef, impl_type: &TypeRef) {
+        let implementation = Implementation {
+            trait_type: trait_type.clone(),
+            implemented: impl_type.clone(),
+        };
+
         self.impls_of
-            .entry(trait_type.clone())
+            .entry(trait_type.instance_of)
             .or_default()
-            .insert(impl_type.clone());
+            .insert(implementation.clone());
 
         self.impls_on
-            .entry(impl_type.clone())
+            .entry(impl_type.instance_of)
             .or_default()
-            .insert(trait_type.clone());
+            .insert(implementation);
 
         let key = key_of(trait_type, impl_type);
 
@@ -50,8 +61,17 @@ impl TraitLookup {
     /// Adds a new trait method implementation to the given trait
     /// implementation.
     pub fn add_impl_method(&mut self, trait_type: &TypeRef, impl_type: &TypeRef, method_id: NodeId) {
-        debug_assert!(self.impls_of.get(trait_type).is_some_and(|im| im.contains(impl_type)));
-        debug_assert!(self.impls_on.get(impl_type).is_some_and(|im| im.contains(trait_type)));
+        debug_assert!(
+            self.impls_of
+                .get(&trait_type.instance_of)
+                .is_some_and(|im| im.iter().any(|i| &i.implemented == impl_type))
+        );
+
+        debug_assert!(
+            self.impls_on
+                .get(&impl_type.instance_of)
+                .is_some_and(|im| im.iter().any(|i| &i.trait_type == trait_type))
+        );
 
         let key = key_of(trait_type, impl_type);
 
@@ -63,25 +83,23 @@ impl TraitLookup {
     }
 
     /// Gets all the trait implementations of the given trait type.
-    pub fn implementations_of(&self, trait_type: &TypeRef) -> impl Iterator<Item = &TypeRef> {
-        static EMPTY: &indexmap::set::Slice<TypeRef> = indexmap::set::Slice::new();
+    pub fn implementations_of(&self, trait_type: &TypeRef) -> impl Iterator<Item = &Implementation> {
+        static EMPTY: &indexmap::set::Slice<Implementation> = indexmap::set::Slice::new();
 
-        self.impls_of.get(trait_type).map_or(EMPTY, |i| i.as_slice()).iter()
+        self.impls_of
+            .get(&trait_type.instance_of)
+            .map_or(EMPTY, |i| i.as_slice())
+            .iter()
     }
 
     /// Gets all the trait implementations on the given implemented type.
-    pub fn implementations_on(&self, impl_type: &TypeRef) -> impl Iterator<Item = &TypeRef> {
-        static EMPTY: &indexmap::set::Slice<TypeRef> = indexmap::set::Slice::new();
+    pub fn implementations_on(&self, impl_type: &TypeRef) -> impl Iterator<Item = &Implementation> {
+        static EMPTY: &indexmap::set::Slice<Implementation> = indexmap::set::Slice::new();
 
-        self.impls_on.get(impl_type).map_or(EMPTY, |i| i.as_slice()).iter()
-    }
-
-    /// Determines whether there is any trait implemention of `trait_type` on
-    /// the type `impl_type`.
-    pub fn is_implemented(&self, trait_type: &TypeRef, impl_type: &TypeRef) -> bool {
-        self.impls_of
-            .get(trait_type)
-            .is_some_and(|impls| impls.contains(impl_type))
+        self.impls_on
+            .get(&impl_type.instance_of)
+            .map_or(EMPTY, |i| i.as_slice())
+            .iter()
     }
 
     /// Gets the ID of the trait implementation block.

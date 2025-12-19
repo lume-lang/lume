@@ -130,9 +130,7 @@ impl TyInferCtx {
     ) -> Vec<&'_ Method> {
         match blanket_lookup {
             BlanketLookup::Exclude => self
-                .tdb()
-                .traits
-                .implementations_on(ty)
+                .implementations_on_type(ty)
                 .filter_map(|trait_def| {
                     for &method_id in self.tdb().traits.implemented_methods_in(trait_def, ty) {
                         let method = self.tdb().method(method_id).unwrap();
