@@ -4,31 +4,35 @@ use lume_hir::Identifier;
 use lume_infer::query::{CallReference, Callable};
 use lume_span::{Location, NodeId};
 
-use crate::state::State;
+use crate::engine::Engine;
 use crate::symbols::lookup::SymbolKind;
 
-pub(crate) fn hover_content_of(state: &State, location: Location) -> Result<String> {
-    let Some(sym) = state.checked.symbols.lookup_position(location) else {
+pub(crate) fn hover_content_of(engine: &Engine, location: Location) -> Result<String> {
+    let Some(sym) = engine.locate_node(location) else {
         log::warn!("could not find matching node for {location}");
         return Ok(String::new());
     };
 
+    let Some(package) = engine.package(sym.location.file.package) else {
+        log::warn!("could not find parent package of location {location}");
+        return Ok(String::new());
+    };
+
     match &sym.kind {
-        SymbolKind::Type { name } => hover_content_of_type(state, location, name),
-        SymbolKind::Callable { reference } => hover_content_of_callable(state, location, *reference),
-        SymbolKind::Variant { name } => hover_content_of_variant(state, location, name),
-        SymbolKind::Pattern { id } => hover_content_of_pattern(state, location, *id),
-        SymbolKind::Field { id } => hover_content_of_field(state, location, *id),
-        SymbolKind::Call { id } => hover_content_of_call(state, location, *id),
-        SymbolKind::Literal { id } => hover_content_of_literal(state, location, *id),
-        SymbolKind::Member { callee, field } => hover_content_of_member(state, location, *callee, field),
-        SymbolKind::VariableDeclaration { id } => hover_content_of_variable_decl(state, location, *id),
-        SymbolKind::VariableReference { id } => hover_content_of_variable_ref(state, location, *id),
+        SymbolKind::Type { name } => hover_content_of_type(package, name),
+        SymbolKind::Callable { reference } => hover_content_of_callable(package, *reference),
+        SymbolKind::Variant { name } => hover_content_of_variant(package, name),
+        SymbolKind::Pattern { id } => hover_content_of_pattern(package, *id),
+        SymbolKind::Field { id } => hover_content_of_field(package, *id),
+        SymbolKind::Call { id } => hover_content_of_call(package, *id),
+        SymbolKind::Literal { id } => hover_content_of_literal(package, *id),
+        SymbolKind::Member { callee, field } => hover_content_of_member(package, *callee, field),
+        SymbolKind::VariableDeclaration { id } => hover_content_of_variable_decl(package, *id),
+        SymbolKind::VariableReference { id } => hover_content_of_variable_ref(package, *id),
     }
 }
 
-pub(crate) fn hover_content_of_type(state: &State, location: Location, type_name: &lume_hir::Path) -> Result<String> {
-    let package = state.checked.graph.packages.get(&location.file.package).unwrap();
+pub(crate) fn hover_content_of_type(package: &CheckedPackage, type_name: &lume_hir::Path) -> Result<String> {
     let Some(type_id) = package.tcx.tdb().find_type(type_name).map(|ty| ty.id) else {
         return Ok(String::new());
     };
@@ -69,8 +73,7 @@ pub(crate) fn hover_content_of_type(state: &State, location: Location, type_name
     }
 }
 
-pub(crate) fn hover_content_of_callable(state: &State, location: Location, reference: CallReference) -> Result<String> {
-    let package = state.checked.graph.packages.get(&location.file.package).unwrap();
+pub(crate) fn hover_content_of_callable(package: &CheckedPackage, reference: CallReference) -> Result<String> {
     let callable = package.tcx.callable_of(reference)?;
 
     match callable {
@@ -147,14 +150,7 @@ pub(crate) fn hover_content_of_method(package: &CheckedPackage, method: &lume_ty
     Ok(contents)
 }
 
-pub(crate) fn hover_content_of_member(
-    state: &State,
-    location: Location,
-    callee: NodeId,
-    field: &Identifier,
-) -> Result<String> {
-    let package = state.checked.graph.packages.get(&location.file.package).unwrap();
-
+pub(crate) fn hover_content_of_member(package: &CheckedPackage, callee: NodeId, field: &Identifier) -> Result<String> {
     let callee_type = package.tcx.type_of(callee)?;
     let Some(field) = package.tcx.field_on(callee_type.instance_of, &field.name)? else {
         return Ok(String::new());
@@ -174,9 +170,7 @@ pub(crate) fn hover_content_of_member(
     ))
 }
 
-pub(crate) fn hover_content_of_variant(state: &State, location: Location, name: &lume_hir::Path) -> Result<String> {
-    let package = state.checked.graph.packages.get(&location.file.package).unwrap();
-
+pub(crate) fn hover_content_of_variant(package: &CheckedPackage, name: &lume_hir::Path) -> Result<String> {
     let enum_name = name.clone().parent().unwrap();
     let enum_def = package.tcx.enum_def_with_name(&enum_name)?;
     let enum_case = package.tcx.enum_case_with_name(name)?;
@@ -205,9 +199,7 @@ pub(crate) fn hover_content_of_variant(state: &State, location: Location, name: 
     ))
 }
 
-pub(crate) fn hover_content_of_pattern(state: &State, location: Location, id: NodeId) -> Result<String> {
-    let package = state.checked.graph.packages.get(&location.file.package).unwrap();
-
+pub(crate) fn hover_content_of_pattern(package: &CheckedPackage, id: NodeId) -> Result<String> {
     let Some(lume_hir::Node::Pattern(pattern)) = package.tcx.hir_node(id) else {
         return Ok(String::new());
     };
@@ -223,9 +215,7 @@ pub(crate) fn hover_content_of_pattern(state: &State, location: Location, id: No
     Ok(format!("```lm\n{pattern_ty_name}\n```{documentation}"))
 }
 
-pub(crate) fn hover_content_of_field(state: &State, location: Location, id: NodeId) -> Result<String> {
-    let package = state.checked.graph.packages.get(&location.file.package).unwrap();
-
+pub(crate) fn hover_content_of_field(package: &CheckedPackage, id: NodeId) -> Result<String> {
     let Some(lume_hir::Node::Field(field)) = package.tcx.hir_node(id) else {
         return Ok(String::new());
     };
@@ -245,31 +235,27 @@ pub(crate) fn hover_content_of_field(state: &State, location: Location, id: Node
     ))
 }
 
-pub(crate) fn hover_content_of_literal(state: &State, location: Location, id: NodeId) -> Result<String> {
-    let package = state.checked.graph.packages.get(&location.file.package).unwrap();
+pub(crate) fn hover_content_of_literal(package: &CheckedPackage, id: NodeId) -> Result<String> {
     let literal_type = package.tcx.type_of(id)?;
 
     let Some(literal_type_def) = package.tcx.tdb().type_(literal_type.instance_of) else {
         return Ok(String::new());
     };
 
-    hover_content_of_type(state, location, &literal_type_def.name)
+    hover_content_of_type(package, &literal_type_def.name)
 }
 
-pub(crate) fn hover_content_of_call(state: &State, location: Location, id: NodeId) -> Result<String> {
-    let package = state.checked.graph.packages.get(&location.file.package).unwrap();
+pub(crate) fn hover_content_of_call(package: &CheckedPackage, id: NodeId) -> Result<String> {
     let Some(expr) = package.tcx.hir_call_expr(id) else {
         return Ok(String::new());
     };
 
     let callable = package.tcx.probe_callable(expr)?;
 
-    hover_content_of_callable(state, location, callable.to_call_reference())
+    hover_content_of_callable(package, callable.to_call_reference())
 }
 
-pub(crate) fn hover_content_of_variable_decl(state: &State, location: Location, id: NodeId) -> Result<String> {
-    let package = state.checked.graph.packages.get(&location.file.package).unwrap();
-
+pub(crate) fn hover_content_of_variable_decl(package: &CheckedPackage, id: NodeId) -> Result<String> {
     let Some(lume_hir::StatementKind::Variable(var_decl)) = package.tcx.hir_stmt(id).map(|e| &e.kind) else {
         return Ok(String::new());
     };
@@ -281,9 +267,7 @@ pub(crate) fn hover_content_of_variable_decl(state: &State, location: Location, 
     Ok(format!("```lm\nlet {variable_name}: {variable_type_name};\n```"))
 }
 
-pub(crate) fn hover_content_of_variable_ref(state: &State, location: Location, id: NodeId) -> Result<String> {
-    let package = state.checked.graph.packages.get(&location.file.package).unwrap();
-
+pub(crate) fn hover_content_of_variable_ref(package: &CheckedPackage, id: NodeId) -> Result<String> {
     let Some(lume_hir::ExpressionKind::Variable(variable_ref)) = package.tcx.hir_expr(id).map(|e| &e.kind) else {
         return Ok(String::new());
     };

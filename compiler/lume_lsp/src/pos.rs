@@ -30,3 +30,17 @@ pub(crate) fn position_from_index(text: &str, index: usize) -> Position {
 
     Position::new(line, (index - line_start) as u32)
 }
+
+pub(crate) fn index_from_position(text: &str, position: Position) -> usize {
+    let mut index = position.character as usize;
+    for (line_idx, line_str) in text.lines().enumerate() {
+        if line_idx >= position.line as usize {
+            break;
+        }
+
+        // +1 for the newline.
+        index += line_str.len() + 1;
+    }
+
+    index
+}

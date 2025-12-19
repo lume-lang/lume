@@ -74,13 +74,13 @@ pub(crate) struct SymbolLookup {
 }
 
 impl SymbolLookup {
-    pub fn from_hir(hir: &lume_hir::Map) -> Result<Self> {
+    pub fn from_hir(hir: &lume_hir::Map) -> Self {
         let mut visitor = LocationVisitor::default();
-        traverse(hir, &mut visitor)?;
+        traverse(hir, &mut visitor).expect("HIR traversal");
 
-        Ok(Self {
+        Self {
             symbols: visitor.symbols,
-        })
+        }
     }
 
     pub fn extend(&mut self, other: SymbolLookup) {

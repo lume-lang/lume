@@ -54,9 +54,8 @@ pub enum Notification {
     },
 
     /// A source file was modified and changes have been saved to disk.
-    SaveDocument {
+    CommitDocument {
         uri: Uri,
-        content: String,
     },
 
     /// A source file was modified in-memory, without being committed to disk.
@@ -90,9 +89,8 @@ impl Notification {
             lsp_types::notification::DidSaveTextDocument::METHOD => {
                 let params = cast_notification::<lsp_types::notification::DidSaveTextDocument>(message);
                 let lsp_types::TextDocumentIdentifier { uri } = params.text_document;
-                let content = params.text.expect("expected full document content on save");
 
-                Self::SaveDocument { uri, content }
+                Self::CommitDocument { uri }
             }
 
             lsp_types::notification::DidChangeTextDocument::METHOD => {
@@ -134,11 +132,6 @@ where
     notification.extract::<R::Params>(R::METHOD).expect("cast notification")
 }
 
-#[derive(Default)]
-pub(crate) struct Listener {
-    // ..
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Handling {
     Message(Message),
@@ -165,28 +158,32 @@ impl Handling {
     }
 }
 
-impl Listener {
-    pub fn receive(&mut self, receiver: &mut Receiver<lsp_server::Message>) -> Handling {
-        use lsp_types::request::Request;
+pub fn receive(receiver: &mut Receiver<lsp_server::Message>) -> Handling {
+    use lsp_types::request::Request;
 
-        let timeout = Duration::from_millis(100);
+    let timeout = Duration::from_millis(100);
 
-        match receiver.recv_timeout(timeout).ok() {
-            Some(lsp_server::Message::Request(request)) => {
-                if request.method == lsp_types::request::Shutdown::METHOD {
-                    return Handling::Shutdown(request.id);
-                }
-
-                Handling::from_request(request)
-            }
-            Some(lsp_server::Message::Notification(notification)) => Handling::from_notification(notification),
-
-            Some(lsp_server::Message::Response(resp)) => {
-                log::error!("got unexpected response: {resp:?}");
-                Handling::Empty
+    match receiver.recv_timeout(timeout).ok() {
+        Some(lsp_server::Message::Request(request)) => {
+            if request.method == lsp_types::request::Shutdown::METHOD {
+                return Handling::Shutdown(request.id);
             }
 
-            None => Handling::Empty,
+            log::info!("received request: {}", request.method);
+
+            Handling::from_request(request)
         }
+        Some(lsp_server::Message::Notification(notification)) => {
+            log::info!("received notification: {}", notification.method);
+
+            Handling::from_notification(notification)
+        }
+
+        Some(lsp_server::Message::Response(resp)) => {
+            log::error!("got unexpected response: {resp:?}");
+            Handling::Empty
+        }
+
+        None => Handling::Empty,
     }
 }
