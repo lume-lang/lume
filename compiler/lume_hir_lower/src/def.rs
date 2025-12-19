@@ -161,14 +161,16 @@ impl LowerModule<'_> {
         let id = self.next_node_id();
         self.add_lang_items(id, &expr.attributes)?;
 
-        let name = self.expand_self_name(expr.name.clone(), &expr.type_parameters)?;
+        let self_name = self.expand_self_name(expr.name.clone(), &expr.type_parameters)?;
+
+        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
         let visibility = lower_visibility(expr.visibility.as_ref());
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
 
         self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
 
-        self.self_type = Some(name.clone());
+        self.self_type = Some(self_name);
 
         let mut methods = Vec::with_capacity(expr.methods.len());
         let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());

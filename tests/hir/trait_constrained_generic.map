@@ -9,33 +9,7 @@ Map {
                         name: "Add",
                         location: trait_constrained_generic.lm:6:9,
                     },
-                    bound_types: [
-                        Type {
-                            id: TypeId(
-                                NodeId {
-                                    package: PackageId(
-                                        1881,
-                                    ),
-                                    index: Idx(
-                                        2,
-                                    ),
-                                },
-                            ),
-                            name: Path {
-                                root: [],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "T",
-                                        location: trait_constrained_generic.lm:0:0,
-                                    },
-                                    bound_types: [],
-                                    location: trait_constrained_generic.lm:0:0,
-                                },
-                                location: trait_constrained_generic.lm:0:0,
-                            },
-                            location: trait_constrained_generic.lm:0:0,
-                        },
-                    ],
+                    bound_types: [],
                     location: trait_constrained_generic.lm:6:9,
                 },
                 location: trait_constrained_generic.lm:6:9,

@@ -463,7 +463,7 @@ impl Path {
         Some(Self {
             name: name.to_owned(),
             root: root.to_vec(),
-            location: self.location,
+            location: self.location(),
         })
     }
 
