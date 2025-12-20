@@ -1,5 +1,6 @@
 mod diagnostics;
 mod io;
+mod reporter;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -12,6 +13,7 @@ use lsp_types::Uri;
 use lume_errors::{Result, SimpleDiagnostic};
 use lume_span::{Internable, Location, PackageId, SourceFile};
 
+use crate::engine::reporter::Reporter;
 use crate::listener::FileLocation;
 use crate::symbols::lookup::{SymbolEntry, SymbolLookup};
 
@@ -24,6 +26,9 @@ pub(crate) struct Engine {
     /// Virtual file system for all source files in the current project.
     io: IO,
 
+    /// Reporter for sending progress updates to the client.
+    reporter: Reporter,
+
     diagnostics: Diagnostics,
 
     symbols: SymbolLookup,
@@ -32,12 +37,14 @@ pub(crate) struct Engine {
 
 impl Engine {
     pub fn new(root: PathBuf, sender: Sender<lsp_server::Message>) -> Self {
+        let reporter = Reporter::new(sender.clone());
         let diagnostics = Diagnostics::new(root.clone());
 
         Self {
             root,
             sender,
             io: IO::default(),
+            reporter,
             diagnostics,
             symbols: SymbolLookup::default(),
             packages: HashMap::new(),
@@ -46,6 +53,8 @@ impl Engine {
 
     pub fn compile(&mut self) {
         log::info!("compiling workspace at {}", self.root.display());
+
+        self.reporter.check_started();
 
         let result = self.with_result(|engine| {
             let driver = lume_driver::Driver::from_root(&engine.root, engine.diagnostics.dcx.handle())?;
@@ -60,9 +69,11 @@ impl Engine {
         });
 
         if let Some(checked_graph) = result {
+            self.reporter.check_indexing();
             self.update_symbol_lookup(checked_graph);
         }
 
+        self.reporter.check_finished();
         self.emit_diagnostics();
     }
 
