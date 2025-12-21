@@ -4,7 +4,7 @@ Map {
             visibility: Private,
             name: Path {
                 root: [],
-                name: Type {
+                name: Callable {
                     name: Identifier {
                         name: "test",
                         location: generic_function_single_generic.lm:3:7,

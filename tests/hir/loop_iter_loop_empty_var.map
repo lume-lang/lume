@@ -4,7 +4,7 @@ Map {
             visibility: Private,
             name: Path {
                 root: [],
-                name: Type {
+                name: Callable {
                     name: Identifier {
                         name: "foo",
                         location: loop_iter_loop_empty_var.lm:3:6,

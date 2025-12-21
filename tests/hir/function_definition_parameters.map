@@ -4,7 +4,7 @@ Map {
             visibility: Private,
             name: Path {
                 root: [],
-                name: Type {
+                name: Callable {
                     name: Identifier {
                         name: "main",
                         location: function_definition_parameters.lm:3:7,

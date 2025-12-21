@@ -4,7 +4,7 @@ Map {
             visibility: Private,
             name: Path {
                 root: [],
-                name: Type {
+                name: Callable {
                     name: Identifier {
                         name: "foo",
                         location: implicit_import_string.lm:3:6,

@@ -4,7 +4,7 @@ Map {
             visibility: Private,
             name: Path {
                 root: [],
-                name: Type {
+                name: Callable {
                     name: Identifier {
                         name: "foo",
                         location: duplicate_item_valid.lm:3:6,
@@ -48,7 +48,7 @@ Map {
             visibility: Private,
             name: Path {
                 root: [],
-                name: Type {
+                name: Callable {
                     name: Identifier {
                         name: "bar",
                         location: duplicate_item_valid.lm:17:20,

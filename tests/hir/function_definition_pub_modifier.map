@@ -4,7 +4,7 @@ Map {
             visibility: Public,
             name: Path {
                 root: [],
-                name: Type {
+                name: Callable {
                     name: Identifier {
                         name: "main",
                         location: function_definition_pub_modifier.lm:7:11,
