@@ -34,7 +34,7 @@ fn lower_into_hir(input: &str) -> Result<Map> {
 
     let package = package_with_src(input);
 
-    dcx.with(|handle| LowerState::lower(&package, &mut source_map, handle))
+    dcx.with(|handle| LowerState::new(&package, &mut source_map, handle).lower_into())
 }
 
 #[track_caller]

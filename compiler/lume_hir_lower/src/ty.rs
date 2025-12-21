@@ -5,7 +5,7 @@ use lume_hir::SELF_TYPE_NAME;
 use crate::errors::*;
 use crate::{ARRAY_STD_TYPE, LowerModule};
 
-impl LowerModule<'_> {
+impl LowerModule {
     #[libftrace::traced(level = Debug)]
     pub(super) fn type_ref(&mut self, expr: lume_ast::Type) -> Result<lume_hir::Type> {
         match expr {

@@ -3,7 +3,7 @@ use error_snippet::Result;
 use crate::LowerModule;
 use crate::errors::*;
 
-impl LowerModule<'_> {
+impl LowerModule {
     /// Lowers an import path to an HIR path.
     ///
     /// For example, the import path `std::io (File)` would become

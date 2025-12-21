@@ -1,6 +1,6 @@
 use crate::LowerModule;
 
-impl LowerModule<'_> {
+impl LowerModule {
     #[libftrace::traced(level = Debug)]
     pub(super) fn literal(&mut self, expr: lume_ast::Literal) -> lume_hir::Literal {
         match expr {
