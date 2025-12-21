@@ -201,12 +201,7 @@ impl LowerModule {
     pub fn lower(&mut self, file: Arc<SourceFile>, expressions: Vec<lume_ast::TopLevelExpression>) -> Result<()> {
         self.file = file;
         self.insert_implicit_imports()?;
-
-        for expr in expressions {
-            if let Err(err) = self.top_level_expression(expr) {
-                self.dcx.emit(err);
-            }
-        }
+        self.lower_items(expressions);
 
         for import in self.imports.values() {
             self.map.imports.insert(import.clone());
