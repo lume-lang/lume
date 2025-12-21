@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use error_snippet::Result;
@@ -114,13 +114,15 @@ impl<'a> LowerState<'a> {
 #[derive(Hash, Debug, PartialEq, Eq)]
 pub enum DefinedItem {
     Function(Path),
+    Method(Path, PathSegment),
     Type(Path),
 }
 
 impl DefinedItem {
-    pub fn path(&self) -> &Path {
+    pub fn path(&self) -> Path {
         match self {
-            Self::Function(path) | Self::Type(path) => path,
+            Self::Function(path) | Self::Type(path) => path.clone(),
+            Self::Method(path, name) => Path::with_root(path.clone(), name.clone()),
         }
     }
 
@@ -140,7 +142,7 @@ pub struct LowerModule {
     map: Map,
 
     /// List of all defined items in the current file.
-    defined: HashSet<DefinedItem>,
+    defined: HashMap<DefinedItem, NodeId>,
 
     /// Defines all the local symbols within the current scope.
     locals: SymbolTable<String, lume_hir::VariableSource>,
@@ -172,7 +174,7 @@ impl LowerModule {
             file: Arc::default(),
             map,
             dcx,
-            defined: HashSet::new(),
+            defined: HashMap::new(),
             locals: SymbolTable::new(),
             imports: HashMap::new(),
             namespace: None,
@@ -201,7 +203,7 @@ impl LowerModule {
     pub fn lower(&mut self, file: Arc<SourceFile>, expressions: Vec<lume_ast::TopLevelExpression>) -> Result<()> {
         self.file = file;
         self.insert_implicit_imports()?;
-        self.lower_items(expressions);
+        self.lower_items(expressions)?;
 
         for import in self.imports.values() {
             self.map.imports.insert(import.clone());
@@ -243,8 +245,8 @@ impl LowerModule {
     /// If the item is not defined, it is added into the list of defined items.
     /// If the item is defined, raises an error to reflect it.
     #[libftrace::traced(level = Trace)]
-    fn ensure_item_undefined(&mut self, item: DefinedItem) -> Result<()> {
-        if let Some(existing) = self.defined.get(&item) {
+    fn ensure_item_undefined(&mut self, id: NodeId, item: DefinedItem) -> Result<()> {
+        if let Some((existing, _)) = self.defined.get_key_value(&item) {
             return Err(crate::errors::DuplicateDefinition {
                 duplicate_range: lume_span::source::Location {
                     file: self.file.clone(),
@@ -256,7 +258,7 @@ impl LowerModule {
             .into());
         }
 
-        self.defined.insert(item);
+        self.defined.insert(item, id);
 
         Ok(())
     }
