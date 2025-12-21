@@ -13,9 +13,9 @@ use lume_span::{Internable, Location, NodeId, SourceFile, SourceMap};
 
 mod errors;
 
-mod def;
 mod expr;
 mod generic;
+mod item;
 mod lit;
 mod path;
 mod pattern;
@@ -249,7 +249,7 @@ impl<'a> LowerModule<'a> {
     fn insert_implicit_imports(&mut self) -> Result<()> {
         let import_item = lume_ast::Import::std(DEFAULT_STD_IMPORTS);
 
-        self.top_import(import_item)
+        self.import(import_item)
     }
 
     /// Gets the next [`NodeId`] in the sequence.
@@ -502,59 +502,5 @@ impl<'a> LowerModule<'a> {
             index: expr.0,
         }
         .intern()
-    }
-
-    #[libftrace::traced(level = Debug)]
-    fn top_namespace(&mut self, expr: lume_ast::Namespace) -> Result<()> {
-        self.namespace = Some(self.import_path(expr.path)?);
-
-        Ok(())
-    }
-
-    fn top_level_expression(&mut self, expr: lume_ast::TopLevelExpression) -> Result<()> {
-        let hir_ast = match expr {
-            lume_ast::TopLevelExpression::Import(i) => {
-                self.top_import(*i)?;
-
-                return Ok(());
-            }
-            lume_ast::TopLevelExpression::Namespace(i) => {
-                self.top_namespace(*i)?;
-
-                return Ok(());
-            }
-            lume_ast::TopLevelExpression::TypeDefinition(t) => self.def_type(*t)?,
-            lume_ast::TopLevelExpression::FunctionDefinition(f) => self.def_function(*f)?,
-            lume_ast::TopLevelExpression::TraitImpl(f) => self.def_trait_impl(*f)?,
-            lume_ast::TopLevelExpression::Impl(f) => self.def_impl(*f)?,
-        };
-
-        let id = hir_ast.id();
-
-        // Ensure that the ID doesn't overwrite an existing entry.
-        debug_assert!(!self.map.nodes.contains_key(&id));
-
-        self.map.nodes.insert(id, hir_ast);
-
-        Ok(())
-    }
-
-    #[libftrace::traced(level = Debug)]
-    fn top_import(&mut self, expr: lume_ast::Import) -> Result<()> {
-        for imported_name in expr.names {
-            let namespace = self.import_path(expr.path.clone())?;
-
-            let import_path_name = if imported_name.is_lower() {
-                PathSegment::callable(self.identifier(imported_name))
-            } else {
-                PathSegment::ty(self.identifier(imported_name))
-            };
-
-            let imported_path = Path::with_root(namespace, import_path_name);
-
-            self.imports.insert(imported_path.name.to_string(), imported_path);
-        }
-
-        Ok(())
     }
 }
