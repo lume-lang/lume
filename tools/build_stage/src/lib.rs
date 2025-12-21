@@ -58,8 +58,9 @@ impl ManifoldDriver {
     pub fn build_hir(&self) -> Result<Map> {
         self.gcx.dcx.with(|dcx| {
             let mut source_map = SourceMap::default();
+            let mut lower = lume_hir_lower::LowerState::new(&self.package, &mut source_map, dcx);
 
-            lume_hir_lower::LowerState::lower(&self.package, &mut source_map, dcx)
+            lower.lower_into()
         })
     }
 

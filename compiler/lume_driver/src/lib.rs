@@ -99,7 +99,7 @@ impl Compiler {
     fn parse(&mut self) -> Result<lume_hir::map::Map> {
         self.gcx
             .dcx
-            .with(|dcx| lume_hir_lower::LowerState::lower(&self.package, &mut self.source_map, dcx))
+            .with(|dcx| lume_hir_lower::LowerState::new(&self.package, &mut self.source_map, dcx).lower_into())
     }
 
     /// Type checks all the given source files.

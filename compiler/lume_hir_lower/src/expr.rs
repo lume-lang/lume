@@ -21,7 +21,7 @@ static ARRAY_NEW_PATH: LazyLock<lume_hir::Path> = LazyLock::new(|| {
 static ARRAY_PUSH_PATH: LazyLock<lume_hir::PathSegment> =
     LazyLock::new(|| lume_hir::PathSegment::callable(ARRAY_PUSH_FUNC));
 
-impl LowerModule<'_> {
+impl LowerModule {
     #[libftrace::traced(level = Debug)]
     pub(super) fn expressions(&mut self, expressions: Vec<lume_ast::Expression>) -> Vec<lume_span::NodeId> {
         expressions

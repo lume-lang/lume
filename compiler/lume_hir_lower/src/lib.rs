@@ -9,7 +9,7 @@ use lume_hir::{Identifier, Path, PathSegment, TypeId};
 use lume_lexer::Lexer;
 use lume_parser::Parser;
 use lume_session::Package;
-use lume_span::{Internable, Location, NodeId, SourceFile, SourceMap};
+use lume_span::{Internable, Location, NodeId, PackageId, SourceFile, SourceMap};
 
 mod errors;
 
@@ -72,19 +72,6 @@ impl<'a> LowerState<'a> {
         }
     }
 
-    /// Lowers the given project and state into a HIR map.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if any AST nodes are invalid or exist in invalid
-    /// locations.
-    #[libftrace::traced(level = Debug)]
-    pub fn lower(package: &'a Package, source_map: &'a mut SourceMap, dcx: DiagCtxHandle) -> Result<Map> {
-        let mut lower = LowerState::new(package, source_map, dcx);
-
-        lower.lower_into()
-    }
-
     /// Lowers the current project and state into a HIR map.
     ///
     /// # Errors
@@ -93,38 +80,34 @@ impl<'a> LowerState<'a> {
     /// locations.
     #[libftrace::traced(level = Info, fields(package = self.package.name))]
     pub fn lower_into(&mut self) -> Result<Map> {
-        // Create a new HIR map for the module.
-        let mut lume_hir = Map::empty(self.package.id);
-        let mut item_idx = NodeId::empty(self.package.id);
-        let mut defined_items = HashSet::<DefinedItem>::new();
+        let map = self.dcx.with(|dcx| {
+            let mut lower = LowerModule::new(self.package.id, dcx);
 
-        for (_, source_file) in self.package.files.clone() {
-            // Register source file in the state.
-            self.source_map.insert(source_file.clone());
+            for (_, source_file) in self.package.files.clone() {
+                // Register source file in the state.
+                self.source_map.insert(source_file.clone());
 
-            // Parse the contents of the source file.
-            let expressions = self.dcx.with(|handle| {
-                let mut lexer = Lexer::new(source_file.clone());
-                let tokens = lexer.lex()?;
+                // Parse the contents of the source file.
+                let expressions = self.dcx.with(|handle| {
+                    let mut lexer = Lexer::new(source_file.clone());
+                    let tokens = lexer.lex()?;
 
-                let mut parser = Parser::new(source_file.clone(), tokens, handle);
-                parser.parse()
-            })?;
+                    let mut parser = Parser::new(source_file.clone(), tokens, handle);
+                    parser.parse()
+                })?;
 
-            // Lowers the parsed module expressions down to HIR.
-            self.dcx.with(|handle| {
-                LowerModule::lower(
-                    &mut lume_hir,
-                    &mut item_idx,
-                    &mut defined_items,
-                    source_file,
-                    handle,
-                    expressions,
-                )
-            })?;
-        }
+                // Lowers the parsed module expressions down to HIR.
+                if let Err(err) = lower.lower(source_file, expressions) {
+                    lower.dcx.emit_and_push(err);
+                }
+            }
 
-        Ok(lume_hir)
+            Ok(lower.map)
+        })?;
+
+        self.dcx.ensure_untainted()?;
+
+        Ok(map)
     }
 }
 
@@ -146,7 +129,7 @@ impl DefinedItem {
     }
 }
 
-pub struct LowerModule<'a> {
+pub struct LowerModule {
     /// Defines the file is being lowered.
     file: Arc<SourceFile>,
 
@@ -154,7 +137,7 @@ pub struct LowerModule<'a> {
     dcx: DiagCtxHandle,
 
     /// Defines the type map to register types to.
-    map: &'a mut Map,
+    map: Map,
 
     /// List of all defined items in the current file.
     defined: HashSet<DefinedItem>,
@@ -179,11 +162,14 @@ pub struct LowerModule<'a> {
     current_node: NodeId,
 }
 
-impl<'a> LowerModule<'a> {
+impl LowerModule {
     /// Creates a new lowerer for creating HIR maps from AST.
-    pub fn new(map: &'a mut Map, item_idx: NodeId, file: Arc<SourceFile>, dcx: DiagCtxHandle) -> LowerModule<'a> {
+    pub fn new(package_id: PackageId, dcx: DiagCtxHandle) -> LowerModule {
+        let map = Map::empty(package_id);
+        let current_node = NodeId::empty(package_id);
+
         LowerModule {
-            file,
+            file: Arc::default(),
             map,
             dcx,
             defined: HashSet::new(),
@@ -192,8 +178,17 @@ impl<'a> LowerModule<'a> {
             namespace: None,
             self_type: None,
             type_parameters: Vec::new(),
-            current_node: item_idx,
+            current_node,
         }
+    }
+
+    /// Resets the lowerer to its initial state.
+    pub fn reset(&mut self) {
+        self.locals.clear();
+        self.imports.clear();
+        self.namespace = None;
+        self.self_type = None;
+        self.type_parameters.clear();
     }
 
     /// Lowers the single given source module into HIR.
@@ -203,32 +198,22 @@ impl<'a> LowerModule<'a> {
     /// Returns `Err` if any AST nodes are invalid or exist in invalid
     /// locations.
     #[libftrace::traced(level = Info, fields(file = file.name))]
-    pub fn lower(
-        map: &'a mut Map,
-        node_idx: &'a mut NodeId,
-        defined: &mut HashSet<DefinedItem>,
-        file: Arc<SourceFile>,
-        dcx: DiagCtxHandle,
-        expressions: Vec<lume_ast::TopLevelExpression>,
-    ) -> Result<()> {
-        let mut lower = LowerModule::new(map, *node_idx, file, dcx);
-        std::mem::swap(&mut lower.defined, defined);
-
-        lower.insert_implicit_imports()?;
+    pub fn lower(&mut self, file: Arc<SourceFile>, expressions: Vec<lume_ast::TopLevelExpression>) -> Result<()> {
+        self.file = file;
+        self.insert_implicit_imports()?;
 
         for expr in expressions {
-            if let Err(err) = lower.top_level_expression(expr) {
-                lower.dcx.emit(err);
+            if let Err(err) = self.top_level_expression(expr) {
+                self.dcx.emit(err);
             }
         }
 
-        for import in lower.imports.values() {
-            lower.map.imports.insert(import.clone());
+        for import in self.imports.values() {
+            self.map.imports.insert(import.clone());
         }
 
-        #[cfg(debug_assertions)]
-        for (id, node) in &lower.map.nodes {
-            assert_eq!(
+        for (id, node) in &self.map.nodes {
+            debug_assert_eq!(
                 *id,
                 node.id(),
                 "mismatched between ID key and value: {id:?} != {:?}",
@@ -236,10 +221,8 @@ impl<'a> LowerModule<'a> {
             );
         }
 
-        lower.dcx.ensure_untainted()?;
-
-        *node_idx = lower.current_node;
-        *defined = std::mem::take(&mut lower.defined);
+        self.dcx.ensure_untainted()?;
+        self.reset();
 
         Ok(())
     }

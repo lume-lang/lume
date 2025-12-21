@@ -2,7 +2,7 @@ use error_snippet::Result;
 
 use crate::LowerModule;
 
-impl LowerModule<'_> {
+impl LowerModule {
     /// Lowers the given AST block into a HIR block, within an nested scope.
     #[libftrace::traced(level = Debug)]
     pub(super) fn block(&mut self, expr: lume_ast::Block) -> lume_hir::Block {

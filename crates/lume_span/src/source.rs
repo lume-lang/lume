@@ -17,10 +17,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{PackageId, hash_id};
 
-#[derive(Serialize, Deserialize, Hash, Debug, Eq, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Default, Hash, Debug, Eq, PartialEq, Clone)]
 pub enum FileName {
     /// A file name which is defined by some internal process,
     /// such as in testing or defined on the command line.
+    #[default]
     Internal,
 
     /// A file name which physically exists on the file system.
@@ -58,7 +59,7 @@ impl std::fmt::Display for FileName {
 ///
 /// Each source file has a parent [`PackageId`], which defines which package it
 /// belongs to.
-#[derive(Serialize, Deserialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Default, Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourceFileId(pub PackageId, pub usize);
 
 impl SourceFileId {
@@ -77,7 +78,7 @@ impl SourceFileId {
 }
 
 /// A single source file within a package.
-#[derive(Serialize, Deserialize, Hash, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Default, Hash, Debug, PartialEq, Eq)]
 pub struct SourceFile {
     /// Defines the unique identifier of the source file.
     pub id: SourceFileId,

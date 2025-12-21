@@ -6,7 +6,7 @@ use lume_hir::{Node, SELF_TYPE_NAME};
 use crate::errors::*;
 use crate::{DefinedItem, LowerModule};
 
-impl LowerModule<'_> {
+impl LowerModule {
     #[libftrace::traced(level = Debug)]
     pub(super) fn top_level_expression(&mut self, expr: lume_ast::TopLevelExpression) -> Result<()> {
         let hir_ast = match expr {

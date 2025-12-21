@@ -112,6 +112,11 @@ impl<TKey: Hash + Eq, TEntry> SymbolTable<TKey, TEntry> {
         table
     }
 
+    /// Clears the symbol table, removing all entries.
+    pub fn clear(&mut self) {
+        self.symbols.clear();
+    }
+
     /// Appends a new frame to the current symbol scope.
     ///
     /// This is usually called when a function is invoked or block scope starts.

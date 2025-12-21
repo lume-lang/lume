@@ -2,7 +2,7 @@ use error_snippet::Result;
 
 use crate::LowerModule;
 
-impl LowerModule<'_> {
+impl LowerModule {
     #[libftrace::traced(level = Debug)]
     pub(super) fn pattern(&mut self, pattern: lume_ast::Pattern) -> Result<lume_hir::Pattern> {
         let id = self.next_node_id();

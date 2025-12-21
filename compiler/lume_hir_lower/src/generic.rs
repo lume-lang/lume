@@ -5,7 +5,7 @@ use lume_span::NodeId;
 
 use crate::LowerModule;
 
-impl LowerModule<'_> {
+impl LowerModule {
     #[libftrace::traced(level = Debug)]
     pub(crate) fn type_parameters(&mut self, params: Vec<lume_ast::TypeParameter>) -> Result<Vec<NodeId>> {
         let mut names: HashSet<lume_hir::Identifier> = HashSet::with_capacity(params.len());
