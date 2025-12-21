@@ -8,293 +8,59 @@ use crate::{DefinedItem, LowerModule};
 
 impl LowerModule<'_> {
     #[libftrace::traced(level = Debug)]
-    pub(super) fn def_type(&mut self, expr: lume_ast::TypeDefinition) -> Result<lume_hir::Node> {
-        match expr {
-            lume_ast::TypeDefinition::Struct(t) => self.def_struct(*t),
-            lume_ast::TypeDefinition::Trait(t) => self.def_trait(*t),
-            lume_ast::TypeDefinition::Enum(t) => self.def_enum(*t),
-        }
-    }
+    pub(super) fn top_level_expression(&mut self, expr: lume_ast::TopLevelExpression) -> Result<()> {
+        let hir_ast = match expr {
+            lume_ast::TopLevelExpression::Import(i) => {
+                self.import(*i)?;
 
-    #[libftrace::traced(level = Debug)]
-    fn def_struct(&mut self, expr: lume_ast::StructDefinition) -> Result<lume_hir::Node> {
-        let id = self.next_node_id();
-        self.add_lang_items(id, &expr.attributes)?;
-
-        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
-        let visibility = lower_visibility(expr.visibility.as_ref());
-        let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let location = self.location(expr.location);
-
-        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
-
-        self.self_type = Some(name.clone());
-
-        let mut fields = Vec::with_capacity(expr.fields.len());
-        for (idx, field) in expr.fields.into_iter().enumerate() {
-            fields.push(self.def_field(idx, field)?);
-        }
-
-        self.type_parameters.pop().unwrap();
-        self.self_type = None;
-
-        Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(Box::new(
-            lume_hir::StructDefinition {
-                id,
-                doc_comment: expr.documentation,
-                name,
-                visibility,
-                builtin: expr.builtin,
-                type_parameters,
-                fields,
-                location,
-            },
-        ))))
-    }
-
-    #[libftrace::traced(level = Debug)]
-    fn def_field(&mut self, index: usize, expr: lume_ast::Field) -> Result<lume_hir::Field> {
-        let id = self.next_node_id();
-
-        let visibility = lower_visibility(expr.visibility.as_ref());
-        let name = self.identifier(expr.name);
-        let field_type = self.type_ref(expr.field_type)?;
-        let location = self.location(expr.location);
-
-        let default_value = if let Some(def) = expr.default_value {
-            Some(self.expression(def)?)
-        } else {
-            None
-        };
-
-        let field = lume_hir::Field {
-            id,
-            index,
-            doc_comment: expr.documentation,
-            name,
-            visibility,
-            field_type,
-            default_value,
-            location,
-        };
-
-        self.map.nodes.insert(id, Node::Field(field.clone()));
-
-        Ok(field)
-    }
-
-    #[libftrace::traced(level = Debug)]
-    pub(super) fn def_impl(&mut self, expr: lume_ast::Implementation) -> Result<lume_hir::Node> {
-        let id = self.next_node_id();
-
-        let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let target = self.type_ref(*expr.name)?;
-        let location = self.location(expr.location);
-
-        self.self_type = Some(target.name.clone());
-
-        let mut methods = Vec::with_capacity(expr.methods.len());
-        let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
-
-        for method in expr.methods {
-            if let Some(existing) = method_names.get(&method.name) {
-                return Err(crate::errors::DuplicateMethod {
-                    source: self.file.clone(),
-                    duplicate_range: method.name.location.0.clone(),
-                    original_range: existing.location.0.clone(),
-                    name: method.name.to_string(),
-                }
-                .into());
+                return Ok(());
             }
+            lume_ast::TopLevelExpression::Namespace(namespace) => {
+                self.namespace = Some(self.import_path(namespace.path)?);
 
-            method_names.insert(method.name.clone());
-
-            let method = self.def_impl_method(method)?;
-            self.map.nodes.insert(method.id, Node::Method(method.clone()));
-
-            methods.push(method);
-        }
-
-        self.type_parameters.pop().unwrap();
-        self.self_type = None;
-
-        Ok(lume_hir::Node::Impl(lume_hir::Implementation {
-            id,
-            target: Box::new(target),
-            methods,
-            type_parameters,
-            location,
-        }))
-    }
-
-    #[libftrace::traced(level = Debug)]
-    fn def_impl_method(&mut self, expr: lume_ast::MethodDefinition) -> Result<lume_hir::MethodDefinition> {
-        let id = self.next_node_id();
-        self.add_lang_items(id, &expr.attributes)?;
-
-        let visibility = lower_visibility(expr.visibility.as_ref());
-        let name = self.identifier(expr.name);
-        let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let parameters = self.parameters(expr.parameters, true)?;
-        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
-        let location = self.location(expr.location);
-
-        let block = expr.block.map(|block| self.isolated_block(block, &parameters));
-
-        self.type_parameters.pop().unwrap();
-
-        Ok(lume_hir::MethodDefinition {
-            id,
-            doc_comment: expr.documentation,
-            name,
-            visibility,
-            type_parameters,
-            parameters,
-            return_type,
-            block,
-            location,
-        })
-    }
-
-    #[libftrace::traced(level = Debug)]
-    fn def_trait(&mut self, expr: lume_ast::TraitDefinition) -> Result<lume_hir::Node> {
-        let id = self.next_node_id();
-        self.add_lang_items(id, &expr.attributes)?;
-
-        let self_name = self.expand_self_name(expr.name.clone(), &expr.type_parameters)?;
-
-        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
-        let visibility = lower_visibility(expr.visibility.as_ref());
-        let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let location = self.location(expr.location);
-
-        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
-
-        self.self_type = Some(self_name);
-
-        let mut methods = Vec::with_capacity(expr.methods.len());
-        let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
-
-        for method in expr.methods {
-            if let Some(existing) = method_names.get(&method.name) {
-                return Err(crate::errors::DuplicateMethod {
-                    source: self.file.clone(),
-                    duplicate_range: method.name.location.0.clone(),
-                    original_range: existing.location.0.clone(),
-                    name: method.name.to_string(),
-                }
-                .into());
+                return Ok(());
             }
-
-            method_names.insert(method.name.clone());
-
-            let method = self.def_trait_method_def(method)?;
-            self.map.nodes.insert(method.id, Node::TraitMethodDef(method.clone()));
-
-            methods.push(method);
-        }
-
-        self.type_parameters.pop().unwrap();
-        self.self_type = None;
-
-        Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(Box::new(
-            lume_hir::TraitDefinition {
-                id,
-                doc_comment: expr.documentation,
-                name,
-                visibility,
-                type_parameters,
-                methods,
-                location,
+            lume_ast::TopLevelExpression::TypeDefinition(t) => match *t {
+                lume_ast::TypeDefinition::Struct(t) => self.struct_definition(*t)?,
+                lume_ast::TypeDefinition::Trait(t) => self.trait_definition(*t)?,
+                lume_ast::TypeDefinition::Enum(t) => self.enum_definition(*t)?,
             },
-        ))))
-    }
-
-    #[libftrace::traced(level = Debug)]
-    fn def_trait_method_def(
-        &mut self,
-        expr: lume_ast::TraitMethodDefinition,
-    ) -> Result<lume_hir::TraitMethodDefinition> {
-        let id = self.next_node_id();
-
-        let name = self.identifier(expr.name);
-        let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let parameters = self.parameters(expr.parameters, true)?;
-        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
-        let location = self.location(expr.location);
-        let block = expr.block.map(|b| self.isolated_block(b, &parameters));
-
-        self.type_parameters.pop().unwrap();
-
-        Ok(lume_hir::TraitMethodDefinition {
-            id,
-            doc_comment: expr.documentation,
-            name,
-            type_parameters,
-            parameters,
-            return_type,
-            block,
-            location,
-        })
-    }
-
-    fn def_enum(&mut self, expr: lume_ast::EnumDefinition) -> Result<lume_hir::Node> {
-        let id = self.next_node_id();
-
-        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
-        let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let visibility = lower_visibility(expr.visibility.as_ref());
-        let location = self.location(expr.location);
-
-        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
-
-        let mut cases = Vec::with_capacity(expr.cases.len());
-        for (idx, case) in expr.cases.into_iter().enumerate() {
-            cases.push(self.def_enum_case(idx, case)?);
-        }
-
-        self.type_parameters.pop().unwrap();
-
-        Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(Box::new(
-            lume_hir::EnumDefinition {
-                id,
-                doc_comment: expr.documentation,
-                name,
-                type_parameters,
-                visibility,
-                cases,
-                location,
-            },
-        ))))
-    }
-
-    #[libftrace::traced(level = Debug)]
-    fn def_enum_case(
-        &mut self,
-        idx: usize,
-        expr: lume_ast::EnumDefinitionCase,
-    ) -> Result<lume_hir::EnumDefinitionCase> {
-        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
-        let location = self.location(expr.location);
-
-        let mut parameters = Vec::with_capacity(expr.parameters.len());
-        for param in expr.parameters {
-            parameters.push(self.type_ref(*param)?);
-        }
-
-        let symbol = lume_hir::EnumDefinitionCase {
-            idx,
-            doc_comment: expr.documentation,
-            name,
-            parameters,
-            location,
+            lume_ast::TopLevelExpression::FunctionDefinition(f) => self.function_definition(*f)?,
+            lume_ast::TopLevelExpression::TraitImpl(f) => self.trait_implementation(*f)?,
+            lume_ast::TopLevelExpression::Impl(f) => self.implementation(*f)?,
         };
 
-        Ok(symbol)
+        let id = hir_ast.id();
+
+        // Ensure that the ID doesn't overwrite an existing entry.
+        debug_assert!(!self.map.nodes.contains_key(&id));
+
+        self.map.nodes.insert(id, hir_ast);
+
+        Ok(())
     }
 
     #[libftrace::traced(level = Debug)]
-    pub(super) fn def_function(&mut self, expr: lume_ast::FunctionDefinition) -> Result<lume_hir::Node> {
+    pub(super) fn import(&mut self, expr: lume_ast::Import) -> Result<()> {
+        for imported_name in expr.names {
+            let namespace = self.import_path(expr.path.clone())?;
+
+            let import_path_name = if imported_name.is_lower() {
+                lume_hir::PathSegment::callable(self.identifier(imported_name))
+            } else {
+                lume_hir::PathSegment::ty(self.identifier(imported_name))
+            };
+
+            let imported_path = lume_hir::Path::with_root(namespace, import_path_name);
+
+            self.imports.insert(imported_path.name.to_string(), imported_path);
+        }
+
+        Ok(())
+    }
+
+    #[libftrace::traced(level = Debug)]
+    fn function_definition(&mut self, expr: lume_ast::FunctionDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
         self.add_lang_items(id, &expr.attributes)?;
 
@@ -387,29 +153,302 @@ impl LowerModule<'_> {
 
             names.insert(param.name.clone());
 
-            parameters.push(self.parameter(index, param)?);
+            let name = self.identifier(param.name);
+            let param_type = self.type_ref(param.param_type)?;
+            let location = self.location(param.location);
+
+            parameters.push(lume_hir::Parameter {
+                index,
+                name,
+                param_type,
+                vararg: param.vararg,
+                location,
+            });
         }
 
         Ok(parameters)
     }
 
     #[libftrace::traced(level = Debug)]
-    fn parameter(&mut self, index: usize, param: lume_ast::Parameter) -> Result<lume_hir::Parameter> {
-        let name = self.identifier(param.name);
-        let param_type = self.type_ref(param.param_type)?;
-        let location = self.location(param.location);
+    fn struct_definition(&mut self, expr: lume_ast::StructDefinition) -> Result<lume_hir::Node> {
+        let id = self.next_node_id();
+        self.add_lang_items(id, &expr.attributes)?;
 
-        Ok(lume_hir::Parameter {
+        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
+        let visibility = lower_visibility(expr.visibility.as_ref());
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
+        let location = self.location(expr.location);
+
+        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
+
+        self.self_type = Some(name.clone());
+
+        let mut fields = Vec::with_capacity(expr.fields.len());
+        for (idx, field) in expr.fields.into_iter().enumerate() {
+            fields.push(self.struct_field_definition(idx, field)?);
+        }
+
+        self.type_parameters.pop().unwrap();
+        self.self_type = None;
+
+        Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(Box::new(
+            lume_hir::StructDefinition {
+                id,
+                doc_comment: expr.documentation,
+                name,
+                visibility,
+                builtin: expr.builtin,
+                type_parameters,
+                fields,
+                location,
+            },
+        ))))
+    }
+
+    #[libftrace::traced(level = Debug)]
+    fn struct_field_definition(&mut self, index: usize, expr: lume_ast::Field) -> Result<lume_hir::Field> {
+        let id = self.next_node_id();
+
+        let visibility = lower_visibility(expr.visibility.as_ref());
+        let name = self.identifier(expr.name);
+        let field_type = self.type_ref(expr.field_type)?;
+        let location = self.location(expr.location);
+
+        let default_value = if let Some(def) = expr.default_value {
+            Some(self.expression(def)?)
+        } else {
+            None
+        };
+
+        let field = lume_hir::Field {
+            id,
             index,
+            doc_comment: expr.documentation,
             name,
-            param_type,
-            vararg: param.vararg,
+            visibility,
+            field_type,
+            default_value,
+            location,
+        };
+
+        self.map.nodes.insert(id, Node::Field(field.clone()));
+
+        Ok(field)
+    }
+
+    #[libftrace::traced(level = Debug)]
+    fn implementation(&mut self, expr: lume_ast::Implementation) -> Result<lume_hir::Node> {
+        let id = self.next_node_id();
+
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
+        let target = self.type_ref(*expr.name)?;
+        let location = self.location(expr.location);
+
+        self.self_type = Some(target.name.clone());
+
+        let mut methods = Vec::with_capacity(expr.methods.len());
+        let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
+
+        for method in expr.methods {
+            if let Some(existing) = method_names.get(&method.name) {
+                return Err(crate::errors::DuplicateMethod {
+                    source: self.file.clone(),
+                    duplicate_range: method.name.location.0.clone(),
+                    original_range: existing.location.0.clone(),
+                    name: method.name.to_string(),
+                }
+                .into());
+            }
+
+            method_names.insert(method.name.clone());
+
+            let method = self.implementation_method(method)?;
+            self.map.nodes.insert(method.id, Node::Method(method.clone()));
+
+            methods.push(method);
+        }
+
+        self.type_parameters.pop().unwrap();
+        self.self_type = None;
+
+        Ok(lume_hir::Node::Impl(lume_hir::Implementation {
+            id,
+            target: Box::new(target),
+            methods,
+            type_parameters,
+            location,
+        }))
+    }
+
+    #[libftrace::traced(level = Debug)]
+    fn implementation_method(&mut self, expr: lume_ast::MethodDefinition) -> Result<lume_hir::MethodDefinition> {
+        let id = self.next_node_id();
+        self.add_lang_items(id, &expr.attributes)?;
+
+        let visibility = lower_visibility(expr.visibility.as_ref());
+        let name = self.identifier(expr.name);
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
+        let parameters = self.parameters(expr.parameters, true)?;
+        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
+        let location = self.location(expr.location);
+
+        let block = expr.block.map(|block| self.isolated_block(block, &parameters));
+
+        self.type_parameters.pop().unwrap();
+
+        Ok(lume_hir::MethodDefinition {
+            id,
+            doc_comment: expr.documentation,
+            name,
+            visibility,
+            type_parameters,
+            parameters,
+            return_type,
+            block,
             location,
         })
     }
 
     #[libftrace::traced(level = Debug)]
-    pub(super) fn def_trait_impl(&mut self, expr: lume_ast::TraitImplementation) -> Result<lume_hir::Node> {
+    fn trait_definition(&mut self, expr: lume_ast::TraitDefinition) -> Result<lume_hir::Node> {
+        let id = self.next_node_id();
+        self.add_lang_items(id, &expr.attributes)?;
+
+        let self_name = self.expand_self_name(expr.name.clone(), &expr.type_parameters)?;
+
+        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
+        let visibility = lower_visibility(expr.visibility.as_ref());
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
+        let location = self.location(expr.location);
+
+        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
+
+        self.self_type = Some(self_name);
+
+        let mut methods = Vec::with_capacity(expr.methods.len());
+        let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
+
+        for method in expr.methods {
+            if let Some(existing) = method_names.get(&method.name) {
+                return Err(crate::errors::DuplicateMethod {
+                    source: self.file.clone(),
+                    duplicate_range: method.name.location.0.clone(),
+                    original_range: existing.location.0.clone(),
+                    name: method.name.to_string(),
+                }
+                .into());
+            }
+
+            method_names.insert(method.name.clone());
+
+            let method = self.trait_definition_method(method)?;
+            self.map.nodes.insert(method.id, Node::TraitMethodDef(method.clone()));
+
+            methods.push(method);
+        }
+
+        self.type_parameters.pop().unwrap();
+        self.self_type = None;
+
+        Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(Box::new(
+            lume_hir::TraitDefinition {
+                id,
+                doc_comment: expr.documentation,
+                name,
+                visibility,
+                type_parameters,
+                methods,
+                location,
+            },
+        ))))
+    }
+
+    #[libftrace::traced(level = Debug)]
+    fn trait_definition_method(
+        &mut self,
+        expr: lume_ast::TraitMethodDefinition,
+    ) -> Result<lume_hir::TraitMethodDefinition> {
+        let id = self.next_node_id();
+
+        let name = self.identifier(expr.name);
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
+        let parameters = self.parameters(expr.parameters, true)?;
+        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
+        let location = self.location(expr.location);
+        let block = expr.block.map(|b| self.isolated_block(b, &parameters));
+
+        self.type_parameters.pop().unwrap();
+
+        Ok(lume_hir::TraitMethodDefinition {
+            id,
+            doc_comment: expr.documentation,
+            name,
+            type_parameters,
+            parameters,
+            return_type,
+            block,
+            location,
+        })
+    }
+
+    #[libftrace::traced(level = Debug)]
+    fn enum_definition(&mut self, expr: lume_ast::EnumDefinition) -> Result<lume_hir::Node> {
+        let id = self.next_node_id();
+
+        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
+        let visibility = lower_visibility(expr.visibility.as_ref());
+        let location = self.location(expr.location);
+
+        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
+
+        let mut cases = Vec::with_capacity(expr.cases.len());
+        for (idx, case) in expr.cases.into_iter().enumerate() {
+            cases.push(self.enum_definition_case(idx, case)?);
+        }
+
+        self.type_parameters.pop().unwrap();
+
+        Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(Box::new(
+            lume_hir::EnumDefinition {
+                id,
+                doc_comment: expr.documentation,
+                name,
+                type_parameters,
+                visibility,
+                cases,
+                location,
+            },
+        ))))
+    }
+
+    #[libftrace::traced(level = Debug)]
+    fn enum_definition_case(
+        &mut self,
+        idx: usize,
+        expr: lume_ast::EnumDefinitionCase,
+    ) -> Result<lume_hir::EnumDefinitionCase> {
+        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
+        let location = self.location(expr.location);
+
+        let mut parameters = Vec::with_capacity(expr.parameters.len());
+        for param in expr.parameters {
+            parameters.push(self.type_ref(*param)?);
+        }
+
+        let symbol = lume_hir::EnumDefinitionCase {
+            idx,
+            doc_comment: expr.documentation,
+            name,
+            parameters,
+            location,
+        };
+
+        Ok(symbol)
+    }
+
+    #[libftrace::traced(level = Debug)]
+    fn trait_implementation(&mut self, expr: lume_ast::TraitImplementation) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let name = self.type_ref(*expr.name)?;
@@ -433,7 +472,7 @@ impl LowerModule<'_> {
 
             method_names.insert(method.name.clone());
 
-            let method = self.def_use_method(method)?;
+            let method = self.trait_implementation_method(method)?;
             self.map.nodes.insert(method.id, Node::TraitMethodImpl(method.clone()));
 
             methods.push(method);
@@ -455,7 +494,7 @@ impl LowerModule<'_> {
     }
 
     #[libftrace::traced(level = Debug)]
-    fn def_use_method(
+    fn trait_implementation_method(
         &mut self,
         expr: lume_ast::TraitMethodImplementation,
     ) -> Result<lume_hir::TraitMethodImplementation> {
