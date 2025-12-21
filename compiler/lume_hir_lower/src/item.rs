@@ -8,7 +8,70 @@ use crate::{DefinedItem, LowerModule};
 
 impl LowerModule {
     #[libftrace::traced(level = Debug)]
-    pub(super) fn top_level_expression(&mut self, expr: lume_ast::TopLevelExpression) -> Result<()> {
+    pub(super) fn lower_items(&mut self, expressions: Vec<lume_ast::TopLevelExpression>) {
+        for expr in &expressions {
+            if let Err(err) = self.define_imported_items(expr) {
+                self.dcx.emit(err);
+            }
+        }
+
+        for expr in expressions {
+            if let Err(err) = self.top_level_expression(expr) {
+                self.dcx.emit(err);
+            }
+        }
+    }
+
+    #[libftrace::traced(level = Debug)]
+    fn define_imported_items(&mut self, expr: &lume_ast::TopLevelExpression) -> Result<()> {
+        match expr {
+            lume_ast::TopLevelExpression::Namespace(namespace) => {
+                self.namespace = Some(self.import_path(namespace.path.clone())?);
+
+                Ok(())
+            }
+            lume_ast::TopLevelExpression::TypeDefinition(type_def) => match &**type_def {
+                lume_ast::TypeDefinition::Struct(struct_def) => {
+                    let path_segment = lume_ast::PathSegment::ty(struct_def.name.clone());
+                    let name = self.expand_name(path_segment)?;
+
+                    self.ensure_item_undefined(DefinedItem::Type(name))?;
+
+                    Ok(())
+                }
+                lume_ast::TypeDefinition::Trait(trait_def) => {
+                    let path_segment = lume_ast::PathSegment::ty(trait_def.name.clone());
+                    let name = self.expand_name(path_segment)?;
+
+                    self.ensure_item_undefined(DefinedItem::Type(name))?;
+
+                    Ok(())
+                }
+                lume_ast::TypeDefinition::Enum(enum_def) => {
+                    let path_segment = lume_ast::PathSegment::ty(enum_def.name.clone());
+                    let name = self.expand_name(path_segment)?;
+
+                    self.ensure_item_undefined(DefinedItem::Type(name))?;
+
+                    Ok(())
+                }
+            },
+            lume_ast::TopLevelExpression::FunctionDefinition(func_def) => {
+                let path_segment = lume_ast::PathSegment::callable(func_def.name.clone());
+                let name = self.expand_name(path_segment)?;
+
+                self.ensure_item_undefined(DefinedItem::Function(name))?;
+
+                Ok(())
+            }
+            lume_ast::TopLevelExpression::Import(_)
+            | lume_ast::TopLevelExpression::TraitImpl(_)
+            | lume_ast::TopLevelExpression::Impl(_) => Ok(()),
+        }
+    }
+
+    #[libftrace::traced(level = Debug)]
+    fn top_level_expression(&mut self, expr: lume_ast::TopLevelExpression) -> Result<()> {
         let hir_ast = match expr {
             lume_ast::TopLevelExpression::Import(i) => {
                 self.import(*i)?;
@@ -70,8 +133,6 @@ impl LowerModule {
         let parameters = self.parameters(expr.parameters, false)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
-
-        self.ensure_item_undefined(DefinedItem::Function(name.clone()))?;
 
         let block = expr.block.map(|block| self.isolated_block(block, &parameters));
 
@@ -178,8 +239,6 @@ impl LowerModule {
         let visibility = lower_visibility(expr.visibility.as_ref());
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
-
-        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
 
         self.self_type = Some(name.clone());
 
@@ -321,8 +380,6 @@ impl LowerModule {
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
 
-        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
-
         self.self_type = Some(self_name);
 
         let mut methods = Vec::with_capacity(expr.methods.len());
@@ -399,8 +456,6 @@ impl LowerModule {
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let visibility = lower_visibility(expr.visibility.as_ref());
         let location = self.location(expr.location);
-
-        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
 
         let mut cases = Vec::with_capacity(expr.cases.len());
         for (idx, case) in expr.cases.into_iter().enumerate() {
