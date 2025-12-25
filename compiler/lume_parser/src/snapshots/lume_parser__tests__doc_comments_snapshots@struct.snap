@@ -3,27 +3,24 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"/// This is a doc comment\n        struct Foo { }\")"
 ---
 [
-    TypeDefinition(
-        Struct(
-            StructDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Foo",
-                    location: Location(
-                        41..44,
-                    ),
-                },
-                builtin: false,
-                fields: [],
-                type_parameters: [],
+    StructDefinition(
+        StructDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Foo",
                 location: Location(
-                    34..48,
-                ),
-                documentation: Some(
-                    "This is a doc comment",
+                    41..44,
                 ),
             },
-        ),
+            fields: [],
+            type_parameters: [],
+            location: Location(
+                34..48,
+            ),
+            documentation: Some(
+                "This is a doc comment",
+            ),
+        },
     ),
 ]

@@ -14,7 +14,6 @@ Map {
                 },
                 location: struct_empty_decl.lm:7:12,
             },
-            builtin: false,
             fields: [],
             type_parameters: [],
             location: struct_empty_decl.lm:0:15,

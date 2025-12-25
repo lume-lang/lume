@@ -3,26 +3,24 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"/// This is a doc comment\n        trait Foo { }\")"
 ---
 [
-    TypeDefinition(
-        Trait(
-            TraitDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Foo",
-                    location: Location(
-                        40..43,
-                    ),
-                },
-                type_parameters: [],
-                methods: [],
+    TraitDefinition(
+        TraitDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Foo",
                 location: Location(
-                    34..47,
-                ),
-                documentation: Some(
-                    "This is a doc comment",
+                    40..43,
                 ),
             },
-        ),
+            type_parameters: [],
+            methods: [],
+            location: Location(
+                34..47,
+            ),
+            documentation: Some(
+                "This is a doc comment",
+            ),
+        },
     ),
 ]

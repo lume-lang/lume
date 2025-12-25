@@ -3,74 +3,71 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"\n        struct Foo {\n            x: Int32 = 0;\n        }\")"
 ---
 [
-    TypeDefinition(
-        Struct(
-            StructDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Foo",
-                    location: Location(
-                        16..19,
-                    ),
-                },
-                builtin: false,
-                fields: [
-                    Field {
-                        visibility: None,
-                        name: Identifier {
-                            name: "x",
-                            location: Location(
-                                34..35,
-                            ),
-                        },
-                        field_type: Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Int32",
-                                            location: Location(
-                                                37..42,
-                                            ),
-                                        },
-                                        bound_types: [],
+    StructDefinition(
+        StructDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Foo",
+                location: Location(
+                    16..19,
+                ),
+            },
+            fields: [
+                Field {
+                    visibility: None,
+                    name: Identifier {
+                        name: "x",
+                        location: Location(
+                            34..35,
+                        ),
+                    },
+                    field_type: Named(
+                        NamedType {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "Int32",
                                         location: Location(
                                             37..42,
                                         ),
                                     },
+                                    bound_types: [],
                                     location: Location(
                                         37..42,
                                     ),
                                 },
-                            },
-                        ),
-                        default_value: Some(
-                            Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 0,
-                                        location: Location(
-                                            45..46,
-                                        ),
-                                        kind: None,
-                                    },
+                                location: Location(
+                                    37..42,
                                 ),
+                            },
+                        },
+                    ),
+                    default_value: Some(
+                        Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 0,
+                                    location: Location(
+                                        45..46,
+                                    ),
+                                    kind: None,
+                                },
                             ),
                         ),
-                        location: Location(
-                            34..47,
-                        ),
-                        documentation: None,
-                    },
-                ],
-                type_parameters: [],
-                location: Location(
-                    9..57,
-                ),
-                documentation: None,
-            },
-        ),
+                    ),
+                    location: Location(
+                        34..47,
+                    ),
+                    documentation: None,
+                },
+            ],
+            type_parameters: [],
+            location: Location(
+                9..57,
+            ),
+            documentation: None,
+        },
     ),
 ]

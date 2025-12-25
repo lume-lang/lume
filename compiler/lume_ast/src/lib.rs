@@ -536,34 +536,15 @@ impl Node for Visibility {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Public {
-    pub location: Location,
-}
-
-node_location!(Public);
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct PublicInternal {
-    pub location: Location,
-}
-
-node_location!(PublicInternal);
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Private {
-    pub location: Location,
-}
-
-node_location!(Private);
-
-#[derive(Debug, Clone, PartialEq)]
 pub enum TopLevelExpression {
     Import(Box<Import>),
     Namespace(Box<Namespace>),
     FunctionDefinition(Box<FunctionDefinition>),
-    TypeDefinition(Box<TypeDefinition>),
-    Impl(Box<Implementation>),
-    TraitImpl(Box<TraitImplementation>),
+    StructDefinition(Box<StructDefinition>),
+    TraitDefinition(Box<TraitDefinition>),
+    EnumDefinition(Box<EnumDefinition>),
+    Implementation(Box<Implementation>),
+    TraitImplementation(Box<TraitImplementation>),
 }
 
 impl Node for TopLevelExpression {
@@ -573,9 +554,11 @@ impl Node for TopLevelExpression {
             Self::Import(e) => &e.location,
             Self::Namespace(e) => &e.location,
             Self::FunctionDefinition(e) => &e.location,
-            Self::TypeDefinition(e) => e.location(),
-            Self::Impl(e) => &e.location,
-            Self::TraitImpl(e) => &e.location,
+            Self::StructDefinition(e) => e.location(),
+            Self::TraitDefinition(e) => e.location(),
+            Self::EnumDefinition(e) => e.location(),
+            Self::Implementation(e) => &e.location,
+            Self::TraitImplementation(e) => &e.location,
         }
     }
 }
@@ -647,36 +630,6 @@ pub struct FunctionDefinition {
 }
 
 node_location!(FunctionDefinition);
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum TypeDefinition {
-    Struct(Box<StructDefinition>),
-    Trait(Box<TraitDefinition>),
-    Enum(Box<EnumDefinition>),
-}
-
-impl Node for TypeDefinition {
-    #[inline]
-    fn location(&self) -> &Location {
-        match self {
-            Self::Struct(e) => &e.location,
-            Self::Trait(e) => &e.location,
-            Self::Enum(e) => &e.location,
-        }
-    }
-}
-
-impl TypeDefinition {
-    #[inline]
-    #[must_use]
-    pub fn name(&self) -> &Identifier {
-        match self {
-            TypeDefinition::Struct(struct_def) => &struct_def.name,
-            TypeDefinition::Trait(trait_def) => &trait_def.name,
-            TypeDefinition::Enum(enum_def) => &enum_def.name,
-        }
-    }
-}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructDefinition {

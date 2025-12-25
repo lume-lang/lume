@@ -3,39 +3,37 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"enum Foo {\n            /// This is a doc comment\n            Bar\n        }\")"
 ---
 [
-    TypeDefinition(
-        Enum(
-            EnumDefinition {
-                visibility: None,
-                name: Identifier {
-                    name: "Foo",
-                    location: Location(
-                        5..8,
-                    ),
-                },
-                type_parameters: [],
-                cases: [
-                    EnumDefinitionCase {
-                        name: Identifier {
-                            name: "Bar",
-                            location: Location(
-                                61..64,
-                            ),
-                        },
-                        parameters: [],
+    EnumDefinition(
+        EnumDefinition {
+            visibility: None,
+            name: Identifier {
+                name: "Foo",
+                location: Location(
+                    5..8,
+                ),
+            },
+            type_parameters: [],
+            cases: [
+                EnumDefinitionCase {
+                    name: Identifier {
+                        name: "Bar",
                         location: Location(
                             61..64,
                         ),
-                        documentation: Some(
-                            "This is a doc comment",
-                        ),
                     },
-                ],
-                location: Location(
-                    0..74,
-                ),
-                documentation: None,
-            },
-        ),
+                    parameters: [],
+                    location: Location(
+                        61..64,
+                    ),
+                    documentation: Some(
+                        "This is a doc comment",
+                    ),
+                },
+            ],
+            location: Location(
+                0..74,
+            ),
+            documentation: None,
+        },
     ),
 ]

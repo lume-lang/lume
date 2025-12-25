@@ -3,83 +3,81 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"trait Add { fn add(other: Int32) { } }\")"
 ---
 [
-    TypeDefinition(
-        Trait(
-            TraitDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Add",
-                    location: Location(
-                        6..9,
-                    ),
-                },
-                type_parameters: [],
-                methods: [
-                    TraitMethodDefinition {
-                        name: Identifier {
-                            name: "add",
-                            location: Location(
-                                15..18,
-                            ),
-                        },
-                        parameters: [
-                            Parameter {
-                                name: Identifier {
-                                    name: "other",
-                                    location: Location(
-                                        19..24,
-                                    ),
-                                },
-                                param_type: Named(
-                                    NamedType {
-                                        name: Path {
-                                            root: [],
-                                            name: Type {
-                                                name: Identifier {
-                                                    name: "Int32",
-                                                    location: Location(
-                                                        26..31,
-                                                    ),
-                                                },
-                                                bound_types: [],
+    TraitDefinition(
+        TraitDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Add",
+                location: Location(
+                    6..9,
+                ),
+            },
+            type_parameters: [],
+            methods: [
+                TraitMethodDefinition {
+                    name: Identifier {
+                        name: "add",
+                        location: Location(
+                            15..18,
+                        ),
+                    },
+                    parameters: [
+                        Parameter {
+                            name: Identifier {
+                                name: "other",
+                                location: Location(
+                                    19..24,
+                                ),
+                            },
+                            param_type: Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Int32",
                                                 location: Location(
                                                     26..31,
                                                 ),
                                             },
+                                            bound_types: [],
                                             location: Location(
                                                 26..31,
                                             ),
                                         },
+                                        location: Location(
+                                            26..31,
+                                        ),
                                     },
-                                ),
-                                vararg: false,
-                                location: Location(
-                                    19..31,
-                                ),
-                            },
-                        ],
-                        type_parameters: [],
-                        return_type: None,
-                        block: Some(
-                            Block {
-                                statements: [],
-                                location: Location(
-                                    33..36,
-                                ),
-                            },
-                        ),
-                        location: Location(
-                            12..36,
-                        ),
-                        documentation: None,
-                    },
-                ],
-                location: Location(
-                    0..38,
-                ),
-                documentation: None,
-            },
-        ),
+                                },
+                            ),
+                            vararg: false,
+                            location: Location(
+                                19..31,
+                            ),
+                        },
+                    ],
+                    type_parameters: [],
+                    return_type: None,
+                    block: Some(
+                        Block {
+                            statements: [],
+                            location: Location(
+                                33..36,
+                            ),
+                        },
+                    ),
+                    location: Location(
+                        12..36,
+                    ),
+                    documentation: None,
+                },
+            ],
+            location: Location(
+                0..38,
+            ),
+            documentation: None,
+        },
     ),
 ]

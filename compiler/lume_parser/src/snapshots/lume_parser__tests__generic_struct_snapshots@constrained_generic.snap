@@ -3,58 +3,55 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"struct Test<T: Numeric> {}\")"
 ---
 [
-    TypeDefinition(
-        Struct(
-            StructDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Test",
-                    location: Location(
-                        7..11,
-                    ),
-                },
-                builtin: false,
-                fields: [],
-                type_parameters: [
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T",
-                            location: Location(
-                                12..13,
-                            ),
-                        },
-                        constraints: [
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Numeric",
-                                                location: Location(
-                                                    15..22,
-                                                ),
-                                            },
-                                            bound_types: [],
+    StructDefinition(
+        StructDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Test",
+                location: Location(
+                    7..11,
+                ),
+            },
+            fields: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T",
+                        location: Location(
+                            12..13,
+                        ),
+                    },
+                    constraints: [
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Numeric",
                                             location: Location(
                                                 15..22,
                                             ),
                                         },
+                                        bound_types: [],
                                         location: Location(
                                             15..22,
                                         ),
                                     },
+                                    location: Location(
+                                        15..22,
+                                    ),
                                 },
-                            ),
-                        ],
-                    },
-                ],
-                location: Location(
-                    0..26,
-                ),
-                documentation: None,
-            },
-        ),
+                            },
+                        ),
+                    ],
+                },
+            ],
+            location: Location(
+                0..26,
+            ),
+            documentation: None,
+        },
     ),
 ]

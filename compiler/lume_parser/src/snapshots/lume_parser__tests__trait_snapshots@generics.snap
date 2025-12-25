@@ -3,43 +3,41 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"trait Add<T1, T2> { }\")"
 ---
 [
-    TypeDefinition(
-        Trait(
-            TraitDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Add",
-                    location: Location(
-                        6..9,
-                    ),
-                },
-                type_parameters: [
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T1",
-                            location: Location(
-                                10..12,
-                            ),
-                        },
-                        constraints: [],
-                    },
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T2",
-                            location: Location(
-                                14..16,
-                            ),
-                        },
-                        constraints: [],
-                    },
-                ],
-                methods: [],
+    TraitDefinition(
+        TraitDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Add",
                 location: Location(
-                    0..21,
+                    6..9,
                 ),
-                documentation: None,
             },
-        ),
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T1",
+                        location: Location(
+                            10..12,
+                        ),
+                    },
+                    constraints: [],
+                },
+                TypeParameter {
+                    name: Identifier {
+                        name: "T2",
+                        location: Location(
+                            14..16,
+                        ),
+                    },
+                    constraints: [],
+                },
+            ],
+            methods: [],
+            location: Location(
+                0..21,
+            ),
+            documentation: None,
+        },
     ),
 ]

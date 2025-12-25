@@ -361,13 +361,11 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             TopLevelExpression::Namespace(ns) => namespace(ns),
             TopLevelExpression::Import(import) => self.import(import),
             TopLevelExpression::FunctionDefinition(func) => self.function_definition(func),
-            TopLevelExpression::TypeDefinition(type_def) => match type_def.as_ref() {
-                TypeDefinition::Struct(struct_def) => self.struct_definition(struct_def),
-                TypeDefinition::Trait(trait_def) => self.trait_definition(trait_def),
-                TypeDefinition::Enum(enum_def) => self.enum_definition(enum_def),
-            },
-            TopLevelExpression::TraitImpl(trait_impl) => self.trait_implementation(trait_impl),
-            TopLevelExpression::Impl(implementation) => self.implementation(implementation),
+            TopLevelExpression::StructDefinition(struct_def) => self.struct_definition(struct_def),
+            TopLevelExpression::TraitDefinition(trait_def) => self.trait_definition(trait_def),
+            TopLevelExpression::EnumDefinition(enum_def) => self.enum_definition(enum_def),
+            TopLevelExpression::TraitImplementation(trait_impl) => self.trait_implementation(trait_impl),
+            TopLevelExpression::Implementation(implementation) => self.implementation(implementation),
         }
     }
 

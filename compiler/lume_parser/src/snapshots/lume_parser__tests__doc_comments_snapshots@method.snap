@@ -3,7 +3,7 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"impl Foo {\n            /// This is a doc comment\n            pub fn bar() -> void { }\n        }\")"
 ---
 [
-    Impl(
+    Implementation(
         Implementation {
             name: Named(
                 NamedType {

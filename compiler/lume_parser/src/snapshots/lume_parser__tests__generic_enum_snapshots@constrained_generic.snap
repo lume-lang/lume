@@ -3,56 +3,54 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"enum Test<T: Numeric> {}\")"
 ---
 [
-    TypeDefinition(
-        Enum(
-            EnumDefinition {
-                visibility: None,
-                name: Identifier {
-                    name: "Test",
-                    location: Location(
-                        5..9,
-                    ),
-                },
-                type_parameters: [
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T",
-                            location: Location(
-                                10..11,
-                            ),
-                        },
-                        constraints: [
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Numeric",
-                                                location: Location(
-                                                    13..20,
-                                                ),
-                                            },
-                                            bound_types: [],
+    EnumDefinition(
+        EnumDefinition {
+            visibility: None,
+            name: Identifier {
+                name: "Test",
+                location: Location(
+                    5..9,
+                ),
+            },
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T",
+                        location: Location(
+                            10..11,
+                        ),
+                    },
+                    constraints: [
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Numeric",
                                             location: Location(
                                                 13..20,
                                             ),
                                         },
+                                        bound_types: [],
                                         location: Location(
                                             13..20,
                                         ),
                                     },
+                                    location: Location(
+                                        13..20,
+                                    ),
                                 },
-                            ),
-                        ],
-                    },
-                ],
-                cases: [],
-                location: Location(
-                    0..24,
-                ),
-                documentation: None,
-            },
-        ),
+                            },
+                        ),
+                    ],
+                },
+            ],
+            cases: [],
+            location: Location(
+                0..24,
+            ),
+            documentation: None,
+        },
     ),
 ]

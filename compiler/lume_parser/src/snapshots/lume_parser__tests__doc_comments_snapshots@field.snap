@@ -3,82 +3,79 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"struct Foo {\n            /// This is a doc comment\n            pub bar: Int32 = 0;\n        }\")"
 ---
 [
-    TypeDefinition(
-        Struct(
-            StructDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Foo",
-                    location: Location(
-                        7..10,
-                    ),
-                },
-                builtin: false,
-                fields: [
-                    Field {
-                        visibility: Some(
-                            Public {
-                                location: Location(
-                                    63..66,
-                                ),
-                            },
-                        ),
-                        name: Identifier {
-                            name: "bar",
+    StructDefinition(
+        StructDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Foo",
+                location: Location(
+                    7..10,
+                ),
+            },
+            fields: [
+                Field {
+                    visibility: Some(
+                        Public {
                             location: Location(
-                                67..70,
+                                63..66,
                             ),
                         },
-                        field_type: Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Int32",
-                                            location: Location(
-                                                72..77,
-                                            ),
-                                        },
-                                        bound_types: [],
+                    ),
+                    name: Identifier {
+                        name: "bar",
+                        location: Location(
+                            67..70,
+                        ),
+                    },
+                    field_type: Named(
+                        NamedType {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "Int32",
                                         location: Location(
                                             72..77,
                                         ),
                                     },
+                                    bound_types: [],
                                     location: Location(
                                         72..77,
                                     ),
                                 },
-                            },
-                        ),
-                        default_value: Some(
-                            Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 0,
-                                        location: Location(
-                                            80..81,
-                                        ),
-                                        kind: None,
-                                    },
+                                location: Location(
+                                    72..77,
                                 ),
+                            },
+                        },
+                    ),
+                    default_value: Some(
+                        Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 0,
+                                    location: Location(
+                                        80..81,
+                                    ),
+                                    kind: None,
+                                },
                             ),
                         ),
-                        location: Location(
-                            63..82,
-                        ),
-                        documentation: Some(
-                            "This is a doc comment",
-                        ),
-                    },
-                ],
-                type_parameters: [],
-                location: Location(
-                    0..92,
-                ),
-                documentation: None,
-            },
-        ),
+                    ),
+                    location: Location(
+                        63..82,
+                    ),
+                    documentation: Some(
+                        "This is a doc comment",
+                    ),
+                },
+            ],
+            type_parameters: [],
+            location: Location(
+                0..92,
+            ),
+            documentation: None,
+        },
     ),
 ]

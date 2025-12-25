@@ -258,9 +258,7 @@ impl Parser<'_> {
             documentation,
         };
 
-        Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Struct(
-            Box::new(struct_def),
-        ))))
+        Ok(TopLevelExpression::StructDefinition(Box::new(struct_def)))
     }
 
     #[libftrace::traced(level = Trace, err)]
@@ -316,7 +314,7 @@ impl Parser<'_> {
 
         let end = self.previous_token().end();
 
-        Ok(TopLevelExpression::Impl(Box::new(Implementation {
+        Ok(TopLevelExpression::Implementation(Box::new(Implementation {
             name: Box::new(name),
             methods,
             type_parameters,
@@ -441,9 +439,7 @@ impl Parser<'_> {
             documentation,
         };
 
-        Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Trait(
-            Box::new(trait_def),
-        ))))
+        Ok(TopLevelExpression::TraitDefinition(Box::new(trait_def)))
     }
 
     #[libftrace::traced(level = Trace, err)]
@@ -495,7 +491,7 @@ impl Parser<'_> {
         let methods = self.consume_curly_seq(Parser::parse_trait_method_implementation)?;
         let end = self.previous_token().end();
 
-        Ok(TopLevelExpression::TraitImpl(Box::new(TraitImplementation {
+        Ok(TopLevelExpression::TraitImplementation(Box::new(TraitImplementation {
             type_parameters,
             name: Box::new(name),
             target: Box::new(target),
@@ -566,16 +562,14 @@ impl Parser<'_> {
 
         let end = self.previous_token().end();
 
-        Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Enum(
-            Box::new(EnumDefinition {
-                visibility,
-                name,
-                type_parameters,
-                cases,
-                location: (start..end).into(),
-                documentation,
-            }),
-        ))))
+        Ok(TopLevelExpression::EnumDefinition(Box::new(EnumDefinition {
+            visibility,
+            name,
+            type_parameters,
+            cases,
+            location: (start..end).into(),
+            documentation,
+        })))
     }
 
     /// Parses a single enum type case, such as `V4` or `V4(String)`.

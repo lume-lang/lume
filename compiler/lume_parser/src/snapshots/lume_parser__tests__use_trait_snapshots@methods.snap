@@ -3,7 +3,7 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"\n        use Cast in Int32 {\n            fn to_string() -> String {\n                return self;\n            }\n\n            fn to_int() -> Int32 {\n                return self;\n            }\n        }\")"
 ---
 [
-    TraitImpl(
+    TraitImplementation(
         TraitImplementation {
             name: Named(
                 NamedType {

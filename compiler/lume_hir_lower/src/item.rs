@@ -34,40 +34,38 @@ impl LowerModule {
 
                 Ok(())
             }
-            lume_ast::TopLevelExpression::TypeDefinition(type_def) => match &**type_def {
-                lume_ast::TypeDefinition::Struct(struct_def) => {
-                    let id = self.next_node_id();
+            lume_ast::TopLevelExpression::StructDefinition(struct_def) => {
+                let id = self.next_node_id();
 
-                    let path_segment = lume_ast::PathSegment::ty(struct_def.name.clone());
-                    let name = self.expand_name(path_segment)?;
+                let path_segment = lume_ast::PathSegment::ty(struct_def.name.clone());
+                let name = self.expand_name(path_segment)?;
 
-                    self.ensure_item_undefined(id, DefinedItem::Type(name))?;
-                    self.add_lang_items(id, &struct_def.attributes)?;
+                self.ensure_item_undefined(id, DefinedItem::Type(name))?;
+                self.add_lang_items(id, &struct_def.attributes)?;
 
-                    Ok(())
-                }
-                lume_ast::TypeDefinition::Trait(trait_def) => {
-                    let id = self.next_node_id();
+                Ok(())
+            }
+            lume_ast::TopLevelExpression::TraitDefinition(trait_def) => {
+                let id = self.next_node_id();
 
-                    let path_segment = lume_ast::PathSegment::ty(trait_def.name.clone());
-                    let name = self.expand_name(path_segment)?;
+                let path_segment = lume_ast::PathSegment::ty(trait_def.name.clone());
+                let name = self.expand_name(path_segment)?;
 
-                    self.ensure_item_undefined(id, DefinedItem::Type(name))?;
-                    self.add_lang_items(id, &trait_def.attributes)?;
+                self.ensure_item_undefined(id, DefinedItem::Type(name))?;
+                self.add_lang_items(id, &trait_def.attributes)?;
 
-                    Ok(())
-                }
-                lume_ast::TypeDefinition::Enum(enum_def) => {
-                    let id = self.next_node_id();
+                Ok(())
+            }
+            lume_ast::TopLevelExpression::EnumDefinition(enum_def) => {
+                let id = self.next_node_id();
 
-                    let path_segment = lume_ast::PathSegment::ty(enum_def.name.clone());
-                    let name = self.expand_name(path_segment)?;
+                let path_segment = lume_ast::PathSegment::ty(enum_def.name.clone());
+                let name = self.expand_name(path_segment)?;
 
-                    self.ensure_item_undefined(id, DefinedItem::Type(name))?;
+                self.ensure_item_undefined(id, DefinedItem::Type(name))?;
 
-                    Ok(())
-                }
-            },
+                Ok(())
+            }
             lume_ast::TopLevelExpression::FunctionDefinition(func_def) => {
                 let id = self.next_node_id();
 
@@ -79,7 +77,7 @@ impl LowerModule {
 
                 Ok(())
             }
-            lume_ast::TopLevelExpression::Impl(implementation) => {
+            lume_ast::TopLevelExpression::Implementation(implementation) => {
                 let impl_name = implementation.name.to_string();
                 let type_name = self.expand_name(lume_ast::PathSegment::ty(impl_name))?;
 
@@ -93,7 +91,7 @@ impl LowerModule {
 
                 Ok(())
             }
-            lume_ast::TopLevelExpression::Import(_) | lume_ast::TopLevelExpression::TraitImpl(_) => Ok(()),
+            lume_ast::TopLevelExpression::Import(_) | lume_ast::TopLevelExpression::TraitImplementation(_) => Ok(()),
         }
     }
 
@@ -110,14 +108,12 @@ impl LowerModule {
 
                 return Ok(());
             }
-            lume_ast::TopLevelExpression::TypeDefinition(t) => match *t {
-                lume_ast::TypeDefinition::Struct(t) => self.struct_definition(*t)?,
-                lume_ast::TypeDefinition::Trait(t) => self.trait_definition(*t)?,
-                lume_ast::TypeDefinition::Enum(t) => self.enum_definition(*t)?,
-            },
+            lume_ast::TopLevelExpression::StructDefinition(t) => self.struct_definition(*t)?,
+            lume_ast::TopLevelExpression::TraitDefinition(t) => self.trait_definition(*t)?,
+            lume_ast::TopLevelExpression::EnumDefinition(t) => self.enum_definition(*t)?,
             lume_ast::TopLevelExpression::FunctionDefinition(f) => self.function_definition(*f)?,
-            lume_ast::TopLevelExpression::TraitImpl(f) => self.trait_implementation(*f)?,
-            lume_ast::TopLevelExpression::Impl(f) => self.implementation(*f)?,
+            lume_ast::TopLevelExpression::TraitImplementation(f) => self.trait_implementation(*f)?,
+            lume_ast::TopLevelExpression::Implementation(f) => self.implementation(*f)?,
         };
 
         let id = hir_ast.id();

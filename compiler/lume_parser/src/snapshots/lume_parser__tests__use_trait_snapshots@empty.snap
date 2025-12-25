@@ -3,7 +3,7 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"use Add in Int32 {}\")"
 ---
 [
-    TraitImpl(
+    TraitImplementation(
         TraitImplementation {
             name: Named(
                 NamedType {

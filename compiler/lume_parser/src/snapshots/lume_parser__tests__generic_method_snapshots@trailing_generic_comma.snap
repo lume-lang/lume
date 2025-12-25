@@ -3,7 +3,7 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"impl Test { fn test<T1,>() -> void {} }\")"
 ---
 [
-    Impl(
+    Implementation(
         Implementation {
             name: Named(
                 NamedType {
