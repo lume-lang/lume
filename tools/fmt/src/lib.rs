@@ -427,7 +427,6 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             .append(attributes)
             .append(visibility(def.visibility.as_ref()))
             .append("struct ")
-            .append(if def.builtin { str("builtin ") } else { empty() })
             .append(def.name.as_str())
             .append(self.type_parameters(&def.type_parameters))
             .space();

@@ -161,9 +161,6 @@ pub enum TokenKind<'source> {
     #[token("break")]
     Break,
 
-    #[token("builtin")]
-    Builtin,
-
     #[token(":")]
     Colon,
 
@@ -375,7 +372,6 @@ impl TokenKind<'_> {
             TokenKind::BinaryOr => TokenType::BinaryOr,
             TokenKind::BinaryXor => TokenType::BinaryXor,
             TokenKind::Break => TokenType::Break,
-            TokenKind::Builtin => TokenType::Builtin,
             TokenKind::Colon => TokenType::Colon,
             TokenKind::Comma => TokenType::Comma,
             TokenKind::Comment(_) => TokenType::Comment,
@@ -447,7 +443,6 @@ impl TokenKind<'_> {
             self,
             TokenKind::As
                 | TokenKind::Break
-                | TokenKind::Builtin
                 | TokenKind::Continue
                 | TokenKind::Else
                 | TokenKind::External
@@ -556,7 +551,6 @@ pub enum TokenType {
     BinaryOr,
     BinaryXor,
     Break,
-    Builtin,
     Colon,
     Comma,
     Comment,
@@ -636,7 +630,6 @@ impl Display for TokenType {
             TokenType::BinaryOr => f.write_str("|"),
             TokenType::BinaryXor => f.write_str("^"),
             TokenType::Break => f.write_str("break"),
-            TokenType::Builtin => f.write_str("builtin"),
             TokenType::Colon => f.write_str(":"),
             TokenType::Comma => f.write_str(","),
             TokenType::Comment => f.write_str("comment"),
@@ -919,7 +912,6 @@ mod tests {
     fn test_keywords() {
         assert_lex("as", &[(Ok(TokenKind::As), "as", 0..2)]);
         assert_lex("break", &[(Ok(TokenKind::Break), "break", 0..5)]);
-        assert_lex("builtin", &[(Ok(TokenKind::Builtin), "builtin", 0..7)]);
         assert_lex("continue", &[(Ok(TokenKind::Continue), "continue", 0..8)]);
         assert_lex("external", &[(Ok(TokenKind::External), "external", 0..8)]);
         assert_lex("for", &[(Ok(TokenKind::For), "for", 0..3)]);

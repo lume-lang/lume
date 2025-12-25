@@ -277,7 +277,6 @@ impl LowerModule {
                 doc_comment: expr.documentation,
                 name,
                 visibility,
-                builtin: expr.builtin,
                 type_parameters,
                 fields,
                 location,
