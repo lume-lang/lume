@@ -29,9 +29,9 @@ impl Parser<'_> {
         let name = self.parse_path()?;
 
         if name.is_self_type() {
-            return Ok(Type::SelfType(Box::new(SelfType {
+            return Ok(Type::SelfType(SelfType {
                 location: name.location,
-            })));
+            }));
         }
 
         Ok(Type::Named(NamedType { name }))
@@ -51,7 +51,7 @@ impl Parser<'_> {
             location: (start..end).into(),
         };
 
-        Ok(Type::Array(Box::new(array_type)))
+        Ok(Type::Array(array_type))
     }
 
     /// Parses some abstract type at the current cursor position.

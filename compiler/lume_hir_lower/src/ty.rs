@@ -9,9 +9,9 @@ impl LowerModule {
     #[libftrace::traced(level = Debug)]
     pub(super) fn type_ref(&mut self, expr: lume_ast::Type) -> Result<lume_hir::Type> {
         match expr {
-            lume_ast::Type::Named(t) => self.type_named(*t),
-            lume_ast::Type::Array(t) => self.type_array(*t),
-            lume_ast::Type::SelfType(t) => self.type_self(*t),
+            lume_ast::Type::Named(t) => self.type_named(t),
+            lume_ast::Type::Array(t) => self.type_array(t),
+            lume_ast::Type::SelfType(t) => self.type_self(t),
         }
     }
 
