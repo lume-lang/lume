@@ -1638,6 +1638,7 @@ dependencies = [
  "lsp-types",
  "lume_driver",
  "lume_errors",
+ "lume_fmt",
  "lume_hir",
  "lume_infer",
  "lume_parser",

@@ -15,6 +15,7 @@ pub(crate) mod server;
 
 mod symbols {
     pub(crate) mod definition;
+    pub(crate) mod format;
     pub(crate) mod hover;
     pub(crate) mod lookup;
 }
@@ -97,6 +98,7 @@ pub fn capabilities() -> ServerCapabilities {
             will_save_wait_until: None,
         })),
         definition_provider: Some(OneOf::Left(true)),
+        document_formatting_provider: Some(OneOf::Left(true)),
         ..Default::default()
     }
 }

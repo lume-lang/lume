@@ -22,6 +22,14 @@ pub(crate) struct IO {
 }
 
 impl IO {
+    /// Reads the content of the source file identified by the given path, if
+    /// any.
+    pub fn read(&self, path: &PathBuf) -> Option<&str> {
+        let source_id = SourceFileId::from(path);
+
+        self.mapped_files.get(&source_id).map(|file| file.content.as_str())
+    }
+
     /// Writes the given content to the source file identified by the given
     /// path. If the source file already exists, its content is overwritten.
     pub fn map(&mut self, path: PathBuf, content: String) {
