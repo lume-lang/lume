@@ -25,7 +25,7 @@ impl<T> Box<T> {
     }
 }
 
-use<T> Dispose in Box<T> {
+use<T> Dispose: Box<T> {
     fn dispose(self) {
         std::mem::dealloc<T>(self.ptr);
     }

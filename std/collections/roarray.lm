@@ -49,7 +49,7 @@ impl<T> ReadOnlyArray<T> {
     }
 }
 
-use<T> Dispose in ReadOnlyArray<T> {
+use<T> Dispose: ReadOnlyArray<T> {
     fn dispose(self) {
         dealloc<T>(self.ptr);
     }

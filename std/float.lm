@@ -7,27 +7,27 @@ import std::ops (Equal, Compare, Negate)
 /// precise to ~7 decimal places, as defined in IEEE 754-2008.
 pub struct Float {}
 
-use Add<Float> in Float {
+use Add<Float>: Float {
     fn external add(self, other: Float) -> Float
 }
 
-use Sub<Float> in Float {
+use Sub<Float>: Float {
     fn external sub(self, other: Float) -> Float
 }
 
-use Mul<Float> in Float {
+use Mul<Float>: Float {
     fn external mul(self, other: Float) -> Float
 }
 
-use Div<Float> in Float {
+use Div<Float>: Float {
     fn external div(self, other: Float) -> Float
 }
 
-use Equal<Float> in Float {
+use Equal<Float>: Float {
     fn external eq(self, other: Float) -> Boolean
 }
 
-use Compare<Float> in Float {
+use Compare<Float>: Float {
     fn external lt(self, other: Float) -> Boolean
     fn external le(self, other: Float) -> Boolean
 
@@ -35,7 +35,7 @@ use Compare<Float> in Float {
     fn external ge(self, other: Float) -> Boolean
 }
 
-use Negate<Float> in Float {
+use Negate<Float>: Float {
     fn external negate(self) -> Float
 }
 
@@ -43,27 +43,27 @@ use Negate<Float> in Float {
 /// precise to ~16 decimal places, as defined in IEEE 754-2008.
 pub struct Double {}
 
-use Add<Double> in Double {
+use Add<Double>: Double {
     fn external add(self, other: Double) -> Double
 }
 
-use Sub<Double> in Double {
+use Sub<Double>: Double {
     fn external sub(self, other: Double) -> Double
 }
 
-use Mul<Double> in Double {
+use Mul<Double>: Double {
     fn external mul(self, other: Double) -> Double
 }
 
-use Div<Double> in Double {
+use Div<Double>: Double {
     fn external div(self, other: Double) -> Double
 }
 
-use Equal<Double> in Double {
+use Equal<Double>: Double {
     fn external eq(self, other: Double) -> Boolean
 }
 
-use Compare<Double> in Double {
+use Compare<Double>: Double {
     fn external lt(self, other: Double) -> Boolean
     fn external le(self, other: Double) -> Boolean
 
@@ -71,6 +71,6 @@ use Compare<Double> in Double {
     fn external ge(self, other: Double) -> Boolean
 }
 
-use Negate<Double> in Double {
+use Negate<Double>: Double {
     fn external negate(self) -> Double
 }

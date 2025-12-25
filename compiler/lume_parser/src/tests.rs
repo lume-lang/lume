@@ -633,11 +633,11 @@ fn test_trait_snapshots() {
 
 #[test]
 fn test_use_trait_snapshots() {
-    assert_snap_eq!("use Add in Int32 {}", "empty");
+    assert_snap_eq!("use Add: Int32 {}", "empty");
 
     assert_snap_eq!(
         "
-        use Add in Int32 {
+        use Add: Int32 {
             fn add(other: Int32) -> Int32 {
                 return self + other;
             }
@@ -647,7 +647,7 @@ fn test_use_trait_snapshots() {
 
     assert_snap_eq!(
         "
-        use Add in Int32 {
+        use Add: Int32 {
             fn add(other: Int32) {}
         }",
         "method_no_ret"
@@ -655,7 +655,7 @@ fn test_use_trait_snapshots() {
 
     assert_snap_eq!(
         "
-        use Cast in Int32 {
+        use Cast: Int32 {
             fn to_string() -> String {
                 return self;
             }
@@ -669,7 +669,7 @@ fn test_use_trait_snapshots() {
 
     assert_snap_eq!(
         "
-        use Zero in Int32 {
+        use Zero: Int32 {
             fn zero?() -> Boolean { }
         }",
         "boolean_method"
@@ -677,7 +677,7 @@ fn test_use_trait_snapshots() {
 
     assert_snap_eq!(
         "
-        use Add<Int32> in Int32 {
+        use Add<Int32>: Int32 {
             fn add(other: Int32) -> Int32 {
                 return self + other;
             }
@@ -687,7 +687,7 @@ fn test_use_trait_snapshots() {
 
     assert_snap_eq!(
         "
-        use Add<Int32, Int64> in Int32 {
+        use Add<Int32, Int64>: Int32 {
             fn add(other: Int32) -> Int64 {
                 return self + other;
             }
@@ -697,7 +697,7 @@ fn test_use_trait_snapshots() {
 
     assert_snap_eq!(
         "
-        use Enumerable<T> in Vector<T> {
+        use Enumerable<T>: Vector<T> {
             fn next() -> T { }
         }",
         "generic_type"
@@ -705,7 +705,7 @@ fn test_use_trait_snapshots() {
 
     assert_snap_eq!(
         "
-        use<T> Enumerable<T> in Vector<T> {
+        use<T> Enumerable<T>: Vector<T> {
             fn next() -> T { }
         }",
         "generic_trait"
