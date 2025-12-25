@@ -482,7 +482,7 @@ impl Parser<'_> {
 
         let name = self.parse_type()?;
 
-        self.consume(TokenType::In)?;
+        self.consume(TokenType::Colon)?;
         let target = self.parse_type()?;
 
         let methods = self.consume_curly_seq(Parser::parse_trait_method_implementation)?;

@@ -53,7 +53,7 @@ impl<T> Block<T> {
     }
 }
 
-use<T> Dispose in Block<T> {
+use<T> Dispose: Block<T> {
     fn dispose(self) {
         std::mem::dealloc<T>(self.ptr);
     }

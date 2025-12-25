@@ -586,7 +586,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             .append(self.type_parameters(&trait_impl.type_parameters))
             .space()
             .append(self.ty(&trait_impl.name))
-            .append(" in ")
+            .append(": ")
             .append(self.ty(&trait_impl.target))
             .space();
 

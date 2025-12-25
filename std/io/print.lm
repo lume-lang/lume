@@ -8,7 +8,7 @@ pub trait ToString {
     fn to_string(self) -> String;
 }
 
-use ToString in Boolean {
+use ToString: Boolean {
     fn to_string(self) -> String {
         if self {
             "true"
@@ -18,47 +18,47 @@ use ToString in Boolean {
     }
 }
 
-use ToString in Int8 {
+use ToString: Int8 {
     fn external to_string(self) -> String
 }
 
-use ToString in Int16 {
+use ToString: Int16 {
     fn external to_string(self) -> String
 }
 
-use ToString in Int32 {
+use ToString: Int32 {
     fn external to_string(self) -> String
 }
 
-use ToString in Int64 {
+use ToString: Int64 {
     fn external to_string(self) -> String
 }
 
-use ToString in UInt8 {
+use ToString: UInt8 {
     fn external to_string(self) -> String
 }
 
-use ToString in UInt16 {
+use ToString: UInt16 {
     fn external to_string(self) -> String
 }
 
-use ToString in UInt32 {
+use ToString: UInt32 {
     fn external to_string(self) -> String
 }
 
-use ToString in UInt64 {
+use ToString: UInt64 {
     fn external to_string(self) -> String
 }
 
-use ToString in Float {
+use ToString: Float {
     fn external to_string(self) -> String
 }
 
-use ToString in Double {
+use ToString: Double {
     fn external to_string(self) -> String
 }
 
-use ToString in String {
+use ToString: String {
     fn to_string(self) -> String {
         self
     }
