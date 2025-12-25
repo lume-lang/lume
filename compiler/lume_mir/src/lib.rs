@@ -1391,6 +1391,21 @@ impl Operand {
             location: Location::empty(),
         }
     }
+
+    /// Gets the size of the operand, in bytes.
+    pub fn byte_size(&self) -> usize {
+        match &self.kind {
+            OperandKind::Boolean { .. } => 1_usize,
+            OperandKind::Integer { bits, .. } | OperandKind::Float { bits, .. } => usize::from(*bits) / 8,
+            OperandKind::Reference { .. } | OperandKind::SlotAddress { .. } | OperandKind::String { .. } => {
+                POINTER_SIZE
+            }
+            OperandKind::Bitcast { target: ty, .. }
+            | OperandKind::Load { loaded_type: ty, .. }
+            | OperandKind::LoadField { field_type: ty, .. }
+            | OperandKind::LoadSlot { loaded_type: ty, .. } => ty.bytesize(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

@@ -3,7 +3,7 @@ mod io;
 mod reporter;
 
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crossbeam::channel::Sender;
@@ -106,7 +106,7 @@ impl Engine {
     }
 
     /// Gets the package source file which exists to the given path.
-    pub(crate) fn source_of_uri(&self, file_path: &PathBuf) -> Option<Arc<SourceFile>> {
+    pub(crate) fn source_of_uri(&self, file_path: &Path) -> Option<Arc<SourceFile>> {
         for package in self.packages.values() {
             for source in package.sources.iter() {
                 if file_path.ends_with(source.name.to_pathbuf()) {

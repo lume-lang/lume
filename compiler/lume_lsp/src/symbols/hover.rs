@@ -19,7 +19,7 @@ pub(crate) fn hover_content_of(engine: &Engine, location: Location) -> Result<St
     };
 
     match &sym.kind {
-        SymbolKind::Type { name } => hover_content_of_type(package, name),
+        SymbolKind::Type { name } => Ok(hover_content_of_type(package, name)),
         SymbolKind::Callable { reference } => hover_content_of_callable(package, *reference),
         SymbolKind::Variant { name } => hover_content_of_variant(package, name),
         SymbolKind::Pattern { id } => hover_content_of_pattern(package, *id),
@@ -32,13 +32,13 @@ pub(crate) fn hover_content_of(engine: &Engine, location: Location) -> Result<St
     }
 }
 
-pub(crate) fn hover_content_of_type(package: &CheckedPackage, type_name: &lume_hir::Path) -> Result<String> {
+pub(crate) fn hover_content_of_type(package: &CheckedPackage, type_name: &lume_hir::Path) -> String {
     let Some(type_id) = package.tcx.tdb().find_type(type_name).map(|ty| ty.id) else {
-        return Ok(String::new());
+        return String::new();
     };
 
     let Some(lume_hir::Node::Type(type_def)) = package.tcx.hir_node(type_id) else {
-        return Ok(String::new());
+        return String::new();
     };
 
     let documentation = match package.tcx.documentation_string_of(type_id) {
@@ -54,21 +54,21 @@ pub(crate) fn hover_content_of_type(package: &CheckedPackage, type_name: &lume_h
                 String::new()
             };
 
-            Ok(format!(
+            format!(
                 "```lm\n{} struct {builtin}{:+}\n```{documentation}",
                 struct_def.visibility, struct_def.name
-            ))
+            )
         }
-        lume_hir::TypeDefinition::Trait(trait_def) => Ok(format!(
+        lume_hir::TypeDefinition::Trait(trait_def) => format!(
             "```lm\n{} trait {:+}\n```{documentation}",
             trait_def.visibility, trait_def.name
-        )),
-        lume_hir::TypeDefinition::Enum(enum_def) => Ok(format!(
+        ),
+        lume_hir::TypeDefinition::Enum(enum_def) => format!(
             "```lm\n{} enum {:+}\n```{documentation}",
             enum_def.visibility, enum_def.name
-        )),
+        ),
         lume_hir::TypeDefinition::TypeParameter(type_param) => {
-            Ok(format!("```lm\n{}\n```{documentation}", type_param.name))
+            format!("```lm\n{}\n```{documentation}", type_param.name)
         }
     }
 }
@@ -242,7 +242,7 @@ pub(crate) fn hover_content_of_literal(package: &CheckedPackage, id: NodeId) -> 
         return Ok(String::new());
     };
 
-    hover_content_of_type(package, &literal_type_def.name)
+    Ok(hover_content_of_type(package, &literal_type_def.name))
 }
 
 pub(crate) fn hover_content_of_call(package: &CheckedPackage, id: NodeId) -> Result<String> {

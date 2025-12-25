@@ -198,23 +198,18 @@ impl Visitor for LocationVisitor {
     }
 
     fn visit_stmt(&mut self, stmt: &lume_hir::Statement) -> Result<()> {
-        match &stmt.kind {
-            lume_hir::StatementKind::Variable(stmt) => {
-                self.symbols.insert(SymbolEntry {
-                    kind: SymbolKind::VariableDeclaration { id: stmt.id },
-                    location: stmt.name.location,
-                });
-            }
-            _ => {}
-        };
+        if let lume_hir::StatementKind::Variable(stmt) = &stmt.kind {
+            self.symbols.insert(SymbolEntry {
+                kind: SymbolKind::VariableDeclaration { id: stmt.id },
+                location: stmt.name.location,
+            });
+        }
 
         Ok(())
     }
 
     fn visit_expr(&mut self, expr: &lume_hir::Expression) -> Result<()> {
         match &expr.kind {
-            lume_hir::ExpressionKind::Assignment(_) => {}
-            lume_hir::ExpressionKind::Cast(_) => {}
             lume_hir::ExpressionKind::Construct(expr) => {
                 self.symbols.insert(SymbolEntry {
                     kind: SymbolKind::Type {
@@ -241,8 +236,6 @@ impl Visitor for LocationVisitor {
                     location: expr.location(),
                 });
             }
-            lume_hir::ExpressionKind::If(_) => {}
-            lume_hir::ExpressionKind::Is(_) => {}
             lume_hir::ExpressionKind::Member(expr) => {
                 self.symbols.insert(SymbolEntry {
                     location: expr.name.location,
@@ -252,8 +245,6 @@ impl Visitor for LocationVisitor {
                     },
                 });
             }
-            lume_hir::ExpressionKind::Scope(_) => {}
-            lume_hir::ExpressionKind::Switch(_) => {}
             lume_hir::ExpressionKind::Variant(expr) => {
                 self.symbols.insert(SymbolEntry {
                     location: expr.name.location(),
@@ -274,6 +265,12 @@ impl Visitor for LocationVisitor {
                     location: expr.location,
                 });
             }
+            lume_hir::ExpressionKind::Assignment(_)
+            | lume_hir::ExpressionKind::Cast(_)
+            | lume_hir::ExpressionKind::If(_)
+            | lume_hir::ExpressionKind::Is(_)
+            | lume_hir::ExpressionKind::Scope(_)
+            | lume_hir::ExpressionKind::Switch(_) => {}
         }
 
         Ok(())

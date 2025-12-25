@@ -42,7 +42,7 @@ impl Diagnostics {
                 if diagnostic.labels().is_some() || diagnostic.source_code().is_some() {
                     self.publish_diagnostic(sender, diagnostic.as_ref());
                 } else {
-                    self.publish_message(sender, diagnostic.as_ref());
+                    publish_message(sender, diagnostic.as_ref());
                 }
             }
         });
@@ -57,7 +57,7 @@ impl Diagnostics {
         let curr = self.current.read().unwrap();
 
         for file_url in prev.difference(&curr) {
-            self.publish_diagnostics_to_file(sender, &[], file_url.clone());
+            publish_diagnostics_to_file(sender, &[], file_url.clone());
         }
     }
 
@@ -83,11 +83,9 @@ impl Diagnostics {
 
         let related_info = related
             .iter()
-            .filter_map(|related| {
-                Some(DiagnosticRelatedInformation {
-                    location: related.location.clone(),
-                    message: related.message.clone(),
-                })
+            .map(|related| DiagnosticRelatedInformation {
+                location: related.location.clone(),
+                message: related.message.clone(),
             })
             .collect();
 
@@ -119,28 +117,7 @@ impl Diagnostics {
             data: None,
         };
 
-        self.publish_diagnostics_to_file(sender, &[diag], primary_label.location.uri.clone());
-    }
-
-    /// Publishes the given [`DiagnosticDiagnostic`] to the given file.
-    fn publish_diagnostics_to_file(
-        &self,
-        sender: &Sender<lsp_server::Message>,
-        diag: &[lsp_types::Diagnostic],
-        file: Uri,
-    ) {
-        let params = PublishDiagnosticsParams {
-            uri: file,
-            diagnostics: diag.to_vec(),
-            version: None,
-        };
-
-        sender
-            .send(Message::Notification(lsp_server::Notification::new(
-                PublishDiagnostics::METHOD.to_owned(),
-                params,
-            )))
-            .unwrap();
+        publish_diagnostics_to_file(sender, &[diag], primary_label.location.uri.clone());
     }
 
     /// Lower the given [`error_snippet::Label`] into a [`DiagnosticLabel`].
@@ -165,28 +142,44 @@ impl Diagnostics {
             message: label.message().to_owned(),
         })
     }
+}
 
-    /// Publishes the given [`error_snippet::Diagnostic`] message to the
-    /// language client.
-    fn publish_message(&self, sender: &Sender<lsp_server::Message>, diagnostic: &dyn error_snippet::Diagnostic) {
-        let severity = match diagnostic.severity() {
-            error_snippet::Severity::Note | error_snippet::Severity::Help | error_snippet::Severity::Info => return,
-            error_snippet::Severity::Warning => lsp_types::MessageType::WARNING,
-            error_snippet::Severity::Error => lsp_types::MessageType::ERROR,
-        };
+/// Publishes the given [`DiagnosticDiagnostic`] to the given file.
+fn publish_diagnostics_to_file(sender: &Sender<lsp_server::Message>, diag: &[lsp_types::Diagnostic], file: Uri) {
+    let params = PublishDiagnosticsParams {
+        uri: file,
+        diagnostics: diag.to_vec(),
+        version: None,
+    };
 
-        let params = ShowMessageParams {
-            typ: severity,
-            message: diagnostic.message(),
-        };
+    sender
+        .send(Message::Notification(lsp_server::Notification::new(
+            PublishDiagnostics::METHOD.to_owned(),
+            params,
+        )))
+        .unwrap();
+}
 
-        sender
-            .send(Message::Notification(lsp_server::Notification::new(
-                ShowMessage::METHOD.to_owned(),
-                params,
-            )))
-            .unwrap();
-    }
+/// Publishes the given [`error_snippet::Diagnostic`] message to the
+/// language client.
+fn publish_message(sender: &Sender<lsp_server::Message>, diagnostic: &dyn error_snippet::Diagnostic) {
+    let severity = match diagnostic.severity() {
+        error_snippet::Severity::Note | error_snippet::Severity::Help | error_snippet::Severity::Info => return,
+        error_snippet::Severity::Warning => lsp_types::MessageType::WARNING,
+        error_snippet::Severity::Error => lsp_types::MessageType::ERROR,
+    };
+
+    let params = ShowMessageParams {
+        typ: severity,
+        message: diagnostic.message(),
+    };
+
+    sender
+        .send(Message::Notification(lsp_server::Notification::new(
+            ShowMessage::METHOD.to_owned(),
+            params,
+        )))
+        .unwrap();
 }
 
 #[derive(Debug)]

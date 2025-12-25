@@ -85,7 +85,7 @@ impl Pass for RenameSsaVariables {
             .cloned()
             .collect::<Vec<Register>>();
 
-        let mut register_mapping = RegisterMapping::new(func.name.clone());
+        let mut register_mapping = RegisterMapping::new(func.name);
 
         for block in func.blocks.values_mut() {
             let block_id = block.id;

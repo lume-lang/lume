@@ -460,23 +460,6 @@ impl Builder<'_, '_> {
         panic!("bug!: field index of {} is out of bounds", field.index)
     }
 
-    /// Gets the size of the given operand, in bytes.
-    pub(crate) fn operand_size(&self, operand: &Operand) -> usize {
-        match &operand.kind {
-            lume_mir::OperandKind::Boolean { .. } => 1_usize,
-            lume_mir::OperandKind::Integer { bits, .. } | lume_mir::OperandKind::Float { bits, .. } => {
-                usize::from(*bits) / 8
-            }
-            lume_mir::OperandKind::Reference { .. }
-            | lume_mir::OperandKind::SlotAddress { .. }
-            | lume_mir::OperandKind::String { .. } => POINTER_SIZE,
-            lume_mir::OperandKind::Bitcast { target: ty, .. }
-            | lume_mir::OperandKind::Load { loaded_type: ty, .. }
-            | lume_mir::OperandKind::LoadField { field_type: ty, .. }
-            | lume_mir::OperandKind::LoadSlot { loaded_type: ty, .. } => ty.bytesize(),
-        }
-    }
-
     /// Declares a new register with the metadata entry of the given type.
     pub(crate) fn declare_metadata_of(&mut self, type_ref: &lume_types::TypeRef, location: Location) -> RegisterId {
         let metadata_id = TypeMetadataId::from(type_ref);

@@ -317,6 +317,7 @@ impl CraneliftBackend {
         let opts = &self.context.options;
         let should_dump_function = opts.dump_mir_func.is_empty() || opts.dump_mir_func.contains(&func.name);
 
+        #[allow(clippy::disallowed_macros, reason = "only used in debugging")]
         if opts.dump_codegen_ir && should_dump_function {
             println!("{}", ctx.func.display());
         }
@@ -710,6 +711,7 @@ impl<'ctx> LowerFunction<'ctx> {
 
         libftrace::debug!("loading {loaded} from {register}({val}), type {ty}");
 
+        #[allow(clippy::let_and_return, reason = "not raised when tracing is enabled")]
         loaded
     }
 

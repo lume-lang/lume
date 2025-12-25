@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
@@ -51,7 +51,9 @@ pub fn start_server(options: Options) -> std::result::Result<(), Box<dyn Error +
     let params = serde_json::from_value(params_json)?;
 
     std::panic::set_hook(Box::new(|panic_info| {
-        if let Some(payload) = panic_info.payload_as_str() {
+        if let Some(payload) = panic_info.payload().downcast_ref::<&str>() {
+            log::error!("LSP server panicked: {payload}");
+        } else if let Some(payload) = panic_info.payload().downcast_ref::<String>() {
             log::error!("LSP server panicked: {payload}");
         } else {
             log::error!("LSP server panicked: <no payload>");
@@ -67,9 +69,7 @@ pub fn start_server(options: Options) -> std::result::Result<(), Box<dyn Error +
     }));
 
     let mut server = server::Server::new(params, conn.sender);
-    if let Err(err) = server.listen(conn.receiver) {
-        return Err(Box::new(std::io::Error::other(err.message())));
-    }
+    server.listen(conn.receiver);
 
     if let Err(err) = io.join() {
         log::error!("failed to join lsp threads: {err:?}");
@@ -132,11 +132,7 @@ fn initialize_logging(options: &Options) -> std::io::Result<()> {
     builder.filter_module("lume_lsp", level_filter);
 
     if let Some(log_file) = &options.log_file {
-        let file = std::fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .append(true)
-            .open(log_file)?;
+        let file = std::fs::OpenOptions::new().create(true).append(true).open(log_file)?;
 
         let target = FileTarget {
             file: Arc::new(Mutex::new(file)),
@@ -160,6 +156,6 @@ fn uri_to_path(uri: &Uri) -> PathBuf {
 }
 
 #[inline]
-fn path_to_uri(path: &PathBuf) -> Uri {
+fn path_to_uri(path: &Path) -> Uri {
     Uri::from_str(&format!("file://{}", path.display())).unwrap()
 }

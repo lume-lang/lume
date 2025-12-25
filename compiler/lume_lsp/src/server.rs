@@ -27,7 +27,7 @@ impl Server {
 
     /// Starts listening on the given [`Connection`] for LSP requests and
     /// notifications.
-    pub fn listen(&mut self, mut receiver: Receiver<lsp_server::Message>) -> Result<()> {
+    pub fn listen(&mut self, mut receiver: Receiver<lsp_server::Message>) {
         if let Some(client_info) = self.params.client_info.as_ref() {
             let client = match client_info.version.as_ref() {
                 Some(version) => format!("{} v{version}", client_info.name),
@@ -50,21 +50,22 @@ impl Server {
 
                 Handling::Message(message) => {
                     if let Err(err) = self.handle_message(message) {
-                        log::error!("error handling message: {}", err);
+                        log::error!("error handling message: {err}");
                     }
                 }
 
                 Handling::Empty => {}
             }
         }
-
-        Ok(())
     }
 
     fn handle_message(&mut self, message: Message) -> Result<()> {
         match message {
             Message::Request(id, request) => self.handle_request(id, request),
-            Message::Notification(notification) => self.handle_notification(notification),
+            Message::Notification(notification) => {
+                self.handle_notification(notification);
+                Ok(())
+            }
         }
     }
 
@@ -78,13 +79,13 @@ impl Server {
         self.respond(id, response)
     }
 
-    fn handle_notification(&mut self, notification: Notification) -> Result<()> {
+    fn handle_notification(&mut self, notification: Notification) {
         match notification {
             Notification::OpenDocument { uri, text } => self.open_document(uri, text),
             Notification::CloseDocument { uri } => self.close_document(uri),
             Notification::CommitDocument { uri } => self.save_document(uri),
             Notification::ChangeDocument { uri, content } => self.change_document(uri, content),
-            Notification::Unknown => Ok(()),
+            Notification::Unknown => {}
         }
     }
 
@@ -138,49 +139,38 @@ impl Server {
         path: PathBuf,
         f: F,
     ) -> Result<serde_json::Value> {
-        match self.engine_for_path(path.clone()) {
-            Some(engine) => {
-                let result = f(engine)?;
-                let json = serde_json::to_value(result).expect("serializing response");
+        if let Some(engine) = self.engine_for_path(path.clone()) {
+            let result = f(engine)?;
+            let json = serde_json::to_value(result).expect("serializing response");
 
-                Ok(json)
-            }
-            None => {
-                log::error!("could not find engine for path {}", path.display());
+            Ok(json)
+        } else {
+            log::error!("could not find engine for path {}", path.display());
 
-                Ok(serde_json::Value::Null)
-            }
+            Ok(serde_json::Value::Null)
         }
     }
 }
 
 impl Server {
-    fn open_document(&mut self, uri: Uri, content: String) -> Result<()> {
+    fn open_document(&mut self, uri: Uri, content: String) {
         let path = crate::uri_to_path(&uri);
         self.with_engine(path, |engine| engine.open_document(uri, content));
-
-        Ok(())
     }
 
-    fn close_document(&mut self, uri: Uri) -> Result<()> {
+    fn close_document(&mut self, uri: Uri) {
         let path = crate::uri_to_path(&uri);
         self.with_engine(path, |engine| engine.close_document(uri));
-
-        Ok(())
     }
 
-    fn save_document(&mut self, uri: Uri) -> Result<()> {
+    fn save_document(&mut self, uri: Uri) {
         let path = crate::uri_to_path(&uri);
         self.with_engine(path, |engine| engine.save_document(uri));
-
-        Ok(())
     }
 
-    fn change_document(&mut self, uri: Uri, content: String) -> Result<()> {
+    fn change_document(&mut self, uri: Uri, content: String) {
         let path = crate::uri_to_path(&uri);
         self.with_engine(path, |engine| engine.update_document(uri, content));
-
-        Ok(())
     }
 }
 
@@ -211,7 +201,7 @@ fn locate_package_root(mut path: PathBuf) -> Option<PathBuf> {
     }
 
     while let Some(parent) = path.parent() {
-        if !is_package_root(&parent) {
+        if !is_package_root(parent) {
             path = parent.to_path_buf();
             continue;
         }
