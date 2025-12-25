@@ -389,6 +389,7 @@ impl Builder<'_, '_> {
     pub(crate) fn box_value(&mut self, value: lume_mir::Operand, expected_type: &TypeRef) -> lume_mir::Operand {
         let location = value.location;
 
+        #[allow(clippy::match_same_arms, reason = "explaitory comments differ")]
         let allocate_on_heap = match &value.kind {
             // Scalar types always get stored on the heap, since they are
             // declared inline (i.e. have no backing static memory address).

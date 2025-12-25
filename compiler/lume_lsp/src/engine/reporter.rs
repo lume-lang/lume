@@ -5,7 +5,7 @@ use lsp_server::RequestId;
 use lsp_types::notification::Notification;
 use lsp_types::request::Request;
 
-pub const PACKAGE_CHECKING: &'static str = "package-check";
+pub const PACKAGE_CHECKING: &str = "package-check";
 
 pub(crate) struct Reporter {
     sender: Sender<lsp_server::Message>,

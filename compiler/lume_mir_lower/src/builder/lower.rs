@@ -292,6 +292,8 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
         // the fields within the type. If this isn't done, the value of a field may be
         // set to the wrong field.
         let mut field_exprs = expr.fields.clone();
+
+        #[allow(unused_variables, reason = "rustc lint bug")]
         field_exprs.sort_by_key(|field| {
             type_fields
                 .iter()
@@ -722,7 +724,7 @@ fn variant_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Variant) -
         // Store all of the arguments of the variant inside the allocation.
         for argument in &expr.arguments {
             let value = expression(builder, argument);
-            let value_size = builder.operand_size(&value);
+            let value_size = value.byte_size();
 
             builder.store_field(variant_alloc, value, offset, expr.location);
 

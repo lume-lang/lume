@@ -27,7 +27,7 @@ pub unsafe extern "C" fn find_method_on(method_id: lume_rt_metadata::FunctionId,
         let method = unsafe { method_ptr.read() };
 
         if method.func_id == method_id {
-            return method.func_ptr as *const _;
+            return method.func_ptr.cast();
         }
     }
 
