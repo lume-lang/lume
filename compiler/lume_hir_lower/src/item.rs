@@ -617,9 +617,9 @@ impl LowerModule {
         let self_type_args = type_params
             .iter()
             .map(|param| {
-                lume_ast::Type::Named(Box::new(lume_ast::NamedType {
+                lume_ast::Type::Named(lume_ast::NamedType {
                     name: lume_ast::Path::rooted(lume_ast::PathSegment::ty(param.name.name.clone())),
-                }))
+                })
             })
             .collect::<Vec<_>>();
 

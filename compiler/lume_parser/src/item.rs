@@ -133,9 +133,9 @@ impl Parser<'_> {
                     location: location.clone().into(),
                 },
                 vararg: false,
-                param_type: Type::SelfType(Box::new(SelfType {
+                param_type: Type::SelfType(SelfType {
                     location: location.clone().into(),
-                })),
+                }),
                 location: location.into(),
             });
         }

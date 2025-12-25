@@ -1269,9 +1269,9 @@ impl Node for TypeParameter {
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum Type {
-    Named(Box<NamedType>),
-    Array(Box<ArrayType>),
-    SelfType(Box<SelfType>),
+    Named(NamedType),
+    Array(ArrayType),
+    SelfType(SelfType),
 }
 
 impl Node for Type {
