@@ -98,12 +98,12 @@ impl TyInferCtx {
     }
 
     /// Determines whether the given [`TypeRef`] refers to a type parameter.
-    #[libftrace::traced(level = Trace, err, ret)]
-    pub fn is_type_parameter(&self, ty: &TypeRef) -> Result<bool> {
-        match self.tdb().type_(ty.instance_of).map(|t| t.kind) {
-            Some(TypeKind::TypeParameter) => Ok(true),
-            _ => Ok(false),
-        }
+    #[libftrace::traced(level = Trace, ret)]
+    pub fn is_type_parameter(&self, ty: &TypeRef) -> bool {
+        matches!(
+            self.tdb().type_(ty.instance_of).map(|t| t.kind),
+            Some(TypeKind::TypeParameter)
+        )
     }
 
     /// If the given [`TypeRef`] refers to a type parameter, returns a reference
@@ -119,19 +119,19 @@ impl TyInferCtx {
     }
 
     /// Determines whether the given [`TypeRef`] has any generic components.
-    #[libftrace::traced(level = Trace, err, ret)]
-    pub fn is_type_generic(&self, ty: &TypeRef) -> Result<bool> {
-        if self.is_type_parameter(ty)? {
-            return Ok(true);
+    #[libftrace::traced(level = Trace, ret)]
+    pub fn is_type_generic(&self, ty: &TypeRef) -> bool {
+        if self.is_type_parameter(ty) {
+            return true;
         }
 
         for type_arg in &ty.bound_types {
-            if self.is_type_parameter(type_arg)? {
-                return Ok(true);
+            if self.is_type_parameter(type_arg) {
+                return true;
             }
         }
 
-        Ok(false)
+        false
     }
 
     /// Gets the current `Never` type as a [`TypeRef`].

@@ -686,7 +686,7 @@ impl TyInferCtx {
 
                 // If the parameter type doesn't have any generic components, we might
                 // as well not check it.
-                if !self.is_type_generic(param_ty)? {
+                if !self.is_type_generic(param_ty) {
                     continue;
                 }
 
@@ -1050,6 +1050,25 @@ impl TyInferCtx {
         }
 
         false
+    }
+
+    /// Determines whether the given callable is a static method call on a type
+    /// parameter.
+    #[libftrace::traced(level = Trace, ret)]
+    pub fn is_generic_static(&self, callable: lume_hir::CallExpression<'_>) -> bool {
+        let lume_hir::CallExpression::Static(static_call) = callable else {
+            return false;
+        };
+
+        let Some(receiving_type_name) = static_call.receiving_type() else {
+            return false;
+        };
+
+        let Ok(Some(receiving_type)) = self.find_type_ref_from(&receiving_type_name, callable.id()) else {
+            return false;
+        };
+
+        self.is_type_parameter(&receiving_type)
     }
 }
 

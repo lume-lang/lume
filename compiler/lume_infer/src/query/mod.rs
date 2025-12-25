@@ -64,6 +64,14 @@ impl Callable<'_> {
     pub fn to_call_reference(self) -> CallReference {
         self.into()
     }
+
+    #[inline]
+    pub fn is_trait_definition(self) -> bool {
+        match self {
+            Self::Method(method) => method.kind == lume_types::MethodKind::TraitDefinition,
+            Self::Function(_) => false,
+        }
+    }
 }
 
 impl From<Callable<'_>> for CallReference {
@@ -1006,7 +1014,7 @@ impl TyInferCtx {
                 return Ok(None);
             };
 
-            if self.is_type_generic(&parameter.ty)? {
+            if self.is_type_generic(&parameter.ty) {
                 return Ok(None);
             }
 
