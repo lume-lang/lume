@@ -3,7 +3,7 @@ namespace std
 import std::ops (Equal, Not, And, Or)
 
 /// Represents an 1-bit boolean value, which can store either `true` or `false`.
-pub struct builtin Boolean {}
+pub struct Boolean {}
 
 use Equal<Boolean> in Boolean {
     fn external eq(self, other: Boolean) -> Boolean

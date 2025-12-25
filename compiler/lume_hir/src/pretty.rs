@@ -167,7 +167,6 @@ impl PrettyPrint for StructDefinition {
         f.debug_struct("StructDefinition")
             .field("visibility", &self.visibility)
             .field("name", &self.name)
-            .field("builtin", &self.builtin)
             .field("fields", &fields)
             .field("type_parameters", &pretty_list!(self.type_parameters, map))
             .field("location", &self.location)

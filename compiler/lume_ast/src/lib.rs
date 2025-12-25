@@ -636,7 +636,6 @@ pub struct StructDefinition {
     pub attributes: Vec<Attribute>,
     pub visibility: Option<Visibility>,
     pub name: Identifier,
-    pub builtin: bool,
     pub fields: Vec<Field>,
     pub type_parameters: Vec<TypeParameter>,
     pub location: Location,

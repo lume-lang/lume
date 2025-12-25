@@ -232,8 +232,6 @@ impl Parser<'_> {
             .first()
             .map_or(self.consume(TokenType::Struct)?.start(), |attr| attr.location.start());
 
-        let builtin = self.check(TokenType::Builtin);
-
         let name = self.parse_ident_or_err(
             ExpectedStructName {
                 source: self.source.clone(),
@@ -251,7 +249,6 @@ impl Parser<'_> {
             attributes,
             visibility,
             name,
-            builtin,
             fields,
             type_parameters,
             location: (start..end).into(),

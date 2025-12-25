@@ -5,7 +5,7 @@ import std::ops (Equal, Compare, Negate)
 
 /// Represents an 32-bit single-precision floating-point number, which is
 /// precise to ~7 decimal places, as defined in IEEE 754-2008.
-pub struct builtin Float {}
+pub struct Float {}
 
 use Add<Float> in Float {
     fn external add(self, other: Float) -> Float
@@ -41,7 +41,7 @@ use Negate<Float> in Float {
 
 /// Represents an 64-bit double-precision floating-point number, which is
 /// precise to ~16 decimal places, as defined in IEEE 754-2008.
-pub struct builtin Double {}
+pub struct Double {}
 
 use Add<Double> in Double {
     fn external add(self, other: Double) -> Double

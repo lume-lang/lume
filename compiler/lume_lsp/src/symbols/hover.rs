@@ -48,14 +48,8 @@ pub(crate) fn hover_content_of_type(package: &CheckedPackage, type_name: &lume_h
 
     match type_def {
         lume_hir::TypeDefinition::Struct(struct_def) => {
-            let builtin = if struct_def.builtin {
-                String::from("builtin ")
-            } else {
-                String::new()
-            };
-
             format!(
-                "```lm\n{} struct {builtin}{:+}\n```{documentation}",
+                "```lm\n{} struct {:+}\n```{documentation}",
                 struct_def.visibility, struct_def.name
             )
         }

@@ -811,7 +811,6 @@ pub struct StructDefinition {
 
     pub name: Path,
     pub visibility: Visibility,
-    pub builtin: bool,
     pub fields: Vec<Field>,
     pub type_parameters: Vec<NodeId>,
     pub location: Location,
