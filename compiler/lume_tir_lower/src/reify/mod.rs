@@ -106,7 +106,7 @@ impl<'tcx> ReificationPass<'tcx> {
             .skip(type_arg_len.saturating_sub(type_param_len))
             .enumerate()
         {
-            let argument = if self.tcx.is_type_parameter(type_arg)? {
+            let argument = if self.tcx.is_type_parameter(type_arg) {
                 self.add_metadata_argument_inherited(call, idx, type_arg)
             } else {
                 self.add_metadata_argument_concrete(type_arg)?
@@ -119,7 +119,7 @@ impl<'tcx> ReificationPass<'tcx> {
             let idx = call.type_arguments.len();
             let instance_ty = &call.arguments.first().unwrap().ty;
 
-            let argument = if self.tcx.is_type_parameter(instance_ty)? {
+            let argument = if self.tcx.is_type_parameter(instance_ty) {
                 self.add_metadata_argument_inherited(call, idx, instance_ty)
             } else {
                 self.add_metadata_argument_concrete(instance_ty)?

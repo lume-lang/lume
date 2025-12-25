@@ -442,11 +442,7 @@ impl TyCheckCtx {
         let callable = self.lookup_callable(expr)?;
         let signature = self.signature_of(callable)?;
 
-        if let lume_infer::query::Callable::Method(method) = callable
-            && method.kind == lume_types::MethodKind::TraitDefinition
-            && self.hir_body_of_node(method.id).is_none()
-            && !signature.is_instanced()
-        {
+        if self.is_dynamic_dispatch(expr)? && !signature.is_instanced() {
             self.dcx().emit(
                 DispatchCannotBeInferred {
                     source: expr.location(),

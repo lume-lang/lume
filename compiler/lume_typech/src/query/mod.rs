@@ -344,6 +344,23 @@ impl TyCheckCtx {
         self.lookup_callable(lume_hir::CallExpression::Static(call))
     }
 
+    /// Determines whether the given call expression is a dynamic dispatch.
+    #[libftrace::traced(level = Trace)]
+    pub fn is_dynamic_dispatch(&self, expr: lume_hir::CallExpression) -> Result<bool> {
+        let callable = self.lookup_callable(expr)?;
+
+        // Handles static calls on type parameters, such as `T::default()`
+        if callable.is_trait_definition() && self.is_generic_static(expr) {
+            return Ok(false);
+        }
+
+        if callable.is_trait_definition() && self.hir_body_of_node(callable.id()).is_none() {
+            return Ok(true);
+        }
+
+        Ok(false)
+    }
+
     /// Ensures that the return type of a block matches the expected type.
     ///
     /// # Errors

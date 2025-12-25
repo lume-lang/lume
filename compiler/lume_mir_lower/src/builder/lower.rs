@@ -379,7 +379,7 @@ fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume
         signature.return_type = builder.lower_type(&expr.return_type);
 
         let return_type = expr.uninst_return_type.as_ref().unwrap_or(&expr.return_type);
-        if builder.tcx().is_type_parameter(return_type).unwrap() {
+        if builder.tcx().is_type_parameter(return_type) {
             signature.return_type = lume_mir::Type::boxed(signature.return_type);
         }
 

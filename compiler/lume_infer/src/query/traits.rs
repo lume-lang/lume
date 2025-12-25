@@ -86,22 +86,22 @@ impl TyInferCtx {
 
     /// Determines whether the given trait [`TypeRef`] has been blanket
     /// implemented anywhere.
-    #[libftrace::traced(level = Trace, err, ret)]
-    pub fn is_trait_blanket_impl(&self, trait_type: &TypeRef) -> Result<bool> {
+    #[libftrace::traced(level = Trace, ret)]
+    pub fn is_trait_blanket_impl(&self, trait_type: &TypeRef) -> bool {
         for implementing_type in self.implementations_of_trait(trait_type) {
-            if self.is_type_parameter(implementing_type)? {
-                return Ok(true);
+            if self.is_type_parameter(implementing_type) {
+                return true;
             }
         }
 
-        Ok(false)
+        false
     }
 
     /// Returns an iterator of all trait implementations of the given trait
     /// [`TypeRef`], which are blanket implementations.
     pub fn trait_blanket_impls(&self, trait_type: &TypeRef) -> impl Iterator<Item = &TypeRef> {
         self.implementations_of_trait(trait_type)
-            .filter(|implementing_type| self.is_type_parameter(implementing_type).unwrap_or(false))
+            .filter(|implementing_type| self.is_type_parameter(implementing_type))
     }
 
     /// Gets the trait implementation of `trait_type` on the type `source`.
