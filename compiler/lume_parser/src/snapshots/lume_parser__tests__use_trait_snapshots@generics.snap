@@ -3,7 +3,7 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn add(other: Int32) -> Int64 {\n                return self + other;\n            }\n        }\")"
 ---
 [
-    TraitImpl(
+    TraitImplementation(
         TraitImplementation {
             name: Named(
                 NamedType {

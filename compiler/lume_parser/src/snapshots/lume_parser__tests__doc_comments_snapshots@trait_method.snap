@@ -3,73 +3,71 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"trait Foo {\n            /// This is a doc comment\n            fn bar() -> void { }\n        }\")"
 ---
 [
-    TypeDefinition(
-        Trait(
-            TraitDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Foo",
-                    location: Location(
-                        6..9,
-                    ),
-                },
-                type_parameters: [],
-                methods: [
-                    TraitMethodDefinition {
-                        name: Identifier {
-                            name: "bar",
-                            location: Location(
-                                65..68,
-                            ),
-                        },
-                        parameters: [],
-                        type_parameters: [],
-                        return_type: Some(
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "void",
-                                                location: Location(
-                                                    74..78,
-                                                ),
-                                            },
-                                            bound_types: [],
+    TraitDefinition(
+        TraitDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Foo",
+                location: Location(
+                    6..9,
+                ),
+            },
+            type_parameters: [],
+            methods: [
+                TraitMethodDefinition {
+                    name: Identifier {
+                        name: "bar",
+                        location: Location(
+                            65..68,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Some(
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "void",
                                             location: Location(
                                                 74..78,
                                             ),
                                         },
+                                        bound_types: [],
                                         location: Location(
                                             74..78,
                                         ),
                                     },
+                                    location: Location(
+                                        74..78,
+                                    ),
                                 },
-                            ),
-                        ),
-                        block: Some(
-                            Block {
-                                statements: [],
-                                location: Location(
-                                    79..82,
-                                ),
                             },
                         ),
-                        location: Location(
-                            62..82,
-                        ),
-                        documentation: Some(
-                            "This is a doc comment",
-                        ),
-                    },
-                ],
-                location: Location(
-                    0..92,
-                ),
-                documentation: None,
-            },
-        ),
+                    ),
+                    block: Some(
+                        Block {
+                            statements: [],
+                            location: Location(
+                                79..82,
+                            ),
+                        },
+                    ),
+                    location: Location(
+                        62..82,
+                    ),
+                    documentation: Some(
+                        "This is a doc comment",
+                    ),
+                },
+            ],
+            location: Location(
+                0..92,
+            ),
+            documentation: None,
+        },
     ),
 ]

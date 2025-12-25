@@ -3,57 +3,55 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"trait Add<T: Numeric> {}\")"
 ---
 [
-    TypeDefinition(
-        Trait(
-            TraitDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Add",
-                    location: Location(
-                        6..9,
-                    ),
-                },
-                type_parameters: [
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T",
-                            location: Location(
-                                10..11,
-                            ),
-                        },
-                        constraints: [
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Numeric",
-                                                location: Location(
-                                                    13..20,
-                                                ),
-                                            },
-                                            bound_types: [],
+    TraitDefinition(
+        TraitDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Add",
+                location: Location(
+                    6..9,
+                ),
+            },
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T",
+                        location: Location(
+                            10..11,
+                        ),
+                    },
+                    constraints: [
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Numeric",
                                             location: Location(
                                                 13..20,
                                             ),
                                         },
+                                        bound_types: [],
                                         location: Location(
                                             13..20,
                                         ),
                                     },
+                                    location: Location(
+                                        13..20,
+                                    ),
                                 },
-                            ),
-                        ],
-                    },
-                ],
-                methods: [],
-                location: Location(
-                    0..24,
-                ),
-                documentation: None,
-            },
-        ),
+                            },
+                        ),
+                    ],
+                },
+            ],
+            methods: [],
+            location: Location(
+                0..24,
+            ),
+            documentation: None,
+        },
     ),
 ]

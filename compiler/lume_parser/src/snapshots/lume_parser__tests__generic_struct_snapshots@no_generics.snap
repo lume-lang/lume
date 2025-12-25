@@ -3,25 +3,22 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"struct Test {}\")"
 ---
 [
-    TypeDefinition(
-        Struct(
-            StructDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Test",
-                    location: Location(
-                        7..11,
-                    ),
-                },
-                builtin: false,
-                fields: [],
-                type_parameters: [],
+    StructDefinition(
+        StructDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Test",
                 location: Location(
-                    0..14,
+                    7..11,
                 ),
-                documentation: None,
             },
-        ),
+            fields: [],
+            type_parameters: [],
+            location: Location(
+                0..14,
+            ),
+            documentation: None,
+        },
     ),
 ]

@@ -14,7 +14,6 @@ Map {
                 },
                 location: struct_field.lm:7:10,
             },
-            builtin: false,
             fields: [
                 Field {
                     visibility: Private,

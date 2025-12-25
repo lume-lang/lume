@@ -3,65 +3,34 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"trait Add {fn add(other: Int32) -> Int32 { return self + other; } }\")"
 ---
 [
-    TypeDefinition(
-        Trait(
-            TraitDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Add",
-                    location: Location(
-                        6..9,
-                    ),
-                },
-                type_parameters: [],
-                methods: [
-                    TraitMethodDefinition {
-                        name: Identifier {
-                            name: "add",
-                            location: Location(
-                                14..17,
-                            ),
-                        },
-                        parameters: [
-                            Parameter {
-                                name: Identifier {
-                                    name: "other",
-                                    location: Location(
-                                        18..23,
-                                    ),
-                                },
-                                param_type: Named(
-                                    NamedType {
-                                        name: Path {
-                                            root: [],
-                                            name: Type {
-                                                name: Identifier {
-                                                    name: "Int32",
-                                                    location: Location(
-                                                        25..30,
-                                                    ),
-                                                },
-                                                bound_types: [],
-                                                location: Location(
-                                                    25..30,
-                                                ),
-                                            },
-                                            location: Location(
-                                                25..30,
-                                            ),
-                                        },
-                                    },
-                                ),
-                                vararg: false,
+    TraitDefinition(
+        TraitDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Add",
+                location: Location(
+                    6..9,
+                ),
+            },
+            type_parameters: [],
+            methods: [
+                TraitMethodDefinition {
+                    name: Identifier {
+                        name: "add",
+                        location: Location(
+                            14..17,
+                        ),
+                    },
+                    parameters: [
+                        Parameter {
+                            name: Identifier {
+                                name: "other",
                                 location: Location(
-                                    18..30,
+                                    18..23,
                                 ),
                             },
-                        ],
-                        type_parameters: [],
-                        return_type: Some(
-                            Named(
+                            param_type: Named(
                                 NamedType {
                                     name: Path {
                                         root: [],
@@ -69,79 +38,108 @@ expression: "parse(\"trait Add {fn add(other: Int32) -> Int32 { return self + ot
                                             name: Identifier {
                                                 name: "Int32",
                                                 location: Location(
-                                                    35..40,
+                                                    25..30,
                                                 ),
                                             },
                                             bound_types: [],
                                             location: Location(
-                                                35..40,
+                                                25..30,
                                             ),
                                         },
                                         location: Location(
-                                            35..40,
+                                            25..30,
                                         ),
                                     },
                                 },
                             ),
-                        ),
-                        block: Some(
-                            Block {
-                                statements: [
-                                    Return(
-                                        Return {
-                                            value: Some(
-                                                IntrinsicCall(
-                                                    IntrinsicCall {
-                                                        kind: Add {
-                                                            lhs: Variable(
-                                                                Variable {
-                                                                    name: Identifier {
-                                                                        name: "self",
-                                                                        location: Location(
-                                                                            50..54,
-                                                                        ),
-                                                                    },
-                                                                },
-                                                            ),
-                                                            rhs: Variable(
-                                                                Variable {
-                                                                    name: Identifier {
-                                                                        name: "other",
-                                                                        location: Location(
-                                                                            57..62,
-                                                                        ),
-                                                                    },
-                                                                },
-                                                            ),
-                                                        },
-                                                        location: Location(
-                                                            50..62,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
+                            vararg: false,
+                            location: Location(
+                                18..30,
+                            ),
+                        },
+                    ],
+                    type_parameters: [],
+                    return_type: Some(
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Int32",
                                             location: Location(
-                                                43..63,
+                                                35..40,
                                             ),
                                         },
+                                        bound_types: [],
+                                        location: Location(
+                                            35..40,
+                                        ),
+                                    },
+                                    location: Location(
+                                        35..40,
                                     ),
-                                ],
-                                location: Location(
-                                    41..65,
-                                ),
+                                },
                             },
                         ),
-                        location: Location(
-                            11..65,
-                        ),
-                        documentation: None,
-                    },
-                ],
-                location: Location(
-                    0..67,
-                ),
-                documentation: None,
-            },
-        ),
+                    ),
+                    block: Some(
+                        Block {
+                            statements: [
+                                Return(
+                                    Return {
+                                        value: Some(
+                                            IntrinsicCall(
+                                                IntrinsicCall {
+                                                    kind: Add {
+                                                        lhs: Variable(
+                                                            Variable {
+                                                                name: Identifier {
+                                                                    name: "self",
+                                                                    location: Location(
+                                                                        50..54,
+                                                                    ),
+                                                                },
+                                                            },
+                                                        ),
+                                                        rhs: Variable(
+                                                            Variable {
+                                                                name: Identifier {
+                                                                    name: "other",
+                                                                    location: Location(
+                                                                        57..62,
+                                                                    ),
+                                                                },
+                                                            },
+                                                        ),
+                                                    },
+                                                    location: Location(
+                                                        50..62,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                        location: Location(
+                                            43..63,
+                                        ),
+                                    },
+                                ),
+                            ],
+                            location: Location(
+                                41..65,
+                            ),
+                        },
+                    ),
+                    location: Location(
+                        11..65,
+                    ),
+                    documentation: None,
+                },
+            ],
+            location: Location(
+                0..67,
+            ),
+            documentation: None,
+        },
     ),
 ]

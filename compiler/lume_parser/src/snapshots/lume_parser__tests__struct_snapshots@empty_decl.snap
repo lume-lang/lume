@@ -3,25 +3,22 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"struct Int32 {}\")"
 ---
 [
-    TypeDefinition(
-        Struct(
-            StructDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Int32",
-                    location: Location(
-                        7..12,
-                    ),
-                },
-                builtin: false,
-                fields: [],
-                type_parameters: [],
+    StructDefinition(
+        StructDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Int32",
                 location: Location(
-                    0..15,
+                    7..12,
                 ),
-                documentation: None,
             },
-        ),
+            fields: [],
+            type_parameters: [],
+            location: Location(
+                0..15,
+            ),
+            documentation: None,
+        },
     ),
 ]

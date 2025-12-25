@@ -3,7 +3,7 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"\n        impl Foo {\n            fn external bar() -> Int32\n        }\")"
 ---
 [
-    Impl(
+    Implementation(
         Implementation {
             name: Named(
                 NamedType {

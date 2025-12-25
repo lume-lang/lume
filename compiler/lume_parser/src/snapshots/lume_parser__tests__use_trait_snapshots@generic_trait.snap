@@ -3,7 +3,7 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            fn next() -> T { }\n        }\")"
 ---
 [
-    TraitImpl(
+    TraitImplementation(
         TraitImplementation {
             name: Named(
                 NamedType {

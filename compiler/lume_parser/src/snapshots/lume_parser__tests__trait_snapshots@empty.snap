@@ -3,24 +3,22 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"trait Add { }\")"
 ---
 [
-    TypeDefinition(
-        Trait(
-            TraitDefinition {
-                attributes: [],
-                visibility: None,
-                name: Identifier {
-                    name: "Add",
-                    location: Location(
-                        6..9,
-                    ),
-                },
-                type_parameters: [],
-                methods: [],
+    TraitDefinition(
+        TraitDefinition {
+            attributes: [],
+            visibility: None,
+            name: Identifier {
+                name: "Add",
                 location: Location(
-                    0..13,
+                    6..9,
                 ),
-                documentation: None,
             },
-        ),
+            type_parameters: [],
+            methods: [],
+            location: Location(
+                0..13,
+            ),
+            documentation: None,
+        },
     ),
 ]

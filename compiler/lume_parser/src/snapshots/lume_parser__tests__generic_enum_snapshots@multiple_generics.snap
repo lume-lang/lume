@@ -3,42 +3,40 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"enum Test<T1, T2> {}\")"
 ---
 [
-    TypeDefinition(
-        Enum(
-            EnumDefinition {
-                visibility: None,
-                name: Identifier {
-                    name: "Test",
-                    location: Location(
-                        5..9,
-                    ),
-                },
-                type_parameters: [
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T1",
-                            location: Location(
-                                10..12,
-                            ),
-                        },
-                        constraints: [],
-                    },
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T2",
-                            location: Location(
-                                14..16,
-                            ),
-                        },
-                        constraints: [],
-                    },
-                ],
-                cases: [],
+    EnumDefinition(
+        EnumDefinition {
+            visibility: None,
+            name: Identifier {
+                name: "Test",
                 location: Location(
-                    0..20,
+                    5..9,
                 ),
-                documentation: None,
             },
-        ),
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T1",
+                        location: Location(
+                            10..12,
+                        ),
+                    },
+                    constraints: [],
+                },
+                TypeParameter {
+                    name: Identifier {
+                        name: "T2",
+                        location: Location(
+                            14..16,
+                        ),
+                    },
+                    constraints: [],
+                },
+            ],
+            cases: [],
+            location: Location(
+                0..20,
+            ),
+            documentation: None,
+        },
     ),
 ]

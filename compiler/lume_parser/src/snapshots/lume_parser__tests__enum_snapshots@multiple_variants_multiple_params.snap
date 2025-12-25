@@ -3,140 +3,138 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"\n        enum Foo {\n            Bar(Int32, Int32),\n            Baz(Int32, Int32)\n        }\")"
 ---
 [
-    TypeDefinition(
-        Enum(
-            EnumDefinition {
-                visibility: None,
-                name: Identifier {
-                    name: "Foo",
-                    location: Location(
-                        14..17,
-                    ),
-                },
-                type_parameters: [],
-                cases: [
-                    EnumDefinitionCase {
-                        name: Identifier {
-                            name: "Bar",
-                            location: Location(
-                                32..35,
-                            ),
-                        },
-                        parameters: [
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Int32",
-                                                location: Location(
-                                                    36..41,
-                                                ),
-                                            },
-                                            bound_types: [],
+    EnumDefinition(
+        EnumDefinition {
+            visibility: None,
+            name: Identifier {
+                name: "Foo",
+                location: Location(
+                    14..17,
+                ),
+            },
+            type_parameters: [],
+            cases: [
+                EnumDefinitionCase {
+                    name: Identifier {
+                        name: "Bar",
+                        location: Location(
+                            32..35,
+                        ),
+                    },
+                    parameters: [
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Int32",
                                             location: Location(
                                                 36..41,
                                             ),
                                         },
+                                        bound_types: [],
                                         location: Location(
                                             36..41,
                                         ),
                                     },
+                                    location: Location(
+                                        36..41,
+                                    ),
                                 },
-                            ),
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Int32",
-                                                location: Location(
-                                                    43..48,
-                                                ),
-                                            },
-                                            bound_types: [],
+                            },
+                        ),
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Int32",
                                             location: Location(
                                                 43..48,
                                             ),
                                         },
+                                        bound_types: [],
                                         location: Location(
                                             43..48,
                                         ),
                                     },
+                                    location: Location(
+                                        43..48,
+                                    ),
                                 },
-                            ),
-                        ],
-                        location: Location(
-                            32..49,
+                            },
                         ),
-                        documentation: None,
+                    ],
+                    location: Location(
+                        32..49,
+                    ),
+                    documentation: None,
+                },
+                EnumDefinitionCase {
+                    name: Identifier {
+                        name: "Baz",
+                        location: Location(
+                            63..66,
+                        ),
                     },
-                    EnumDefinitionCase {
-                        name: Identifier {
-                            name: "Baz",
-                            location: Location(
-                                63..66,
-                            ),
-                        },
-                        parameters: [
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Int32",
-                                                location: Location(
-                                                    67..72,
-                                                ),
-                                            },
-                                            bound_types: [],
+                    parameters: [
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Int32",
                                             location: Location(
                                                 67..72,
                                             ),
                                         },
+                                        bound_types: [],
                                         location: Location(
                                             67..72,
                                         ),
                                     },
+                                    location: Location(
+                                        67..72,
+                                    ),
                                 },
-                            ),
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Int32",
-                                                location: Location(
-                                                    74..79,
-                                                ),
-                                            },
-                                            bound_types: [],
+                            },
+                        ),
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Int32",
                                             location: Location(
                                                 74..79,
                                             ),
                                         },
+                                        bound_types: [],
                                         location: Location(
                                             74..79,
                                         ),
                                     },
+                                    location: Location(
+                                        74..79,
+                                    ),
                                 },
-                            ),
-                        ],
-                        location: Location(
-                            63..80,
+                            },
                         ),
-                        documentation: None,
-                    },
-                ],
-                location: Location(
-                    9..90,
-                ),
-                documentation: None,
-            },
-        ),
+                    ],
+                    location: Location(
+                        63..80,
+                    ),
+                    documentation: None,
+                },
+            ],
+            location: Location(
+                9..90,
+            ),
+            documentation: None,
+        },
     ),
 ]

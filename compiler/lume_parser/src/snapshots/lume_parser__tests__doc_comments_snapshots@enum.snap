@@ -3,39 +3,37 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"/// This is a doc comment\n        enum Foo {\n            Bar\n        }\")"
 ---
 [
-    TypeDefinition(
-        Enum(
-            EnumDefinition {
-                visibility: None,
-                name: Identifier {
-                    name: "Foo",
-                    location: Location(
-                        39..42,
-                    ),
-                },
-                type_parameters: [],
-                cases: [
-                    EnumDefinitionCase {
-                        name: Identifier {
-                            name: "Bar",
-                            location: Location(
-                                57..60,
-                            ),
-                        },
-                        parameters: [],
+    EnumDefinition(
+        EnumDefinition {
+            visibility: None,
+            name: Identifier {
+                name: "Foo",
+                location: Location(
+                    39..42,
+                ),
+            },
+            type_parameters: [],
+            cases: [
+                EnumDefinitionCase {
+                    name: Identifier {
+                        name: "Bar",
                         location: Location(
                             57..60,
                         ),
-                        documentation: None,
                     },
-                ],
-                location: Location(
-                    34..70,
-                ),
-                documentation: Some(
-                    "This is a doc comment",
-                ),
-            },
-        ),
+                    parameters: [],
+                    location: Location(
+                        57..60,
+                    ),
+                    documentation: None,
+                },
+            ],
+            location: Location(
+                34..70,
+            ),
+            documentation: Some(
+                "This is a doc comment",
+            ),
+        },
     ),
 ]

@@ -3,7 +3,7 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"\n        use Zero in Int32 {\n            fn zero?() -> Boolean { }\n        }\")"
 ---
 [
-    TraitImpl(
+    TraitImplementation(
         TraitImplementation {
             name: Named(
                 NamedType {

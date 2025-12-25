@@ -3,23 +3,21 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"enum Test {}\")"
 ---
 [
-    TypeDefinition(
-        Enum(
-            EnumDefinition {
-                visibility: None,
-                name: Identifier {
-                    name: "Test",
-                    location: Location(
-                        5..9,
-                    ),
-                },
-                type_parameters: [],
-                cases: [],
+    EnumDefinition(
+        EnumDefinition {
+            visibility: None,
+            name: Identifier {
+                name: "Test",
                 location: Location(
-                    0..12,
+                    5..9,
                 ),
-                documentation: None,
             },
-        ),
+            type_parameters: [],
+            cases: [],
+            location: Location(
+                0..12,
+            ),
+            documentation: None,
+        },
     ),
 ]
