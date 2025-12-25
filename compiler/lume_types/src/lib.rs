@@ -51,6 +51,7 @@ impl Parameter {
 /// structure is also used for methods.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FunctionSig<'a> {
+    pub id: NodeId,
     pub params: &'a [Parameter],
     pub type_params: &'a [NodeId],
     pub ret_ty: &'a TypeRef,
@@ -67,6 +68,7 @@ impl FunctionSig<'_> {
 
     pub fn to_owned(&self) -> FunctionSigOwned {
         FunctionSigOwned {
+            id: self.id,
             params: self.params.to_owned(),
             type_params: self.type_params.to_owned(),
             ret_ty: self.ret_ty.to_owned(),
@@ -81,6 +83,7 @@ impl FunctionSig<'_> {
 /// structure is also used for methods.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionSigOwned {
+    pub id: NodeId,
     pub params: Vec<Parameter>,
     pub type_params: Vec<NodeId>,
     pub ret_ty: TypeRef,
@@ -97,6 +100,7 @@ impl FunctionSigOwned {
 
     pub fn as_ref(&'_ self) -> FunctionSig<'_> {
         FunctionSig {
+            id: self.id,
             params: &self.params,
             type_params: &self.type_params,
             ret_ty: &self.ret_ty,
