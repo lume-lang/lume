@@ -647,6 +647,7 @@ impl TyInferCtx {
         expr: lume_hir::CallExpression<'a>,
     ) -> Result<lume_types::FunctionSigOwned> {
         let mut inst = lume_types::FunctionSigOwned {
+            id: signature.id,
             params: signature.params.to_vec(),
             ret_ty: TypeRef::unknown(),
             type_params: Vec::new(),
@@ -729,6 +730,7 @@ impl TyInferCtx {
         type_args: &[TypeRef],
     ) -> lume_types::FunctionSigOwned {
         let mut inst = lume_types::FunctionSigOwned {
+            id: sig.id,
             params: Vec::new(),
             ret_ty: TypeRef::unknown(),
             type_params: Vec::new(),
@@ -862,16 +864,19 @@ impl TyInferCtx {
         match callable {
             Callable::Method(method) => match self.hir_expect_node(method.id) {
                 lume_hir::Node::Method(method) => Ok(FunctionSigOwned {
+                    id: method.id,
                     params: params_of(self, method.id, &method.parameters)?,
                     type_params: method.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                 }),
                 lume_hir::Node::TraitMethodDef(method) => Ok(FunctionSigOwned {
+                    id: method.id,
                     params: params_of(self, method.id, &method.parameters)?,
                     type_params: method.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                 }),
                 lume_hir::Node::TraitMethodImpl(method) => Ok(FunctionSigOwned {
+                    id: method.id,
                     params: params_of(self, method.id, &method.parameters)?,
                     type_params: method.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
@@ -884,6 +889,7 @@ impl TyInferCtx {
                 };
 
                 Ok(FunctionSigOwned {
+                    id: function.id,
                     params: params_of(self, func.id, &func.parameters)?,
                     type_params: func.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&func.return_type, func.id)?,
@@ -903,16 +909,19 @@ impl TyInferCtx {
             Callable::Method(method) => {
                 let mut signature = match self.hir_expect_node(method.id) {
                     lume_hir::Node::Method(method) => FunctionSigOwned {
+                        id: method.id,
                         params: params_of(self, method.id, &method.parameters)?,
                         type_params: method.type_parameters.clone(),
                         ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                     },
                     lume_hir::Node::TraitMethodDef(method) => FunctionSigOwned {
+                        id: method.id,
                         params: params_of(self, method.id, &method.parameters)?,
                         type_params: method.type_parameters.clone(),
                         ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
                     },
                     lume_hir::Node::TraitMethodImpl(method) => FunctionSigOwned {
+                        id: method.id,
                         params: params_of(self, method.id, &method.parameters)?,
                         type_params: method.type_parameters.clone(),
                         ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
@@ -932,6 +941,7 @@ impl TyInferCtx {
                 };
 
                 Ok(FunctionSigOwned {
+                    id: function.id,
                     params: params_of(self, func.id, &func.parameters)?,
                     type_params: func.type_parameters.clone(),
                     ret_ty: self.mk_type_ref_from(&func.return_type, func.id)?,
