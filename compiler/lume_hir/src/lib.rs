@@ -1802,60 +1802,6 @@ impl AsRef<TypeParameter> for TypeParameter {
     }
 }
 
-/*
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
-pub struct TypeParameters {
-    pub inner: Vec<TypeParameter>,
-}
-
-impl TypeParameters {
-    pub const fn new() -> Self {
-        Self { inner: Vec::new() }
-    }
-
-    pub fn len(&self) -> usize {
-        self.inner.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &TypeParameter> {
-        self.inner.iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut TypeParameter> {
-        self.inner.iter_mut()
-    }
-
-    pub fn as_refs(&self) -> Vec<&TypeParameter> {
-        self.iter().map(AsRef::as_ref).collect::<Vec<_>>()
-    }
-
-    pub fn as_id_refs(&self) -> Vec<NodeId> {
-        self.iter().map(|param| param.id).collect::<Vec<_>>()
-    }
-
-    pub fn as_types(&self) -> Vec<Type> {
-        self.as_refs()
-            .into_iter()
-            .map(|type_param| Type {
-                id: TypeId::from(type_param.id),
-                name: Path::rooted(PathSegment::ty(type_param.name.clone())),
-                location: type_param.location,
-            })
-            .collect()
-    }
-}
-
-impl From<Vec<TypeParameter>> for TypeParameters {
-    fn from(value: Vec<TypeParameter>) -> Self {
-        Self { inner: value }
-    }
-}
-*/
-
 /// Uniquely identifiers a single HIR type.
 #[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub struct TypeId(NodeId);
