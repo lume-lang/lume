@@ -8,7 +8,6 @@ use crate::TyInferCtx;
 impl TyInferCtx {
     /// Returns an iterator over all traits which are implemented on the given
     /// type.
-    #[libftrace::traced(level = Trace, err)]
     pub fn implementations_on_type(&self, ty: &TypeRef) -> impl Iterator<Item = &TypeRef> {
         self.tdb().traits.implementations_on(ty).filter_map(|implementation| {
             self.check_type_compatibility(ty, &implementation.implemented)
@@ -19,7 +18,6 @@ impl TyInferCtx {
 
     /// Returns an iterator over all types which implement the given
     /// trait.
-    #[libftrace::traced(level = Trace, err)]
     pub fn implementations_of_trait(&self, trait_type: &TypeRef) -> impl Iterator<Item = &TypeRef> {
         self.tdb()
             .traits
