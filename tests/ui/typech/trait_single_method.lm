@@ -6,6 +6,6 @@ trait Foo {
     fn foo();
 }
 
-use Foo in A {
+use Foo: A {
     fn foo() { }
 }

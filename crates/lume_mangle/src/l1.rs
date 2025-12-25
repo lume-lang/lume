@@ -445,7 +445,7 @@ mod tests {
                     fn bar(self) { }
                 }
 
-                use Foo in Int32 {
+                use Foo: Int32 {
                     fn bar(self) { }
                 }
             ",
@@ -473,7 +473,7 @@ mod tests {
                     fn bar(self) { }
                 }
 
-                use Foo in Int32 {
+                use Foo: Int32 {
                     fn external bar(self)
                 }
             ",

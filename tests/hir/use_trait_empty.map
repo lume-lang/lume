@@ -49,18 +49,18 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Int32",
-                            location: use_trait_empty.lm:11:16,
+                            location: use_trait_empty.lm:9:14,
                         },
                         bound_types: [],
-                        location: use_trait_empty.lm:11:16,
+                        location: use_trait_empty.lm:9:14,
                     },
-                    location: use_trait_empty.lm:11:16,
+                    location: use_trait_empty.lm:9:14,
                 },
-                location: use_trait_empty.lm:11:16,
+                location: use_trait_empty.lm:9:14,
             },
             methods: [],
             type_parameters: [],
-            location: use_trait_empty.lm:0:19,
+            location: use_trait_empty.lm:0:17,
         },
     ],
 }

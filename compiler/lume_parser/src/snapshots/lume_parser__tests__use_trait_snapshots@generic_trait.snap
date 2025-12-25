@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            fn next() -> T { }\n        }\")"
+expression: "parse(\"\n        use<T> Enumerable<T>: Vector<T> {\n            fn next() -> T { }\n        }\")"
 ---
 [
     TraitImplementation(
@@ -58,7 +58,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                             name: Identifier {
                                 name: "Vector",
                                 location: Location(
-                                    33..39,
+                                    31..37,
                                 ),
                             },
                             bound_types: [
@@ -70,27 +70,27 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                                 name: Identifier {
                                                     name: "T",
                                                     location: Location(
-                                                        40..41,
+                                                        38..39,
                                                     ),
                                                 },
                                                 bound_types: [],
                                                 location: Location(
-                                                    40..41,
+                                                    38..39,
                                                 ),
                                             },
                                             location: Location(
-                                                40..41,
+                                                38..39,
                                             ),
                                         },
                                     },
                                 ),
                             ],
                             location: Location(
-                                33..42,
+                                31..40,
                             ),
                         },
                         location: Location(
-                            33..42,
+                            31..40,
                         ),
                     },
                 },
@@ -101,7 +101,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                     name: Identifier {
                         name: "next",
                         location: Location(
-                            60..64,
+                            58..62,
                         ),
                     },
                     parameters: [],
@@ -115,16 +115,16 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                         name: Identifier {
                                             name: "T",
                                             location: Location(
-                                                70..71,
+                                                68..69,
                                             ),
                                         },
                                         bound_types: [],
                                         location: Location(
-                                            70..71,
+                                            68..69,
                                         ),
                                     },
                                     location: Location(
-                                        70..71,
+                                        68..69,
                                     ),
                                 },
                             },
@@ -134,12 +134,12 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                         Block {
                             statements: [],
                             location: Location(
-                                72..75,
+                                70..73,
                             ),
                         },
                     ),
                     location: Location(
-                        57..75,
+                        55..73,
                     ),
                 },
             ],
@@ -155,7 +155,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                 },
             ],
             location: Location(
-                9..85,
+                9..83,
             ),
         },
     ),

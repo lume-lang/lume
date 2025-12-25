@@ -2,7 +2,7 @@ trait Default<T> {
     fn default() -> T;
 }
 
-use Default<Int64> in Int32 {
+use Default<Int64>: Int32 {
     fn default() -> Int32 {
         return 0_i32;
     }

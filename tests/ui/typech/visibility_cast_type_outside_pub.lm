@@ -7,7 +7,7 @@ pub struct Foo {
     a: Int32;
 }
 
-use Cast<Foo> in Int32 {
+use Cast<Foo>: Int32 {
     fn cast(self) -> Foo {
         Foo {
             a: self

@@ -2,6 +2,6 @@ struct A { }
 
 trait Foo { }
 
-use Foo in A {
+use Foo: A {
     fn foo() { }
 }

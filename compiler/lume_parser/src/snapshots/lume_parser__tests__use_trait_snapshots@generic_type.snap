@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        use Enumerable<T> in Vector<T> {\n            fn next() -> T { }\n        }\")"
+expression: "parse(\"\n        use Enumerable<T>: Vector<T> {\n            fn next() -> T { }\n        }\")"
 ---
 [
     TraitImplementation(
@@ -58,7 +58,7 @@ expression: "parse(\"\n        use Enumerable<T> in Vector<T> {\n            fn 
                             name: Identifier {
                                 name: "Vector",
                                 location: Location(
-                                    30..36,
+                                    28..34,
                                 ),
                             },
                             bound_types: [
@@ -70,27 +70,27 @@ expression: "parse(\"\n        use Enumerable<T> in Vector<T> {\n            fn 
                                                 name: Identifier {
                                                     name: "T",
                                                     location: Location(
-                                                        37..38,
+                                                        35..36,
                                                     ),
                                                 },
                                                 bound_types: [],
                                                 location: Location(
-                                                    37..38,
+                                                    35..36,
                                                 ),
                                             },
                                             location: Location(
-                                                37..38,
+                                                35..36,
                                             ),
                                         },
                                     },
                                 ),
                             ],
                             location: Location(
-                                30..39,
+                                28..37,
                             ),
                         },
                         location: Location(
-                            30..39,
+                            28..37,
                         ),
                     },
                 },
@@ -101,7 +101,7 @@ expression: "parse(\"\n        use Enumerable<T> in Vector<T> {\n            fn 
                     name: Identifier {
                         name: "next",
                         location: Location(
-                            57..61,
+                            55..59,
                         ),
                     },
                     parameters: [],
@@ -115,16 +115,16 @@ expression: "parse(\"\n        use Enumerable<T> in Vector<T> {\n            fn 
                                         name: Identifier {
                                             name: "T",
                                             location: Location(
-                                                67..68,
+                                                65..66,
                                             ),
                                         },
                                         bound_types: [],
                                         location: Location(
-                                            67..68,
+                                            65..66,
                                         ),
                                     },
                                     location: Location(
-                                        67..68,
+                                        65..66,
                                     ),
                                 },
                             },
@@ -134,18 +134,18 @@ expression: "parse(\"\n        use Enumerable<T> in Vector<T> {\n            fn 
                         Block {
                             statements: [],
                             location: Location(
-                                69..72,
+                                67..70,
                             ),
                         },
                     ),
                     location: Location(
-                        54..72,
+                        52..70,
                     ),
                 },
             ],
             type_parameters: [],
             location: Location(
-                9..82,
+                9..80,
             ),
         },
     ),

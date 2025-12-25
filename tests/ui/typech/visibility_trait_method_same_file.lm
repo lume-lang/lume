@@ -6,7 +6,7 @@ trait Trait {
 
 struct Foo { }
 
-use Trait in Foo {
+use Trait: Foo {
     fn call(self) { }
 }
 

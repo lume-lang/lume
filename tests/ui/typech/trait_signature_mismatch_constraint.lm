@@ -4,6 +4,6 @@ trait Foo {
     fn foo<T: Default>();
 }
 
-use Foo in Int32 {
+use Foo: Int32 {
     fn foo<T>() { }
 }

@@ -2,6 +2,6 @@ trait Foo {
     fn foo<T>();
 }
 
-use Foo in Int32 {
+use Foo: Int32 {
     fn foo() { }
 }

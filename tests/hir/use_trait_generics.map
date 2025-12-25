@@ -114,26 +114,26 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Int32",
-                            location: use_trait_generics.lm:25:30,
+                            location: use_trait_generics.lm:23:28,
                         },
                         bound_types: [],
-                        location: use_trait_generics.lm:25:30,
+                        location: use_trait_generics.lm:23:28,
                     },
-                    location: use_trait_generics.lm:25:30,
+                    location: use_trait_generics.lm:23:28,
                 },
-                location: use_trait_generics.lm:25:30,
+                location: use_trait_generics.lm:23:28,
             },
             methods: [
                 TraitMethodImplementation {
                     name: Identifier {
                         name: "add",
-                        location: use_trait_generics.lm:40:43,
+                        location: use_trait_generics.lm:38:41,
                     },
                     parameters: [
                         Parameter {
                             name: Identifier {
                                 name: "other",
-                                location: use_trait_generics.lm:44:49,
+                                location: use_trait_generics.lm:42:47,
                             },
                             param_type: Type {
                                 id: TypeId(
@@ -158,17 +158,17 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "Int32",
-                                            location: use_trait_generics.lm:51:56,
+                                            location: use_trait_generics.lm:49:54,
                                         },
                                         bound_types: [],
-                                        location: use_trait_generics.lm:51:56,
+                                        location: use_trait_generics.lm:49:54,
                                     },
-                                    location: use_trait_generics.lm:51:56,
+                                    location: use_trait_generics.lm:49:54,
                                 },
-                                location: use_trait_generics.lm:51:56,
+                                location: use_trait_generics.lm:49:54,
                             },
                             vararg: false,
-                            location: use_trait_generics.lm:44:56,
+                            location: use_trait_generics.lm:42:54,
                         },
                     ],
                     type_parameters: [],
@@ -185,24 +185,24 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "Int64",
-                                    location: use_trait_generics.lm:61:66,
+                                    location: use_trait_generics.lm:59:64,
                                 },
                                 bound_types: [],
-                                location: use_trait_generics.lm:61:66,
+                                location: use_trait_generics.lm:59:64,
                             },
-                            location: use_trait_generics.lm:61:66,
+                            location: use_trait_generics.lm:59:64,
                         },
-                        location: use_trait_generics.lm:61:66,
+                        location: use_trait_generics.lm:59:64,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_generics.lm:67:69,
+                        location: use_trait_generics.lm:65:67,
                     },
-                    location: use_trait_generics.lm:37:69,
+                    location: use_trait_generics.lm:35:67,
                 },
             ],
             type_parameters: [],
-            location: use_trait_generics.lm:0:71,
+            location: use_trait_generics.lm:0:69,
         },
     ],
 }

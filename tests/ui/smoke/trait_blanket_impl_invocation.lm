@@ -4,7 +4,7 @@ trait Foo {
     fn foo(self) { }
 }
 
-use<T> Foo in T {
+use<T> Foo: T {
     fn foo(self) { }
 }
 

@@ -6,7 +6,7 @@ trait Dynamic {
     fn func(self) -> Int32;
 }
 
-use Dynamic in Foo {
+use Dynamic: Foo {
     fn func(self) -> Int32 {
         5_i32
     }

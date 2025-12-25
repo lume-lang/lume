@@ -4,6 +4,6 @@ trait Foo {
     fn foo(self);
 }
 
-use Foo in Int32 {
+use Foo: Int32 {
     fn foo(self) { }
 }

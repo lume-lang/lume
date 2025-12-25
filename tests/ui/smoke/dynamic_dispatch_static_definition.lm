@@ -2,7 +2,7 @@ trait Foo {
     fn foo();
 }
 
-use Foo in Int32 {
+use Foo: Int32 {
     fn foo() { }
 }
 

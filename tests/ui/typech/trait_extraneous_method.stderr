@@ -1,7 +1,7 @@
 × error[LM4162]: extraneous method in implementation
    ╭─[trait_extraneous_method.lm:5:1]
  4 │ ╭─▶
- 5 │ │   use Foo in A {
+ 5 │ │   use Foo: A {
  6 │ │       fn foo() { }
  7 │ ├─▶ }
    ∶ │
