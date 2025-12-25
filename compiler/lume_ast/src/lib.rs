@@ -498,6 +498,15 @@ pub struct Parameter {
 
 node_location!(Parameter);
 
+impl Parameter {
+    /// Checks whether the current parameter is `self`.
+    #[inline]
+    #[must_use]
+    pub fn is_self(&self) -> bool {
+        self.name.as_str() == "self" && self.param_type.is_self()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Visibility {
     Public { location: Location },
@@ -1276,9 +1285,9 @@ impl Type {
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Type::Named(t) => f.write_fmt(format_args!("{t}")),
-            Type::Array(t) => f.write_fmt(format_args!("{t}")),
-            Type::SelfType(t) => f.write_fmt(format_args!("{t}")),
+            Type::Named(t) => std::fmt::Display::fmt(t, f),
+            Type::Array(t) => std::fmt::Display::fmt(t, f),
+            Type::SelfType(t) => std::fmt::Display::fmt(t, f),
         }
     }
 }

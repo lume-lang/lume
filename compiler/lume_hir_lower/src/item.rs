@@ -190,7 +190,7 @@ impl LowerModule {
             // using `self` as the first parameter is a best practice, since it's
             // so much easier to see whether a method is an instance method or a static
             // method.
-            if index > 0 && param.param_type.is_self() {
+            if index > 0 && param.is_self() {
                 return Err(SelfNotFirstParameter {
                     source: self.file.clone(),
                     range: param.location.0.clone(),

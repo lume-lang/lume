@@ -91,6 +91,24 @@ impl TyInferCtx {
         }
     }
 
+    /// Gets the [`CallReference`] with the given ID, if any.
+    #[libftrace::traced(level = Trace, ret)]
+    pub fn callref_with_id(&self, id: NodeId) -> Option<CallReference> {
+        match self.hir_node(id)? {
+            lume_hir::Node::Function(_) => Some(CallReference::Function(id)),
+            lume_hir::Node::Method(_) | lume_hir::Node::TraitMethodDef(_) | lume_hir::Node::TraitMethodImpl(_) => {
+                Some(CallReference::Method(id))
+            }
+            _ => None,
+        }
+    }
+
+    /// Gets the [`Callable`] with the given ID, if any.
+    #[libftrace::traced(level = Trace, ret)]
+    pub fn callable_with_id(&self, id: NodeId) -> Option<Callable<'_>> {
+        self.callable_of(self.callref_with_id(id)?).ok()
+    }
+
     /// Gets the [`Callable`] with the given name, if any.
     #[libftrace::traced(level = Trace, ret)]
     pub fn callable_with_name(&self, name: &Path) -> Option<Callable<'_>> {
@@ -448,9 +466,7 @@ impl TyInferCtx {
                 Ok(Callable::Method(method))
             }
             lume_hir::CallExpression::Static(call) => {
-                if let Some(callee_ty_name) = call.name.clone().parent()
-                    && callee_ty_name.is_type()
-                {
+                if let Some(callee_ty_name) = call.receiving_type() {
                     let Some(callee_type) = self.find_type_ref_from(&callee_ty_name, call.id)? else {
                         return Err(self.missing_type_err(&lume_hir::Type {
                             id: lume_hir::TypeId::from(lume_span::NodeId::empty(call.id.package)),

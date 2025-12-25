@@ -502,12 +502,10 @@ impl Path {
 
     /// Gets the all bound types of all the path segments.
     pub fn all_bound_types(&self) -> Vec<Type> {
-        let mut args = self.bound_types().to_vec();
-        for segment in &self.root {
-            args.extend_from_slice(segment.bound_types());
-        }
-
-        args
+        self.segments()
+            .into_iter()
+            .flat_map(|seg| seg.bound_types().to_vec())
+            .collect()
     }
 
     /// Gets the all bound types of all the root path segments.
@@ -1383,6 +1381,14 @@ pub struct StaticCall {
 }
 
 impl StaticCall {
+    pub fn receiving_type(&self) -> Option<Path> {
+        if let PathSegment::Type { .. } = self.name.root.last()? {
+            self.name.clone().parent()
+        } else {
+            None
+        }
+    }
+
     pub fn type_arguments(&self) -> &[Type] {
         self.name.bound_types()
     }
