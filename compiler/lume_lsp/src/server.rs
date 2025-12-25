@@ -73,6 +73,7 @@ impl Server {
         let response = match request {
             Request::Hover(location) => self.hover(location)?,
             Request::GoToDefinition(location) => self.goto_definition(location)?,
+            Request::Format { uri, config } => self.format(uri, config)?,
             Request::Unknown => return Ok(()),
         };
 
@@ -183,6 +184,11 @@ impl Server {
     fn goto_definition(&mut self, location: FileLocation) -> Result<serde_json::Value> {
         let path = crate::uri_to_path(&location.uri);
         self.respond_with_engine(path, |engine| engine.go_to_definition(location))
+    }
+
+    fn format(&mut self, uri: Uri, config: lume_fmt::Config) -> Result<serde_json::Value> {
+        let path = crate::uri_to_path(&uri);
+        self.respond_with_engine(path, |engine| engine.format(uri, config))
     }
 }
 

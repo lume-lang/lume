@@ -1143,7 +1143,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
     fn ty<'a>(&mut self, ty: &'a Type) -> Document<'a> {
         match ty {
             Type::Named(ty) => self.path(&ty.name),
-            Type::SelfType(_) => str("self"),
+            Type::SelfType(_) => str("Self"),
             Type::Array(ty) => concat(vec![str("["), self.ty(&ty.element_type), str("]")]),
         }
     }

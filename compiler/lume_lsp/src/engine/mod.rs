@@ -106,16 +106,23 @@ impl Engine {
     }
 
     /// Gets the package source file which exists to the given path.
-    pub(crate) fn source_of_uri(&self, file_path: &Path) -> Option<Arc<SourceFile>> {
+    pub(crate) fn source_of_uri<'a>(&'a self, file_path: &Path) -> Option<&'a Arc<SourceFile>> {
         for package in self.packages.values() {
             for source in package.sources.iter() {
                 if file_path.ends_with(source.name.to_pathbuf()) {
-                    return Some(source.clone());
+                    return Some(source);
                 }
             }
         }
 
         None
+    }
+
+    /// Gets the source file content which exists to the given path.
+    pub(crate) fn content_of_uri(&self, path: &PathBuf) -> Option<&str> {
+        self.io
+            .read(path)
+            .or_else(|| self.source_of_uri(path).map(|file| file.content.as_str()))
     }
 
     /// Gets the location of an LSP location as a range within a source file.
@@ -129,7 +136,7 @@ impl Engine {
         let index = crate::index_from_position(&source_file.content, location.position);
 
         Ok(lume_span::source::Location {
-            file: source_file,
+            file: source_file.clone(),
             index: index..index + 1,
         }
         .intern())
@@ -213,5 +220,20 @@ impl Engine {
             uri: crate::path_to_uri(&absolute_path),
             range: crate::location_range(definition_location),
         }))
+    }
+
+    pub(crate) fn format(&self, uri: Uri, config: lume_fmt::Config) -> Result<Vec<lsp_types::TextEdit>> {
+        let path = self.resolve_path(crate::uri_to_path(&uri));
+
+        let Some(content) = self.content_of_uri(&path) else {
+            return Err(SimpleDiagnostic::new(format!("could not find source file: {}", path.display())).into());
+        };
+
+        let text_edits = crate::symbols::format::formatted_file(content, config).unwrap_or_else(|err| {
+            log::error!("could not format file: {err}");
+            Vec::new()
+        });
+
+        Ok(text_edits)
     }
 }

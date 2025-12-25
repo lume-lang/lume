@@ -13,6 +13,7 @@ pub enum Message {
 pub enum Request {
     Hover(FileLocation),
     GoToDefinition(FileLocation),
+    Format { uri: Uri, config: lume_fmt::Config },
     Unknown,
 }
 
@@ -35,6 +36,14 @@ impl Request {
                 let position = params.text_document_position_params.position;
 
                 Self::GoToDefinition(FileLocation { uri, position })
+            }
+
+            lsp_types::request::Formatting::METHOD => {
+                let params = cast_request::<lsp_types::request::Formatting>(message);
+                let uri = params.text_document.uri;
+                let config = crate::symbols::format::parse_formatting_config(params.options);
+
+                Self::Format { uri, config }
             }
 
             _ => Self::Unknown,
