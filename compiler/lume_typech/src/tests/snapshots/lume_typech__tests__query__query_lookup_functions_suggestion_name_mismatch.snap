@@ -24,7 +24,7 @@ MissingFunction {
                 ),
             },
             range: 3..7,
-            function_name: Type {
+            function_name: Callable {
                 name: Identifier {
                     name: "foo_",
                     location: <internal>:3:7,
