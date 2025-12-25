@@ -2,7 +2,7 @@
 
 trait Foo {}
 
-use Foo in Int32 {}
+use Foo: Int32 {}
 
 fn foo<T: Foo>(val: T) { }
 

@@ -8,7 +8,7 @@ trait Dynamic {
     }
 }
 
-use Dynamic in Foo {}
+use Dynamic: Foo {}
 
 pub fn main() -> Int32 {
     let foo = Foo { };

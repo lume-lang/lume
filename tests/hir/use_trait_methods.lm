@@ -1,4 +1,4 @@
-use Cast in Int32 {
+use Cast: Int32 {
     fn to_string() -> String {}
 
     fn to_int() -> Int32 {}

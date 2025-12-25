@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        use Zero in Int32 {\n            fn zero?() -> Boolean { }\n        }\")"
+expression: "parse(\"\n        use Zero: Int32 {\n            fn zero?() -> Boolean { }\n        }\")"
 ---
 [
     TraitImplementation(
@@ -35,16 +35,16 @@ expression: "parse(\"\n        use Zero in Int32 {\n            fn zero?() -> Bo
                             name: Identifier {
                                 name: "Int32",
                                 location: Location(
-                                    21..26,
+                                    19..24,
                                 ),
                             },
                             bound_types: [],
                             location: Location(
-                                21..26,
+                                19..24,
                             ),
                         },
                         location: Location(
-                            21..26,
+                            19..24,
                         ),
                     },
                 },
@@ -55,7 +55,7 @@ expression: "parse(\"\n        use Zero in Int32 {\n            fn zero?() -> Bo
                     name: Identifier {
                         name: "zero?",
                         location: Location(
-                            44..49,
+                            42..47,
                         ),
                     },
                     parameters: [],
@@ -69,16 +69,16 @@ expression: "parse(\"\n        use Zero in Int32 {\n            fn zero?() -> Bo
                                         name: Identifier {
                                             name: "Boolean",
                                             location: Location(
-                                                55..62,
+                                                53..60,
                                             ),
                                         },
                                         bound_types: [],
                                         location: Location(
-                                            55..62,
+                                            53..60,
                                         ),
                                     },
                                     location: Location(
-                                        55..62,
+                                        53..60,
                                     ),
                                 },
                             },
@@ -88,18 +88,18 @@ expression: "parse(\"\n        use Zero in Int32 {\n            fn zero?() -> Bo
                         Block {
                             statements: [],
                             location: Location(
-                                63..66,
+                                61..64,
                             ),
                         },
                     ),
                     location: Location(
-                        41..66,
+                        39..64,
                     ),
                 },
             ],
             type_parameters: [],
             location: Location(
-                9..76,
+                9..74,
             ),
         },
     ),

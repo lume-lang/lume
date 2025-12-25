@@ -68,7 +68,7 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Vector",
-                            location: use_trait_generic_type.lm:21:27,
+                            location: use_trait_generic_type.lm:19:25,
                         },
                         bound_types: [
                             Type {
@@ -87,27 +87,27 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "T",
-                                            location: use_trait_generic_type.lm:28:29,
+                                            location: use_trait_generic_type.lm:26:27,
                                         },
                                         bound_types: [],
-                                        location: use_trait_generic_type.lm:28:29,
+                                        location: use_trait_generic_type.lm:26:27,
                                     },
-                                    location: use_trait_generic_type.lm:28:29,
+                                    location: use_trait_generic_type.lm:26:27,
                                 },
-                                location: use_trait_generic_type.lm:28:29,
+                                location: use_trait_generic_type.lm:26:27,
                             },
                         ],
-                        location: use_trait_generic_type.lm:21:30,
+                        location: use_trait_generic_type.lm:19:28,
                     },
-                    location: use_trait_generic_type.lm:21:30,
+                    location: use_trait_generic_type.lm:19:28,
                 },
-                location: use_trait_generic_type.lm:21:30,
+                location: use_trait_generic_type.lm:19:28,
             },
             methods: [
                 TraitMethodImplementation {
                     name: Identifier {
                         name: "next",
-                        location: use_trait_generic_type.lm:40:44,
+                        location: use_trait_generic_type.lm:38:42,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -117,24 +117,24 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "T",
-                                    location: use_trait_generic_type.lm:50:51,
+                                    location: use_trait_generic_type.lm:48:49,
                                 },
                                 bound_types: [],
-                                location: use_trait_generic_type.lm:50:51,
+                                location: use_trait_generic_type.lm:48:49,
                             },
-                            location: use_trait_generic_type.lm:50:51,
+                            location: use_trait_generic_type.lm:48:49,
                         },
-                        location: use_trait_generic_type.lm:50:51,
+                        location: use_trait_generic_type.lm:48:49,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_generic_type.lm:52:54,
+                        location: use_trait_generic_type.lm:50:52,
                     },
-                    location: use_trait_generic_type.lm:37:54,
+                    location: use_trait_generic_type.lm:35:52,
                 },
             ],
             type_parameters: [],
-            location: use_trait_generic_type.lm:0:56,
+            location: use_trait_generic_type.lm:0:54,
         },
     ],
 }

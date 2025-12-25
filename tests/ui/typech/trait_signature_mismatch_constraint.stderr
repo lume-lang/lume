@@ -1,6 +1,6 @@
 × error[LM4169]: implemented method does not match definition signature
    ╭─[trait_signature_mismatch_constraint.lm:8:5]
- 7 │ use Foo in Int32 {
+ 7 │ use Foo: Int32 {
  8 │     fn foo<T>() { }
    ∶     ^^^^^^^^^^^^^^^ expected signature fn foo<T: Default>() -> Void, found fn foo<T>() -> Void
  9 │ }

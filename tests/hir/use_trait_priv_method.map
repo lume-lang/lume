@@ -49,26 +49,26 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Int32",
-                            location: use_trait_priv_method.lm:11:16,
+                            location: use_trait_priv_method.lm:9:14,
                         },
                         bound_types: [],
-                        location: use_trait_priv_method.lm:11:16,
+                        location: use_trait_priv_method.lm:9:14,
                     },
-                    location: use_trait_priv_method.lm:11:16,
+                    location: use_trait_priv_method.lm:9:14,
                 },
-                location: use_trait_priv_method.lm:11:16,
+                location: use_trait_priv_method.lm:9:14,
             },
             methods: [
                 TraitMethodImplementation {
                     name: Identifier {
                         name: "add",
-                        location: use_trait_priv_method.lm:26:29,
+                        location: use_trait_priv_method.lm:24:27,
                     },
                     parameters: [
                         Parameter {
                             name: Identifier {
                                 name: "other",
-                                location: use_trait_priv_method.lm:30:35,
+                                location: use_trait_priv_method.lm:28:33,
                             },
                             param_type: Type {
                                 id: TypeId(
@@ -93,17 +93,17 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "Int32",
-                                            location: use_trait_priv_method.lm:37:42,
+                                            location: use_trait_priv_method.lm:35:40,
                                         },
                                         bound_types: [],
-                                        location: use_trait_priv_method.lm:37:42,
+                                        location: use_trait_priv_method.lm:35:40,
                                     },
-                                    location: use_trait_priv_method.lm:37:42,
+                                    location: use_trait_priv_method.lm:35:40,
                                 },
-                                location: use_trait_priv_method.lm:37:42,
+                                location: use_trait_priv_method.lm:35:40,
                             },
                             vararg: false,
-                            location: use_trait_priv_method.lm:30:42,
+                            location: use_trait_priv_method.lm:28:40,
                         },
                     ],
                     type_parameters: [],
@@ -120,24 +120,24 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "Int32",
-                                    location: use_trait_priv_method.lm:47:52,
+                                    location: use_trait_priv_method.lm:45:50,
                                 },
                                 bound_types: [],
-                                location: use_trait_priv_method.lm:47:52,
+                                location: use_trait_priv_method.lm:45:50,
                             },
-                            location: use_trait_priv_method.lm:47:52,
+                            location: use_trait_priv_method.lm:45:50,
                         },
-                        location: use_trait_priv_method.lm:47:52,
+                        location: use_trait_priv_method.lm:45:50,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_priv_method.lm:53:55,
+                        location: use_trait_priv_method.lm:51:53,
                     },
-                    location: use_trait_priv_method.lm:23:55,
+                    location: use_trait_priv_method.lm:21:53,
                 },
             ],
             type_parameters: [],
-            location: use_trait_priv_method.lm:0:57,
+            location: use_trait_priv_method.lm:0:55,
         },
     ],
 }

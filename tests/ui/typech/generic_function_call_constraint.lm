@@ -2,7 +2,7 @@
 
 trait A {}
 
-use A in Boolean { }
+use A: Boolean { }
 
 fn foo<T: A>() { }
 

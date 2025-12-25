@@ -259,16 +259,19 @@ impl TyCheckCtx {
         match expr {
             lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_) => {
                 let method = self.lookup_methods(expr)?;
+                self.dcx.ensure_untainted()?;
 
                 Ok(Callable::Method(method))
             }
             lume_hir::CallExpression::Static(call) => {
                 if call.receiving_type().is_some() {
                     let method = self.lookup_methods(expr)?;
+                    self.dcx.ensure_untainted()?;
 
                     Ok(Callable::Method(method))
                 } else {
                     let function = self.lookup_functions(call)?;
+                    self.dcx.ensure_untainted()?;
 
                     Ok(Callable::Function(function))
                 }

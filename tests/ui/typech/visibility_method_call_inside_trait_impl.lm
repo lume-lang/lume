@@ -10,7 +10,7 @@ trait Trait {
     fn baz(self);
 }
 
-use Trait in Foo {
+use Trait: Foo {
     fn baz(self) {
         self.bar();
     }

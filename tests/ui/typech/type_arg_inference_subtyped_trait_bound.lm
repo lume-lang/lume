@@ -2,7 +2,7 @@
 
 trait Test {}
 
-use Test in Int32 { }
+use Test: Int32 { }
 
 struct Foo<T> {}
 

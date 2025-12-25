@@ -7,7 +7,7 @@ struct Foo {
     pub a: UInt8 = 8;
 }
 
-use Dispose in Foo {
+use Dispose: Foo {
     fn dispose(self) {
         println("disposed!");
     }

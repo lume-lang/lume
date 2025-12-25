@@ -8,7 +8,7 @@ trait Dynamic {
     }
 }
 
-use Dynamic in Foo {
+use Dynamic: Foo {
     fn func(self) -> Int32 {
         5_i32
     }

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn add(other: Int32) -> Int64 {\n                return self + other;\n            }\n        }\")"
+expression: "parse(\"\n        use Add<Int32, Int64>: Int32 {\n            fn add(other: Int32) -> Int64 {\n                return self + other;\n            }\n        }\")"
 ---
 [
     TraitImplementation(
@@ -80,16 +80,16 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                             name: Identifier {
                                 name: "Int32",
                                 location: Location(
-                                    34..39,
+                                    32..37,
                                 ),
                             },
                             bound_types: [],
                             location: Location(
-                                34..39,
+                                32..37,
                             ),
                         },
                         location: Location(
-                            34..39,
+                            32..37,
                         ),
                     },
                 },
@@ -100,7 +100,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                     name: Identifier {
                         name: "add",
                         location: Location(
-                            57..60,
+                            55..58,
                         ),
                     },
                     parameters: [
@@ -108,7 +108,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                             name: Identifier {
                                 name: "other",
                                 location: Location(
-                                    61..66,
+                                    59..64,
                                 ),
                             },
                             param_type: Named(
@@ -119,23 +119,23 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                                             name: Identifier {
                                                 name: "Int32",
                                                 location: Location(
-                                                    68..73,
+                                                    66..71,
                                                 ),
                                             },
                                             bound_types: [],
                                             location: Location(
-                                                68..73,
+                                                66..71,
                                             ),
                                         },
                                         location: Location(
-                                            68..73,
+                                            66..71,
                                         ),
                                     },
                                 },
                             ),
                             vararg: false,
                             location: Location(
-                                61..73,
+                                59..71,
                             ),
                         },
                     ],
@@ -149,16 +149,16 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                                         name: Identifier {
                                             name: "Int64",
                                             location: Location(
-                                                78..83,
+                                                76..81,
                                             ),
                                         },
                                         bound_types: [],
                                         location: Location(
-                                            78..83,
+                                            76..81,
                                         ),
                                     },
                                     location: Location(
-                                        78..83,
+                                        76..81,
                                     ),
                                 },
                             },
@@ -178,7 +178,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                                                                 name: Identifier {
                                                                     name: "self",
                                                                     location: Location(
-                                                                        109..113,
+                                                                        107..111,
                                                                     ),
                                                                 },
                                                             },
@@ -188,37 +188,37 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                                                                 name: Identifier {
                                                                     name: "other",
                                                                     location: Location(
-                                                                        116..121,
+                                                                        114..119,
                                                                     ),
                                                                 },
                                                             },
                                                         ),
                                                     },
                                                     location: Location(
-                                                        109..121,
+                                                        107..119,
                                                     ),
                                                 },
                                             ),
                                         ),
                                         location: Location(
-                                            102..122,
+                                            100..120,
                                         ),
                                     },
                                 ),
                             ],
                             location: Location(
-                                84..136,
+                                82..134,
                             ),
                         },
                     ),
                     location: Location(
-                        54..136,
+                        52..134,
                     ),
                 },
             ],
             type_parameters: [],
             location: Location(
-                9..146,
+                9..144,
             ),
         },
     ),
