@@ -28,7 +28,13 @@ impl Parser<'_> {
     fn parse_named_type(&mut self) -> Result<Type> {
         let name = self.parse_path()?;
 
-        Ok(Type::Named(Box::new(NamedType { name })))
+        if name.is_self_type() {
+            return Ok(Type::SelfType(Box::new(SelfType {
+                location: name.location,
+            })));
+        }
+
+        Ok(Type::Named(NamedType { name }))
     }
 
     /// Parses an array type at the current cursor position.

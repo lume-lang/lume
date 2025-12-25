@@ -350,6 +350,14 @@ impl PathSegment {
             Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => std::mem::take(bound_types),
         }
     }
+
+    pub fn is_self_type(&self) -> bool {
+        if let Self::Type { name, .. } = self {
+            name.as_str() == "Self"
+        } else {
+            false
+        }
+    }
 }
 
 impl std::fmt::Display for PathSegment {
@@ -436,6 +444,10 @@ impl Path {
 
     pub fn take_bound_types(&mut self) -> Vec<Type> {
         self.name.take_bound_types()
+    }
+
+    pub fn is_self_type(&self) -> bool {
+        self.root.is_empty() && self.name.is_self_type()
     }
 
     pub fn is_variant(&self) -> bool {
