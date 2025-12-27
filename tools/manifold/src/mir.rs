@@ -1,10 +1,8 @@
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use build_stage::ManifoldDriver;
 use error_snippet::IntoDiagnostic;
 use lume_errors::{DiagCtx, Result};
-use lume_span::{PackageId, SourceFile};
 
 use crate::TestResult;
 use crate::diff::normalize_output;
@@ -20,15 +18,15 @@ pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
 }
 
 fn build_mir(path: &Path, content: String) -> String {
-    let file_name = Path::new(path.file_name().unwrap());
-    let source_file = SourceFile::new(PackageId::empty(), file_name, content);
-    let source_file_id = source_file.id;
+    let source_file_name = path.file_name().unwrap();
 
-    let mut stub_package = build_stage::stub_package_with(|pkg| pkg.add_source(Arc::new(source_file)));
-    stub_package.add_std_sources();
+    let package = build_stage::PackageBuilder::new("<manifold-test>")
+        .with_source(source_file_name, content)
+        .with_standard_library()
+        .finish();
 
     let dcx = DiagCtx::new();
-    let manifold_driver = ManifoldDriver::new(stub_package, dcx.clone());
+    let manifold_driver = ManifoldDriver::new(package, dcx.clone());
 
     let mir = match manifold_driver.build_mir() {
         Ok(mir) => mir,
@@ -49,7 +47,7 @@ fn build_mir(path: &Path, content: String) -> String {
     let filtered_functions: Vec<_> = mir
         .functions
         .values()
-        .filter(|func| func.location.file.id == source_file_id)
+        .filter(|func| func.location.file.name.to_pathbuf().ends_with(source_file_name))
         .map(ToString::to_string)
         .collect();
 
