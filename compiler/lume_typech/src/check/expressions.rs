@@ -584,7 +584,7 @@ impl TyCheckCtx {
         let Some(method) = self.lookup_intrinsic_method(expr)? else {
             return Err(lume_infer::errors::IntrinsicNotImplemented {
                 source: expr.location,
-                trait_name: format!("{trait_name:+}"),
+                trait_name: format!("{trait_name}"),
                 operation: self.operation_name_of_intrinsic(&expr.kind),
             }
             .into());

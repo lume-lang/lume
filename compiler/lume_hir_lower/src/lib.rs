@@ -399,7 +399,7 @@ impl LowerModule {
                 .into());
             };
 
-            self.map.lang_items.insert(lang_name.value.clone(), node);
+            self.map.lang_items.add_name(lang_name.value.as_str(), node)?;
         }
 
         Ok(())

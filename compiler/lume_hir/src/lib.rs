@@ -2,11 +2,13 @@ use lume_macros::Location;
 use lume_span::*;
 use serde::{Deserialize, Serialize};
 
+pub mod lang;
 pub mod map;
 pub mod pretty;
 pub mod symbols;
 pub mod visitor;
 
+pub use lang::LangItem;
 pub use map::Map;
 pub use visitor::{Visitor, traverse};
 

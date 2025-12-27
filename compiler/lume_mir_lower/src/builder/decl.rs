@@ -320,10 +320,10 @@ impl Builder<'_, '_> {
         let vararg_loc = last_arg.unwrap_or(vararg_type.location);
         let metadata_reg = self.declare_metadata_of(vararg_type, vararg_loc);
 
-        let array_alloc_func_id = self.tcx().lang_item("array_with_capacity").unwrap();
+        let array_alloc_func_id = self.tcx().lang_item(lume_hir::LangItem::ArrayWithCapacity).unwrap();
         let array_alloc_func = self.mcx.function(array_alloc_func_id).unwrap();
 
-        let array_push_func_id = self.tcx().lang_item("array_push").unwrap();
+        let array_push_func_id = self.tcx().lang_item(lume_hir::LangItem::ArrayPush).unwrap();
 
         let vararg_arr_reg = self
             .func
