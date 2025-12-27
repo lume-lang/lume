@@ -1,11 +1,13 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::sync::Arc;
 
 use error_snippet::Result;
-use lume_errors::DiagCtxHandle;
+use lume_errors::{DiagCtxHandle, Error};
 use lume_hir::map::Map;
 use lume_hir::symbols::*;
-use lume_hir::{Identifier, Path, PathSegment, TypeId};
+use lume_hir::{Path, PathSegment, TypeId};
 use lume_lexer::Lexer;
 use lume_parser::Parser;
 use lume_session::Package;
@@ -251,8 +253,9 @@ impl LowerModule {
                 duplicate_range: lume_span::source::Location {
                     file: self.file.clone(),
                     index: item.location().index.clone(),
-                },
-                original_range: existing.location().clone_inner(),
+                }
+                .intern(),
+                original_range: existing.location(),
                 name: item.path().to_string(),
             }
             .into());
@@ -405,82 +408,115 @@ impl LowerModule {
         Ok(())
     }
 
-    fn identifier(&self, expr: lume_ast::Identifier) -> Identifier {
-        let location = self.location(expr.location.clone());
-
-        Identifier {
-            name: expr.name,
-            location,
-        }
-    }
-
-    fn expand_name(&mut self, name: lume_ast::PathSegment) -> Result<Path> {
-        if let Some(ns) = &self.namespace {
-            Ok(Path::with_root(ns.clone(), self.path_segment(name)?))
-        } else {
-            Ok(Path::rooted(self.path_segment(name)?))
-        }
-    }
-
-    fn path_root(&mut self, expr: Vec<lume_ast::PathSegment>) -> Result<Vec<PathSegment>> {
-        expr.into_iter()
-            .map(|seg| self.path_segment(seg))
-            .collect::<Result<Vec<_>>>()
-    }
-
-    fn path_segment(&mut self, expr: lume_ast::PathSegment) -> Result<PathSegment> {
-        match expr {
-            lume_ast::PathSegment::Namespace { name } => Ok(PathSegment::namespace(self.identifier(name))),
-            lume_ast::PathSegment::Type {
-                name,
-                bound_types,
-                location,
-            } => {
-                let name = self.identifier(name);
-                let location = self.location(location);
-                let bound_types = bound_types
-                    .into_iter()
-                    .map(|arg| self.type_ref(arg))
-                    .collect::<Result<Vec<_>>>()?;
-
-                Ok(PathSegment::Type {
-                    name,
-                    bound_types,
-                    location,
-                })
-            }
-            lume_ast::PathSegment::Callable {
-                name,
-                bound_types,
-                location,
-            } => {
-                let name = self.identifier(name);
-                let location = self.location(location);
-                let bound_types = bound_types
-                    .into_iter()
-                    .map(|arg| self.type_ref(arg))
-                    .collect::<Result<Vec<_>>>()?;
-
-                Ok(PathSegment::Callable {
-                    name,
-                    bound_types,
-                    location,
-                })
-            }
-            lume_ast::PathSegment::Variant { name, location } => {
-                let name = self.identifier(name);
-                let location = self.location(location);
-
-                Ok(PathSegment::Variant { name, location })
-            }
-        }
-    }
-
     fn location(&self, expr: lume_ast::Location) -> Location {
         lume_span::source::Location {
             file: self.file.clone(),
             index: expr.0,
         }
         .intern()
+    }
+}
+
+pub(crate) trait Unique {
+    /// Gets the name of the node.
+    fn name(&self) -> Cow<'_, str>;
+}
+
+impl<T: Unique> Unique for &T {
+    fn name(&self) -> Cow<'_, str> {
+        Unique::name(*self)
+    }
+}
+
+impl Unique for lume_hir::Identifier {
+    fn name(&self) -> Cow<'_, str> {
+        Cow::Borrowed(&self.name)
+    }
+}
+
+impl Unique for lume_hir::Path {
+    fn name(&self) -> Cow<'_, str> {
+        Cow::Owned(self.to_wide_string())
+    }
+}
+
+impl Unique for lume_hir::PathSegment {
+    fn name(&self) -> Cow<'_, str> {
+        Cow::Borrowed(self.name().as_str())
+    }
+}
+
+impl Unique for lume_hir::Parameter {
+    fn name(&self) -> Cow<'_, str> {
+        Cow::Borrowed(&self.name.name)
+    }
+}
+
+impl Unique for lume_hir::TypeParameter {
+    fn name(&self) -> Cow<'_, str> {
+        Cow::Borrowed(&self.name.name)
+    }
+}
+
+impl Unique for lume_hir::Type {
+    fn name(&self) -> Cow<'_, str> {
+        Unique::name(&self.name)
+    }
+}
+
+impl Unique for lume_hir::Field {
+    fn name(&self) -> Cow<'_, str> {
+        Cow::Borrowed(&self.name.name)
+    }
+}
+
+impl Unique for lume_hir::MethodDefinition {
+    fn name(&self) -> Cow<'_, str> {
+        Cow::Borrowed(&self.name.name)
+    }
+}
+
+impl Unique for lume_hir::TraitMethodDefinition {
+    fn name(&self) -> Cow<'_, str> {
+        Cow::Borrowed(&self.name.name)
+    }
+}
+
+impl Unique for lume_hir::TraitMethodImplementation {
+    fn name(&self) -> Cow<'_, str> {
+        Cow::Borrowed(&self.name.name)
+    }
+}
+
+impl Unique for lume_hir::EnumDefinitionCase {
+    fn name(&self) -> Cow<'_, str> {
+        Unique::name(&self.name)
+    }
+}
+
+impl LowerModule {
+    /// Ensures that the given series of items are unique.
+    ///
+    /// If a duplicate is found, the provided closure is called with the
+    /// duplicate item and the existing item. The closure should return an
+    /// error, which is reported to the current diagnostic context.
+    pub(crate) fn ensure_unique_series<'a, T, F>(&self, items: &'a [T], on_duplicate: F) -> Result<()>
+    where
+        T: Unique,
+        F: Fn(&T, &T) -> Error,
+    {
+        let mut seen = HashMap::<Cow<'a, str>, &T>::with_capacity(items.len());
+
+        for item in items {
+            let item_name = Unique::name(item);
+
+            if let Some(existing) = seen.get(&item_name) {
+                self.dcx.emit_and_push(on_duplicate(item, existing));
+            }
+
+            seen.insert(item_name, item);
+        }
+
+        self.dcx.ensure_untainted()
     }
 }

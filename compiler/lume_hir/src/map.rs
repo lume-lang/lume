@@ -59,6 +59,46 @@ impl Map {
             .ok_or_else(|| SimpleDiagnostic::new(format!("expected node with ID {id:?}, found none")).into())
     }
 
+    /// Gets the type definition with the given ID.
+    pub fn type_definition(&self, id: NodeId) -> Option<&TypeDefinition> {
+        if let Node::Type(type_def) = self.node(id)? {
+            Some(type_def)
+        } else {
+            None
+        }
+    }
+
+    /// Gets the type definition with the given ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if no `TypeDefinition` with the given ID was found in the
+    /// map.
+    pub fn expect_type_definition(&self, id: NodeId) -> Result<&TypeDefinition> {
+        self.type_definition(id)
+            .ok_or_else(|| SimpleDiagnostic::new(format!("expected type definition with ID {id:?}, found none")).into())
+    }
+
+    /// Gets the type parameter with the given ID.
+    pub fn type_parameter(&self, id: NodeId) -> Option<&TypeParameter> {
+        if let TypeDefinition::TypeParameter(type_param) = self.type_definition(id)? {
+            Some(type_param)
+        } else {
+            None
+        }
+    }
+
+    /// Gets the type parameter with the given ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if no `TypeParameter` with the given ID was found in the
+    /// map.
+    pub fn expect_type_parameter(&self, id: NodeId) -> Result<&TypeParameter> {
+        self.type_parameter(id)
+            .ok_or_else(|| SimpleDiagnostic::new(format!("expected type parameter with ID {id:?}, found none")).into())
+    }
+
     /// Gets all the statements within the HIR map.
     pub fn statements(&self) -> impl Iterator<Item = &Statement> {
         self.nodes.values().filter_map(|node| {

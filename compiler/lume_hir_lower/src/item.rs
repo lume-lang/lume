@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use error_snippet::Result;
 use lume_hir::{Node, SELF_TYPE_NAME};
 
@@ -103,7 +101,6 @@ impl LowerModule {
     fn parameters(&mut self, params: Vec<lume_ast::Parameter>, allow_self: bool) -> Result<Vec<lume_hir::Parameter>> {
         let param_len = params.len();
         let mut parameters = Vec::with_capacity(param_len);
-        let mut names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(param_len);
 
         for (index, param) in params.into_iter().enumerate() {
             // Make sure that `self` is the first parameter.
@@ -150,18 +147,6 @@ impl LowerModule {
                 .into());
             }
 
-            if let Some(existing) = names.get(&param.name) {
-                return Err(crate::errors::DuplicateParameter {
-                    source: self.file.clone(),
-                    duplicate_range: param.location.0.clone(),
-                    original_range: existing.location.0.clone(),
-                    name: param.name.to_string(),
-                }
-                .into());
-            }
-
-            names.insert(param.name.clone());
-
             let name = self.identifier(param.name);
             let param_type = self.type_ref(param.param_type)?;
             let location = self.location(param.location);
@@ -174,6 +159,15 @@ impl LowerModule {
                 location,
             });
         }
+
+        self.ensure_unique_series(&parameters, |duplicate, existing| {
+            crate::errors::DuplicateParameter {
+                duplicate_range: duplicate.location,
+                original_range: existing.location,
+                name: existing.name.to_string(),
+            }
+            .into()
+        })?;
 
         Ok(parameters)
     }
@@ -195,6 +189,15 @@ impl LowerModule {
         for (idx, field) in expr.fields.into_iter().enumerate() {
             fields.push(self.struct_field_definition(idx, field)?);
         }
+
+        self.ensure_unique_series(&fields, |duplicate, existing| {
+            crate::errors::DuplicateField {
+                duplicate_range: duplicate.name.location,
+                original_range: existing.location,
+                name: existing.name.to_string(),
+            }
+            .into()
+        })?;
 
         self.type_parameters.pop().unwrap();
         self.self_type = None;
@@ -257,26 +260,21 @@ impl LowerModule {
         self.self_type = Some(target.name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
-        let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
-
         for method in expr.methods {
-            if let Some(existing) = method_names.get(&method.signature.name) {
-                return Err(crate::errors::DuplicateMethod {
-                    source: self.file.clone(),
-                    duplicate_range: method.signature.name.location.0.clone(),
-                    original_range: existing.location.0.clone(),
-                    name: method.signature.name.to_string(),
-                }
-                .into());
-            }
-
-            method_names.insert(method.signature.name.clone());
-
             let method = self.implementation_method(type_name.clone(), method)?;
             self.map.nodes.insert(method.id, Node::Method(method.clone()));
 
             methods.push(method);
         }
+
+        self.ensure_unique_series(&methods, |duplicate, existing| {
+            crate::errors::DuplicateMethod {
+                duplicate_range: duplicate.name.location,
+                original_range: existing.location,
+                name: existing.name.to_string(),
+            }
+            .into()
+        })?;
 
         self.type_parameters.pop().unwrap();
         self.self_type = None;
@@ -343,26 +341,21 @@ impl LowerModule {
         self.self_type = Some(self_name);
 
         let mut methods = Vec::with_capacity(expr.methods.len());
-        let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
-
         for method in expr.methods {
-            if let Some(existing) = method_names.get(&method.signature.name) {
-                return Err(crate::errors::DuplicateMethod {
-                    source: self.file.clone(),
-                    duplicate_range: method.signature.name.location.0.clone(),
-                    original_range: existing.location.0.clone(),
-                    name: method.signature.name.to_string(),
-                }
-                .into());
-            }
-
-            method_names.insert(method.signature.name.clone());
-
             let method = self.trait_definition_method(method)?;
             self.map.nodes.insert(method.id, Node::TraitMethodDef(method.clone()));
 
             methods.push(method);
         }
+
+        self.ensure_unique_series(&methods, |duplicate, existing| {
+            crate::errors::DuplicateMethod {
+                duplicate_range: duplicate.name.location,
+                original_range: existing.location,
+                name: existing.name.to_string(),
+            }
+            .into()
+        })?;
 
         self.type_parameters.pop().unwrap();
         self.self_type = None;
@@ -422,6 +415,15 @@ impl LowerModule {
             cases.push(self.enum_definition_case(idx, case)?);
         }
 
+        self.ensure_unique_series(&cases, |duplicate, existing| {
+            crate::errors::DuplicateVariant {
+                duplicate_range: duplicate.name.location,
+                original_range: existing.location,
+                name: existing.name.to_string(),
+            }
+            .into()
+        })?;
+
         self.type_parameters.pop().unwrap();
 
         Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(Box::new(
@@ -472,26 +474,21 @@ impl LowerModule {
         self.self_type = Some(target.name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
-        let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
-
         for method in expr.methods {
-            if let Some(existing) = method_names.get(&method.signature.name) {
-                return Err(crate::errors::DuplicateMethod {
-                    source: self.file.clone(),
-                    duplicate_range: method.signature.name.location.0.clone(),
-                    original_range: existing.location.0.clone(),
-                    name: method.signature.name.to_string(),
-                }
-                .into());
-            }
-
-            method_names.insert(method.signature.name.clone());
-
             let method = self.trait_implementation_method(method)?;
             self.map.nodes.insert(method.id, Node::TraitMethodImpl(method.clone()));
 
             methods.push(method);
         }
+
+        self.ensure_unique_series(&methods, |duplicate, existing| {
+            crate::errors::DuplicateMethod {
+                duplicate_range: duplicate.name.location,
+                original_range: existing.location,
+                name: existing.name.to_string(),
+            }
+            .into()
+        })?;
 
         let location = self.location(expr.location);
 
