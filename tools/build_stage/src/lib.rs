@@ -1,3 +1,5 @@
+pub mod package;
+
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -10,6 +12,7 @@ use lume_span::SourceMap;
 use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
 use lume_types::TyCtx;
+pub use package::PackageBuilder;
 
 /// Creates a new stub [`Package`] with all default options.
 pub fn stub_package() -> Package {
@@ -36,7 +39,6 @@ pub struct ManifoldDriver {
     gcx: Arc<GlobalCtx>,
 }
 
-#[expect(clippy::missing_errors_doc)]
 impl ManifoldDriver {
     /// Creates a new manifold driver from the given package.
     pub fn new(package: Package, dcx: DiagCtx) -> Self {

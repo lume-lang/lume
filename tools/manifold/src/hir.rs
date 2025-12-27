@@ -1,10 +1,8 @@
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use build_stage::ManifoldDriver;
 use error_snippet::IntoDiagnostic;
 use lume_errors::{DiagCtx, Result};
-use lume_span::{PackageId, SourceFile};
 
 use crate::TestResult;
 use crate::diff::normalize_output;
@@ -20,12 +18,13 @@ pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
 }
 
 fn build_hir(path: &Path, content: String) -> String {
-    let file_name = Path::new(path.file_name().unwrap());
-    let source_file = SourceFile::new(PackageId::empty(), file_name, content);
-    let stub_package = build_stage::stub_package_with(|pkg| pkg.add_source(Arc::new(source_file)));
+    let source_file_name = path.file_name().unwrap();
+    let package = build_stage::PackageBuilder::new("<manifold-test>")
+        .with_source(source_file_name, content)
+        .finish();
 
     let dcx = DiagCtx::new();
-    let manifold_driver = ManifoldDriver::new(stub_package, dcx.clone());
+    let manifold_driver = ManifoldDriver::new(package, dcx.clone());
 
     let map = match manifold_driver.build_hir() {
         Ok(hir) => hir,

@@ -1,12 +1,11 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::sync::{Arc, LazyLock};
+use std::sync::LazyLock;
 
 use build_stage::ManifoldDriver;
 use error_snippet::{IntoDiagnostic, SimpleDiagnostic};
 use lume_errors::{DiagCtx, Result};
-use lume_span::{PackageId, SourceFile};
 use owo_colors::OwoColorize;
 use regex::Regex;
 
@@ -78,18 +77,16 @@ pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
 }
 
 fn compile(path: &Path, content: String, dcx: DiagCtx) -> Result<PathBuf> {
-    let file_name = Path::new(path.file_name().unwrap());
-    let source_file = SourceFile::new(PackageId::empty(), file_name, content);
+    let package_name = path.file_name().unwrap().display().to_string();
+    let package_name = package_name.trim_end_matches(".lm");
 
-    let mut package_name = path.to_path_buf();
-    package_name.set_extension("");
+    let package = build_stage::PackageBuilder::new(package_name)
+        .with_root(path.parent().unwrap())
+        .with_source(path.file_name().unwrap(), content)
+        .with_standard_library()
+        .finish();
 
-    let mut stub_package = build_stage::stub_package_with(|pkg| pkg.add_source(Arc::new(source_file)));
-    stub_package.name = package_name.file_name().unwrap().display().to_string();
-    stub_package.path = path.parent().unwrap().to_path_buf();
-    stub_package.add_std_sources();
-
-    let manifold_driver = ManifoldDriver::new(stub_package, dcx.clone());
+    let manifold_driver = ManifoldDriver::new(package, dcx.clone());
 
     manifold_driver.link()
 }
