@@ -16,7 +16,7 @@ pub struct Map {
     pub nodes: IndexMap<NodeId, Node>,
 
     /// Defines all the defined language items within the HIR.
-    pub lang_items: IndexMap<String, NodeId>,
+    pub lang_items: lang::LanguageItems,
 
     /// Defines all the imported paths within the HIR map.
     #[serde(skip)]
@@ -29,7 +29,7 @@ impl Map {
         Self {
             package,
             nodes: IndexMap::new(),
-            lang_items: IndexMap::new(),
+            lang_items: lang::LanguageItems::new(),
             imports: IndexSet::new(),
         }
     }

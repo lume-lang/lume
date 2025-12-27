@@ -120,7 +120,7 @@ impl TyInferCtx {
     /// `T` is the type `dest`.
     #[libftrace::traced(level = Trace)]
     pub fn cast_impl_of(&self, source: &TypeRef, dest: &TypeRef) -> Option<&lume_hir::TraitImplementation> {
-        let mut cast_trait = self.lang_item_type("cast_trait")?;
+        let mut cast_trait = self.lang_item_type(lume_hir::LangItem::Cast)?;
         cast_trait.bound_types.push(dest.clone());
 
         self.get_trait_impl_of(&cast_trait, source)

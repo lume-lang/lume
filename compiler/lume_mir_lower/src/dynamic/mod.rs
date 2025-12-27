@@ -55,7 +55,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
             let parameters = builder.func.parameters().collect::<Vec<_>>();
             let type_metadata_reg = parameters.last().unwrap().id;
 
-            let lookup_method_id = builder.tcx().lang_item("lookup_method").unwrap();
+            let lookup_method_id = builder.tcx().lang_item(lume_hir::LangItem::MethodLookup).unwrap();
 
             let method_id = self.function.id;
             let method_id_arg = lume_mir::Operand::integer(64, false, method_id.as_usize().cast_signed() as i64);

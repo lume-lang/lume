@@ -1,5 +1,6 @@
 use lume_architect::cached_query;
 use lume_errors::Result;
+use lume_hir::LangItem;
 use lume_span::NodeId;
 use lume_types::{TypeKind, TypeRef};
 
@@ -138,14 +139,14 @@ impl TyInferCtx {
     #[cached_query]
     #[libftrace::traced(level = Trace)]
     pub fn never_type(&self) -> Option<TypeRef> {
-        self.lang_item_type("never")
+        self.lang_item_type(lume_hir::LangItem::Never)
     }
 
     /// Determines whether the given [`TypeRef`] is the `Never` type.
     #[cached_query]
     #[libftrace::traced(level = Trace)]
     pub fn is_type_never(&self, ty: &TypeRef) -> bool {
-        let never_type = self.lang_item_type("never").expect("expected `Never` lang item");
+        let never_type = self.never_type().expect("expected `Never` lang item");
 
         never_type.instance_of == ty.instance_of
     }
@@ -160,19 +161,16 @@ impl TyInferCtx {
     /// Gets the `lang_item` with the given name from the HIR map.
     #[cached_query]
     #[libftrace::traced(level = Trace)]
-    pub fn lang_item(&self, name: &str) -> Option<NodeId> {
-        self.hir
-            .lang_items
-            .iter()
-            .find_map(|(key, id)| (key == name).then_some(*id))
+    pub fn lang_item(&self, item: lume_hir::LangItem) -> Option<NodeId> {
+        self.hir.lang_items.get(item)
     }
 
     /// Gets the `lang_item` with the given name from the HIR map, turned into a
     /// [`TypeRef`].
     #[cached_query]
     #[libftrace::traced(level = Trace)]
-    pub fn lang_item_type(&self, name: &str) -> Option<TypeRef> {
-        let id = self.lang_item(name)?;
+    pub fn lang_item_type(&self, item: lume_hir::LangItem) -> Option<TypeRef> {
+        let id = self.lang_item(item)?;
 
         Some(TypeRef::new(id, self.hir_span_of_node(id)))
     }
@@ -180,25 +178,25 @@ impl TyInferCtx {
     /// Gets the name of the `![lang_item]` attribute and corresponding method,
     /// matching the given intrinsic.
     #[libftrace::traced(level = Trace)]
-    pub fn lang_item_of_intrinsic(&self, intrinsic: &lume_hir::IntrinsicKind) -> (&'static str, &'static str) {
+    pub fn lang_item_of_intrinsic(&self, intrinsic: &lume_hir::IntrinsicKind) -> (LangItem, &'static str) {
         match intrinsic {
-            lume_hir::IntrinsicKind::Add { .. } => ("add_trait", "add"),
-            lume_hir::IntrinsicKind::Sub { .. } => ("sub_trait", "sub"),
-            lume_hir::IntrinsicKind::Mul { .. } => ("mul_trait", "mul"),
-            lume_hir::IntrinsicKind::Div { .. } => ("div_trait", "div"),
-            lume_hir::IntrinsicKind::And { .. } => ("and_trait", "and"),
-            lume_hir::IntrinsicKind::Or { .. } => ("or_trait", "or"),
-            lume_hir::IntrinsicKind::Negate { .. } => ("negate_trait", "negate"),
-            lume_hir::IntrinsicKind::BinaryAnd { .. } => ("band_trait", "band"),
-            lume_hir::IntrinsicKind::BinaryOr { .. } => ("bor_trait", "bor"),
-            lume_hir::IntrinsicKind::BinaryXor { .. } => ("bxor_trait", "bxor"),
-            lume_hir::IntrinsicKind::Not { .. } => ("not_trait", "not"),
-            lume_hir::IntrinsicKind::Equal { .. } => ("equal_trait", "eq"),
-            lume_hir::IntrinsicKind::NotEqual { .. } => ("equal_trait", "ne"),
-            lume_hir::IntrinsicKind::Less { .. } => ("cmp_trait", "lt"),
-            lume_hir::IntrinsicKind::LessEqual { .. } => ("cmp_trait", "le"),
-            lume_hir::IntrinsicKind::Greater { .. } => ("cmp_trait", "gt"),
-            lume_hir::IntrinsicKind::GreaterEqual { .. } => ("cmp_trait", "ge"),
+            lume_hir::IntrinsicKind::Add { .. } => (LangItem::Add, "add"),
+            lume_hir::IntrinsicKind::Sub { .. } => (LangItem::Sub, "sub"),
+            lume_hir::IntrinsicKind::Mul { .. } => (LangItem::Mul, "mul"),
+            lume_hir::IntrinsicKind::Div { .. } => (LangItem::Div, "div"),
+            lume_hir::IntrinsicKind::And { .. } => (LangItem::And, "and"),
+            lume_hir::IntrinsicKind::Or { .. } => (LangItem::Or, "or"),
+            lume_hir::IntrinsicKind::Negate { .. } => (LangItem::Negate, "negate"),
+            lume_hir::IntrinsicKind::BinaryAnd { .. } => (LangItem::BinaryAnd, "band"),
+            lume_hir::IntrinsicKind::BinaryOr { .. } => (LangItem::BinaryOr, "bor"),
+            lume_hir::IntrinsicKind::BinaryXor { .. } => (LangItem::BinaryXor, "bxor"),
+            lume_hir::IntrinsicKind::Not { .. } => (LangItem::Not, "not"),
+            lume_hir::IntrinsicKind::Equal { .. } => (LangItem::Equal, "eq"),
+            lume_hir::IntrinsicKind::NotEqual { .. } => (LangItem::Equal, "ne"),
+            lume_hir::IntrinsicKind::Less { .. } => (LangItem::Compare, "lt"),
+            lume_hir::IntrinsicKind::LessEqual { .. } => (LangItem::Compare, "le"),
+            lume_hir::IntrinsicKind::Greater { .. } => (LangItem::Compare, "gt"),
+            lume_hir::IntrinsicKind::GreaterEqual { .. } => (LangItem::Compare, "ge"),
         }
     }
 

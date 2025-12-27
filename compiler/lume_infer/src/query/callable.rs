@@ -1025,7 +1025,7 @@ impl TyInferCtx {
     #[cached_query]
     #[libftrace::traced(level = Trace)]
     pub fn drop_method_def(&self) -> NodeId {
-        let drop_type_ref = self.lang_item_type("dispose_trait").unwrap();
+        let drop_type_ref = self.lang_item_type(lume_hir::LangItem::Dispose).unwrap();
         let drop_method_name = Identifier::from("dispose");
 
         let method = self
