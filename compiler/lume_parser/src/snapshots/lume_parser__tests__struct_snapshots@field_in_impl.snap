@@ -2,7 +2,7 @@
 source: compiler/lume_parser/src/tests.rs
 expression: "parse_err(\"impl Foo { pub x: Bar; }\")"
 ---
-FieldInImpl {
+UnexpectedToken {
     source: SourceFile {
         id: SourceFileId(
             PackageId(
@@ -17,4 +17,6 @@ FieldInImpl {
         ),
     },
     range: 15..16,
+    expected: Fn,
+    actual: Identifier,
 }

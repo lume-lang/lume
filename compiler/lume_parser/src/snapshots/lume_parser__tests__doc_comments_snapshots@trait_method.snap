@@ -16,38 +16,44 @@ expression: "parse(\"trait Foo {\n            /// This is a doc comment\n       
             type_parameters: [],
             methods: [
                 TraitMethodDefinition {
-                    name: Identifier {
-                        name: "bar",
-                        location: Location(
-                            65..68,
-                        ),
-                    },
-                    parameters: [],
-                    type_parameters: [],
-                    return_type: Some(
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "void",
+                    signature: Signature {
+                        external: false,
+                        name: Identifier {
+                            name: "bar",
+                            location: Location(
+                                65..68,
+                            ),
+                        },
+                        type_parameters: [],
+                        parameters: [],
+                        return_type: Some(
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "void",
+                                                location: Location(
+                                                    74..78,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 74..78,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             74..78,
                                         ),
                                     },
-                                    location: Location(
-                                        74..78,
-                                    ),
                                 },
-                            },
+                            ),
                         ),
-                    ),
+                        location: Location(
+                            62..78,
+                        ),
+                    },
                     block: Some(
                         Block {
                             statements: [],

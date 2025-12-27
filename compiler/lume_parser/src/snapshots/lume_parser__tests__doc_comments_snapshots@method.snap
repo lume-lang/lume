@@ -37,39 +37,44 @@ expression: "parse(\"impl Foo {\n            /// This is a doc comment\n        
                             ),
                         },
                     ),
-                    external: false,
-                    name: Identifier {
-                        name: "bar",
-                        location: Location(
-                            68..71,
-                        ),
-                    },
-                    parameters: [],
-                    type_parameters: [],
-                    return_type: Some(
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "void",
+                    signature: Signature {
+                        external: false,
+                        name: Identifier {
+                            name: "bar",
+                            location: Location(
+                                68..71,
+                            ),
+                        },
+                        type_parameters: [],
+                        parameters: [],
+                        return_type: Some(
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "void",
+                                                location: Location(
+                                                    77..81,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 77..81,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             77..81,
                                         ),
                                     },
-                                    location: Location(
-                                        77..81,
-                                    ),
                                 },
-                            },
+                            ),
                         ),
-                    ),
+                        location: Location(
+                            65..81,
+                        ),
+                    },
                     block: Some(
                         Block {
                             statements: [],

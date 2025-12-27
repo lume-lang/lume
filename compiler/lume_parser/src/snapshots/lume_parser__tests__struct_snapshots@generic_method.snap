@@ -31,49 +31,54 @@ expression: "parse(\"\n        impl Foo {\n            fn bar<T>() -> Int32 { }\
                 MethodDefinition {
                     attributes: [],
                     visibility: None,
-                    external: false,
-                    name: Identifier {
-                        name: "bar",
-                        location: Location(
-                            35..38,
-                        ),
-                    },
-                    parameters: [],
-                    type_parameters: [
-                        TypeParameter {
-                            name: Identifier {
-                                name: "T",
-                                location: Location(
-                                    39..40,
-                                ),
-                            },
-                            constraints: [],
+                    signature: Signature {
+                        external: false,
+                        name: Identifier {
+                            name: "bar",
+                            location: Location(
+                                35..38,
+                            ),
                         },
-                    ],
-                    return_type: Some(
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Int32",
+                        type_parameters: [
+                            TypeParameter {
+                                name: Identifier {
+                                    name: "T",
+                                    location: Location(
+                                        39..40,
+                                    ),
+                                },
+                                constraints: [],
+                            },
+                        ],
+                        parameters: [],
+                        return_type: Some(
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Int32",
+                                                location: Location(
+                                                    47..52,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 47..52,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             47..52,
                                         ),
                                     },
-                                    location: Location(
-                                        47..52,
-                                    ),
                                 },
-                            },
+                            ),
                         ),
-                    ),
+                        location: Location(
+                            32..52,
+                        ),
+                    },
                     block: Some(
                         Block {
                             statements: [],

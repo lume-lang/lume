@@ -8,7 +8,7 @@ use crate::{DefinedItem, LowerModule};
 
 impl LowerModule {
     #[libftrace::traced(level = Debug)]
-    pub(super) fn lower_items(&mut self, expressions: Vec<lume_ast::TopLevelExpression>) -> Result<()> {
+    pub(super) fn lower_items(&mut self, expressions: Vec<lume_ast::Item>) -> Result<()> {
         for expr in &expressions {
             if let Err(err) = self.define_imported_items(expr) {
                 self.dcx.emit_and_push(err);
@@ -27,14 +27,14 @@ impl LowerModule {
     }
 
     #[libftrace::traced(level = Debug)]
-    fn define_imported_items(&mut self, expr: &lume_ast::TopLevelExpression) -> Result<()> {
+    fn define_imported_items(&mut self, expr: &lume_ast::Item) -> Result<()> {
         match expr {
-            lume_ast::TopLevelExpression::Namespace(namespace) => {
+            lume_ast::Item::Namespace(namespace) => {
                 self.namespace = Some(self.import_path(namespace.path.clone())?);
 
                 Ok(())
             }
-            lume_ast::TopLevelExpression::StructDefinition(struct_def) => {
+            lume_ast::Item::StructDefinition(struct_def) => {
                 let id = self.next_node_id();
 
                 let path_segment = lume_ast::PathSegment::ty(struct_def.name.clone());
@@ -45,7 +45,7 @@ impl LowerModule {
 
                 Ok(())
             }
-            lume_ast::TopLevelExpression::TraitDefinition(trait_def) => {
+            lume_ast::Item::TraitDefinition(trait_def) => {
                 let id = self.next_node_id();
 
                 let path_segment = lume_ast::PathSegment::ty(trait_def.name.clone());
@@ -56,7 +56,7 @@ impl LowerModule {
 
                 Ok(())
             }
-            lume_ast::TopLevelExpression::EnumDefinition(enum_def) => {
+            lume_ast::Item::EnumDefinition(enum_def) => {
                 let id = self.next_node_id();
 
                 let path_segment = lume_ast::PathSegment::ty(enum_def.name.clone());
@@ -66,10 +66,10 @@ impl LowerModule {
 
                 Ok(())
             }
-            lume_ast::TopLevelExpression::FunctionDefinition(func_def) => {
+            lume_ast::Item::FunctionDefinition(func_def) => {
                 let id = self.next_node_id();
 
-                let path_segment = lume_ast::PathSegment::callable(func_def.name.clone());
+                let path_segment = lume_ast::PathSegment::callable(func_def.signature.name.clone());
                 let name = self.expand_name(path_segment)?;
 
                 self.ensure_item_undefined(id, DefinedItem::Function(name))?;
@@ -77,13 +77,14 @@ impl LowerModule {
 
                 Ok(())
             }
-            lume_ast::TopLevelExpression::Implementation(implementation) => {
+            lume_ast::Item::Implementation(implementation) => {
                 let impl_name = implementation.name.to_string();
                 let type_name = self.expand_name(lume_ast::PathSegment::ty(impl_name))?;
 
                 for method in &implementation.methods {
                     let id = self.next_node_id();
-                    let method_name = self.path_segment(lume_ast::PathSegment::callable(method.name.clone()))?;
+                    let method_name =
+                        self.path_segment(lume_ast::PathSegment::callable(method.signature.name.clone()))?;
 
                     self.ensure_item_undefined(id, DefinedItem::Method(type_name.clone(), method_name))?;
                     self.add_lang_items(id, &method.attributes)?;
@@ -91,29 +92,29 @@ impl LowerModule {
 
                 Ok(())
             }
-            lume_ast::TopLevelExpression::Import(_) | lume_ast::TopLevelExpression::TraitImplementation(_) => Ok(()),
+            lume_ast::Item::Import(_) | lume_ast::Item::TraitImplementation(_) => Ok(()),
         }
     }
 
     #[libftrace::traced(level = Debug)]
-    fn top_level_expression(&mut self, expr: lume_ast::TopLevelExpression) -> Result<()> {
+    fn top_level_expression(&mut self, expr: lume_ast::Item) -> Result<()> {
         let hir_ast = match expr {
-            lume_ast::TopLevelExpression::Import(i) => {
+            lume_ast::Item::Import(i) => {
                 self.import(*i)?;
 
                 return Ok(());
             }
-            lume_ast::TopLevelExpression::Namespace(namespace) => {
+            lume_ast::Item::Namespace(namespace) => {
                 self.namespace = Some(self.import_path(namespace.path)?);
 
                 return Ok(());
             }
-            lume_ast::TopLevelExpression::StructDefinition(t) => self.struct_definition(*t)?,
-            lume_ast::TopLevelExpression::TraitDefinition(t) => self.trait_definition(*t)?,
-            lume_ast::TopLevelExpression::EnumDefinition(t) => self.enum_definition(*t)?,
-            lume_ast::TopLevelExpression::FunctionDefinition(f) => self.function_definition(*f)?,
-            lume_ast::TopLevelExpression::TraitImplementation(f) => self.trait_implementation(*f)?,
-            lume_ast::TopLevelExpression::Implementation(f) => self.implementation(*f)?,
+            lume_ast::Item::StructDefinition(t) => self.struct_definition(*t)?,
+            lume_ast::Item::TraitDefinition(t) => self.trait_definition(*t)?,
+            lume_ast::Item::EnumDefinition(t) => self.enum_definition(*t)?,
+            lume_ast::Item::FunctionDefinition(f) => self.function_definition(*f)?,
+            lume_ast::Item::TraitImplementation(f) => self.trait_implementation(*f)?,
+            lume_ast::Item::Implementation(f) => self.implementation(*f)?,
         };
 
         let id = hir_ast.id();
@@ -147,13 +148,13 @@ impl LowerModule {
 
     #[libftrace::traced(level = Debug)]
     fn function_definition(&mut self, expr: lume_ast::FunctionDefinition) -> Result<lume_hir::Node> {
-        let name = self.expand_name(lume_ast::PathSegment::callable(expr.name))?;
+        let name = self.expand_name(lume_ast::PathSegment::callable(expr.signature.name))?;
         let id = *self.defined.get(&DefinedItem::Function(name.clone())).unwrap();
 
         let visibility = lower_visibility(expr.visibility.as_ref());
-        let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let parameters = self.parameters(expr.parameters, false)?;
-        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
+        let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
+        let parameters = self.parameters(expr.signature.parameters, false)?;
+        let return_type = self.opt_type_ref(expr.signature.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
         let block = expr.block.map(|block| self.isolated_block(block, &parameters));
@@ -332,17 +333,17 @@ impl LowerModule {
         let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
 
         for method in expr.methods {
-            if let Some(existing) = method_names.get(&method.name) {
+            if let Some(existing) = method_names.get(&method.signature.name) {
                 return Err(crate::errors::DuplicateMethod {
                     source: self.file.clone(),
-                    duplicate_range: method.name.location.0.clone(),
+                    duplicate_range: method.signature.name.location.0.clone(),
                     original_range: existing.location.0.clone(),
-                    name: method.name.to_string(),
+                    name: method.signature.name.to_string(),
                 }
                 .into());
             }
 
-            method_names.insert(method.name.clone());
+            method_names.insert(method.signature.name.clone());
 
             let method = self.implementation_method(type_name.clone(), method)?;
             self.map.nodes.insert(method.id, Node::Method(method.clone()));
@@ -368,16 +369,16 @@ impl LowerModule {
         type_name: lume_hir::Path,
         expr: lume_ast::MethodDefinition,
     ) -> Result<lume_hir::MethodDefinition> {
-        let method_name = self.path_segment(lume_ast::PathSegment::callable(expr.name.clone()))?;
+        let method_name = self.path_segment(lume_ast::PathSegment::callable(expr.signature.name.clone()))?;
         let defined_item = DefinedItem::Method(type_name, method_name);
 
         let id = *self.defined.get(&defined_item).unwrap();
 
         let visibility = lower_visibility(expr.visibility.as_ref());
-        let name = self.identifier(expr.name);
-        let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let parameters = self.parameters(expr.parameters, true)?;
-        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
+        let name = self.identifier(expr.signature.name);
+        let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
+        let parameters = self.parameters(expr.signature.parameters, true)?;
+        let return_type = self.opt_type_ref(expr.signature.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
         let block = expr.block.map(|block| self.isolated_block(block, &parameters));
@@ -414,17 +415,17 @@ impl LowerModule {
         let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
 
         for method in expr.methods {
-            if let Some(existing) = method_names.get(&method.name) {
+            if let Some(existing) = method_names.get(&method.signature.name) {
                 return Err(crate::errors::DuplicateMethod {
                     source: self.file.clone(),
-                    duplicate_range: method.name.location.0.clone(),
+                    duplicate_range: method.signature.name.location.0.clone(),
                     original_range: existing.location.0.clone(),
-                    name: method.name.to_string(),
+                    name: method.signature.name.to_string(),
                 }
                 .into());
             }
 
-            method_names.insert(method.name.clone());
+            method_names.insert(method.signature.name.clone());
 
             let method = self.trait_definition_method(method)?;
             self.map.nodes.insert(method.id, Node::TraitMethodDef(method.clone()));
@@ -455,10 +456,10 @@ impl LowerModule {
     ) -> Result<lume_hir::TraitMethodDefinition> {
         let id = self.next_node_id();
 
-        let name = self.identifier(expr.name);
-        let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let parameters = self.parameters(expr.parameters, true)?;
-        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
+        let name = self.identifier(expr.signature.name);
+        let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
+        let parameters = self.parameters(expr.signature.parameters, true)?;
+        let return_type = self.opt_type_ref(expr.signature.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
         let block = expr.block.map(|b| self.isolated_block(b, &parameters));
 
@@ -543,17 +544,17 @@ impl LowerModule {
         let mut method_names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(expr.methods.len());
 
         for method in expr.methods {
-            if let Some(existing) = method_names.get(&method.name) {
+            if let Some(existing) = method_names.get(&method.signature.name) {
                 return Err(crate::errors::DuplicateMethod {
                     source: self.file.clone(),
-                    duplicate_range: method.name.location.0.clone(),
+                    duplicate_range: method.signature.name.location.0.clone(),
                     original_range: existing.location.0.clone(),
-                    name: method.name.to_string(),
+                    name: method.signature.name.to_string(),
                 }
                 .into());
             }
 
-            method_names.insert(method.name.clone());
+            method_names.insert(method.signature.name.clone());
 
             let method = self.trait_implementation_method(method)?;
             self.map.nodes.insert(method.id, Node::TraitMethodImpl(method.clone()));
@@ -583,10 +584,10 @@ impl LowerModule {
     ) -> Result<lume_hir::TraitMethodImplementation> {
         let id = self.next_node_id();
 
-        let name = self.identifier(expr.name);
-        let parameters = self.parameters(expr.parameters, true)?;
-        let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
+        let name = self.identifier(expr.signature.name);
+        let parameters = self.parameters(expr.signature.parameters, true)?;
+        let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
+        let return_type = self.opt_type_ref(expr.signature.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
         let block = expr.block.map(|block| self.isolated_block(block, &parameters));

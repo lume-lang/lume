@@ -31,39 +31,44 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
                 MethodDefinition {
                     attributes: [],
                     visibility: None,
-                    external: false,
-                    name: Identifier {
-                        name: "test",
-                        location: Location(
-                            15..19,
-                        ),
-                    },
-                    parameters: [],
-                    type_parameters: [],
-                    return_type: Some(
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "void",
+                    signature: Signature {
+                        external: false,
+                        name: Identifier {
+                            name: "test",
+                            location: Location(
+                                15..19,
+                            ),
+                        },
+                        type_parameters: [],
+                        parameters: [],
+                        return_type: Some(
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "void",
+                                                location: Location(
+                                                    25..29,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 25..29,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             25..29,
                                         ),
                                     },
-                                    location: Location(
-                                        25..29,
-                                    ),
                                 },
-                            },
+                            ),
                         ),
-                    ),
+                        location: Location(
+                            12..29,
+                        ),
+                    },
                     block: Some(
                         Block {
                             statements: [],

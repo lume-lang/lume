@@ -74,22 +74,53 @@ expression: "parse(\"\n        use Add<Int32>: Int32 {\n            fn add(other
             ),
             methods: [
                 TraitMethodImplementation {
-                    external: false,
-                    name: Identifier {
-                        name: "add",
-                        location: Location(
-                            48..51,
-                        ),
-                    },
-                    parameters: [
-                        Parameter {
-                            name: Identifier {
-                                name: "other",
+                    signature: Signature {
+                        external: false,
+                        name: Identifier {
+                            name: "add",
+                            location: Location(
+                                48..51,
+                            ),
+                        },
+                        type_parameters: [],
+                        parameters: [
+                            Parameter {
+                                name: Identifier {
+                                    name: "other",
+                                    location: Location(
+                                        52..57,
+                                    ),
+                                },
+                                param_type: Named(
+                                    NamedType {
+                                        name: Path {
+                                            root: [],
+                                            name: Type {
+                                                name: Identifier {
+                                                    name: "Int32",
+                                                    location: Location(
+                                                        59..64,
+                                                    ),
+                                                },
+                                                bound_types: [],
+                                                location: Location(
+                                                    59..64,
+                                                ),
+                                            },
+                                            location: Location(
+                                                59..64,
+                                            ),
+                                        },
+                                    },
+                                ),
+                                vararg: false,
                                 location: Location(
-                                    52..57,
+                                    52..64,
                                 ),
                             },
-                            param_type: Named(
+                        ],
+                        return_type: Some(
+                            Named(
                                 NamedType {
                                     name: Path {
                                         root: [],
@@ -97,51 +128,25 @@ expression: "parse(\"\n        use Add<Int32>: Int32 {\n            fn add(other
                                             name: Identifier {
                                                 name: "Int32",
                                                 location: Location(
-                                                    59..64,
+                                                    69..74,
                                                 ),
                                             },
                                             bound_types: [],
                                             location: Location(
-                                                59..64,
-                                            ),
-                                        },
-                                        location: Location(
-                                            59..64,
-                                        ),
-                                    },
-                                },
-                            ),
-                            vararg: false,
-                            location: Location(
-                                52..64,
-                            ),
-                        },
-                    ],
-                    type_parameters: [],
-                    return_type: Some(
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Int32",
-                                            location: Location(
                                                 69..74,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             69..74,
                                         ),
                                     },
-                                    location: Location(
-                                        69..74,
-                                    ),
                                 },
-                            },
+                            ),
                         ),
-                    ),
+                        location: Location(
+                            45..74,
+                        ),
+                    },
                     block: Some(
                         Block {
                             statements: [

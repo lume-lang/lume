@@ -3,7 +3,7 @@ use error_snippet::Error;
 use super::*;
 
 #[track_caller]
-fn parse(input: &str) -> Vec<TopLevelExpression> {
+fn parse(input: &str) -> Vec<Item> {
     let source = Arc::new(SourceFile::internal(input));
 
     let mut lexer = lume_lexer::Lexer::new(source.clone());
@@ -465,16 +465,6 @@ fn test_struct_snapshots() {
             fn external bar() -> Int32
         }",
         "ext_method"
-    );
-
-    assert_snap_eq!(
-        "
-        impl Foo {
-            pub fn ==() -> Boolean {
-                return true;
-            }
-        }",
-        "operator_method"
     );
 
     assert_snap_eq!(

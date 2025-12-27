@@ -31,16 +31,21 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() { }\n        }\"
                 MethodDefinition {
                     attributes: [],
                     visibility: None,
-                    external: false,
-                    name: Identifier {
-                        name: "bar",
+                    signature: Signature {
+                        external: false,
+                        name: Identifier {
+                            name: "bar",
+                            location: Location(
+                                35..38,
+                            ),
+                        },
+                        type_parameters: [],
+                        parameters: [],
+                        return_type: None,
                         location: Location(
-                            35..38,
+                            32..40,
                         ),
                     },
-                    parameters: [],
-                    type_parameters: [],
-                    return_type: None,
                     block: Some(
                         Block {
                             statements: [],

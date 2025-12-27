@@ -51,39 +51,44 @@ expression: "parse(\"\n        use Zero: Int32 {\n            fn zero?() -> Bool
             ),
             methods: [
                 TraitMethodImplementation {
-                    external: false,
-                    name: Identifier {
-                        name: "zero?",
-                        location: Location(
-                            42..47,
-                        ),
-                    },
-                    parameters: [],
-                    type_parameters: [],
-                    return_type: Some(
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Boolean",
+                    signature: Signature {
+                        external: false,
+                        name: Identifier {
+                            name: "zero?",
+                            location: Location(
+                                42..47,
+                            ),
+                        },
+                        type_parameters: [],
+                        parameters: [],
+                        return_type: Some(
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Boolean",
+                                                location: Location(
+                                                    53..60,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 53..60,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             53..60,
                                         ),
                                     },
-                                    location: Location(
-                                        53..60,
-                                    ),
                                 },
-                            },
+                            ),
                         ),
-                    ),
+                        location: Location(
+                            39..60,
+                        ),
+                    },
                     block: Some(
                         Block {
                             statements: [],

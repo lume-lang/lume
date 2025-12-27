@@ -7,51 +7,56 @@ expression: "parse(\"fn foo(...args: Int32) {}\")"
         FunctionDefinition {
             attributes: [],
             visibility: None,
-            external: false,
-            name: Identifier {
-                name: "foo",
-                location: Location(
-                    3..6,
-                ),
-            },
-            parameters: [
-                Parameter {
-                    name: Identifier {
-                        name: "args",
-                        location: Location(
-                            10..14,
-                        ),
-                    },
-                    param_type: Named(
-                        NamedType {
-                            name: Path {
-                                root: [],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "Int32",
+            signature: Signature {
+                external: false,
+                name: Identifier {
+                    name: "foo",
+                    location: Location(
+                        3..6,
+                    ),
+                },
+                type_parameters: [],
+                parameters: [
+                    Parameter {
+                        name: Identifier {
+                            name: "args",
+                            location: Location(
+                                10..14,
+                            ),
+                        },
+                        param_type: Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: Location(
+                                                16..21,
+                                            ),
+                                        },
+                                        bound_types: [],
                                         location: Location(
                                             16..21,
                                         ),
                                     },
-                                    bound_types: [],
                                     location: Location(
                                         16..21,
                                     ),
                                 },
-                                location: Location(
-                                    16..21,
-                                ),
                             },
-                        },
-                    ),
-                    vararg: true,
-                    location: Location(
-                        10..21,
-                    ),
-                },
-            ],
-            type_parameters: [],
-            return_type: None,
+                        ),
+                        vararg: true,
+                        location: Location(
+                            10..21,
+                        ),
+                    },
+                ],
+                return_type: None,
+                location: Location(
+                    0..22,
+                ),
+            },
             block: Some(
                 Block {
                     statements: [],

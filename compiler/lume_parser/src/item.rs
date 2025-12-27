@@ -2,21 +2,40 @@ use error_snippet::Result;
 use lume_ast::*;
 use lume_lexer::{TokenKind, TokenType};
 
-use crate::Parser;
 use crate::errors::*;
+use crate::{ItemKind, Parser};
 
 impl Parser<'_> {
     #[libftrace::traced(level = Debug, err)]
-    pub(super) fn parse_top_level_expression(&mut self) -> Result<TopLevelExpression> {
+    fn parse_item_prefix(&mut self) -> Result<()> {
+        self.read_doc_comment();
+        self.attributes = Some(self.parse_attributes()?);
+
+        Ok(())
+    }
+
+    #[libftrace::traced(level = Debug, err)]
+    pub(super) fn parse_item(&mut self) -> Result<Item> {
+        self.parse_item_prefix()?;
+
+        let visibility = self.parse_visibility()?;
+
+        if let Some(visibility) = visibility.as_ref() {
+            self.raise_if_visibility_invalid(visibility)?;
+        }
+
+        if let Some(item_kind) = self.item_kind() {
+            self.raise_if_attributes(item_kind)?;
+        }
+
         match self.token().kind {
-            TokenKind::Pub | TokenKind::Priv => self.parse_top_level_expression_visibility(),
             TokenKind::Import => self.parse_import(),
             TokenKind::Namespace => self.parse_namespace(),
             TokenKind::Impl => self.parse_implementation(),
-            TokenKind::Fn => self.parse_function(),
-            TokenKind::Struct => self.parse_struct_definition(),
-            TokenKind::Trait => self.parse_trait_definition(),
-            TokenKind::Enum => self.parse_enum_definition(),
+            TokenKind::Fn => self.parse_function(visibility),
+            TokenKind::Struct => self.parse_struct_definition(visibility),
+            TokenKind::Trait => self.parse_trait_definition(visibility),
+            TokenKind::Enum => self.parse_enum_definition(visibility),
             TokenKind::Use => self.parse_trait_implementation(),
             k => Err(InvalidTopLevelStatement {
                 source: self.source.clone(),
@@ -28,25 +47,50 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_top_level_expression_visibility(&mut self) -> Result<TopLevelExpression> {
-        let visibility = self.parse_visibility()?;
-
-        match self.token().kind {
-            TokenKind::Fn => self.parse_function_visibility(visibility),
-            TokenKind::Struct => self.parse_struct_visibility(visibility),
-            TokenKind::Trait => self.parse_trait_visibility(visibility),
-            TokenKind::Enum => self.parse_enum_visibility(visibility),
-            k => Err(InvalidTopLevelStatement {
-                source: self.source.clone(),
-                range: self.token().index,
-                actual: k.as_type(),
-            }
-            .into()),
+    fn raise_if_attributes(&self, item: ItemKind) -> Result<()> {
+        if item.supports_attributes() {
+            return Ok(());
         }
+
+        let attributes = if let Some(attributes) = self.attributes.as_ref()
+            && !attributes.is_empty()
+        {
+            attributes
+        } else {
+            return Ok(());
+        };
+
+        let start = attributes.first().unwrap().location.start();
+        let end = attributes.last().unwrap().location.end();
+
+        Err(UnexpectedAttributes {
+            source: self.source.clone(),
+            range: start..end,
+            item,
+        }
+        .into())
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_import(&mut self) -> Result<TopLevelExpression> {
+    fn raise_if_visibility_invalid(&self, visibility: &Visibility) -> Result<()> {
+        let item = match self.token().kind {
+            TokenKind::Import => ItemKind::Import,
+            TokenKind::Namespace => ItemKind::Namespace,
+            TokenKind::Impl => ItemKind::Impl,
+            TokenKind::Use => ItemKind::TraitImpl,
+            _ => return Ok(()),
+        };
+
+        Err(UnexpectedVisibility {
+            source: self.source.clone(),
+            range: visibility.location().0.clone(),
+            item,
+        }
+        .into())
+    }
+
+    #[libftrace::traced(level = Debug, err)]
+    fn parse_import(&mut self) -> Result<Item> {
         let start = self.consume(TokenType::Import)?.start();
         let path = self.parse_import_path()?;
 
@@ -70,18 +114,49 @@ impl Parser<'_> {
             location: (start..end).into(),
         };
 
-        Ok(TopLevelExpression::Import(Box::new(import_def)))
+        Ok(Item::Import(Box::new(import_def)))
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_namespace(&mut self) -> Result<TopLevelExpression> {
+    fn parse_namespace(&mut self) -> Result<Item> {
         let (path, location) = self.consume_with_loc(|p| {
             p.consume(TokenType::Namespace)?;
 
             p.parse_import_path()
         })?;
 
-        Ok(TopLevelExpression::Namespace(Box::new(Namespace { path, location })))
+        Ok(Item::Namespace(Box::new(Namespace { path, location })))
+    }
+
+    #[libftrace::traced(level = Trace, err)]
+    fn parse_signature(&mut self) -> Result<Signature> {
+        let start = self.expect_fn()?.start();
+
+        let external = self.check_external();
+        let name = self.parse_callable_name_or_err(
+            ExpectedFunctionName {
+                source: self.source.clone(),
+                range: self.token().index,
+            }
+            .into(),
+        )?;
+
+        let type_parameters = self.parse_type_parameters()?;
+        let parameters = self.parse_parameters()?;
+        let return_type = self.parse_return_type()?;
+
+        let end = self.previous_token().end();
+
+        let location = Location(start..end);
+
+        Ok(Signature {
+            external,
+            name,
+            type_parameters,
+            parameters,
+            return_type,
+            location,
+        })
     }
 
     #[libftrace::traced(level = Trace, err)]
@@ -168,63 +243,35 @@ impl Parser<'_> {
         Ok(Some(Box::new(self.parse_type()?)))
     }
 
-    #[libftrace::traced(level = Trace, err)]
-    fn parse_function(&mut self) -> Result<TopLevelExpression> {
-        let visibility = self.parse_visibility()?;
-
-        self.parse_function_visibility(visibility)
-    }
-
     #[libftrace::traced(level = Debug, err)]
-    fn parse_function_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
+    fn parse_function(&mut self, visibility: Option<Visibility>) -> Result<Item> {
         let documentation = self.doc_token.take();
         let attributes = self.attributes.take().unwrap_or_default();
 
+        let signature = self.parse_signature()?;
         let start = visibility
             .as_ref()
-            .map_or(self.expect_fn()?.start(), |vis| vis.location().start());
+            .map_or(signature.location.start(), |vis| vis.location().start());
 
-        let external = self.check_external();
-        let name = self.parse_callable_name_or_err(
-            ExpectedFunctionName {
-                source: self.source.clone(),
-                range: self.token().index,
-            }
-            .into(),
-        )?;
-
-        let type_parameters = self.parse_type_parameters()?;
-        let parameters = self.parse_parameters()?;
-        let return_type = self.parse_return_type()?;
-        let block = self.parse_opt_external_block(external)?;
+        let block = self.parse_opt_external_block(signature.external)?;
 
         let end = self.previous_token().end();
+        let location = Location(start..end);
 
         let function_def = FunctionDefinition {
             attributes,
             visibility,
-            external,
-            name,
-            parameters,
-            type_parameters,
-            return_type,
+            signature,
             block,
-            location: (start..end).into(),
+            location,
             documentation,
         };
 
-        Ok(TopLevelExpression::FunctionDefinition(Box::new(function_def)))
+        Ok(Item::FunctionDefinition(Box::new(function_def)))
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_struct_definition(&mut self) -> Result<TopLevelExpression> {
-        let visibility = self.parse_visibility()?;
-
-        self.parse_struct_visibility(visibility)
-    }
-
-    #[libftrace::traced(level = Debug, err)]
-    fn parse_struct_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
+    fn parse_struct_definition(&mut self, visibility: Option<Visibility>) -> Result<Item> {
         let documentation = self.doc_token.take();
         let attributes = self.attributes.take().unwrap_or_default();
 
@@ -255,13 +302,15 @@ impl Parser<'_> {
             documentation,
         };
 
-        Ok(TopLevelExpression::StructDefinition(Box::new(struct_def)))
+        Ok(Item::StructDefinition(Box::new(struct_def)))
     }
 
     #[libftrace::traced(level = Trace, err)]
     fn parse_struct_field(&mut self) -> Result<Field> {
-        self.read_doc_comment();
+        self.parse_item_prefix()?;
+        self.raise_if_attributes(ItemKind::Field)?;
 
+        let documentation = self.doc_token.take();
         let visibility = self.parse_visibility()?;
 
         let Ok(name) = self.parse_identifier() else {
@@ -297,12 +346,12 @@ impl Parser<'_> {
             field_type,
             default_value,
             location: (start..end).into(),
-            documentation: self.doc_token.take(),
+            documentation,
         })
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_implementation(&mut self) -> Result<TopLevelExpression> {
+    fn parse_implementation(&mut self) -> Result<Item> {
         let start = self.expect_impl()?.start();
 
         let type_parameters = self.parse_type_parameters()?;
@@ -311,7 +360,7 @@ impl Parser<'_> {
 
         let end = self.previous_token().end();
 
-        Ok(TopLevelExpression::Implementation(Box::new(Implementation {
+        Ok(Item::Implementation(Box::new(Implementation {
             name: Box::new(name),
             methods,
             type_parameters,
@@ -321,91 +370,35 @@ impl Parser<'_> {
 
     #[libftrace::traced(level = Debug, err)]
     fn parse_method_definition(&mut self) -> Result<MethodDefinition> {
-        self.read_doc_comment();
-        self.attributes = Some(self.parse_attributes()?);
+        self.parse_item_prefix()?;
+        self.raise_if_attributes(ItemKind::Method)?;
 
         let documentation = self.doc_token.take();
         let attributes = self.attributes.take().unwrap_or_default();
 
         let visibility = self.parse_visibility()?;
+        let signature = self.parse_signature()?;
         let start = visibility
             .as_ref()
-            .map_or(self.token().start(), |vis| vis.location().start());
+            .map_or(signature.location.start(), |v| v.location().start());
 
-        // Report a special error if we found an identifier, such as
-        // a field declaration, which isn't allowed within an `impl` block.
-        if !self.check(TokenType::Fn) && self.peek(TokenType::Identifier) {
-            return Err(FieldInImpl {
-                source: self.source.clone(),
-                range: self.token().index,
-            }
-            .into());
-        }
+        let block = self.parse_opt_external_block(signature.external)?;
 
-        let external = self.check_external();
-
-        let name = self.parse_method_name()?;
-        let type_parameters = self.parse_type_parameters()?;
-        let parameters = self.parse_parameters()?;
-        let return_type = self.parse_return_type()?;
-        let block = self.parse_opt_external_block(external)?;
-
-        let end = self.token_at(self.index - 1).end();
+        let end = self.previous_token().end();
+        let location = Location(start..end);
 
         Ok(MethodDefinition {
             attributes,
             visibility,
-            external,
-            name,
-            parameters,
-            type_parameters,
-            return_type,
+            signature,
             block,
-            location: (start..end).into(),
+            location,
             documentation,
         })
     }
 
-    #[libftrace::traced(level = Trace, err)]
-    fn parse_method_name(&mut self) -> Result<Identifier> {
-        match self.token() {
-            // Allow actual identifiers.
-            t if t.kind.as_type() == TokenType::Identifier => self.parse_callable_name_or_err(
-                ExpectedFunctionName {
-                    source: self.source.clone(),
-                    range: self.token().index,
-                }
-                .into(),
-            ),
-
-            // As well as operator tokens, so we can do operator overloading.
-            t if t.kind.is_operator() => {
-                let index = self.consume_any().index;
-                let slice = &self.source.content[index.clone()];
-
-                Ok(Identifier {
-                    name: slice.to_string(),
-                    location: index.into(),
-                })
-            }
-
-            t => Err(ExpectedFunctionName {
-                source: self.source.clone(),
-                range: t.index,
-            }
-            .into()),
-        }
-    }
-
     #[libftrace::traced(level = Debug, err)]
-    fn parse_trait_definition(&mut self) -> Result<TopLevelExpression> {
-        let visibility = self.parse_visibility()?;
-
-        self.parse_trait_visibility(visibility)
-    }
-
-    #[libftrace::traced(level = Debug, err)]
-    fn parse_trait_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
+    fn parse_trait_definition(&mut self, visibility: Option<Visibility>) -> Result<Item> {
         let documentation = self.doc_token.take();
         let attributes = self.attributes.take().unwrap_or_default();
 
@@ -436,26 +429,19 @@ impl Parser<'_> {
             documentation,
         };
 
-        Ok(TopLevelExpression::TraitDefinition(Box::new(trait_def)))
+        Ok(Item::TraitDefinition(Box::new(trait_def)))
     }
 
     #[libftrace::traced(level = Trace, err)]
     fn parse_trait_method(&mut self) -> Result<TraitMethodDefinition> {
-        self.read_doc_comment();
+        self.parse_item_prefix()?;
+        self.raise_if_attributes(ItemKind::TraitMethod)?;
 
-        let start = self.expect_fn()?.start();
+        let documentation = self.doc_token.take();
 
-        let Ok(name) = self.parse_callable_name() else {
-            return Err(ExpectedFunctionName {
-                source: self.source.clone(),
-                range: self.token().index,
-            }
-            .into());
-        };
+        let signature = self.parse_signature()?;
+        let start = signature.location.start();
 
-        let type_parameters = self.parse_type_parameters()?;
-        let parameters = self.parse_parameters()?;
-        let return_type = self.parse_return_type()?;
         let block = if self.check(TokenType::Semicolon) {
             None
         } else {
@@ -463,20 +449,18 @@ impl Parser<'_> {
         };
 
         let end = self.previous_token().end();
+        let location = Location(start..end);
 
         Ok(TraitMethodDefinition {
-            name,
-            parameters,
-            type_parameters,
-            return_type,
+            signature,
             block,
-            location: (start..end).into(),
-            documentation: self.doc_token.take(),
+            location,
+            documentation,
         })
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_trait_implementation(&mut self) -> Result<TopLevelExpression> {
+    fn parse_trait_implementation(&mut self) -> Result<Item> {
         let start = self.consume(TokenType::Use)?.start();
         let type_parameters = self.parse_type_parameters()?;
 
@@ -487,54 +471,31 @@ impl Parser<'_> {
 
         let methods = self.consume_curly_seq(Parser::parse_trait_method_implementation)?;
         let end = self.previous_token().end();
+        let location = Location(start..end);
 
-        Ok(TopLevelExpression::TraitImplementation(Box::new(TraitImplementation {
+        Ok(Item::TraitImplementation(Box::new(TraitImplementation {
             type_parameters,
             name: Box::new(name),
             target: Box::new(target),
             methods,
-            location: (start..end).into(),
+            location,
         })))
     }
 
     #[libftrace::traced(level = Trace, err)]
     fn parse_trait_method_implementation(&mut self) -> Result<TraitMethodImplementation> {
-        let visibility = self.parse_visibility()?;
+        let signature = self.parse_signature()?;
+        let start = signature.location.start();
 
-        let start = visibility.map_or(self.expect_fn()?.start(), |v| v.location().start());
-        let external = self.check_external();
-
-        let Ok(name) = self.parse_callable_name() else {
-            return Err(ExpectedFunctionName {
-                source: self.source.clone(),
-                range: self.token().index,
-            }
-            .into());
-        };
-
-        let type_parameters = self.parse_type_parameters()?;
-        let parameters = self.parse_parameters()?;
-        let return_type = self.parse_return_type()?;
-        let block = self.parse_opt_external_block(external)?;
-
+        let block = self.parse_opt_external_block(signature.external)?;
         let end = self.previous_token().end();
+        let location = Location(start..end);
 
         Ok(TraitMethodImplementation {
-            external,
-            name,
-            parameters,
-            type_parameters,
-            return_type,
+            signature,
             block,
-            location: (start..end).into(),
+            location,
         })
-    }
-
-    #[libftrace::traced(level = Debug, err)]
-    fn parse_enum_definition(&mut self) -> Result<TopLevelExpression> {
-        let visibility = self.parse_visibility()?;
-
-        self.parse_enum_visibility(visibility)
     }
 
     /// Parses a single enum type definition, such as:
@@ -546,7 +507,9 @@ impl Parser<'_> {
     /// }
     /// ```
     #[libftrace::traced(level = Debug, err)]
-    fn parse_enum_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
+    fn parse_enum_definition(&mut self, visibility: Option<Visibility>) -> Result<Item> {
+        self.raise_if_attributes(ItemKind::Enum)?;
+
         let documentation = self.doc_token.take();
 
         let start = visibility
@@ -559,7 +522,7 @@ impl Parser<'_> {
 
         let end = self.previous_token().end();
 
-        Ok(TopLevelExpression::EnumDefinition(Box::new(EnumDefinition {
+        Ok(Item::EnumDefinition(Box::new(EnumDefinition {
             visibility,
             name,
             type_parameters,
@@ -572,7 +535,10 @@ impl Parser<'_> {
     /// Parses a single enum type case, such as `V4` or `V4(String)`.
     #[libftrace::traced(level = Trace, err)]
     fn parse_enum_case(&mut self) -> Result<EnumDefinitionCase> {
-        self.read_doc_comment();
+        self.parse_item_prefix()?;
+        self.raise_if_attributes(ItemKind::Variant)?;
+
+        let documentation = self.doc_token.take();
 
         let name = self.parse_identifier()?;
 
@@ -591,7 +557,7 @@ impl Parser<'_> {
             name,
             parameters,
             location: (start..end).into(),
-            documentation: self.doc_token.take(),
+            documentation,
         })
     }
 }

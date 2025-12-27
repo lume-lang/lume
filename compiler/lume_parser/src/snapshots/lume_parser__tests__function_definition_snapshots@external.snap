@@ -7,39 +7,44 @@ expression: "parse(\"fn external main() -> void\")"
         FunctionDefinition {
             attributes: [],
             visibility: None,
-            external: true,
-            name: Identifier {
-                name: "main",
-                location: Location(
-                    12..16,
-                ),
-            },
-            parameters: [],
-            type_parameters: [],
-            return_type: Some(
-                Named(
-                    NamedType {
-                        name: Path {
-                            root: [],
-                            name: Type {
-                                name: Identifier {
-                                    name: "void",
+            signature: Signature {
+                external: true,
+                name: Identifier {
+                    name: "main",
+                    location: Location(
+                        12..16,
+                    ),
+                },
+                type_parameters: [],
+                parameters: [],
+                return_type: Some(
+                    Named(
+                        NamedType {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "void",
+                                        location: Location(
+                                            22..26,
+                                        ),
+                                    },
+                                    bound_types: [],
                                     location: Location(
                                         22..26,
                                     ),
                                 },
-                                bound_types: [],
                                 location: Location(
                                     22..26,
                                 ),
                             },
-                            location: Location(
-                                22..26,
-                            ),
                         },
-                    },
+                    ),
                 ),
-            ),
+                location: Location(
+                    0..26,
+                ),
+            },
             block: None,
             location: Location(
                 0..26,

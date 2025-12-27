@@ -13,39 +13,44 @@ expression: "parse(\"pub fn main() -> void {}\")"
                     ),
                 },
             ),
-            external: false,
-            name: Identifier {
-                name: "main",
-                location: Location(
-                    7..11,
-                ),
-            },
-            parameters: [],
-            type_parameters: [],
-            return_type: Some(
-                Named(
-                    NamedType {
-                        name: Path {
-                            root: [],
-                            name: Type {
-                                name: Identifier {
-                                    name: "void",
+            signature: Signature {
+                external: false,
+                name: Identifier {
+                    name: "main",
+                    location: Location(
+                        7..11,
+                    ),
+                },
+                type_parameters: [],
+                parameters: [],
+                return_type: Some(
+                    Named(
+                        NamedType {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "void",
+                                        location: Location(
+                                            17..21,
+                                        ),
+                                    },
+                                    bound_types: [],
                                     location: Location(
                                         17..21,
                                     ),
                                 },
-                                bound_types: [],
                                 location: Location(
                                     17..21,
                                 ),
                             },
-                            location: Location(
-                                17..21,
-                            ),
                         },
-                    },
+                    ),
                 ),
-            ),
+                location: Location(
+                    4..21,
+                ),
+            },
             block: Some(
                 Block {
                     statements: [],

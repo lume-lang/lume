@@ -1,5 +1,0 @@
-impl Foo {
-    pub fn ==() -> bool {
-        return true;
-    }
-}

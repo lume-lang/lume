@@ -200,7 +200,7 @@ impl LowerModule {
     /// Returns `Err` if any AST nodes are invalid or exist in invalid
     /// locations.
     #[libftrace::traced(level = Info, fields(file = file.name))]
-    pub fn lower(&mut self, file: Arc<SourceFile>, expressions: Vec<lume_ast::TopLevelExpression>) -> Result<()> {
+    pub fn lower(&mut self, file: Arc<SourceFile>, expressions: Vec<lume_ast::Item>) -> Result<()> {
         self.file = file;
         self.insert_implicit_imports()?;
         self.lower_items(expressions)?;

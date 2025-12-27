@@ -7,48 +7,53 @@ expression: "parse(\"fn main() -> std::Int32 {}\")"
         FunctionDefinition {
             attributes: [],
             visibility: None,
-            external: false,
-            name: Identifier {
-                name: "main",
-                location: Location(
-                    3..7,
-                ),
-            },
-            parameters: [],
-            type_parameters: [],
-            return_type: Some(
-                Named(
-                    NamedType {
-                        name: Path {
-                            root: [
-                                Namespace {
+            signature: Signature {
+                external: false,
+                name: Identifier {
+                    name: "main",
+                    location: Location(
+                        3..7,
+                    ),
+                },
+                type_parameters: [],
+                parameters: [],
+                return_type: Some(
+                    Named(
+                        NamedType {
+                            name: Path {
+                                root: [
+                                    Namespace {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: Location(
+                                                13..16,
+                                            ),
+                                        },
+                                    },
+                                ],
+                                name: Type {
                                     name: Identifier {
-                                        name: "std",
+                                        name: "Int32",
                                         location: Location(
-                                            13..16,
+                                            18..23,
                                         ),
                                     },
-                                },
-                            ],
-                            name: Type {
-                                name: Identifier {
-                                    name: "Int32",
+                                    bound_types: [],
                                     location: Location(
                                         18..23,
                                     ),
                                 },
-                                bound_types: [],
                                 location: Location(
                                     18..23,
                                 ),
                             },
-                            location: Location(
-                                18..23,
-                            ),
                         },
-                    },
+                    ),
                 ),
-            ),
+                location: Location(
+                    0..23,
+                ),
+            },
             block: Some(
                 Block {
                     statements: [],

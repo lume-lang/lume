@@ -51,39 +51,44 @@ expression: "parse(\"\n        use Cast: Int32 {\n            fn to_string() -> 
             ),
             methods: [
                 TraitMethodImplementation {
-                    external: false,
-                    name: Identifier {
-                        name: "to_string",
-                        location: Location(
-                            42..51,
-                        ),
-                    },
-                    parameters: [],
-                    type_parameters: [],
-                    return_type: Some(
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "String",
+                    signature: Signature {
+                        external: false,
+                        name: Identifier {
+                            name: "to_string",
+                            location: Location(
+                                42..51,
+                            ),
+                        },
+                        type_parameters: [],
+                        parameters: [],
+                        return_type: Some(
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "String",
+                                                location: Location(
+                                                    57..63,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 57..63,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             57..63,
                                         ),
                                     },
-                                    location: Location(
-                                        57..63,
-                                    ),
                                 },
-                            },
+                            ),
                         ),
-                    ),
+                        location: Location(
+                            39..63,
+                        ),
+                    },
                     block: Some(
                         Block {
                             statements: [
@@ -117,39 +122,44 @@ expression: "parse(\"\n        use Cast: Int32 {\n            fn to_string() -> 
                     ),
                 },
                 TraitMethodImplementation {
-                    external: false,
-                    name: Identifier {
-                        name: "to_int",
-                        location: Location(
-                            125..131,
-                        ),
-                    },
-                    parameters: [],
-                    type_parameters: [],
-                    return_type: Some(
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Int32",
+                    signature: Signature {
+                        external: false,
+                        name: Identifier {
+                            name: "to_int",
+                            location: Location(
+                                125..131,
+                            ),
+                        },
+                        type_parameters: [],
+                        parameters: [],
+                        return_type: Some(
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Int32",
+                                                location: Location(
+                                                    137..142,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 137..142,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             137..142,
                                         ),
                                     },
-                                    location: Location(
-                                        137..142,
-                                    ),
                                 },
-                            },
+                            ),
                         ),
-                    ),
+                        location: Location(
+                            122..142,
+                        ),
+                    },
                     block: Some(
                         Block {
                             statements: [

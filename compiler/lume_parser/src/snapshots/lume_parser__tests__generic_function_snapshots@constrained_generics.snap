@@ -7,104 +7,109 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
         FunctionDefinition {
             attributes: [],
             visibility: None,
-            external: false,
-            name: Identifier {
-                name: "test",
-                location: Location(
-                    3..7,
-                ),
-            },
-            parameters: [],
-            type_parameters: [
-                TypeParameter {
-                    name: Identifier {
-                        name: "T1",
-                        location: Location(
-                            8..10,
-                        ),
-                    },
-                    constraints: [
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Numeric",
+            signature: Signature {
+                external: false,
+                name: Identifier {
+                    name: "test",
+                    location: Location(
+                        3..7,
+                    ),
+                },
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T1",
+                            location: Location(
+                                8..10,
+                            ),
+                        },
+                        constraints: [
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Numeric",
+                                                location: Location(
+                                                    12..19,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 12..19,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             12..19,
                                         ),
                                     },
-                                    location: Location(
-                                        12..19,
-                                    ),
                                 },
-                            },
-                        ),
-                    ],
-                },
-                TypeParameter {
-                    name: Identifier {
-                        name: "T2",
-                        location: Location(
-                            21..23,
-                        ),
+                            ),
+                        ],
                     },
-                    constraints: [
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Numeric",
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T2",
+                            location: Location(
+                                21..23,
+                            ),
+                        },
+                        constraints: [
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Numeric",
+                                                location: Location(
+                                                    25..32,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 25..32,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             25..32,
                                         ),
                                     },
-                                    location: Location(
-                                        25..32,
-                                    ),
                                 },
-                            },
-                        ),
-                    ],
-                },
-            ],
-            return_type: Some(
-                Named(
-                    NamedType {
-                        name: Path {
-                            root: [],
-                            name: Type {
-                                name: Identifier {
-                                    name: "void",
+                            ),
+                        ],
+                    },
+                ],
+                parameters: [],
+                return_type: Some(
+                    Named(
+                        NamedType {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "void",
+                                        location: Location(
+                                            39..43,
+                                        ),
+                                    },
+                                    bound_types: [],
                                     location: Location(
                                         39..43,
                                     ),
                                 },
-                                bound_types: [],
                                 location: Location(
                                     39..43,
                                 ),
                             },
-                            location: Location(
-                                39..43,
-                            ),
                         },
-                    },
+                    ),
                 ),
-            ),
+                location: Location(
+                    0..43,
+                ),
+            },
             block: Some(
                 Block {
                     statements: [],
