@@ -4,5 +4,5 @@
    ∶                  ^^^^^^^^ parameter x is already defined
    ∶
  1 │ fn foo(x: Int32, x: Int32) { }
-   ∶        ^ original parameter found here
+   ∶        ^^^^^^^^ original parameter found here
    ╰──

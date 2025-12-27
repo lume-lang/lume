@@ -2,8 +2,7 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use error_snippet_derive::Diagnostic;
-use lume_span::SourceFile;
-use lume_span::source::Location;
+use lume_span::{Location, SourceFile};
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "invalid namespace path", code = "LM3005")]
@@ -118,14 +117,11 @@ pub struct DuplicateDefinition {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "duplicate type parameter", code = "LM3029")]
 pub struct DuplicateTypeParameter {
-    #[span]
-    pub source: Arc<SourceFile>,
+    #[label(source, "type parameter {name} is already defined")]
+    pub duplicate_range: Location,
 
-    #[label("type parameter {name} is already defined")]
-    pub duplicate_range: Range<usize>,
-
-    #[label(note, "original type parameter found here")]
-    pub original_range: Range<usize>,
+    #[label(source, note, "original type parameter found here")]
+    pub original_range: Location,
 
     pub name: String,
 }
@@ -133,14 +129,11 @@ pub struct DuplicateTypeParameter {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "duplicate parameter", code = "LM3030")]
 pub struct DuplicateParameter {
-    #[span]
-    pub source: Arc<SourceFile>,
+    #[label(source, "parameter {name} is already defined")]
+    pub duplicate_range: Location,
 
-    #[label("parameter {name} is already defined")]
-    pub duplicate_range: Range<usize>,
-
-    #[label(note, "original parameter found here")]
-    pub original_range: Range<usize>,
+    #[label(source, note, "original parameter found here")]
+    pub original_range: Location,
 
     pub name: String,
 }
@@ -148,14 +141,35 @@ pub struct DuplicateParameter {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "duplicate method", code = "LM3032")]
 pub struct DuplicateMethod {
-    #[span]
-    pub source: Arc<SourceFile>,
+    #[label(source, "method {name} is already defined")]
+    pub duplicate_range: Location,
 
-    #[label("method {name} is already defined")]
-    pub duplicate_range: Range<usize>,
+    #[label(source, note, "original method found here")]
+    pub original_range: Location,
 
-    #[label(note, "original method found here")]
-    pub original_range: Range<usize>,
+    pub name: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "duplicate field", code = "LM3033")]
+pub struct DuplicateField {
+    #[label(source, "field {name} is already defined within this struct")]
+    pub duplicate_range: Location,
+
+    #[label(source, note, "original field found here")]
+    pub original_range: Location,
+
+    pub name: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "duplicate variant", code = "LM3034")]
+pub struct DuplicateVariant {
+    #[label(source, "variant {name} is already defined in this enum")]
+    pub duplicate_range: Location,
+
+    #[label(source, note, "original variant found here")]
+    pub original_range: Location,
 
     pub name: String,
 }

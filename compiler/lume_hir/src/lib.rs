@@ -546,6 +546,11 @@ impl Path {
 
         self.name() == other.name()
     }
+
+    /// Formats the path as a string, where all segments are expanded.
+    pub fn to_wide_string(&self) -> String {
+        format!("{self:+}")
+    }
 }
 
 impl std::fmt::Display for Path {
