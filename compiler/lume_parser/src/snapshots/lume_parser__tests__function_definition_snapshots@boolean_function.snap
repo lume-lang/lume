@@ -7,16 +7,21 @@ expression: "parse(\"fn empty?() {}\")"
         FunctionDefinition {
             attributes: [],
             visibility: None,
-            external: false,
-            name: Identifier {
-                name: "empty?",
+            signature: Signature {
+                external: false,
+                name: Identifier {
+                    name: "empty?",
+                    location: Location(
+                        3..9,
+                    ),
+                },
+                type_parameters: [],
+                parameters: [],
+                return_type: None,
                 location: Location(
-                    3..9,
+                    0..11,
                 ),
             },
-            parameters: [],
-            type_parameters: [],
-            return_type: None,
             block: Some(
                 Block {
                     statements: [],

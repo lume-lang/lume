@@ -7,94 +7,99 @@ expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
         FunctionDefinition {
             attributes: [],
             visibility: None,
-            external: false,
-            name: Identifier {
-                name: "test",
-                location: Location(
-                    3..7,
-                ),
-            },
-            parameters: [],
-            type_parameters: [
-                TypeParameter {
-                    name: Identifier {
-                        name: "T",
-                        location: Location(
-                            8..9,
-                        ),
-                    },
-                    constraints: [
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Numeric",
+            signature: Signature {
+                external: false,
+                name: Identifier {
+                    name: "test",
+                    location: Location(
+                        3..7,
+                    ),
+                },
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T",
+                            location: Location(
+                                8..9,
+                            ),
+                        },
+                        constraints: [
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Numeric",
+                                                location: Location(
+                                                    11..18,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 11..18,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             11..18,
                                         ),
                                     },
-                                    location: Location(
-                                        11..18,
-                                    ),
                                 },
-                            },
-                        ),
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Floating",
+                            ),
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Floating",
+                                                location: Location(
+                                                    21..29,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 21..29,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             21..29,
                                         ),
                                     },
-                                    location: Location(
-                                        21..29,
-                                    ),
                                 },
-                            },
-                        ),
-                    ],
-                },
-            ],
-            return_type: Some(
-                Named(
-                    NamedType {
-                        name: Path {
-                            root: [],
-                            name: Type {
-                                name: Identifier {
-                                    name: "void",
+                            ),
+                        ],
+                    },
+                ],
+                parameters: [],
+                return_type: Some(
+                    Named(
+                        NamedType {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "void",
+                                        location: Location(
+                                            36..40,
+                                        ),
+                                    },
+                                    bound_types: [],
                                     location: Location(
                                         36..40,
                                     ),
                                 },
-                                bound_types: [],
                                 location: Location(
                                     36..40,
                                 ),
                             },
-                            location: Location(
-                                36..40,
-                            ),
                         },
-                    },
+                    ),
                 ),
-            ),
+                location: Location(
+                    0..40,
+                ),
+            },
             block: Some(
                 Block {
                     statements: [],

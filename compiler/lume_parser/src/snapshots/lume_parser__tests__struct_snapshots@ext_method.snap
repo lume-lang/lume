@@ -31,39 +31,44 @@ expression: "parse(\"\n        impl Foo {\n            fn external bar() -> Int3
                 MethodDefinition {
                     attributes: [],
                     visibility: None,
-                    external: true,
-                    name: Identifier {
-                        name: "bar",
-                        location: Location(
-                            44..47,
-                        ),
-                    },
-                    parameters: [],
-                    type_parameters: [],
-                    return_type: Some(
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Int32",
+                    signature: Signature {
+                        external: true,
+                        name: Identifier {
+                            name: "bar",
+                            location: Location(
+                                44..47,
+                            ),
+                        },
+                        type_parameters: [],
+                        parameters: [],
+                        return_type: Some(
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Int32",
+                                                location: Location(
+                                                    53..58,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 53..58,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             53..58,
                                         ),
                                     },
-                                    location: Location(
-                                        53..58,
-                                    ),
                                 },
-                            },
+                            ),
                         ),
-                    ),
+                        location: Location(
+                            32..58,
+                        ),
+                    },
                     block: None,
                     location: Location(
                         32..58,

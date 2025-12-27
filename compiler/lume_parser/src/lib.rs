@@ -21,6 +21,50 @@ pub mod ty;
 #[cfg(test)]
 mod tests;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ItemKind {
+    Import,
+    Namespace,
+    Struct,
+    Enum,
+    Trait,
+    Impl,
+    Function,
+    Method,
+    Field,
+    Variant,
+    TraitImpl,
+    TraitMethod,
+}
+
+impl ItemKind {
+    pub(crate) fn supports_attributes(self) -> bool {
+        matches!(
+            self,
+            ItemKind::Struct | ItemKind::Trait | ItemKind::Function | ItemKind::Method
+        )
+    }
+}
+
+impl std::fmt::Display for ItemKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ItemKind::Import => write!(f, "import"),
+            ItemKind::Namespace => write!(f, "namespace"),
+            ItemKind::Struct => write!(f, "struct definition"),
+            ItemKind::Enum => write!(f, "enum definition"),
+            ItemKind::Trait => write!(f, "trait definition"),
+            ItemKind::Impl => write!(f, "implementation block"),
+            ItemKind::Function => write!(f, "function definition"),
+            ItemKind::Method => write!(f, "method definition"),
+            ItemKind::Field => write!(f, "field"),
+            ItemKind::Variant => write!(f, "enum variant"),
+            ItemKind::TraitImpl => write!(f, "trait implementation"),
+            ItemKind::TraitMethod => write!(f, "trait method"),
+        }
+    }
+}
+
 pub struct Parser<'src> {
     /// Defines the source code which is being parsed.
     source: Arc<SourceFile>,
@@ -106,7 +150,7 @@ impl<'src> Parser<'src> {
     /// Returns `Err` if some part of the input is unexpected or if the
     /// parser unexpectedly reaches end-of-file.
     #[libftrace::traced(level = Info, fields(file = self.source.name), err)]
-    pub fn parse(&mut self) -> Result<Vec<TopLevelExpression>> {
+    pub fn parse(&mut self) -> Result<Vec<Item>> {
         let mut expressions = Vec::new();
 
         loop {
@@ -114,10 +158,7 @@ impl<'src> Parser<'src> {
                 break;
             }
 
-            self.read_doc_comment();
-            self.attributes = Some(self.parse_attributes()?);
-
-            expressions.push(self.parse_top_level_expression()?);
+            expressions.push(self.parse_item()?);
         }
 
         self.dcx.ensure_untainted()?;
@@ -228,6 +269,23 @@ impl<'src> Parser<'src> {
     fn move_to_pos(&mut self, pos: usize) {
         while self.position > pos {
             self.rewind();
+        }
+    }
+
+    /// Gets the item kind, deduced from the current token.
+    ///
+    /// If the token does not match any item kind, returns [`None`]
+    fn item_kind(&self) -> Option<ItemKind> {
+        match self.token().kind {
+            TokenKind::Import => Some(ItemKind::Import),
+            TokenKind::Namespace => Some(ItemKind::Namespace),
+            TokenKind::Struct => Some(ItemKind::Struct),
+            TokenKind::Enum => Some(ItemKind::Enum),
+            TokenKind::Trait => Some(ItemKind::Trait),
+            TokenKind::Impl => Some(ItemKind::Impl),
+            TokenKind::Fn => Some(ItemKind::Function),
+            TokenKind::Use => Some(ItemKind::TraitImpl),
+            _ => None,
         }
     }
 

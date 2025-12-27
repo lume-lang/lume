@@ -482,7 +482,7 @@ impl Block {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Attribute {
     pub name: Identifier,
     pub arguments: Vec<AttributeArgument>,
@@ -491,7 +491,7 @@ pub struct Attribute {
 
 node_location!(Attribute);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AttributeArgument {
     pub key: Identifier,
     pub value: Literal,
@@ -500,7 +500,7 @@ pub struct AttributeArgument {
 
 node_location!(AttributeArgument);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Parameter {
     pub name: Identifier,
     pub param_type: Type,
@@ -519,7 +519,7 @@ impl Parameter {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Visibility {
     Public { location: Location },
     Internal { location: Location },
@@ -536,7 +536,7 @@ impl Node for Visibility {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum TopLevelExpression {
+pub enum Item {
     Import(Box<Import>),
     Namespace(Box<Namespace>),
     FunctionDefinition(Box<FunctionDefinition>),
@@ -547,7 +547,7 @@ pub enum TopLevelExpression {
     TraitImplementation(Box<TraitImplementation>),
 }
 
-impl Node for TopLevelExpression {
+impl Node for Item {
     #[inline]
     fn location(&self) -> &Location {
         match self {
@@ -607,7 +607,7 @@ impl Import {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Namespace {
     pub path: ImportPath,
     pub location: Location,
@@ -615,15 +615,21 @@ pub struct Namespace {
 
 node_location!(Namespace);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Signature {
+    pub external: bool,
+    pub name: Identifier,
+    pub type_parameters: Vec<TypeParameter>,
+    pub parameters: Vec<Parameter>,
+    pub return_type: Option<Box<Type>>,
+    pub location: Location,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionDefinition {
     pub attributes: Vec<Attribute>,
     pub visibility: Option<Visibility>,
-    pub external: bool,
-    pub name: Identifier,
-    pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<TypeParameter>,
-    pub return_type: Option<Box<Type>>,
+    pub signature: Signature,
     pub block: Option<Block>,
     pub location: Location,
     pub documentation: Option<String>,
@@ -631,7 +637,7 @@ pub struct FunctionDefinition {
 
 node_location!(FunctionDefinition);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StructDefinition {
     pub attributes: Vec<Attribute>,
     pub visibility: Option<Visibility>,
@@ -644,7 +650,7 @@ pub struct StructDefinition {
 
 node_location!(StructDefinition);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Field {
     pub visibility: Option<Visibility>,
     pub name: Identifier,
@@ -660,11 +666,7 @@ node_location!(Field);
 pub struct MethodDefinition {
     pub attributes: Vec<Attribute>,
     pub visibility: Option<Visibility>,
-    pub external: bool,
-    pub name: Identifier,
-    pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<TypeParameter>,
-    pub return_type: Option<Box<Type>>,
+    pub signature: Signature,
     pub block: Option<Block>,
     pub location: Location,
     pub documentation: Option<String>,
@@ -687,10 +689,7 @@ node_location!(TraitDefinition);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
-    pub name: Identifier,
-    pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<TypeParameter>,
-    pub return_type: Option<Box<Type>>,
+    pub signature: Signature,
     pub block: Option<Block>,
     pub location: Location,
     pub documentation: Option<String>,
@@ -755,11 +754,7 @@ node_location!(TraitImplementation);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
-    pub external: bool,
-    pub name: Identifier,
-    pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<TypeParameter>,
-    pub return_type: Option<Box<Type>>,
+    pub signature: Signature,
     pub block: Option<Block>,
     pub location: Location,
 }

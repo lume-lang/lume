@@ -7,115 +7,120 @@ expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
         FunctionDefinition {
             attributes: [],
             visibility: None,
-            external: false,
-            name: Identifier {
-                name: "main",
-                location: Location(
-                    3..7,
-                ),
-            },
-            parameters: [
-                Parameter {
-                    name: Identifier {
-                        name: "argc",
+            signature: Signature {
+                external: false,
+                name: Identifier {
+                    name: "main",
+                    location: Location(
+                        3..7,
+                    ),
+                },
+                type_parameters: [],
+                parameters: [
+                    Parameter {
+                        name: Identifier {
+                            name: "argc",
+                            location: Location(
+                                8..12,
+                            ),
+                        },
+                        param_type: Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "UInt8",
+                                            location: Location(
+                                                14..19,
+                                            ),
+                                        },
+                                        bound_types: [],
+                                        location: Location(
+                                            14..19,
+                                        ),
+                                    },
+                                    location: Location(
+                                        14..19,
+                                    ),
+                                },
+                            },
+                        ),
+                        vararg: false,
                         location: Location(
-                            8..12,
+                            8..19,
                         ),
                     },
-                    param_type: Named(
+                    Parameter {
+                        name: Identifier {
+                            name: "arcv",
+                            location: Location(
+                                21..25,
+                            ),
+                        },
+                        param_type: Array(
+                            ArrayType {
+                                element_type: Named(
+                                    NamedType {
+                                        name: Path {
+                                            root: [],
+                                            name: Type {
+                                                name: Identifier {
+                                                    name: "String",
+                                                    location: Location(
+                                                        28..34,
+                                                    ),
+                                                },
+                                                bound_types: [],
+                                                location: Location(
+                                                    28..34,
+                                                ),
+                                            },
+                                            location: Location(
+                                                28..34,
+                                            ),
+                                        },
+                                    },
+                                ),
+                                location: Location(
+                                    27..35,
+                                ),
+                            },
+                        ),
+                        vararg: false,
+                        location: Location(
+                            21..35,
+                        ),
+                    },
+                ],
+                return_type: Some(
+                    Named(
                         NamedType {
                             name: Path {
                                 root: [],
                                 name: Type {
                                     name: Identifier {
-                                        name: "UInt8",
+                                        name: "void",
                                         location: Location(
-                                            14..19,
+                                            40..44,
                                         ),
                                     },
                                     bound_types: [],
                                     location: Location(
-                                        14..19,
-                                    ),
-                                },
-                                location: Location(
-                                    14..19,
-                                ),
-                            },
-                        },
-                    ),
-                    vararg: false,
-                    location: Location(
-                        8..19,
-                    ),
-                },
-                Parameter {
-                    name: Identifier {
-                        name: "arcv",
-                        location: Location(
-                            21..25,
-                        ),
-                    },
-                    param_type: Array(
-                        ArrayType {
-                            element_type: Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "String",
-                                                location: Location(
-                                                    28..34,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                28..34,
-                                            ),
-                                        },
-                                        location: Location(
-                                            28..34,
-                                        ),
-                                    },
-                                },
-                            ),
-                            location: Location(
-                                27..35,
-                            ),
-                        },
-                    ),
-                    vararg: false,
-                    location: Location(
-                        21..35,
-                    ),
-                },
-            ],
-            type_parameters: [],
-            return_type: Some(
-                Named(
-                    NamedType {
-                        name: Path {
-                            root: [],
-                            name: Type {
-                                name: Identifier {
-                                    name: "void",
-                                    location: Location(
                                         40..44,
                                     ),
                                 },
-                                bound_types: [],
                                 location: Location(
                                     40..44,
                                 ),
                             },
-                            location: Location(
-                                40..44,
-                            ),
                         },
-                    },
+                    ),
                 ),
-            ),
+                location: Location(
+                    0..44,
+                ),
+            },
             block: Some(
                 Block {
                     statements: [],

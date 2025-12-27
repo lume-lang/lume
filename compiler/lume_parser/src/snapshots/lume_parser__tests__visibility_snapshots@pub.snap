@@ -13,16 +13,21 @@ expression: "parse(\"pub fn foo {}\")"
                     ),
                 },
             ),
-            external: false,
-            name: Identifier {
-                name: "foo",
+            signature: Signature {
+                external: false,
+                name: Identifier {
+                    name: "foo",
+                    location: Location(
+                        7..10,
+                    ),
+                },
+                type_parameters: [],
+                parameters: [],
+                return_type: None,
                 location: Location(
-                    7..10,
+                    4..10,
                 ),
             },
-            parameters: [],
-            type_parameters: [],
-            return_type: None,
             block: Some(
                 Block {
                     statements: [],

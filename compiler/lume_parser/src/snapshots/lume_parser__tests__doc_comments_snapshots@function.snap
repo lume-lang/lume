@@ -7,39 +7,44 @@ expression: "parse(\"/// This is a doc comment\n        fn foo() -> void { }\")"
         FunctionDefinition {
             attributes: [],
             visibility: None,
-            external: false,
-            name: Identifier {
-                name: "foo",
-                location: Location(
-                    37..40,
-                ),
-            },
-            parameters: [],
-            type_parameters: [],
-            return_type: Some(
-                Named(
-                    NamedType {
-                        name: Path {
-                            root: [],
-                            name: Type {
-                                name: Identifier {
-                                    name: "void",
+            signature: Signature {
+                external: false,
+                name: Identifier {
+                    name: "foo",
+                    location: Location(
+                        37..40,
+                    ),
+                },
+                type_parameters: [],
+                parameters: [],
+                return_type: Some(
+                    Named(
+                        NamedType {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "void",
+                                        location: Location(
+                                            46..50,
+                                        ),
+                                    },
+                                    bound_types: [],
                                     location: Location(
                                         46..50,
                                     ),
                                 },
-                                bound_types: [],
                                 location: Location(
                                     46..50,
                                 ),
                             },
-                            location: Location(
-                                46..50,
-                            ),
                         },
-                    },
+                    ),
                 ),
-            ),
+                location: Location(
+                    34..50,
+                ),
+            },
             block: Some(
                 Block {
                     statements: [],

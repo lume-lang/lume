@@ -5,6 +5,8 @@ use error_snippet_derive::Diagnostic;
 use lume_lexer::TokenType;
 use lume_span::SourceFile;
 
+use crate::ItemKind;
+
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "unexpected token", code = "LM1050")]
 pub struct UnexpectedToken {
@@ -28,6 +30,30 @@ pub struct UnexpectedType {
     pub range: Range<usize>,
 
     pub actual: TokenType,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "unexpected visibility", code = "LM1053")]
+pub struct UnexpectedVisibility {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("{item}s cannot have visibility modifiers")]
+    pub range: Range<usize>,
+
+    pub item: ItemKind,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "unexpected attributes", code = "LM1054")]
+pub struct UnexpectedAttributes {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("{item}s cannot have attributes")]
+    pub range: Range<usize>,
+
+    pub item: ItemKind,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -103,20 +129,6 @@ pub struct ExpectedStructField {
     pub source: Arc<SourceFile>,
 
     #[label("expected a struct field definition")]
-    pub range: Range<usize>,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "field in implementation",
-    code = "LM1063",
-    help = "fields can only be defined in `struct` blocks"
-)]
-pub struct FieldInImpl {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("found unexpected field in implementation block")]
     pub range: Range<usize>,
 }
 

@@ -97,39 +97,44 @@ expression: "parse(\"\n        use<T> Enumerable<T>: Vector<T> {\n            fn
             ),
             methods: [
                 TraitMethodImplementation {
-                    external: false,
-                    name: Identifier {
-                        name: "next",
-                        location: Location(
-                            58..62,
-                        ),
-                    },
-                    parameters: [],
-                    type_parameters: [],
-                    return_type: Some(
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "T",
+                    signature: Signature {
+                        external: false,
+                        name: Identifier {
+                            name: "next",
+                            location: Location(
+                                58..62,
+                            ),
+                        },
+                        type_parameters: [],
+                        parameters: [],
+                        return_type: Some(
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "T",
+                                                location: Location(
+                                                    68..69,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 68..69,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             68..69,
                                         ),
                                     },
-                                    location: Location(
-                                        68..69,
-                                    ),
                                 },
-                            },
+                            ),
                         ),
-                    ),
+                        location: Location(
+                            55..69,
+                        ),
+                    },
                     block: Some(
                         Block {
                             statements: [],

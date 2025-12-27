@@ -95,7 +95,7 @@ struct Source<'src> {
     pub file: Arc<SourceFile>,
 
     /// Defines all the top-level nodes within the original source file.
-    pub items: Vec<TopLevelExpression>,
+    pub items: Vec<Item>,
 
     /// Defines a list of all comments from the original source file, which
     /// were discarded during parsing.
@@ -356,16 +356,16 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         }
     }
 
-    fn top_level_expression<'a>(&mut self, item: &'a TopLevelExpression) -> Document<'a> {
+    fn top_level_expression<'a>(&mut self, item: &'a Item) -> Document<'a> {
         match item {
-            TopLevelExpression::Namespace(ns) => namespace(ns),
-            TopLevelExpression::Import(import) => self.import(import),
-            TopLevelExpression::FunctionDefinition(func) => self.function_definition(func),
-            TopLevelExpression::StructDefinition(struct_def) => self.struct_definition(struct_def),
-            TopLevelExpression::TraitDefinition(trait_def) => self.trait_definition(trait_def),
-            TopLevelExpression::EnumDefinition(enum_def) => self.enum_definition(enum_def),
-            TopLevelExpression::TraitImplementation(trait_impl) => self.trait_implementation(trait_impl),
-            TopLevelExpression::Implementation(implementation) => self.implementation(implementation),
+            Item::Namespace(ns) => namespace(ns),
+            Item::Import(import) => self.import(import),
+            Item::FunctionDefinition(func) => self.function_definition(func),
+            Item::StructDefinition(struct_def) => self.struct_definition(struct_def),
+            Item::TraitDefinition(trait_def) => self.trait_definition(trait_def),
+            Item::EnumDefinition(enum_def) => self.enum_definition(enum_def),
+            Item::TraitImplementation(trait_impl) => self.trait_implementation(trait_impl),
+            Item::Implementation(implementation) => self.implementation(implementation),
         }
     }
 
@@ -387,6 +387,20 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         str("import ").append(root).space().append(wrapped_names)
     }
 
+    fn signature<'a>(&mut self, func: &'a Signature) -> Document<'a> {
+        let signature = str("fn ")
+            .append(if func.external { "external " } else { "" })
+            .append(func.name.as_str())
+            .append(self.type_parameters(&func.type_parameters))
+            .append(self.parameters(&func.parameters));
+
+        match &func.return_type {
+            Some(ret_ty) => signature.append(" -> ").append(self.ty(ret_ty)),
+            None => signature,
+        }
+        .group()
+    }
+
     fn function_definition<'a>(&mut self, func: &'a FunctionDefinition) -> Document<'a> {
         let doc_comment = match &func.documentation {
             Some(doc) => self.doc_comment(doc),
@@ -395,17 +409,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
 
         let signature = doc_comment
             .append(visibility(func.visibility.as_ref()))
-            .append("fn ")
-            .append(if func.external { "external " } else { "" })
-            .append(func.name.as_str())
-            .append(self.type_parameters(&func.type_parameters))
-            .append(self.parameters(&func.parameters));
-
-        let signature = match &func.return_type {
-            Some(ret_ty) => signature.append(" -> ").append(self.ty(ret_ty)),
-            None => signature,
-        }
-        .group();
+            .append(self.signature(&func.signature));
 
         let body = match &func.block {
             Some(block) => str(" ").append(self.block(block)),
@@ -516,17 +520,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             None => empty(),
         };
 
-        let signature = doc_comment
-            .append("fn ")
-            .append(method.name.as_str())
-            .append(self.type_parameters(&method.type_parameters))
-            .append(self.parameters(&method.parameters));
-
-        let signature = match &method.return_type {
-            Some(ret_ty) => signature.append(" -> ").append(self.ty(ret_ty)),
-            None => signature,
-        }
-        .group();
+        let signature = doc_comment.append(self.signature(&method.signature));
 
         let body = match &method.block {
             Some(block) => str(" ").append(self.block(block)),
@@ -607,17 +601,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
     }
 
     fn trait_method_implementation<'a>(&mut self, method: &'a TraitMethodImplementation) -> Document<'a> {
-        let signature = str("fn ")
-            .append(if method.external { "external " } else { "" })
-            .append(method.name.as_str())
-            .append(self.type_parameters(&method.type_parameters))
-            .append(self.parameters(&method.parameters));
-
-        let signature = match &method.return_type {
-            Some(ret_ty) => signature.append(" -> ").append(self.ty(ret_ty)),
-            None => signature,
-        }
-        .group();
+        let signature = self.signature(&method.signature);
 
         let body = match &method.block {
             Some(block) => str(" ").append(self.block(block)),
@@ -661,17 +645,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         let signature = doc_comment
             .append(attributes)
             .append(visibility(method.visibility.as_ref()))
-            .append(str("fn "))
-            .append(if method.external { "external " } else { "" })
-            .append(method.name.as_str())
-            .append(self.type_parameters(&method.type_parameters))
-            .append(self.parameters(&method.parameters));
-
-        let signature = match &method.return_type {
-            Some(ret_ty) => signature.append(" -> ").append(self.ty(ret_ty)),
-            None => signature,
-        }
-        .group();
+            .append(self.signature(&method.signature));
 
         let body = match &method.block {
             Some(block) => str(" ").append(self.block(block)),

@@ -7,58 +7,63 @@ expression: "parse(\"fn test<T1, T2>() -> void {}\")"
         FunctionDefinition {
             attributes: [],
             visibility: None,
-            external: false,
-            name: Identifier {
-                name: "test",
-                location: Location(
-                    3..7,
-                ),
-            },
-            parameters: [],
-            type_parameters: [
-                TypeParameter {
-                    name: Identifier {
-                        name: "T1",
-                        location: Location(
-                            8..10,
-                        ),
-                    },
-                    constraints: [],
+            signature: Signature {
+                external: false,
+                name: Identifier {
+                    name: "test",
+                    location: Location(
+                        3..7,
+                    ),
                 },
-                TypeParameter {
-                    name: Identifier {
-                        name: "T2",
-                        location: Location(
-                            12..14,
-                        ),
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T1",
+                            location: Location(
+                                8..10,
+                            ),
+                        },
+                        constraints: [],
                     },
-                    constraints: [],
-                },
-            ],
-            return_type: Some(
-                Named(
-                    NamedType {
-                        name: Path {
-                            root: [],
-                            name: Type {
-                                name: Identifier {
-                                    name: "void",
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T2",
+                            location: Location(
+                                12..14,
+                            ),
+                        },
+                        constraints: [],
+                    },
+                ],
+                parameters: [],
+                return_type: Some(
+                    Named(
+                        NamedType {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "void",
+                                        location: Location(
+                                            21..25,
+                                        ),
+                                    },
+                                    bound_types: [],
                                     location: Location(
                                         21..25,
                                     ),
                                 },
-                                bound_types: [],
                                 location: Location(
                                     21..25,
                                 ),
                             },
-                            location: Location(
-                                21..25,
-                            ),
                         },
-                    },
+                    ),
                 ),
-            ),
+                location: Location(
+                    0..25,
+                ),
+            },
             block: Some(
                 Block {
                     statements: [],

@@ -7,49 +7,54 @@ expression: "parse(\"fn test<T>() -> void {}\")"
         FunctionDefinition {
             attributes: [],
             visibility: None,
-            external: false,
-            name: Identifier {
-                name: "test",
-                location: Location(
-                    3..7,
-                ),
-            },
-            parameters: [],
-            type_parameters: [
-                TypeParameter {
-                    name: Identifier {
-                        name: "T",
-                        location: Location(
-                            8..9,
-                        ),
-                    },
-                    constraints: [],
+            signature: Signature {
+                external: false,
+                name: Identifier {
+                    name: "test",
+                    location: Location(
+                        3..7,
+                    ),
                 },
-            ],
-            return_type: Some(
-                Named(
-                    NamedType {
-                        name: Path {
-                            root: [],
-                            name: Type {
-                                name: Identifier {
-                                    name: "void",
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T",
+                            location: Location(
+                                8..9,
+                            ),
+                        },
+                        constraints: [],
+                    },
+                ],
+                parameters: [],
+                return_type: Some(
+                    Named(
+                        NamedType {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "void",
+                                        location: Location(
+                                            16..20,
+                                        ),
+                                    },
+                                    bound_types: [],
                                     location: Location(
                                         16..20,
                                     ),
                                 },
-                                bound_types: [],
                                 location: Location(
                                     16..20,
                                 ),
                             },
-                            location: Location(
-                                16..20,
-                            ),
                         },
-                    },
+                    ),
                 ),
-            ),
+                location: Location(
+                    0..20,
+                ),
+            },
             block: Some(
                 Block {
                     statements: [],

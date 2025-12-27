@@ -31,58 +31,63 @@ expression: "parse(\"impl Test { fn test<T1, T2>() -> void {} }\")"
                 MethodDefinition {
                     attributes: [],
                     visibility: None,
-                    external: false,
-                    name: Identifier {
-                        name: "test",
-                        location: Location(
-                            15..19,
-                        ),
-                    },
-                    parameters: [],
-                    type_parameters: [
-                        TypeParameter {
-                            name: Identifier {
-                                name: "T1",
-                                location: Location(
-                                    20..22,
-                                ),
-                            },
-                            constraints: [],
+                    signature: Signature {
+                        external: false,
+                        name: Identifier {
+                            name: "test",
+                            location: Location(
+                                15..19,
+                            ),
                         },
-                        TypeParameter {
-                            name: Identifier {
-                                name: "T2",
-                                location: Location(
-                                    24..26,
-                                ),
+                        type_parameters: [
+                            TypeParameter {
+                                name: Identifier {
+                                    name: "T1",
+                                    location: Location(
+                                        20..22,
+                                    ),
+                                },
+                                constraints: [],
                             },
-                            constraints: [],
-                        },
-                    ],
-                    return_type: Some(
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "void",
+                            TypeParameter {
+                                name: Identifier {
+                                    name: "T2",
+                                    location: Location(
+                                        24..26,
+                                    ),
+                                },
+                                constraints: [],
+                            },
+                        ],
+                        parameters: [],
+                        return_type: Some(
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "void",
+                                                location: Location(
+                                                    33..37,
+                                                ),
+                                            },
+                                            bound_types: [],
                                             location: Location(
                                                 33..37,
                                             ),
                                         },
-                                        bound_types: [],
                                         location: Location(
                                             33..37,
                                         ),
                                     },
-                                    location: Location(
-                                        33..37,
-                                    ),
                                 },
-                            },
+                            ),
                         ),
-                    ),
+                        location: Location(
+                            12..37,
+                        ),
+                    },
                     block: Some(
                         Block {
                             statements: [],
