@@ -9,14 +9,6 @@ use crate::{DefinedItem, LowerModule};
 impl LowerModule {
     #[libftrace::traced(level = Debug)]
     pub(super) fn lower_items(&mut self, expressions: Vec<lume_ast::Item>) -> Result<()> {
-        for expr in &expressions {
-            if let Err(err) = self.define_imported_items(expr) {
-                self.dcx.emit_and_push(err);
-            }
-        }
-
-        self.dcx.ensure_untainted()?;
-
         for expr in expressions {
             if let Err(err) = self.top_level_expression(expr) {
                 self.dcx.emit_and_push(err);
@@ -24,76 +16,6 @@ impl LowerModule {
         }
 
         self.dcx.ensure_untainted()
-    }
-
-    #[libftrace::traced(level = Debug)]
-    fn define_imported_items(&mut self, expr: &lume_ast::Item) -> Result<()> {
-        match expr {
-            lume_ast::Item::Namespace(namespace) => {
-                self.namespace = Some(self.import_path(namespace.path.clone())?);
-
-                Ok(())
-            }
-            lume_ast::Item::StructDefinition(struct_def) => {
-                let id = self.next_node_id();
-
-                let path_segment = lume_ast::PathSegment::ty(struct_def.name.clone());
-                let name = self.expand_name(path_segment)?;
-
-                self.ensure_item_undefined(id, DefinedItem::Type(name))?;
-                self.add_lang_items(id, &struct_def.attributes)?;
-
-                Ok(())
-            }
-            lume_ast::Item::TraitDefinition(trait_def) => {
-                let id = self.next_node_id();
-
-                let path_segment = lume_ast::PathSegment::ty(trait_def.name.clone());
-                let name = self.expand_name(path_segment)?;
-
-                self.ensure_item_undefined(id, DefinedItem::Type(name))?;
-                self.add_lang_items(id, &trait_def.attributes)?;
-
-                Ok(())
-            }
-            lume_ast::Item::EnumDefinition(enum_def) => {
-                let id = self.next_node_id();
-
-                let path_segment = lume_ast::PathSegment::ty(enum_def.name.clone());
-                let name = self.expand_name(path_segment)?;
-
-                self.ensure_item_undefined(id, DefinedItem::Type(name))?;
-
-                Ok(())
-            }
-            lume_ast::Item::FunctionDefinition(func_def) => {
-                let id = self.next_node_id();
-
-                let path_segment = lume_ast::PathSegment::callable(func_def.signature.name.clone());
-                let name = self.expand_name(path_segment)?;
-
-                self.ensure_item_undefined(id, DefinedItem::Function(name))?;
-                self.add_lang_items(id, &func_def.attributes)?;
-
-                Ok(())
-            }
-            lume_ast::Item::Implementation(implementation) => {
-                let impl_name = implementation.name.to_string();
-                let type_name = self.expand_name(lume_ast::PathSegment::ty(impl_name))?;
-
-                for method in &implementation.methods {
-                    let id = self.next_node_id();
-                    let method_name =
-                        self.path_segment(lume_ast::PathSegment::callable(method.signature.name.clone()))?;
-
-                    self.ensure_item_undefined(id, DefinedItem::Method(type_name.clone(), method_name))?;
-                    self.add_lang_items(id, &method.attributes)?;
-                }
-
-                Ok(())
-            }
-            lume_ast::Item::Import(_) | lume_ast::Item::TraitImplementation(_) => Ok(()),
-        }
     }
 
     #[libftrace::traced(level = Debug)]
@@ -148,8 +70,11 @@ impl LowerModule {
 
     #[libftrace::traced(level = Debug)]
     fn function_definition(&mut self, expr: lume_ast::FunctionDefinition) -> Result<lume_hir::Node> {
+        let id = self.next_node_id();
+        self.add_lang_items(id, &expr.attributes)?;
+
         let name = self.expand_name(lume_ast::PathSegment::callable(expr.signature.name))?;
-        let id = *self.defined.get(&DefinedItem::Function(name.clone())).unwrap();
+        self.ensure_item_undefined(id, DefinedItem::Function(name.clone()))?;
 
         let visibility = lower_visibility(expr.visibility.as_ref());
         let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
@@ -255,13 +180,15 @@ impl LowerModule {
 
     #[libftrace::traced(level = Debug)]
     fn struct_definition(&mut self, expr: lume_ast::StructDefinition) -> Result<lume_hir::Node> {
-        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
-        let id = *self.defined.get(&DefinedItem::Type(name.clone())).unwrap();
+        let id = self.next_node_id();
+        self.add_lang_items(id, &expr.attributes)?;
 
+        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
         let visibility = lower_visibility(expr.visibility.as_ref());
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
 
+        self.ensure_item_undefined(id, DefinedItem::Type(name.clone()))?;
         self.self_type = Some(name.clone());
 
         let mut fields = Vec::with_capacity(expr.fields.len());
@@ -369,10 +296,11 @@ impl LowerModule {
         type_name: lume_hir::Path,
         expr: lume_ast::MethodDefinition,
     ) -> Result<lume_hir::MethodDefinition> {
-        let method_name = self.path_segment(lume_ast::PathSegment::callable(expr.signature.name.clone()))?;
-        let defined_item = DefinedItem::Method(type_name, method_name);
+        let id = self.next_node_id();
+        self.add_lang_items(id, &expr.attributes)?;
 
-        let id = *self.defined.get(&defined_item).unwrap();
+        let method_name = self.path_segment(lume_ast::PathSegment::callable(expr.signature.name.clone()))?;
+        self.ensure_item_undefined(id, DefinedItem::Method(type_name, method_name))?;
 
         let visibility = lower_visibility(expr.visibility.as_ref());
         let name = self.identifier(expr.signature.name);
@@ -400,10 +328,13 @@ impl LowerModule {
 
     #[libftrace::traced(level = Debug)]
     fn trait_definition(&mut self, expr: lume_ast::TraitDefinition) -> Result<lume_hir::Node> {
+        let id = self.next_node_id();
+        self.add_lang_items(id, &expr.attributes)?;
+
         let self_name = self.expand_self_name(expr.name.clone(), &expr.type_parameters)?;
 
         let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
-        let id = *self.defined.get(&DefinedItem::Type(name.clone())).unwrap();
+        self.ensure_item_undefined(id, DefinedItem::Type(name.clone()))?;
 
         let visibility = lower_visibility(expr.visibility.as_ref());
         let type_parameters = self.type_parameters(expr.type_parameters)?;
