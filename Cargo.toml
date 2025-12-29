@@ -13,6 +13,11 @@ name = "lume"
 path = "src/lume.rs"
 test = false
 
+[[bin]]
+name = "lbs"
+path = "src/lbs.rs"
+test = false
+
 [workspace.package]
 version = "0.1.1"
 rust-version = "1.88.0"
@@ -28,7 +33,10 @@ indexmap = { version = "=2.11.3" }
 libftrace = { version = "^0", default-features = false }
 lume_architect = { git = "https://github.com/lume-lang/architect" }
 owo-colors = { version = "=4.2.2" }
+regex = { version = "=1.11.1" }
+semver = { version = "^1", features = ["serde"] }
 serde = { version = "=1.0.225", features = ["derive"] }
+spinoff = { version = "=0.8.0" }
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }
@@ -48,6 +56,7 @@ similar-names = "allow"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fuzzing)'] }
 
 [dependencies]
+bootstrap = { path = "tools/bootstrap" }
 libftrace = { workspace = true }
 lume_cli = { path = "compiler/lume_cli" }
 lume_driver = { path = "compiler/lume_driver" }

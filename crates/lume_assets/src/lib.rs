@@ -106,10 +106,63 @@ fn asset_dir() -> Result<PathBuf> {
     Ok(asset_dir_path)
 }
 
+/// Attempts to determine the absolute path to the toolchain path, depending on
+/// the current execution environment.
+///
+/// When a directory is returned from this function, it is guaranteed to exist.
+///
+/// # Errors
+///
+/// Returns [`Err`] if the path could not be found within the current
+/// environment.
+pub fn toolchain_base_path() -> Result<PathBuf> {
+    let Some(lume_dir) = determine_data_dir() else {
+        return Err(SimpleDiagnostic::new("could not determine toolchain directory").into());
+    };
+
+    let toolchains_path = lume_dir.join("toolchains");
+
+    std::fs::create_dir_all(&toolchains_path).map_diagnostic()?;
+
+    Ok(toolchains_path)
+}
+
+/// Attempts to determine the absolute path to the link which points to the
+/// currently selected toolchain.
+///
+/// If no toolchain is selected, returns [`None`].
+///
+/// # Errors
+///
+/// Returns [`Err`] if the path could not be determined within the current
+/// environment.
+pub fn current_toolchain_linkpath() -> Result<PathBuf> {
+    let toolchain_path = toolchain_base_path()?;
+
+    Ok(toolchain_path.join("current"))
+}
+
+/// Attempts to determine the absolute path to the currently selected toolchain.
+///
+/// If no toolchain is selected, returns [`None`].
+///
+/// # Errors
+///
+/// Returns [`Err`] if the path could not be determined within the current
+/// environment.
+pub fn toolchain_current_path() -> Result<Option<PathBuf>> {
+    let link_path = current_toolchain_linkpath()?;
+    if !link_path.exists() {
+        return Ok(None);
+    }
+
+    std::fs::read_link(link_path).map_diagnostic().map(Some)
+}
+
 /// Determines the directory where the system runtime library would be stored.
 ///
 /// Depending on the directory returned, the directory might not exist.
-fn determine_data_dir() -> Option<PathBuf> {
+pub fn determine_data_dir() -> Option<PathBuf> {
     // |Platform | Value                                    | Example                                  |
     // | ------- | ---------------------------------------- | ---------------------------------------- |
     // | Linux   | `$XDG_DATA_HOME` or `$HOME`/.local/share | /home/alice/.local/share                 |
@@ -150,6 +203,34 @@ fn determine_data_dir() -> Option<PathBuf> {
     // | Windows | `{FOLDERID_Profile}` | C:\Users\Alice |
     if let Some(home_dir) = dirs::home_dir() {
         return Some(home_dir.join(".lume"));
+    }
+
+    None
+}
+
+/// Attempts to determine the absolute path to the local Lume directory within
+/// the home directory.
+///
+/// Depending on the directory returned, the directory might not exist.
+pub fn determine_lume_home() -> Option<PathBuf> {
+    // |Platform | Value                | Example        |
+    // | ------- | -------------------- | -------------- |
+    // | Linux   | `$HOME`              | /home/alice    |
+    // | macOS   | `$HOME`              | /Users/Alice   |
+    // | Windows | `{FOLDERID_Profile}` | C:\Users\Alice |
+    if let Some(home_dir) = dirs::home_dir() {
+        return Some(home_dir.join(".lume"));
+    }
+
+    // |Platform | Value                                    | Example                                  |
+    // | ------- | ---------------------------------------- | ---------------------------------------- |
+    // | Linux   | `$XDG_DATA_HOME` or `$HOME`/.local/share | /home/alice/.local/share                 |
+    // | macOS   | `$HOME`/Library/Application Support      | /Users/Alice/Library/Application Support |
+    // | Windows | `{FOLDERID_LocalAppData}`                | C:\Users\Alice\AppData\Local             |
+    if let Some(dir) = dirs::data_local_dir()
+        && dir.exists()
+    {
+        return Some(dir.join("lume"));
     }
 
     None

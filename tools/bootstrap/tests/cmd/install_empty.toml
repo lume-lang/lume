@@ -1,0 +1,3 @@
+bin.name = "lbs"
+args = ["install"]
+status.code = 2

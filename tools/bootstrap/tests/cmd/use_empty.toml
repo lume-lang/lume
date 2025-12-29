@@ -1,0 +1,3 @@
+bin.name = "lbs"
+args = ["use"]
+status.code = 2

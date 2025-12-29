@@ -1,0 +1,3 @@
+bin.name = "lbs"
+args = ["install", "--branch=main", "--dry-run"]
+status.code = 0

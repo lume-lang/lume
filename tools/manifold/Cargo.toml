@@ -15,7 +15,7 @@ error_snippet = { workspace = true }
 glob = "^0"
 owo-colors = { workspace = true }
 rayon = "=1.11.0"
-regex = "=1.11.1"
+regex = { workspace = true }
 similar = { version = "=2.7.0", features = ["inline"] }
 
 [lints]
