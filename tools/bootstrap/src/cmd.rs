@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Output};
 
 use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 
@@ -13,7 +13,7 @@ use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 ///
 /// Returns [`Err`] if the command failed to spawn, the command timed out, or
 /// the command exited with a non-zero status code.
-pub fn execute_with<B, A, S, F>(binary: B, args: A, f: F) -> Result<Option<i32>>
+pub fn execute_with<B, A, S, F>(binary: B, args: A, f: F) -> Result<Output>
 where
     B: AsRef<OsStr>,
     A: IntoIterator<Item = S>,
@@ -26,7 +26,7 @@ where
     cmd.args(args);
 
     cmd.stdin(std::process::Stdio::null());
-    cmd.stdout(std::process::Stdio::null());
+    cmd.stdout(std::process::Stdio::piped());
     cmd.stderr(std::process::Stdio::piped());
 
     f(&mut cmd);
@@ -45,7 +45,7 @@ where
         .into());
     }
 
-    Ok(output.status.code())
+    Ok(output)
 }
 
 /// Executes the given command, along with the defined arguments, inside the
@@ -55,7 +55,7 @@ where
 ///
 /// Returns [`Err`] if the command failed to spawn, the command timed out, or
 /// the command exited with a non-zero status code.
-pub fn execute_cwd<B, A, S, C>(binary: B, args: A, cwd: C) -> Result<Option<i32>>
+pub fn execute_cwd<B, A, S, C>(binary: B, args: A, cwd: C) -> Result<Output>
 where
     B: AsRef<OsStr>,
     A: IntoIterator<Item = S>,
@@ -73,7 +73,7 @@ where
 ///
 /// Returns [`Err`] if the command failed to spawn, the command timed out, or
 /// the command exited with a non-zero status code.
-pub fn execute<B, A, S>(binary: B, args: A) -> Result<Option<i32>>
+pub fn execute<B, A, S>(binary: B, args: A) -> Result<Output>
 where
     B: AsRef<OsStr>,
     A: IntoIterator<Item = S>,

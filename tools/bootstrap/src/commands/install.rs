@@ -34,7 +34,7 @@ impl InstallCommand {
 
         let compiler_root = task! {
             "cloning 'lume-lang/lume' compiler..." => {
-                crate::run_dry(|| crate::toolchain::clone_version(&version))
+                crate::run_dry(|| crate::git::clone(&version))
             },
             Ok(path) => {
                 format!("cloned 'lume-lang/lume' ({})", path.display())

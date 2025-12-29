@@ -2,13 +2,9 @@ use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
 use error_snippet::{Result, SimpleDiagnostic};
-use lume_errors::{IntoDiagnostic, MapDiagnostic};
+use lume_errors::MapDiagnostic;
 
 use crate::{cmd, fs};
-
-/// Defines the URL of the Lume Git repository, which is used to clone the
-/// compiler.
-pub const LUME_GIT_REPOSITORY: &str = "https://github.com/lume-lang/lume.git";
 
 #[derive(clap::Parser, clap::ValueEnum, Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Profile {
@@ -56,6 +52,16 @@ pub enum TargetVersion {
     Commit(String),
 }
 
+impl TargetVersion {
+    pub fn references_branch(&self) -> bool {
+        matches!(self, Self::Branch(_) | Self::Tag(_))
+    }
+
+    pub fn is_commit(&self) -> bool {
+        matches!(self, Self::Commit(_))
+    }
+}
+
 impl Display for TargetVersion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -63,50 +69,6 @@ impl Display for TargetVersion {
             Self::Tag(version) => write!(f, "{version}"),
             Self::Commit(commit) => write!(f, "{commit}"),
         }
-    }
-}
-
-/// Attempts to clone the Lume compiler with the specified version.
-pub fn clone_version(version: &TargetVersion) -> Result<PathBuf> {
-    if !crate::is_binary_installed("git") {
-        return Err(SimpleDiagnostic::new("failed to clone repository: git is not installed").into());
-    }
-
-    let dest_directory = download_directory_for(version)?;
-    let git_clone_args = git_clone_arguments(version);
-
-    // Git will fail to clone the repository if it already exists.
-    if dest_directory.exists() {
-        if dest_directory.join(".git").exists() {
-            return Ok(dest_directory);
-        }
-
-        if let Err(err) = std::fs::remove_dir_all(&dest_directory) {
-            return Err(SimpleDiagnostic::new(
-                "failed to clone repository: destination folder already exists and cannot be deleted",
-            )
-            .add_cause(err.into_diagnostic())
-            .into());
-        }
-    }
-
-    fs::create_dir(&dest_directory)?;
-
-    let mut args = vec!["clone", "--depth=1", git_clone_args.as_str(), LUME_GIT_REPOSITORY];
-    args.push(dest_directory.to_str().unwrap());
-
-    cmd::execute("git", args)?;
-
-    Ok(dest_directory)
-}
-
-/// Returns a list of extra arguments to pass to `git clone`, corresponding
-/// to the target version passed.
-fn git_clone_arguments(version: &TargetVersion) -> String {
-    match version {
-        TargetVersion::Branch(branch) => format!("--revision=refs/heads/{branch}"),
-        TargetVersion::Tag(tag) => format!("--revision=refs/tags/v{tag}"),
-        TargetVersion::Commit(commit) => format!("--revision={commit}"),
     }
 }
 

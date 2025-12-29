@@ -9,6 +9,7 @@ use crate::toolchain::TargetVersion;
 
 pub(crate) mod cmd;
 pub(crate) mod fs;
+pub(crate) mod git;
 pub(crate) mod home;
 pub(crate) mod toolchain;
 
@@ -21,18 +22,6 @@ mod commands {
     pub mod list;
     pub mod uninstall;
     pub mod use_;
-}
-
-pub(crate) mod env {
-    cfg_if::cfg_if! {
-        if #[cfg(target_os = "macos")] {
-            pub mod macos;
-            pub use macos::LUME_ENV;
-        } else if #[cfg(target_os = "linux")] {
-            pub mod linux;
-            pub use linux::LUME_ENV;
-        }
-    }
 }
 
 #[derive(Parser)]
