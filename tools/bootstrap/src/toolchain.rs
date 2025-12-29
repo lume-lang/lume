@@ -188,6 +188,9 @@ pub fn link_toolchain(artifact_root: &Path) -> Result<()> {
         return Err(err);
     }
 
+    // If the links in the home directory don't already exist, link them.
+    crate::home::add_links_if_needed()?;
+
     Ok(())
 }
 
