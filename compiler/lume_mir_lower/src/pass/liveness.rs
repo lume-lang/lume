@@ -1,4 +1,3 @@
-use indexmap::IndexMap;
 use lume_mir_queries::analysis::liveness::BlockLiveness;
 
 use super::*;
@@ -83,7 +82,7 @@ impl Pass for DefineLiveness {
 /// Dump the given liveness information for a function into `stdout`.
 #[cfg(debug_assertions)]
 #[allow(dead_code, clippy::disallowed_macros, reason = "only used in debugging")]
-fn dump_liveness(func: &Function, liveness: &IndexMap<BasicBlockId, BlockLiveness>) {
+fn dump_liveness(func: &Function, liveness: &indexmap::IndexMap<BasicBlockId, BlockLiveness>) {
     println!("{}:", func.name);
     for (&block_id, BlockLiveness { live_in, live_out }) in liveness {
         println!("  [{block_id}]");

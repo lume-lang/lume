@@ -36,7 +36,6 @@ pub struct BuildOptions {
     #[clap(flatten, next_help_heading = "Codegen")]
     pub codegen: CodegenOptions,
 
-    #[cfg(debug_assertions)]
     #[clap(flatten, next_help_heading = "Development")]
     pub dev: DevelopmentBuildOptions,
 }
@@ -72,11 +71,11 @@ pub struct CodegenOptions {
     pub linker: Option<Linker>,
 }
 
-#[cfg(debug_assertions)]
 #[derive(Debug, clap::Parser)]
 pub struct DevelopmentBuildOptions {
     /// Print the type context before analyzing.
     #[arg(long)]
+    #[cfg_attr(not(debug_assertions), arg(hide = true))]
     pub print_type_ctx: bool,
 
     /// Prints the generated MIR
@@ -90,16 +89,19 @@ pub struct DevelopmentBuildOptions {
         required = false,
         num_args = 0..=1
     )]
+    #[cfg_attr(not(debug_assertions), arg(hide = true))]
     pub dump_mir: Option<Vec<String>>,
 
     /// Filters the dumped MIR functions
     ///
     /// Comma-separated list of the unmangled function names to dump.
     #[arg(long, value_name = "FUNC", value_delimiter = ',')]
+    #[cfg_attr(not(debug_assertions), arg(hide = true))]
     pub dump_mir_func: Vec<String>,
 
     /// Dumps the generated codegen IR
     #[arg(long)]
+    #[cfg_attr(not(debug_assertions), arg(hide = true))]
     pub dump_codegen_ir: bool,
 }
 
