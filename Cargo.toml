@@ -10,7 +10,7 @@ resolver = "3"
 
 [[bin]]
 name = "lume"
-path = "src/main.rs"
+path = "src/lume.rs"
 test = false
 
 [workspace.package]
