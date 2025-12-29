@@ -3,6 +3,7 @@ name = "lume"
 version = { workspace = true }
 rust-version = { workspace = true }
 edition = { workspace = true }
+default-run = "lume"
 
 [workspace]
 members = ["compiler/lume_cli", "crates/*", "tools/*", "fuzz", "rt/lume_runtime"]
