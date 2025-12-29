@@ -1,0 +1,23 @@
+[package]
+name = "bootstrap"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+lume_assets = { path = "../../crates/lume_assets" }
+lume_errors = { path = "../../crates/lume_errors" }
+
+clap = { workspace = true }
+error_snippet = { workspace = true }
+error_snippet_derive = { workspace = true }
+libftrace = { workspace = true }
+regex = { workspace = true }
+semver = { workspace = true }
+spinoff = { workspace = true }
+
+[dev-dependencies]
+trycmd = { version = "=0.15.11" }
+
+[lints]
+workspace = true

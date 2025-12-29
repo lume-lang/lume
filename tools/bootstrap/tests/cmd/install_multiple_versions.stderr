@@ -1,0 +1,5 @@
+error: the argument '--latest' cannot be used with '--tag <VERSION>'
+
+Usage: lbs install [OPTIONS] [TOOLCHAIN]
+
+For more information, try '--help'.
