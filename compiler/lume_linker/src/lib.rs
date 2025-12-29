@@ -126,7 +126,7 @@ pub fn link_objects(objects: Vec<ObjectLocation>, output: &PathBuf, opts: &Optio
     // GCC will not link correctly if the runtime library is presented in the
     // beginning of the argument list, so we must add all source object files
     // first.
-    cmd.arg(determine_runtime_path(opts)?);
+    cmd.arg(runtime_linker_arg(opts)?);
 
     // Target specific linker options.
     if cfg!(target_os = "linux") {
@@ -177,17 +177,27 @@ static LIB_RUNTIME_NAME: &str = "liblume_runtime.lib";
 #[cfg(not(target_env = "msvc"))]
 static LIB_RUNTIME_NAME: &str = "liblume_runtime.a";
 
-/// Determines the full path of the runtime library.
-fn determine_runtime_path(opts: &Options) -> Result<PathBuf> {
+/// Determines the linker argument for linking with the runtime library.
+fn runtime_linker_arg(opts: &Options) -> Result<String> {
     if let Some(defined_path) = &opts.runtime_path {
         return if defined_path.is_absolute() {
-            Ok(defined_path.clone())
+            Ok(format!("{}", defined_path.display()))
         } else {
             let cwd = std::env::current_dir().expect("could not get working directory");
+            let absolute_path = cwd.join(defined_path);
 
-            Ok(cwd.join(defined_path))
+            Ok(format!("{}", absolute_path.display()))
         };
     }
 
-    lume_assets::asset_file_path(LIB_RUNTIME_NAME)
+    // If running inside the source tree, use the static runtime library within the
+    // build directory.
+    if lume_assets::is_dev() {
+        let lib_path = lume_assets::asset_file_path(LIB_RUNTIME_NAME)?;
+
+        Ok(format!("{}", lib_path.display()))
+    } else {
+        // Otherwise, let the linker find the correct runtime library.
+        Ok(String::from("-llume_runtime"))
+    }
 }
