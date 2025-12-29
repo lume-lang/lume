@@ -19,7 +19,6 @@ pub(crate) struct LumeCli {
     #[clap(subcommand)]
     pub subcommand: LumeSubcommands,
 
-    #[cfg(debug_assertions)]
     #[clap(flatten)]
     pub dev: LumeDevelopmentCommands,
 }
@@ -35,7 +34,6 @@ pub enum LumeSubcommands {
     Lsp(commands::LanguageServerCommand),
 }
 
-#[cfg(debug_assertions)]
 #[derive(Debug, Parser)]
 pub(crate) struct LumeDevelopmentCommands {
     /// Panics the compiler when an error is emitted instead of printing it.
@@ -43,6 +41,7 @@ pub(crate) struct LumeDevelopmentCommands {
     /// This allows a developer to see a stacktrace of where the error was
     /// emitted from.
     #[arg(long, global = true, help_heading = "Development")]
+    #[cfg_attr(not(debug_assertions), arg(hide = true))]
     pub panic_on_error: bool,
 
     /// Prints the location of where diagnostics are emitted.
@@ -50,6 +49,7 @@ pub(crate) struct LumeDevelopmentCommands {
     /// This allows a developer to see where an error is emitted from without
     /// having to look through a stack trace.
     #[arg(long, global = true, help_heading = "Development")]
+    #[cfg_attr(not(debug_assertions), arg(hide = true))]
     pub track_diagnostics: bool,
 }
 
@@ -67,12 +67,10 @@ pub fn lume_cli_entry() {
     let matches = LumeCli::parse();
     let dcx = DiagCtx::new();
 
-    #[cfg(debug_assertions)]
     if matches.dev.panic_on_error {
         dcx.panic_on_error();
     }
 
-    #[cfg(debug_assertions)]
     if matches.dev.track_diagnostics {
         dcx.track_diagnostics();
     }
