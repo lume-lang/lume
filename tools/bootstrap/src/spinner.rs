@@ -37,7 +37,7 @@ macro_rules! warn {
 macro_rules! success {
     ($($arg:tt)*) => {
         #[allow(clippy::disallowed_macros, reason = "used for CLI logging")]
-        {
+        if !$crate::is_quiet() {
             print!("{} ", colorized!("✓", owo_colors::Style::new().green().bold()));
             println!($($arg)*);
         }

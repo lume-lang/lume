@@ -50,10 +50,14 @@ impl InstallCommand {
                 crate::run_dry(|| crate::git::clone(&version))
             },
             Ok(path) => {
-                format!(
-                    "cloned 'lume-lang/lume' ({})",
-                    colorized!(path.display(), Style::new().dimmed())
-                )
+                if crate::verbose() > 0 {
+                    format!(
+                        "cloned 'lume-lang/lume' ({})",
+                        colorized!(path.display(), Style::new().dimmed())
+                    )
+                } else {
+                    String::from("cloned 'lume-lang/lume'")
+                }
             },
             Err(err) => {
                 format!("failed to clone 'lume-lang/lume' ({})", err.message())

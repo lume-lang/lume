@@ -36,7 +36,7 @@ static LINKS: &[&str] = &["bin/lume", "lib/liblume_runtime.a"];
 macro_rules! print_post_install_env {
     () => {
         #[allow(clippy::disallowed_macros)]
-        {
+        if !$crate::is_quiet() {
             println!(
                 "
              🎉 {header}
@@ -66,7 +66,7 @@ Afterwards, you can verify that Lume is installed correctly by running:
 macro_rules! print_post_install_noenv {
     (path => $path:expr) => {
         #[allow(clippy::disallowed_macros)]
-        {
+        if !$crate::is_quiet() {
             println!(
                 "
              🎉 {header}

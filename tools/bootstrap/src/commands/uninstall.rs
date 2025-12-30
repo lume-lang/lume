@@ -46,11 +46,17 @@ impl UninstallCommand {
                     Ok(())
                 })
             },
-            Ok(()) => format!(
-                "removed toolchain {} ({})",
-                self.version,
-                colorized!(toolchain_directory.display(), Style::new().dimmed())
-            ),
+            Ok(()) => {
+                if crate::verbose() > 0 {
+                    format!(
+                        "removed toolchain {} ({})",
+                        self.version,
+                        colorized!(toolchain_directory.display(), Style::new().dimmed())
+                    )
+                } else {
+                    format!("removed toolchain {}", self.version)
+                }
+            },
             Err(err) => {
                 format!("failed to remove toolchain ({})", err.message())
             }
