@@ -212,6 +212,7 @@ dependencies = [
  "libftrace",
  "lume_assets",
  "lume_errors",
+ "owo-colors",
  "regex",
  "semver",
  "spinoff",
