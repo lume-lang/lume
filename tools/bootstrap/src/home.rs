@@ -33,6 +33,76 @@ static LINKS: &[&str] = &["bin/lume.exe", "lib/liblume_runtime.lib"];
 #[cfg(not(target_env = "msvc"))]
 static LINKS: &[&str] = &["bin/lume", "lib/liblume_runtime.a"];
 
+macro_rules! print_post_install_env {
+    () => {
+        #[allow(clippy::disallowed_macros)]
+        {
+            println!(
+                "
+             🎉 {header}
+
+Before you can use it, you may need to restart your shell or source your
+shell configuration file, so your `PATH` environment variable is updated.
+
+Your shell configuration file has been updated, so it can locate the new
+Lume toolchain. The shell configuration file is located at: {shellrc}
+
+Afterwards, you can verify that Lume is installed correctly by running:
+
+    {version_cmd}
+
+",
+                header = colorized!(
+                    "Lume has been installed successfully!",
+                    owo_colors::Style::new().bright_yellow().bold()
+                ),
+                version_cmd = colorized!("lume --version", owo_colors::Style::new().dimmed()),
+                shellrc = colorized!(shellrc(), owo_colors::Style::new().dimmed())
+            )
+        }
+    };
+}
+
+macro_rules! print_post_install_noenv {
+    (path => $path:expr) => {
+        #[allow(clippy::disallowed_macros)]
+        {
+            println!(
+                "
+             🎉 {header}
+
+Before you can use it, you need to add the Lume bin directory to your
+`PATH` environment variable. You can do it for the current session using:
+
+    {temporary_cmd}
+
+To do this permanently, you can add the following line to your shell
+configuration file (e.g., ~/.bashrc, ~/.zshrc):
+
+    {persistent_cmd}
+
+",
+                header = colorized!(
+                    "Lume has been installed successfully!",
+                    owo_colors::Style::new().bright_yellow().bold()
+                ),
+                temporary_cmd = colorized!(
+                    format!(r#"export PATH="{path}:$PATH""#, path = $path),
+                    owo_colors::Style::new().dimmed()
+                ),
+                persistent_cmd = colorized!(
+                    format!(
+                        r#"echo 'export PATH="{path}:$PATH"' >> {shellrc}"#,
+                        path = $path,
+                        shellrc = shellrc()
+                    ),
+                    owo_colors::Style::new().dimmed()
+                )
+            )
+        }
+    };
+}
+
 /// Determines whether the home directory contains the links added by
 /// [`add_links`].
 pub fn has_links() -> Result<bool> {
@@ -76,6 +146,15 @@ pub fn add_links() -> Result<()> {
     // Write the `.lume/env` file in the home directory.
     write_lume_env()?;
 
+    // Update the shell environment variables, if needed.
+    if should_update_shellrc() {
+        update_shellrc()?;
+
+        print_post_install_env!();
+    } else {
+        print_post_install_noenv!(path => lume_home.join("bin").display());
+    }
+
     Ok(())
 }
 
@@ -87,6 +166,70 @@ fn write_lume_env() -> Result<()> {
 
     let lume_env_path = lume_home.join("env");
     std::fs::write(lume_env_path, LUME_ENV).map_diagnostic()?;
+
+    Ok(())
+}
+
+/// Gets the path to the shell configuration file.
+fn shellrc() -> &'static str {
+    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string());
+
+    match shell.as_str() {
+        shell if shell.ends_with("zsh") => "~/.zshrc",
+        shell if shell.ends_with("fish") => "~/.config/fish/config.fish",
+        _ => "~/.bashrc",
+    }
+}
+
+/// Determines whether the `PATH` environment variable should be updated in the
+/// current shell configuration.
+fn should_update_shellrc() -> bool {
+    std::env::var("LBS_SKIP_PATH").map_or(true, |value| {
+        matches!(value.to_lowercase().as_str(), "false" | "0" | "no")
+    })
+}
+
+/// Updates the shell configuration file to include the Lume binaries.
+fn update_shellrc() -> Result<()> {
+    let lume_home = lume_assets::determine_lume_home().expect("determine Lume home");
+    let lume_env_path = lume_home.join("env");
+
+    let content = format!(
+        r#"
+# Shell setup for Lume
+source "{}"
+"#,
+        lume_env_path.display()
+    );
+
+    let shellrc_relative_path = shellrc();
+
+    let shell_config = if shellrc_relative_path.starts_with("~/") {
+        let home_dir = std::env::home_dir().expect("get home directory");
+
+        home_dir.join(shellrc_relative_path.trim_start_matches("~/"))
+    } else {
+        PathBuf::from(shellrc_relative_path)
+    };
+
+    let mut shell_file = std::fs::OpenOptions::new()
+        .read(true) // to read whether it's already added
+        .append(true)
+        .open(&shell_config)
+        .map_cause(format!(
+            "failed to open shell configuration file: {}",
+            shell_config.display()
+        ))?;
+
+    // Check if the content is already added
+    let mut buffer = String::new();
+    shell_file
+        .read_to_string(&mut buffer)
+        .map_cause("failed to read shell configuration file")?;
+
+    if !buffer.contains("# Shell setup for Lume") {
+        shell_file.write_all(content.as_bytes()).map_diagnostic()?;
+    }
 
     Ok(())
 }
