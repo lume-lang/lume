@@ -181,8 +181,11 @@ pub fn unlink_toolchain() -> Result<bool> {
 /// Downloaded toolchains are those that exist within the download directory.
 pub fn downloaded_toolchains() -> Result<Vec<String>> {
     let mut toolchains = Vec::new();
+    let Ok(dir_iter) = download_directory()?.read_dir() else {
+        return Ok(Vec::new());
+    };
 
-    for dir in download_directory()?.read_dir().map_diagnostic()? {
+    for dir in dir_iter {
         let Ok(dir) = dir else { continue };
         let name = dir.file_name().to_string_lossy().to_string();
 
@@ -198,8 +201,11 @@ pub fn downloaded_toolchains() -> Result<Vec<String>> {
 /// directory.
 pub fn installed_toolchains() -> Result<Vec<String>> {
     let mut toolchains = Vec::new();
+    let Ok(dir_iter) = artifact_directory()?.read_dir() else {
+        return Ok(Vec::new());
+    };
 
-    for dir in artifact_directory()?.read_dir().map_diagnostic()? {
+    for dir in dir_iter {
         let Ok(dir) = dir else { continue };
         let name = dir.file_name().to_string_lossy().to_string();
 
