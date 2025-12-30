@@ -1,6 +1,7 @@
 use std::sync::LazyLock;
 
 use clap::{ArgAction, Parser};
+use lume_cli_tools::*;
 use lume_errors::{DiagCtx, Result};
 use regex::Regex;
 
@@ -11,9 +12,6 @@ pub(crate) mod fs;
 pub(crate) mod git;
 pub(crate) mod home;
 pub(crate) mod toolchain;
-
-#[macro_use]
-pub(crate) mod spinner;
 
 mod commands {
     pub mod clean;

@@ -1,3 +1,4 @@
+use lume_cli_tools::*;
 use lume_errors::{Result, SimpleDiagnostic};
 
 #[derive(clap::Parser)]

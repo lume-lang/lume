@@ -1,0 +1,16 @@
+[package]
+name = "lume_cli_tools"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+libftrace = { workspace = true }
+owo-colors = { workspace = true }
+
+[lints]
+workspace = true

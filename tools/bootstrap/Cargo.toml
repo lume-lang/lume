@@ -6,6 +6,7 @@ rust-version.workspace = true
 
 [dependencies]
 lume_assets = { path = "../../crates/lume_assets" }
+lume_cli_tools = { path = "../../crates/lume_cli_tools" }
 lume_errors = { path = "../../crates/lume_errors" }
 
 clap = { workspace = true }
@@ -15,7 +16,6 @@ libftrace = { workspace = true }
 owo-colors = { workspace = true }
 regex = { workspace = true }
 semver = { workspace = true }
-spinoff = { workspace = true }
 
 [dev-dependencies]
 trycmd = { version = "=0.15.11" }
