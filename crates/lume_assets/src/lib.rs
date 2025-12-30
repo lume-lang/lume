@@ -14,11 +14,7 @@ use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 /// Returns [`Err`] if the asset could not be found within the current
 /// environment.
 pub fn asset_file_path(asset_name: &str) -> Result<PathBuf> {
-    let asset_path = if is_dev() {
-        target_build_dir()?.join(asset_name)
-    } else {
-        asset_dir()?.join(asset_name)
-    };
+    let asset_path = target_build_dir()?.join(asset_name);
 
     if !asset_path.exists() {
         return if is_dev() {
@@ -87,23 +83,6 @@ pub fn target_build_dir() -> Result<PathBuf> {
     }
 
     Ok(build_dir)
-}
-
-/// Determines the directory where the system runtime library would be stored,
-/// keyed by the current version of the compiler.
-///
-/// Depending on the directory returned, the directory might not exist.
-fn asset_dir() -> Result<PathBuf> {
-    let Some(data_dir) = determine_data_dir() else {
-        return Err(SimpleDiagnostic::new("could not determine compiler data directory").into());
-    };
-
-    let compiler_version = std::env!("CARGO_PKG_VERSION");
-    let asset_dir_path = data_dir.join(compiler_version);
-
-    std::fs::create_dir_all(&asset_dir_path).map_diagnostic()?;
-
-    Ok(asset_dir_path)
 }
 
 /// Attempts to determine the absolute path to the toolchain path, depending on
