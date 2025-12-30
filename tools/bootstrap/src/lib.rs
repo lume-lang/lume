@@ -1,7 +1,6 @@
 use std::sync::LazyLock;
-use std::sync::atomic::AtomicBool;
 
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use lume_errors::{DiagCtx, Result};
 use regex::Regex;
 
@@ -35,6 +34,14 @@ struct Arguments {
     /// Prevent modifying the filesystem
     #[clap(long, global = true, default_value_t)]
     pub dry_run: bool,
+
+    /// Verbose output
+    #[clap(long, short = 'v', global = true, action = ArgAction::Count)]
+    pub verbose: u8,
+
+    /// Disable non-verbose output
+    #[clap(long, short = 'q', global = true, conflicts_with = "verbose")]
+    pub quiet: bool,
 
     #[clap(subcommand)]
     pub subcommand: Subcommands,
@@ -112,6 +119,8 @@ pub fn lbs_cli_entry() {
     let dcx = DiagCtx::new();
 
     set_dry_run(matches.dry_run);
+    set_verbose(matches.verbose);
+    set_quiet(matches.quiet);
 
     let _ = dcx.with_opt(|_handle| match matches.subcommand {
         Subcommands::Install(cmd) => cmd.run(),
@@ -144,15 +153,44 @@ pub(crate) fn is_binary_installed(binary: &'static str) -> bool {
     output.status.success()
 }
 
-static DRY_RUN: AtomicBool = AtomicBool::new(false);
-
-pub(crate) fn set_dry_run(value: bool) {
-    DRY_RUN.store(value, std::sync::atomic::Ordering::Relaxed);
+macro_rules! atomic {
+    ($name:ident : bool) => {
+        static $name: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    };
+    ($name:ident : u8) => {
+        static $name: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+    };
 }
 
-pub(crate) fn is_dry_run() -> bool {
-    DRY_RUN.load(std::sync::atomic::Ordering::Relaxed)
+macro_rules! global_value {
+    ($global:ident: bool => ($getter:ident, $setter:ident)) => {
+        atomic!($global : bool);
+
+        pub(crate) fn $getter() -> bool {
+            $global.load(std::sync::atomic::Ordering::Relaxed)
+        }
+
+        pub(crate) fn $setter(value: bool) {
+            $global.store(value, std::sync::atomic::Ordering::Relaxed);
+        }
+    };
+
+    ($global:ident: u8 => ($getter:ident, $setter:ident)) => {
+        atomic!($global : u8);
+
+        pub(crate) fn $getter() -> u8 {
+            $global.load(std::sync::atomic::Ordering::Relaxed)
+        }
+
+        pub(crate) fn $setter(value: u8) {
+            $global.store(value, std::sync::atomic::Ordering::Relaxed);
+        }
+    };
 }
+
+global_value!(DRY_RUN: bool => (is_dry_run, set_dry_run));
+global_value!(VERBOSE: u8   => (verbose, set_verbose));
+global_value!(QUIET:   bool => (is_quiet, set_quiet));
 
 pub(crate) fn run_dry<T: Default>(f: impl FnOnce() -> Result<T>) -> Result<T> {
     if is_dry_run() { Ok(Default::default()) } else { f() }
