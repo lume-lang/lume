@@ -170,14 +170,39 @@ fn write_lume_env() -> Result<()> {
     Ok(())
 }
 
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+enum Shell {
+    #[default]
+    Bash,
+    Zsh,
+    Fish,
+}
+
+/// Attempts to get the currently running shell.
+fn current_shell() -> Option<Shell> {
+    let shell = std::env::var("SHELL").ok();
+
+    if shell.as_ref().is_some_and(|s| s.ends_with("bash")) {
+        return Some(Shell::Bash);
+    }
+
+    if shell.as_ref().is_some_and(|s| s.ends_with("zsh")) {
+        return Some(Shell::Zsh);
+    }
+
+    if shell.as_ref().is_some_and(|s| s.ends_with("fish")) {
+        return Some(Shell::Fish);
+    }
+
+    None
+}
+
 /// Gets the path to the shell configuration file.
 fn shellrc() -> &'static str {
-    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string());
-
-    match shell.as_str() {
-        shell if shell.ends_with("zsh") => "~/.zshrc",
-        shell if shell.ends_with("fish") => "~/.config/fish/config.fish",
-        _ => "~/.bashrc",
+    match current_shell().unwrap_or_default() {
+        Shell::Bash => "~/.bashrc",
+        Shell::Zsh => "~/.zshrc",
+        Shell::Fish => "~/.config/fish/config.fish",
     }
 }
 
