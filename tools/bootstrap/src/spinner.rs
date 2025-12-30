@@ -1,3 +1,49 @@
+/// Colorizes the given text with the given style.
+///
+/// If colors aren't supported, the text is returned as-is.
+#[macro_export]
+macro_rules! colorized {
+    ($this:expr, $style:expr) => {
+        owo_colors::OwoColorize::if_supports_color(&$this, owo_colors::Stream::Stdout, |text| $style.style(text))
+    };
+}
+
+/// Prints an error message to the standard error output.
+#[macro_export]
+macro_rules! error {
+    ($($arg:tt)*) => {
+        #[allow(clippy::disallowed_macros, reason = "used for CLI logging")]
+        {
+            eprint!("{} ", colorized!("×", owo_colors::Style::new().red().bold()));
+            eprintln!($($arg)*);
+        }
+    };
+}
+
+/// Prints a warning message to the standard error output.
+#[macro_export]
+macro_rules! warn {
+    ($($arg:tt)*) => {
+        #[allow(clippy::disallowed_macros, reason = "used for CLI logging")]
+        {
+            eprint!("{} ", colorized!("⚠", owo_colors::Style::new().yellow().bold()));
+            eprintln!($($arg)*);
+        }
+    };
+}
+
+/// Prints a success message to the standard error output.
+#[macro_export]
+macro_rules! success {
+    ($($arg:tt)*) => {
+        #[allow(clippy::disallowed_macros, reason = "used for CLI logging")]
+        {
+            print!("{} ", colorized!("✓", owo_colors::Style::new().green().bold()));
+            println!($($arg)*);
+        }
+    };
+}
+
 /// Executes the function with a spinner, with the given message.
 ///
 /// If the function returns an error, the spinner message will be updated with

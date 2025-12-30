@@ -1,9 +1,12 @@
+use std::io::{Read, Write as _};
+use std::path::PathBuf;
+
 use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 
-use crate::fs;
+use crate::{colorized, fs};
 
 pub const LUME_ENV: &str = r#"#!/bin/sh
-## Shell setup for Lume
+## Shell environment setup for Lume
 
 # Prevent adding duplicate entries to PATH, LIBRARY_PATH
 

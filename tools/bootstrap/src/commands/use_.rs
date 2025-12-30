@@ -23,15 +23,14 @@ impl UseCommand {
             );
         }
 
-        task! {
-            "linking toolchain as default..." => {
-                crate::run_dry(|| crate::toolchain::link_toolchain(&toolchain_base))
-            },
-            Ok(()) => format!("set toolchain '{}' as active", self.version),
-            Err(err) => {
-                format!("failed to link toolchain: {}", err.message())
+        match crate::run_dry(|| crate::toolchain::link_toolchain(&toolchain_base)) {
+            Ok(()) => {
+                success!("set toolchain '{}' as active", self.version);
             }
-        }?;
+            Err(err) => {
+                error!("failed to link toolchain: {}", err.message());
+            }
+        }
 
         Ok(())
     }
