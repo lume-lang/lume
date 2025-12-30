@@ -6,7 +6,8 @@ fn main() {
     let dcx = DiagCtx::new();
 
     match manifold::manifold_entry(config, dcx.clone()) {
-        Ok(code) => std::process::exit(code),
+        Ok(0) => std::process::exit(0),
+        Ok(_) => {}
         Err(err) => {
             dcx.emit(err);
 
@@ -15,7 +16,10 @@ fn main() {
             renderer.highlight_source = true;
 
             dcx.render_stderr(&mut renderer);
-            dcx.clear();
         }
+    }
+
+    if dcx.is_tainted() {
+        std::process::exit(5);
     }
 }

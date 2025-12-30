@@ -1,3 +1,4 @@
+use lume_cli_tools::*;
 use lume_errors::{Result, SimpleDiagnostic};
 use owo_colors::Style;
 
@@ -35,7 +36,7 @@ impl UninstallCommand {
         let toolchain_source_dir = toolchain::download_directory_for(&self.version)?;
 
         task! {
-            "removing toolchain..." => {
+            format!("removing toolchain {}", self.version) => {
                 crate::run_dry(|| {
                     fs::remove_dir(&toolchain_directory)?;
 

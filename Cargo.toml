@@ -37,7 +37,6 @@ owo-colors = { version = "=4.2.2" }
 regex = { version = "=1.11.1" }
 semver = { version = "^1", features = ["serde"] }
 serde = { version = "=1.0.225", features = ["derive"] }
-spinoff = { version = "=0.8.0" }
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }
