@@ -1,4 +1,5 @@
 use lume_errors::{Result, SimpleDiagnostic};
+use owo_colors::Style;
 
 use crate::fs;
 use crate::toolchain::{self, active_toolchain};
@@ -45,18 +46,18 @@ impl UninstallCommand {
                     Ok(())
                 })
             },
-            Ok(()) => format!("removed toolchain {} ({})", self.version, toolchain_directory.display()),
+            Ok(()) => format!(
+                "removed toolchain {} ({})",
+                self.version,
+                colorized!(toolchain_directory.display(), Style::new().dimmed())
+            ),
             Err(err) => {
                 format!("failed to remove toolchain ({})", err.message())
             }
         }?;
 
         if active_toolchain().is_none() {
-            return Err(
-                SimpleDiagnostic::new("currently no active toolchain, since it was just uninstalled")
-                    .with_severity(error_snippet::Severity::Warning)
-                    .into(),
-            );
+            warn!("currently no active toolchain, since it was just uninstalled");
         }
 
         Ok(())

@@ -119,7 +119,7 @@ pub fn has_links() -> Result<bool> {
 
 /// Links the binaries inside the `.lume` directory, which exists inside the
 /// home directory.
-pub fn add_links() -> Result<()> {
+pub fn add_links(skip_shellrc: bool) -> Result<()> {
     let toolchain_link_path = lume_assets::current_toolchain_linkpath()?;
 
     let Some(lume_home) = lume_assets::determine_lume_home() else {
@@ -147,7 +147,7 @@ pub fn add_links() -> Result<()> {
     write_lume_env()?;
 
     // Update the shell environment variables, if needed.
-    if should_update_shellrc() {
+    if !skip_shellrc && should_update_shellrc() {
         update_shellrc()?;
 
         print_post_install_env!();
@@ -236,10 +236,10 @@ source "{}"
 
 /// Links the binaries inside the `.lume` directory, if they don't already
 /// exist.
-pub fn add_links_if_needed() -> Result<()> {
+pub fn add_links_if_needed(skip_shellrc: bool) -> Result<()> {
     if has_links().is_ok_and(|r| r) {
         return Ok(());
     }
 
-    add_links()
+    add_links(skip_shellrc)
 }

@@ -127,7 +127,7 @@ pub fn copy_artifacts(compiler_root: &Path, artifact_root: &Path, opts: &BuildOp
 
 /// Links the given toolchain to the current toolchain link path, causing it to
 /// be used by default for subsequent compiler invocations.
-pub fn link_toolchain(artifact_root: &Path) -> Result<()> {
+pub fn link_toolchain(artifact_root: &Path, skip_shellrc: bool) -> Result<()> {
     let current_link_path = lume_assets::current_toolchain_linkpath()?;
 
     let previous = if current_link_path.exists() {
@@ -151,7 +151,7 @@ pub fn link_toolchain(artifact_root: &Path) -> Result<()> {
     }
 
     // If the links in the home directory don't already exist, link them.
-    crate::home::add_links_if_needed()?;
+    crate::home::add_links_if_needed(skip_shellrc)?;
 
     Ok(())
 }

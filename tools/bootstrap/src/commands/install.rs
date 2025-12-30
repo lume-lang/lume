@@ -1,5 +1,6 @@
 use clap::CommandFactory;
 use lume_errors::Result;
+use owo_colors::Style;
 
 use crate::toolchain::{Profile, TargetVersion};
 use crate::{Version, fs};
@@ -20,10 +21,22 @@ pub struct InstallCommand {
     /// Use the toolchain as the default
     #[arg(long, default_value_t)]
     pub use_as_default: bool,
+
+    /// Don't update shell configuration
+    #[arg(long)]
+    pub skip_shellrc: bool,
 }
 
 impl InstallCommand {
     pub(crate) fn run(&self) -> Result<()> {
+        if self.skip_shellrc && !self.use_as_default {
+            warn!(
+                "{} has no effect without {}\n",
+                colorized!("--skip-shellrc", Style::new().dimmed()),
+                colorized!("--use-as-default", Style::new().dimmed()),
+            );
+        }
+
         let version = match TargetVersion::try_from(&self.version) {
             Ok(version) => version,
             Err(err) => {
@@ -37,7 +50,10 @@ impl InstallCommand {
                 crate::run_dry(|| crate::git::clone(&version))
             },
             Ok(path) => {
-                format!("cloned 'lume-lang/lume' ({})", path.display())
+                format!(
+                    "cloned 'lume-lang/lume' ({})",
+                    colorized!(path.display(), Style::new().dimmed())
+                )
             },
             Err(err) => {
                 format!("failed to clone 'lume-lang/lume' ({})", err.message())
@@ -70,15 +86,14 @@ impl InstallCommand {
         }?;
 
         if self.use_as_default {
-            task! {
-                "linking toolchain as default..." => {
-                    crate::run_dry(|| crate::toolchain::link_toolchain(&toolchain_base))
-                },
-                Ok(()) => "toolchain successfully linked",
-                Err(err) => {
-                    format!("failed to link toolchain: {}", err.message())
+            match crate::run_dry(|| crate::toolchain::link_toolchain(&toolchain_base, self.skip_shellrc)) {
+                Ok(()) => {
+                    success!("set toolchain '{version}' as active");
                 }
-            }?;
+                Err(err) => {
+                    error!("failed to link toolchain: {}", err.message());
+                }
+            }
         }
 
         Ok(())

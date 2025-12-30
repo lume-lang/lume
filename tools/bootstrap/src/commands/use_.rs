@@ -10,6 +10,10 @@ pub struct UseCommand {
     /// Toolchain to set as active
     #[arg(value_name = "TOOLCHAIN")]
     pub version: String,
+
+    /// Don't update shell configuration
+    #[arg(long)]
+    pub skip_shellrc: bool,
 }
 
 impl UseCommand {
@@ -23,7 +27,7 @@ impl UseCommand {
             );
         }
 
-        match crate::run_dry(|| crate::toolchain::link_toolchain(&toolchain_base)) {
+        match crate::run_dry(|| crate::toolchain::link_toolchain(&toolchain_base, self.skip_shellrc)) {
             Ok(()) => {
                 success!("set toolchain '{}' as active", self.version);
             }
