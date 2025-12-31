@@ -1,5 +1,4 @@
 pub mod metadata;
-mod visitor;
 
 use lume_errors::Result;
 use lume_span::{Internable, NodeId};
@@ -7,8 +6,6 @@ use lume_tir::{Call, ExpressionKind, Function, Parameter};
 use lume_type_metadata::*;
 use lume_typech::TyCheckCtx;
 use lume_types::TypeRef;
-
-use crate::reify::visitor::Visitor;
 
 pub(crate) struct ReificationPass<'tcx> {
     tcx: &'tcx TyCheckCtx,
@@ -27,7 +24,7 @@ impl<'tcx> ReificationPass<'tcx> {
     /// Executes the pass over the given function.
     pub fn execute(&mut self, func: &mut Function) -> Result<&StaticMetadata> {
         self.add_metadata_params(func);
-        self.add_metadata_calls(func)?;
+        lume_tir::traverse(func, self)?;
 
         Ok(&self.static_metadata)
     }
@@ -88,10 +85,6 @@ impl<'tcx> ReificationPass<'tcx> {
         } else {
             false
         }
-    }
-
-    fn add_metadata_calls(&mut self, func: &mut Function) -> Result<()> {
-        self.visit(func)
     }
 
     fn add_metadata_arguments_on_call(&mut self, call: &mut Call) -> Result<()> {
@@ -168,12 +161,12 @@ impl<'tcx> ReificationPass<'tcx> {
     }
 }
 
-impl visitor::Visitor for ReificationPass<'_> {
-    fn visit_expression(&mut self, expr: &mut lume_tir::Expression) -> Result<()> {
+impl lume_tir::Visitor for ReificationPass<'_> {
+    fn visit_expr(&mut self, expr: &mut lume_tir::Expression) -> Result<()> {
         if let ExpressionKind::Call(call) = &mut expr.kind {
             self.add_metadata_arguments_on_call(call)?;
         }
 
-        self.visit_expression_inner(expr)
+        Ok(())
     }
 }

@@ -11,6 +11,7 @@ doctest = false
 [dependencies]
 indexmap = { workspace = true }
 
+lume_errors = { path = "../../crates/lume_errors" }
 lume_span = { path = "../../crates/lume_span" }
 lume_type_metadata = { path = "../lume_type_metadata" }
 lume_types = { path = "../lume_types" }

@@ -1895,6 +1895,7 @@ name = "lume_tir"
 version = "0.1.1"
 dependencies = [
  "indexmap",
+ "lume_errors",
  "lume_span",
  "lume_type_metadata",
  "lume_types",

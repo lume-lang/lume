@@ -1,9 +1,12 @@
+pub mod visitor;
+
 use std::fmt::Display;
 
 use indexmap::IndexMap;
 use lume_span::{Interned, Location, NodeId};
 use lume_type_metadata::{StaticMetadata, TypeMetadataId};
 use lume_types::TypeRef;
+pub use visitor::{Visitor, traverse};
 
 #[derive(Debug, Default)]
 pub struct TypedIR {
