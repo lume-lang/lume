@@ -24,6 +24,7 @@ Map {
                     },
                     location: struct_method.lm:5:8,
                 },
+                self_type: false,
                 location: struct_method.lm:5:8,
             },
             methods: [

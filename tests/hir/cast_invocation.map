@@ -78,6 +78,7 @@ Map {
                                 },
                                 location: cast_invocation.lm:22:25,
                             },
+                            self_type: false,
                             location: cast_invocation.lm:22:25,
                         },
                         location: cast_invocation.lm:12:25,

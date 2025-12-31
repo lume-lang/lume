@@ -31,6 +31,7 @@ Map {
                     },
                     location: struct_empty_impl.lm:5:10,
                 },
+                self_type: false,
                 location: struct_empty_impl.lm:5:10,
             },
             methods: [],

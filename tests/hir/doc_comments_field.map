@@ -51,6 +51,7 @@ Map {
                             },
                             location: doc_comments_field.lm:56:61,
                         },
+                        self_type: false,
                         location: doc_comments_field.lm:56:61,
                     },
                     default_value: Literal {

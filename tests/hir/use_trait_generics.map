@@ -50,6 +50,7 @@ Map {
                                     },
                                     location: use_trait_generics.lm:8:13,
                                 },
+                                self_type: false,
                                 location: use_trait_generics.lm:8:13,
                             },
                             Type {
@@ -82,6 +83,7 @@ Map {
                                     },
                                     location: use_trait_generics.lm:15:20,
                                 },
+                                self_type: false,
                                 location: use_trait_generics.lm:15:20,
                             },
                         ],
@@ -89,6 +91,7 @@ Map {
                     },
                     location: use_trait_generics.lm:4:21,
                 },
+                self_type: false,
                 location: use_trait_generics.lm:4:21,
             },
             target: Type {
@@ -121,6 +124,7 @@ Map {
                     },
                     location: use_trait_generics.lm:23:28,
                 },
+                self_type: false,
                 location: use_trait_generics.lm:23:28,
             },
             methods: [
@@ -165,6 +169,7 @@ Map {
                                     },
                                     location: use_trait_generics.lm:49:54,
                                 },
+                                self_type: false,
                                 location: use_trait_generics.lm:49:54,
                             },
                             vararg: false,

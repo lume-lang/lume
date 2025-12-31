@@ -51,6 +51,7 @@ Map {
                             },
                             location: struct_pub_field.lm:24:29,
                         },
+                        self_type: false,
                         location: struct_pub_field.lm:24:29,
                     },
                     default_value: Literal {
