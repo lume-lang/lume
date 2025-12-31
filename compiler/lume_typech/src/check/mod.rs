@@ -43,6 +43,13 @@ impl TyCheckCtx {
             return Ok(true);
         }
 
+        Ok(self.check_type_parameter_compatibility(from, to)?
+            && self.check_parameter_compatibility(from, to)?
+            && self.check_return_type_compatibility(from, to)?)
+    }
+
+    #[libftrace::traced(level = Trace, err, ret)]
+    fn check_type_parameter_compatibility(&self, from: FunctionSig<'_>, to: FunctionSig<'_>) -> Result<bool> {
         if from.type_params.len() != to.type_params.len() {
             return Ok(false);
         }
@@ -65,13 +72,25 @@ impl TyCheckCtx {
             }
         }
 
+        Ok(true)
+    }
+
+    #[libftrace::traced(level = Trace, err, ret)]
+    fn check_parameter_compatibility(&self, from: FunctionSig<'_>, to: FunctionSig<'_>) -> Result<bool> {
         if from.params.len() != to.params.len() {
             return Ok(false);
         }
 
         for (from_param, to_param) in from.params.iter().zip(to.params.iter()) {
-            if from_param.name == "self" && to_param.name == "self" {
+            // Types of `self` will almost always refer to separate types.
+            if from_param.is_self() && to_param.is_self() {
                 continue;
+            }
+
+            // If both return types refer to `Self` or are otherwise equivalent to `Self`,
+            // return true.
+            if self.is_self_type_within(&from_param.ty, from.id)? && self.is_self_type_within(&to_param.ty, to.id)? {
+                return Ok(true);
             }
 
             if from_param.vararg != to_param.vararg || !self.check_type_compatibility(&from_param.ty, &to_param.ty)? {
@@ -79,10 +98,17 @@ impl TyCheckCtx {
             }
         }
 
-        if !self.check_type_compatibility(from.ret_ty, to.ret_ty)? {
-            return Ok(false);
+        Ok(true)
+    }
+
+    #[libftrace::traced(level = Trace, err, ret)]
+    fn check_return_type_compatibility(&self, from: FunctionSig<'_>, to: FunctionSig<'_>) -> Result<bool> {
+        // If both return types refer to `Self` or are otherwise equivalent to `Self`,
+        // return true.
+        if self.is_self_type_within(from.ret_ty, from.id)? && self.is_self_type_within(to.ret_ty, to.id)? {
+            return Ok(true);
         }
 
-        Ok(true)
+        self.check_type_compatibility(from.ret_ty, to.ret_ty)
     }
 }

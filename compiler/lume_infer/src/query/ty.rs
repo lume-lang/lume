@@ -1,6 +1,6 @@
 use lume_architect::cached_query;
 use lume_errors::Result;
-use lume_hir::LangItem;
+use lume_hir::{LangItem, TypeId};
 use lume_span::NodeId;
 use lume_types::{TypeKind, TypeRef};
 
@@ -134,6 +134,27 @@ impl TyInferCtx {
         }
 
         false
+    }
+
+    /// Determines whether the given [`TypeRef`] is a type reference of `Self`.
+    #[libftrace::traced(level = Trace, ret)]
+    pub fn is_self_type(&self, ty: &TypeRef) -> bool {
+        let type_id = ty.hir.unwrap_or(TypeId::from(ty.instance_of));
+
+        self.hir().type_(type_id).is_some_and(|hir_type| hir_type.self_type)
+    }
+
+    /// Determines whether the given [`TypeRef`] is a type reference of `Self`,
+    /// or refers to the same type inside the current callable.
+    #[libftrace::traced(level = Trace, ret, err)]
+    pub fn is_self_type_within(&self, ty: &TypeRef, callable_id: NodeId) -> Result<bool> {
+        if let Some(impl_parent_type) = self.parent_type_of(callable_id)?
+            && &impl_parent_type == ty
+        {
+            return Ok(true);
+        }
+
+        Ok(self.is_self_type(ty))
     }
 
     /// Gets the current `Never` type as a [`TypeRef`].
