@@ -1,8 +1,8 @@
-× error[LM3014]: self must be the first parameter
+× error[LM3014]: `self` must be the first parameter
    ╭─[using_self_as_parameter_invalid.lm:2:26]
  1 │ impl Foo {
  2 │     pub fn bar(a: Int32, self) -> void { }
-   ∶                          ^^^^ instance methods must have self as the first parameter
+   ∶                          ^^^^ instance methods must have `self` as the first parameter
  3 │ }
    ╰──
-   help: consider moving the self parameter to the beginning
+   help: consider moving the `self` parameter to the beginning

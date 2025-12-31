@@ -1,5 +1,5 @@
 use error_snippet::Result;
-use lume_hir::{Node, SELF_TYPE_NAME};
+use lume_hir::{Node, SELF_PARAM_NAME, SELF_TYPE_NAME};
 
 use crate::errors::*;
 use crate::{DefinedItem, LowerModule};
@@ -113,14 +113,14 @@ impl LowerModule {
                 return Err(SelfNotFirstParameter {
                     source: self.file.clone(),
                     range: param.location.0.clone(),
-                    ty: String::from(SELF_TYPE_NAME),
+                    ty: String::from(SELF_PARAM_NAME),
                 }
                 .into());
             }
 
             // Using `self` outside of an object context is not allowed, such as functions.
             if !allow_self && param.param_type.is_self() {
-                return Err(SelfOutsideObjectContext {
+                return Err(InvalidSelfParameter {
                     source: self.file.clone(),
                     range: param.location.0.clone(),
                     ty: String::from(SELF_TYPE_NAME),
@@ -129,11 +129,11 @@ impl LowerModule {
             }
 
             // Naming a parameter `self` with an explicit type is not allowed.
-            if param.name.as_str() == SELF_TYPE_NAME && !param.param_type.is_self() {
+            if param.name.as_str() == SELF_PARAM_NAME && !param.param_type.is_self() {
                 return Err(SelfWithExplicitType {
                     source: self.file.clone(),
                     range: param.location.0.clone(),
-                    ty: String::from(SELF_TYPE_NAME),
+                    ty: String::from(SELF_PARAM_NAME),
                 }
                 .into());
             }

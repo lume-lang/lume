@@ -12,7 +12,8 @@ pub use lang::LangItem;
 pub use map::Map;
 pub use visitor::{Visitor, traverse};
 
-pub const SELF_TYPE_NAME: &str = "self";
+pub const SELF_PARAM_NAME: &str = "self";
+pub const SELF_TYPE_NAME: &str = "Self";
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Node {
