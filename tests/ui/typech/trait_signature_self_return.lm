@@ -1,0 +1,13 @@
+//# test-outcome=success
+
+struct Foo { }
+
+trait Default {
+    fn default() -> Self;
+}
+
+use Default: Foo {
+    fn default() -> Self {
+        Foo { }
+    }
+}
