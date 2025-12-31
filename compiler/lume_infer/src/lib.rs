@@ -153,10 +153,11 @@ impl TyInferCtx {
     #[libftrace::traced(level = Debug, fields(ty = ty.name, loc = ty.location, ty_params = type_params))]
     pub fn mk_type_ref_generic(&self, ty: &lume_hir::Type, type_params: &[&TypeParameter]) -> Result<TypeRef> {
         let Some(found_type) = self.find_type_ref_ctx(&ty.name, type_params) else {
-            return Err(self.missing_type_err(ty));
+            return Err(self.missing_type_err(&ty.name, ty.location));
         };
 
         let mut type_ref = TypeRef::new(found_type, ty.location);
+        type_ref.hir = ty.self_type.then_some(ty.id);
 
         for type_param in ty.bound_types() {
             let type_param_ref = self.mk_type_ref_generic(type_param, type_params)?;
@@ -241,6 +242,7 @@ impl TyInferCtx {
         Ok(Some(TypeRef {
             instance_of: ty.id,
             bound_types,
+            hir: None,
             location,
         }))
     }
@@ -282,6 +284,7 @@ impl TyInferCtx {
         Ok(Some(TypeRef {
             instance_of: ty.id,
             bound_types,
+            hir: None,
             location,
         }))
     }
@@ -432,31 +435,31 @@ impl TyInferCtx {
     }
 
     /// Returns an error indicating that the given type was not found.
-    fn missing_type_err(&self, ty: &lume_hir::Type) -> error_snippet::Error {
+    fn missing_type_err(&self, name: &lume_hir::Path, location: Location) -> error_snippet::Error {
         for (newcomer_name, lume_name) in NEWCOMER_TYPE_NAMES {
-            if newcomer_name == &ty.name.name().as_str() {
+            if newcomer_name == &name.name().as_str() {
                 return errors::UnavailableScalarType {
-                    source: ty.location.file.clone(),
-                    range: ty.location.index.clone(),
-                    found: ty.name.name.to_string(),
+                    source: location.file.clone(),
+                    range: location.index.clone(),
+                    found: name.name.to_string(),
                     suggestion: lume_name,
                 }
                 .into();
             }
         }
 
-        if let Some(import) = self.hir.get_imported(&ty.name) {
+        if let Some(import) = self.hir.get_imported(name) {
             return errors::InvalidTypeInNamespace {
                 source: import.name.name().location,
-                name: ty.name.clone(),
-                namespace: format!("{:+}", ty.name.clone().parent().unwrap()),
+                name: name.clone(),
+                namespace: format!("{:+}", name.clone().parent().unwrap()),
             }
             .into();
         }
 
         errors::MissingType {
-            source: ty.location,
-            name: ty.name.clone(),
+            source: location,
+            name: name.clone(),
         }
         .into()
     }
@@ -570,6 +573,7 @@ impl TyInferCtx {
         Ok(lume_hir::Type {
             id: lume_hir::TypeId::from(ty.instance_of),
             name,
+            self_type: false,
             location,
         })
     }

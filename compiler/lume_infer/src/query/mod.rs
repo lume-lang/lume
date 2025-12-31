@@ -123,11 +123,7 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target)?,
             lume_hir::ExpressionKind::Construct(e) => {
                 let Some(ty_opt) = self.find_type_ref_from(&e.path, e.id)? else {
-                    return Err(self.missing_type_err(&lume_hir::Type {
-                        id: lume_hir::TypeId::from(lume_span::NodeId::empty(expr.id.package)),
-                        name: e.path.clone(),
-                        location: e.path.location,
-                    }));
+                    return Err(self.missing_type_err(&e.path, e.path.location()));
                 };
 
                 let type_parameters = self.available_type_params_at(e.id);
@@ -181,13 +177,7 @@ impl TyInferCtx {
                 let enum_segment = var.name.clone().parent().unwrap();
                 let enum_ty = self.find_type_ref_from(&enum_segment, expr.id)?;
 
-                enum_ty.ok_or_else(|| {
-                    self.missing_type_err(&lume_hir::Type {
-                        id: lume_hir::TypeId::from(lume_span::NodeId::empty(expr.id.package)),
-                        name: enum_segment.clone(),
-                        location: enum_segment.location,
-                    })
-                })?
+                enum_ty.ok_or_else(|| self.missing_type_err(&enum_segment, enum_segment.location()))?
             }
         };
 
@@ -432,14 +422,11 @@ impl TyInferCtx {
                     Some(ty) => TypeRef {
                         instance_of: ty.id,
                         bound_types: type_args,
+                        hir: None,
                         location: pat.location,
                     },
                     None => {
-                        return Err(self.missing_type_err(&lume_hir::Type {
-                            id: lume_hir::TypeId::from(lume_span::NodeId::empty(pat.id.package)),
-                            name: var.name.clone(),
-                            location: var.name.location,
-                        }));
+                        return Err(self.missing_type_err(&var.name, var.name.location));
                     }
                 }
             }

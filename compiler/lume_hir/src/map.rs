@@ -15,6 +15,9 @@ pub struct Map {
     /// Defines all the items within the module.
     pub nodes: IndexMap<NodeId, Node>,
 
+    /// Defines all the named types within the module.
+    pub types: IndexMap<TypeId, Type>,
+
     /// Defines all the defined language items within the HIR.
     pub lang_items: lang::LanguageItems,
 
@@ -29,6 +32,7 @@ impl Map {
         Self {
             package,
             nodes: IndexMap::new(),
+            types: IndexMap::new(),
             lang_items: lang::LanguageItems::new(),
             imports: IndexSet::new(),
         }
@@ -57,6 +61,21 @@ impl Map {
     pub fn expect_node(&self, id: NodeId) -> Result<&Node> {
         self.node(id)
             .ok_or_else(|| SimpleDiagnostic::new(format!("expected node with ID {id:?}, found none")).into())
+    }
+
+    /// Gets the type with the given ID.
+    pub fn type_(&self, id: TypeId) -> Option<&Type> {
+        self.types.get(&id)
+    }
+
+    /// Gets the type with the given ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if no `Type` with the given ID was found in the map.
+    pub fn expect_type(&self, id: TypeId) -> Result<&Type> {
+        self.type_(id)
+            .ok_or_else(|| SimpleDiagnostic::new(format!("expected type with ID {id:?}, found none")).into())
     }
 
     /// Gets the type definition with the given ID.

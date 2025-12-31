@@ -468,11 +468,7 @@ impl TyInferCtx {
             lume_hir::CallExpression::Static(call) => {
                 if let Some(callee_ty_name) = call.receiving_type() {
                     let Some(callee_type) = self.find_type_ref_from(&callee_ty_name, call.id)? else {
-                        return Err(self.missing_type_err(&lume_hir::Type {
-                            id: lume_hir::TypeId::from(lume_span::NodeId::empty(call.id.package)),
-                            name: callee_ty_name.clone(),
-                            location: callee_ty_name.name().location,
-                        }));
+                        return Err(self.missing_type_err(&callee_ty_name, callee_ty_name.location));
                     };
 
                     let method = self.lookup_method_on(&callee_type, call.name.name());

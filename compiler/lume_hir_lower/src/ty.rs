@@ -7,6 +7,12 @@ use crate::{ARRAY_STD_TYPE, LowerModule};
 
 impl LowerModule {
     #[libftrace::traced(level = Debug)]
+    fn add_type(&mut self, ty: lume_hir::Type) -> lume_hir::Type {
+        self.map.types.insert(ty.id, ty.clone());
+        ty
+    }
+
+    #[libftrace::traced(level = Debug)]
     pub(super) fn type_ref(&mut self, expr: lume_ast::Type) -> Result<lume_hir::Type> {
         match expr {
             lume_ast::Type::Named(t) => self.type_named(t),
@@ -39,7 +45,12 @@ impl LowerModule {
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location().clone());
 
-        Ok(lume_hir::Type { id, name, location })
+        Ok(self.add_type(lume_hir::Type {
+            id,
+            name,
+            self_type: false,
+            location,
+        }))
     }
 
     #[libftrace::traced(level = Debug)]
@@ -67,11 +78,12 @@ impl LowerModule {
             }
         };
 
-        Ok(lume_hir::Type {
+        Ok(self.add_type(lume_hir::Type {
             id: lume_hir::TypeId::from(id),
             name,
+            self_type: true,
             location,
-        })
+        }))
     }
 
     #[libftrace::traced(level = Debug)]
@@ -82,10 +94,11 @@ impl LowerModule {
         let name = self.path_segment(name)?;
         let path = lume_hir::Path::from_parts(Some(vec![lume_hir::PathSegment::namespace("std")]), name);
 
-        Ok(lume_hir::Type {
+        Ok(self.add_type(lume_hir::Type {
             id: lume_hir::TypeId::from(id),
             name: path,
+            self_type: false,
             location,
-        })
+        }))
     }
 }
