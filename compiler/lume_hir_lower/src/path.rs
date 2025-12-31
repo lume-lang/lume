@@ -1,4 +1,6 @@
 use error_snippet::Result;
+use lume_hir::WithLocation;
+use lume_span::Internable;
 
 use crate::LowerModule;
 use crate::errors::*;
@@ -19,6 +21,25 @@ impl LowerModule {
         } else {
             Ok(lume_hir::Path::rooted(self.path_segment(name)?))
         }
+    }
+
+    pub(crate) fn path(&mut self, path: lume_ast::Path) -> Result<lume_hir::Path> {
+        let root = self.path_root(path.root)?;
+        let name = self.path_segment(path.name)?;
+
+        let mut location = name.location().clone_inner();
+
+        location.index.start = root
+            .iter()
+            .map(|r| r.name().location.start())
+            .min()
+            .unwrap_or(location.index.start);
+
+        Ok(lume_hir::Path {
+            root,
+            name,
+            location: location.intern(),
+        })
     }
 
     pub(crate) fn path_root(&mut self, expr: Vec<lume_ast::PathSegment>) -> Result<Vec<lume_hir::PathSegment>> {

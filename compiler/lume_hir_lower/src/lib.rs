@@ -4,6 +4,7 @@ use std::hash::Hash;
 use std::sync::Arc;
 
 use error_snippet::Result;
+use lume_ast::Node;
 use lume_errors::{DiagCtxHandle, Error};
 use lume_hir::map::Map;
 use lume_hir::symbols::*;
@@ -302,6 +303,10 @@ impl LowerModule {
 
     /// Gets the [`lume_hir::Path`] for the item with the given name.
     fn resolve_symbol_name(&mut self, path: &lume_ast::Path) -> Result<Path> {
+        if path.root.first().is_some_and(|segment| segment.is_self_type()) {
+            return self.resolve_self_name(path);
+        }
+
         if let Some(symbol) = self.resolve_imported_symbol(path)? {
             return Ok(symbol.clone());
         }
@@ -326,6 +331,26 @@ impl LowerModule {
             name: self.path_segment(path.name.clone())?,
             location: self.location(path.location.clone()),
         })
+    }
+
+    /// Gets the [`lume_hir::Path`] for the item with the given name, within the
+    /// current parent type.
+    fn resolve_self_name(&mut self, path: &lume_ast::Path) -> Result<Path> {
+        debug_assert!(path.root.first().is_some_and(|seg| seg.is_self_type()));
+
+        let mut selfless_path = path.clone();
+        let self_segment = selfless_path.root.remove(0);
+
+        if let Some(self_path) = self.self_type.clone() {
+            return Ok(Path::join(self_path, self.path(selfless_path)?));
+        }
+
+        Err(errors::SelfOutsideObjectContext {
+            source: self.file.clone(),
+            range: self_segment.location().0.clone(),
+            ty: String::from("Self"),
+        }
+        .into())
     }
 
     /// Attemps to resolve a [`lume_hir::Path`] for an imported symbol.

@@ -373,6 +373,26 @@ impl Path {
         Self { root, name, location }
     }
 
+    /// Joins two paths together.
+    pub fn join(base: Path, end: Path) -> Self {
+        let mut location = base.location.clone_inner();
+
+        let mut root = base.as_root();
+        root.extend(end.root);
+
+        location.index.start = root
+            .iter()
+            .map(|r| r.name().location.start())
+            .min()
+            .unwrap_or(location.index.start);
+
+        Self {
+            root,
+            name: end.name,
+            location: location.intern(),
+        }
+    }
+
     pub fn as_root(self) -> Vec<PathSegment> {
         let mut root = self.root;
         root.reserve(1);
