@@ -1,0 +1,11 @@
+//# test-outcome=success
+
+struct Foo { }
+
+trait Consume {
+    fn consume(item: Self);
+}
+
+use Consume: Foo {
+    fn consume(item: Self) { }
+}
