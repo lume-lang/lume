@@ -69,6 +69,7 @@ Map {
                                 },
                                 location: cast_literal_single.lm:17:20,
                             },
+                            self_type: false,
                             location: cast_literal_single.lm:17:20,
                         },
                         location: cast_literal_single.lm:12:20,

@@ -24,6 +24,7 @@ Map {
                     },
                     location: generic_method_single_generic.lm:5:9,
                 },
+                self_type: false,
                 location: generic_method_single_generic.lm:5:9,
             },
             methods: [

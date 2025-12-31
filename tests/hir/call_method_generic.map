@@ -73,6 +73,7 @@ Map {
                                             },
                                             location: call_method_generic.lm:27:28,
                                         },
+                                        self_type: false,
                                         location: call_method_generic.lm:27:28,
                                     },
                                 ],

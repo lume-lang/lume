@@ -62,6 +62,7 @@ Map {
                                     },
                                     location: implicit_import_ptr.lm:20:25,
                                 },
+                                self_type: false,
                                 location: implicit_import_ptr.lm:20:25,
                             },
                         ],

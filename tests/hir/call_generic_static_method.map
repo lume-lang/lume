@@ -81,6 +81,7 @@ Map {
                                                     },
                                                     location: call_generic_static_method.lm:26:27,
                                                 },
+                                                self_type: false,
                                                 location: call_generic_static_method.lm:26:27,
                                             },
                                         ],

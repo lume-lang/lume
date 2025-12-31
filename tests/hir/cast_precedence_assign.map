@@ -72,6 +72,7 @@ Map {
                                     },
                                     location: cast_precedence_assign.lm:25:28,
                                 },
+                                self_type: false,
                                 location: cast_precedence_assign.lm:25:28,
                             },
                             location: cast_precedence_assign.lm:20:28,

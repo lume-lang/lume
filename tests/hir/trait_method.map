@@ -47,6 +47,7 @@ Map {
                                     },
                                     location: trait_method.lm:26:29,
                                 },
+                                self_type: false,
                                 location: trait_method.lm:26:29,
                             },
                             vararg: false,

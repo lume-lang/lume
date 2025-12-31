@@ -75,6 +75,7 @@ Map {
                                                 },
                                                 location: call_function_generic.lm:25:26,
                                             },
+                                            self_type: false,
                                             location: call_function_generic.lm:25:26,
                                         },
                                     ],

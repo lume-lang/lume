@@ -50,6 +50,7 @@ Map {
                             },
                             location: function_definition_varargs.lm:16:21,
                         },
+                        self_type: false,
                         location: function_definition_varargs.lm:16:21,
                     },
                     vararg: true,

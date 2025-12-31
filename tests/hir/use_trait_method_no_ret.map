@@ -24,6 +24,7 @@ Map {
                     },
                     location: use_trait_method_no_ret.lm:4:7,
                 },
+                self_type: false,
                 location: use_trait_method_no_ret.lm:4:7,
             },
             target: Type {
@@ -56,6 +57,7 @@ Map {
                     },
                     location: use_trait_method_no_ret.lm:9:14,
                 },
+                self_type: false,
                 location: use_trait_method_no_ret.lm:9:14,
             },
             methods: [
@@ -100,6 +102,7 @@ Map {
                                     },
                                     location: use_trait_method_no_ret.lm:35:40,
                                 },
+                                self_type: false,
                                 location: use_trait_method_no_ret.lm:35:40,
                             },
                             vararg: false,

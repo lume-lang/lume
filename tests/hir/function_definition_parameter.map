@@ -41,6 +41,7 @@ Map {
                             },
                             location: function_definition_parameter.lm:14:16,
                         },
+                        self_type: false,
                         location: function_definition_parameter.lm:14:16,
                     },
                     vararg: false,

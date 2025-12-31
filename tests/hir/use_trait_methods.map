@@ -24,6 +24,7 @@ Map {
                     },
                     location: use_trait_methods.lm:4:8,
                 },
+                self_type: false,
                 location: use_trait_methods.lm:4:8,
             },
             target: Type {
@@ -56,6 +57,7 @@ Map {
                     },
                     location: use_trait_methods.lm:10:15,
                 },
+                self_type: false,
                 location: use_trait_methods.lm:10:15,
             },
             methods: [
