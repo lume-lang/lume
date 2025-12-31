@@ -69,7 +69,7 @@ impl LowerModule {
         let name = match &self.self_type {
             Some(ty) => ty.clone(),
             None => {
-                return Err(SelfOutsideClass {
+                return Err(SelfOutsideObjectContext {
                     source: self.file.clone(),
                     range: location.index.clone(),
                     ty: String::from(SELF_TYPE_NAME),

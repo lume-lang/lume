@@ -17,12 +17,16 @@ pub struct InvalidNamespacePath {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "cannot use {ty} outside of a class", code = "LM3013")]
-pub struct SelfOutsideClass {
+#[diagnostic(
+    message = "`{ty}` cannot be used in functions",
+    code = "LM3013",
+    help = "since functions have no instance, remove the `{ty}` parameter"
+)]
+pub struct InvalidSelfParameter {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("type {ty} cannot be used outside of a class, since it has nothing to refer to")]
+    #[label("`{ty}` is only available inside traits and implementations")]
     pub range: Range<usize>,
 
     pub ty: String,
@@ -30,31 +34,27 @@ pub struct SelfOutsideClass {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
-    message = "{ty} must be the first parameter",
+    message = "`{ty}` must be the first parameter",
     code = "LM3014",
-    help = "consider moving the {ty} parameter to the beginning"
+    help = "consider moving the `{ty}` parameter to the beginning"
 )]
 pub struct SelfNotFirstParameter {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("instance methods must have {ty} as the first parameter")]
+    #[label("instance methods must have `{ty}` as the first parameter")]
     pub range: Range<usize>,
 
     pub ty: String,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "{ty} cannot be used in functions",
-    code = "LM3015",
-    help = "since functions have no instance, remove the {ty} parameter"
-)]
+#[diagnostic(message = "{ty} cannot be used in functions", code = "LM3015")]
 pub struct SelfOutsideObjectContext {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("{ty} cannot be used in functions; they must only be used in traits and classes")]
+    #[label("`{ty}` is only available inside traits and implementations")]
     pub range: Range<usize>,
 
     pub ty: String,
