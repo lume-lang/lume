@@ -168,6 +168,7 @@ impl<'tcx> Lower<'tcx> {
     }
 
     /// Determines the [`lume_tir::FunctionKind`] of the given method.
+    #[libftrace::traced(level = Debug, fields(method = method.name.to_wide_string(), has_body), ret)]
     pub(crate) fn determine_method_kind(&self, method: &lume_types::Method, has_body: bool) -> lume_tir::FunctionKind {
         // Checks whether the method is an implementation of
         // `std::ops::Dispose::dispose()`.
@@ -229,7 +230,14 @@ impl<'tcx> Lower<'tcx> {
     /// via dynamic dispatch.
     #[inline]
     #[must_use]
+    #[libftrace::traced(level = Debug, fields(method = method.name.to_wide_string()), ret)]
     pub(crate) fn is_dynamic_dispatch(&self, method: &lume_types::Method) -> bool {
+        libftrace::trace!(
+            "kind: {:?}, instanced: {}",
+            method.kind,
+            self.tcx.is_instanced_method(method.id)
+        );
+
         method.kind == lume_types::MethodKind::TraitDefinition && self.tcx.is_instanced_method(method.id)
     }
 }

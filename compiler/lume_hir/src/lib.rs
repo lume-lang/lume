@@ -738,7 +738,7 @@ pub struct Parameter {
 
 impl Parameter {
     pub fn is_self(&self) -> bool {
-        self.name.as_str() == SELF_TYPE_NAME
+        self.name.as_str() == SELF_PARAM_NAME
     }
 }
 
