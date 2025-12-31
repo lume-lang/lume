@@ -49,7 +49,7 @@ pub struct SelfNotFirstParameter {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "{ty} cannot be used in functions", code = "LM3015")]
+#[diagnostic(message = "`{ty}` cannot be used in functions", code = "LM3015")]
 pub struct SelfOutsideObjectContext {
     #[span]
     pub source: Arc<SourceFile>,
