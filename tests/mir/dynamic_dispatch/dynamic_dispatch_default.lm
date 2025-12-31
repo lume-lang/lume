@@ -1,0 +1,17 @@
+//# test-return = 15
+
+struct Foo {}
+
+trait Dynamic {
+    fn func(self) -> Int32 {
+        15_i32
+    }
+}
+
+use Dynamic: Foo {}
+
+pub fn main() -> Int32 {
+    let foo = Foo { };
+
+    Dynamic::func(foo)
+}

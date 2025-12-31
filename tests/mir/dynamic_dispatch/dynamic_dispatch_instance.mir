@@ -1,0 +1,32 @@
+fn "Dynamic::func" (self: ptr void #0, $_dyn: ptr std::Type #1) -> i32 {
+B0:
+    let #2: u64 = call std::find_method_on(5140422466772675369_u64, #1)
+    let #3: bool = ==(#2, 0_u64)
+    if #3 goto B2 else B1(#2, #0)
+B1(#6, #7):  B0
+    let #8: i32 = call indirect #6(#7)
+    mark object(#6)
+    mark object(#7)
+    return #8
+B2:  B0
+    let #11: i32 = 15_i32
+    return #11
+}
+
+fn "Foo::func" (self: ptr Foo #0) -> i32 {
+B0:
+    let #1: i32 = 5_i32
+    return #1
+}
+
+fn "main" () -> i32 {
+B0:
+    let #0: metadata Foo = metadata Foo()
+    #1 = alloc Foo
+    mark object(#1)
+    *#1[+x0] = #0
+    let #2: ptr Foo = +(#1, 8_u64)
+    mark object(#2)
+    let #3: i32 = call Dynamic::func(#2, #0)
+    return #3
+}
