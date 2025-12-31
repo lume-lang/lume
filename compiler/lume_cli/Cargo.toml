@@ -14,7 +14,7 @@ lume_driver = { path = "../lume_driver" }
 lume_fmt = { path = "../../tools/fmt" }
 lume_errors = { path = "../../crates/lume_errors" }
 lume_lsp = { path = "../lume_lsp", optional = true }
-lume_session = { path = "../lume_session", features = ["cli"] }
+lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 
 clap = { workspace = true }

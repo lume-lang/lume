@@ -8,7 +8,6 @@ rust-version.workspace = true
 doctest = false
 
 [dependencies]
-lume_hir = { path = "../lume_hir" }
 lume_span = { path = "../../crates/lume_span" }
 lume_types = { path = "../lume_types" }
 

@@ -9,7 +9,6 @@ test = false
 doctest = false
 
 [dependencies]
-libftrace = { workspace = true }
 owo-colors = { workspace = true }
 
 [lints]

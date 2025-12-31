@@ -12,7 +12,6 @@ lume_hir = { path = "../../compiler/lume_hir" }
 lume_session = { path = "../../compiler/lume_session" }
 lume_typech = { path = "../../compiler/lume_typech" }
 
-indexmap = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 
 [lints]

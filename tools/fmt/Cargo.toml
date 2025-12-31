@@ -16,7 +16,6 @@ lume_lexer = { path = "../../compiler/lume_lexer" }
 lume_span = { path = "../../crates/lume_span" }
 lume_parser = { path = "../../compiler/lume_parser" }
 
-error_snippet = { workspace = true }
 im = { version = "15.1.0" }
 iter_tools = { version = "0.43.0" }
 serde = { workspace = true, features = ["derive"] }

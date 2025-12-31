@@ -17,3 +17,6 @@ owo-colors = { workspace = true }
 
 [lints]
 workspace = true
+
+[package.metadata.cargo-machete]
+ignored = ["lume_errors"]

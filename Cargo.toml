@@ -67,6 +67,9 @@ manifold = { path = "tools/manifold" }
 [features]
 tracing = ["lume_cli/tracing", "libftrace/enabled"]
 
+[package.metadata.cargo-machete]
+ignored = ["libftrace"]
+
 [profile.profiling]
 inherits = "release"
 debug = true

@@ -208,8 +208,6 @@ version = "0.1.1"
 dependencies = [
  "clap",
  "error_snippet",
- "error_snippet_derive",
- "libftrace",
  "lume_assets",
  "lume_cli_tools",
  "lume_errors",
@@ -1255,9 +1253,9 @@ checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
 name = "jiff"
-version = "0.2.16"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49cce2b81f2098e7e3efc35bc2e0a6b7abec9d34128283d7a26fa8f32a6dbb35"
+checksum = "a87d9b8105c23642f50cbbae03d1f75d8422c5cb98ce7ee9271f7ff7505be6b8"
 dependencies = [
  "jiff-static",
  "log",
@@ -1268,9 +1266,9 @@ dependencies = [
 
 [[package]]
 name = "jiff-static"
-version = "0.2.16"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "980af8b43c3ad5d8d349ace167ec8170839f753a42d233ba19e08afe1850fa69"
+checksum = "b787bebb543f8969132630c51fd0afab173a86c6abae56ff3b9e5e3e3f9f6e58"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1537,7 +1535,6 @@ dependencies = [
 name = "lume_cli_tools"
 version = "0.1.1"
 dependencies = [
- "libftrace",
  "owo-colors",
 ]
 
@@ -1560,7 +1557,6 @@ dependencies = [
  "lume_span",
  "lume_type_metadata",
  "object",
- "serde",
  "target-lexicon",
 ]
 
@@ -1577,8 +1573,6 @@ name = "lume_driver"
 version = "0.1.1"
 dependencies = [
  "arc",
- "error_snippet",
- "error_snippet_derive",
  "libftrace",
  "lume_codegen",
  "lume_errors",
@@ -1605,7 +1599,6 @@ version = "0.1.1"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
- "lume_span",
 ]
 
 [[package]]
@@ -1622,7 +1615,6 @@ dependencies = [
 name = "lume_fmt"
 version = "0.1.1"
 dependencies = [
- "error_snippet",
  "im",
  "iter_tools",
  "lume_ast",
@@ -1650,7 +1642,6 @@ name = "lume_hir"
 version = "0.1.1"
 dependencies = [
  "error_snippet",
- "error_snippet_derive",
  "indexmap",
  "insta",
  "lume_ast",
@@ -1709,7 +1700,6 @@ dependencies = [
  "error_snippet",
  "error_snippet_derive",
  "logos",
- "lume_ast",
  "lume_span",
 ]
 
@@ -1717,12 +1707,10 @@ dependencies = [
 name = "lume_linker"
 version = "0.1.1"
 dependencies = [
- "dirs",
  "error_snippet",
  "libftrace",
  "lume_assets",
  "lume_errors",
- "lume_mir",
  "lume_session",
 ]
 
@@ -1730,11 +1718,9 @@ dependencies = [
 name = "lume_lsp"
 version = "0.1.1"
 dependencies = [
- "clap",
  "crossbeam",
  "env_logger",
  "error_snippet",
- "error_snippet_derive",
  "indexmap",
  "log",
  "lsp-server",
@@ -1744,7 +1730,6 @@ dependencies = [
  "lume_fmt",
  "lume_hir",
  "lume_infer",
- "lume_parser",
  "lume_session",
  "lume_span",
  "lume_types",
@@ -1768,7 +1753,6 @@ dependencies = [
  "build_stage",
  "lume_errors",
  "lume_hir",
- "lume_infer",
  "lume_session",
  "lume_span",
  "lume_typech",
@@ -1778,7 +1762,6 @@ dependencies = [
 name = "lume_metadata"
 version = "0.1.1"
 dependencies = [
- "indexmap",
  "lume_hir",
  "lume_session",
  "lume_typech",
@@ -1791,7 +1774,6 @@ version = "0.1.1"
 dependencies = [
  "indexmap",
  "libftrace",
- "lume_errors",
  "lume_session",
  "lume_span",
  "lume_type_metadata",
@@ -1821,14 +1803,12 @@ dependencies = [
 name = "lume_mir_opt"
 version = "0.1.1"
 dependencies = [
- "indexmap",
  "libftrace",
  "lume_mir",
  "lume_mir_queries",
  "lume_session",
  "lume_span",
  "lume_typech",
- "lume_types",
 ]
 
 [[package]]
@@ -1842,7 +1822,6 @@ dependencies = [
  "lume_session",
  "lume_span",
  "lume_typech",
- "lume_types",
 ]
 
 [[package]]
@@ -1886,7 +1865,6 @@ dependencies = [
 name = "lume_session"
 version = "0.1.1"
 dependencies = [
- "clap",
  "error_snippet",
  "error_snippet_derive",
  "fxhash",
@@ -1917,7 +1895,6 @@ name = "lume_tir"
 version = "0.1.1"
 dependencies = [
  "indexmap",
- "lume_session",
  "lume_span",
  "lume_type_metadata",
  "lume_types",
@@ -1945,7 +1922,6 @@ name = "lume_type_metadata"
 version = "0.1.1"
 dependencies = [
  "indexmap",
- "lume_hir",
  "lume_span",
  "lume_types",
  "serde",
@@ -1960,7 +1936,6 @@ dependencies = [
  "error_snippet_derive",
  "indexmap",
  "insta",
- "levenshtein",
  "libftrace",
  "lume_architect",
  "lume_errors",
@@ -2039,9 +2014,9 @@ checksum = "61807f77802ff30975e01f4f071c8ba10c022052f98b3294119f3e615d13e5be"
 
 [[package]]
 name = "ntapi"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8a3895c6391c39d7fe7ebc444a87eb2991b2a0bc718fdabd071eec617fc68e4"
+checksum = "c70f219e21142367c70c0b30c6a9e3a14d55b4d12a204d897fbec83a0363f081"
 dependencies = [
  "winapi",
 ]
@@ -2154,9 +2129,9 @@ checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 
 [[package]]
 name = "portable-atomic"
-version = "1.11.1"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483"
+checksum = "f89776e4d69bb58bc6993e99ffa1d11f228b839984854c7daeb5d37f87cbe950"
 
 [[package]]
 name = "portable-atomic-util"
@@ -2540,9 +2515,9 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "simd-adler32"
-version = "0.3.7"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
+checksum = "e320a6c5ad31d271ad523dcf3ad13e2767ad8b1cb8f047f75a8aeaf8da139da2"
 
 [[package]]
 name = "similar"

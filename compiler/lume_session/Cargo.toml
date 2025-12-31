@@ -13,7 +13,6 @@ lume_errors = { path = "../../crates/lume_errors" }
 lume_options = { path = "../../rt/lume_options" }
 lume_span = { path = "../../crates/lume_span" }
 
-clap = { workspace = true, optional = true }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 fxhash = "^0.2"
@@ -26,9 +25,6 @@ rust-embed = { version = "=8.7.0", features = [
 ] }
 semver = { version = "^1", features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
-
-[features]
-cli = ["dep:clap"]
 
 [lints]
 workspace = true

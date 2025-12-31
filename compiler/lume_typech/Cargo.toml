@@ -17,7 +17,6 @@ lume_types = { path = "../lume_types" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
-levenshtein = { version = "=1.0.5" }
 lume_architect = { workspace = true }
 indexmap = { workspace = true }
 libftrace = { workspace = true }

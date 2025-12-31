@@ -11,8 +11,6 @@ lume_errors = { path = "../../crates/lume_errors" }
 
 clap = { workspace = true }
 error_snippet = { workspace = true }
-error_snippet_derive = { workspace = true }
-libftrace = { workspace = true }
 owo-colors = { workspace = true }
 regex = { workspace = true }
 semver = { workspace = true }

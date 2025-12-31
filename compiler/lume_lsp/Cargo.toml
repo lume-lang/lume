@@ -14,16 +14,12 @@ lume_errors = { path = "../../crates/lume_errors" }
 lume_fmt = { path = "../../tools/fmt" }
 lume_hir = { path = "../lume_hir" }
 lume_infer = { path = "../lume_infer" }
-lume_parser = { path = "../lume_parser" }
-lume_session = { path = "../lume_session", features = ["cli"] }
+lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 lume_types = { path = "../lume_types" }
-
-clap = { workspace = true }
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
 env_logger = { version = "=0.11.8" }
 error_snippet = { workspace = true }
-error_snippet_derive = { workspace = true }
 indexmap = { workspace = true }
 log = { version = "0.4" }
 lsp-server = { version = "=0.7.9" }

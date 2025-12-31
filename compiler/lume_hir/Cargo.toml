@@ -14,7 +14,6 @@ lume_macros = { path = "../../crates/lume_macros" }
 lume_span = { path = "../../crates/lume_span" }
 
 error_snippet = { workspace = true }
-error_snippet_derive = { workspace = true }
 indexmap = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 

@@ -20,3 +20,6 @@ similar = { version = "=2.7.0", features = ["inline"] }
 
 [lints]
 workspace = true
+
+[package.metadata.cargo-machete]
+ignored = ["lume_gc"]
