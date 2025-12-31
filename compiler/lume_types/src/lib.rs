@@ -5,7 +5,7 @@ use std::sync::Arc;
 use error_snippet::Result;
 use indexmap::IndexMap;
 use lume_errors::DiagCtx;
-use lume_hir::Path;
+use lume_hir::{Path, TypeId};
 use lume_session::GlobalCtx;
 use lume_span::*;
 use serde::{Deserialize, Serialize};
@@ -338,6 +338,9 @@ pub struct TypeRef {
     pub instance_of: NodeId,
     pub bound_types: Vec<TypeRef>,
 
+    /// Optional reference to the parent HIR type.
+    pub hir: Option<TypeId>,
+
     #[serde(skip)]
     pub location: Location,
 }
@@ -348,6 +351,7 @@ impl TypeRef {
         Self {
             instance_of: instance,
             bound_types: vec![],
+            hir: None,
             location,
         }
     }
@@ -365,6 +369,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_VOID_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -374,6 +379,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_BOOL_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -384,6 +390,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_INT8_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -394,6 +401,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_INT16_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -404,6 +412,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_INT32_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -414,6 +423,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_INT64_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -424,6 +434,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_UINT8_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -434,6 +445,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_UINT16_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -444,6 +456,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_UINT32_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -454,6 +467,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_UINT64_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -464,6 +478,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_FLOAT32_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -474,6 +489,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_FLOAT64_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }
@@ -484,6 +500,7 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_UNKNOWN_ID,
             bound_types: vec![],
+            hir: None,
             location: Location::empty(),
         }
     }

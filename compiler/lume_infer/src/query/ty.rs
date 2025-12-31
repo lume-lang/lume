@@ -73,6 +73,7 @@ impl TyInferCtx {
             .map(|type_param| lume_hir::Type {
                 id: lume_hir::TypeId::from(type_param.id),
                 name: lume_hir::Path::rooted(lume_hir::PathSegment::ty(type_param.name.clone())),
+                self_type: false,
                 location: type_param.location,
             })
             .collect::<Vec<_>>())

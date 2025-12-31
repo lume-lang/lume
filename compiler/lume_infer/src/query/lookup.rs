@@ -16,6 +16,7 @@ impl TyInferCtx {
                     let struct_type = lume_hir::Type {
                         id: lume_hir::TypeId::from(struct_def.id),
                         name: struct_def.name.clone(),
+                        self_type: false,
                         location: struct_def.location,
                     };
 

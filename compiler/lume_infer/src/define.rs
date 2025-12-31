@@ -279,6 +279,7 @@ impl TyInferCtx {
             &lume_hir::Type {
                 id: lume_hir::TypeId::from(trait_def.id),
                 name: trait_def.name.clone(),
+                self_type: false,
                 location: trait_def.location,
             },
             &type_params,

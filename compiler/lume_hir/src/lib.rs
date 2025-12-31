@@ -1840,6 +1840,7 @@ impl PartialEq<NodeId> for TypeId {
 pub struct Type {
     pub id: TypeId,
     pub name: Path,
+    pub self_type: bool,
     pub location: Location,
 }
 
@@ -1848,6 +1849,7 @@ impl Type {
         Self {
             id: TypeId(NodeId::empty(PackageId::empty())),
             name: Path::void(),
+            self_type: false,
             location: Location::empty(),
         }
     }
