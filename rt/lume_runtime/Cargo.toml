@@ -5,6 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [lib]
+doctest = false
 crate-type = ["lib", "staticlib"]
 
 [dependencies]
