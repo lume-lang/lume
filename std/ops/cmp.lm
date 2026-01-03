@@ -5,10 +5,10 @@ namespace std::ops
 /// Whenever the `==` or `!=` operators are used on a value, the compiler
 /// looks to see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "equal_trait")]
-pub trait Equal<T> {
-    fn eq(self, other: T) -> Boolean;
+pub trait Equal {
+    fn eq(self, other: Self) -> Boolean;
 
-    fn ne(self, other: T) -> Boolean {
+    fn ne(self, other: Self) -> Boolean {
         !self.eq(other)
     }
 }
@@ -19,10 +19,10 @@ pub trait Equal<T> {
 /// value, the compiler looks to see if this trait is implemented, given the
 /// correct type argument.
 ![lang_item(name = "cmp_trait")]
-pub trait Compare<T> {
-    fn lt(self, other: T) -> Boolean;
-    fn le(self, other: T) -> Boolean;
+pub trait Compare {
+    fn lt(self, other: Self) -> Boolean;
+    fn le(self, other: Self) -> Boolean;
 
-    fn gt(self, other: T) -> Boolean;
-    fn ge(self, other: T) -> Boolean;
+    fn gt(self, other: Self) -> Boolean;
+    fn ge(self, other: Self) -> Boolean;
 }
