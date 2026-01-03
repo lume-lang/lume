@@ -5,8 +5,8 @@ namespace std::ops
 /// Whenever the `+` operator is used on a value, the compiler looks to
 /// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "add_trait")]
-pub trait Add<T> {
-    fn add(self, other: T) -> T;
+pub trait Add {
+    fn add(self, other: Self) -> Self;
 }
 
 /// Trait for performing the arithmetic subtraction operator, `-`.
@@ -14,8 +14,8 @@ pub trait Add<T> {
 /// Whenever the `-` operator is used on a value, the compiler looks to
 /// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "sub_trait")]
-pub trait Sub<T> {
-    fn sub(self, other: T) -> T;
+pub trait Sub {
+    fn sub(self, other: Self) -> Self;
 }
 
 /// Trait for performing the arithmetic multiplication operator, `*`.
@@ -23,8 +23,8 @@ pub trait Sub<T> {
 /// Whenever the `*` operator is used on a value, the compiler looks to
 /// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "mul_trait")]
-pub trait Mul<T> {
-    fn mul(self, other: T) -> T;
+pub trait Mul {
+    fn mul(self, other: Self) -> Self;
 }
 
 /// Trait for performing the arithmetic division operator, `/`.
@@ -32,8 +32,8 @@ pub trait Mul<T> {
 /// Whenever the `/` operator is used on a value, the compiler looks to
 /// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "div_trait")]
-pub trait Div<T> {
-    fn div(self, other: T) -> T;
+pub trait Div {
+    fn div(self, other: Self) -> Self;
 }
 
 /// Trait for performing the arithmetic AND operator, `&`.
@@ -41,8 +41,8 @@ pub trait Div<T> {
 /// Whenever the `&` operator is used on a value, the compiler looks to
 /// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "band_trait")]
-pub trait BitAnd<T> {
-    fn band(self, other: T) -> T;
+pub trait BitAnd {
+    fn band(self, other: Self) -> Self;
 }
 
 /// Trait for performing the arithmetic OR operator, `|`.
@@ -50,8 +50,8 @@ pub trait BitAnd<T> {
 /// Whenever the `|` operator is used on a value, the compiler looks to
 /// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "bor_trait")]
-pub trait BitOr<T> {
-    fn bor(self, other: T) -> T;
+pub trait BitOr {
+    fn bor(self, other: Self) -> Self;
 }
 
 /// Trait for performing the arithmetic XOR operator, `^`.
@@ -59,6 +59,6 @@ pub trait BitOr<T> {
 /// Whenever the `^` operator is used on a value, the compiler looks to
 /// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "bxor_trait")]
-pub trait BitXor<T> {
-    fn bxor(self, other: T) -> T;
+pub trait BitXor {
+    fn bxor(self, other: Self) -> Self;
 }

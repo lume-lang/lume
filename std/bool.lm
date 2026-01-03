@@ -5,18 +5,18 @@ import std::ops (Equal, Not, And, Or)
 /// Represents an 1-bit boolean value, which can store either `true` or `false`.
 pub struct Boolean {}
 
-use Equal<Boolean>: Boolean {
+use Equal: Boolean {
     fn external eq(self, other: Boolean) -> Boolean
 }
 
-use And<Boolean>: Boolean {
+use And: Boolean {
     fn external and(self, other: Boolean) -> Boolean
 }
 
-use Or<Boolean>: Boolean {
+use Or: Boolean {
     fn external or(self, other: Boolean) -> Boolean
 }
 
-use Not<Boolean>: Boolean {
+use Not: Boolean {
     fn external not(self) -> Boolean
 }

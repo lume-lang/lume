@@ -7,27 +7,27 @@ import std::ops (Equal, Compare, Negate)
 /// precise to ~7 decimal places, as defined in IEEE 754-2008.
 pub struct Float {}
 
-use Add<Float>: Float {
+use Add: Float {
     fn external add(self, other: Float) -> Float
 }
 
-use Sub<Float>: Float {
+use Sub: Float {
     fn external sub(self, other: Float) -> Float
 }
 
-use Mul<Float>: Float {
+use Mul: Float {
     fn external mul(self, other: Float) -> Float
 }
 
-use Div<Float>: Float {
+use Div: Float {
     fn external div(self, other: Float) -> Float
 }
 
-use Equal<Float>: Float {
+use Equal: Float {
     fn external eq(self, other: Float) -> Boolean
 }
 
-use Compare<Float>: Float {
+use Compare: Float {
     fn external lt(self, other: Float) -> Boolean
     fn external le(self, other: Float) -> Boolean
 
@@ -35,7 +35,7 @@ use Compare<Float>: Float {
     fn external ge(self, other: Float) -> Boolean
 }
 
-use Negate<Float>: Float {
+use Negate: Float {
     fn external negate(self) -> Float
 }
 
@@ -43,27 +43,27 @@ use Negate<Float>: Float {
 /// precise to ~16 decimal places, as defined in IEEE 754-2008.
 pub struct Double {}
 
-use Add<Double>: Double {
+use Add: Double {
     fn external add(self, other: Double) -> Double
 }
 
-use Sub<Double>: Double {
+use Sub: Double {
     fn external sub(self, other: Double) -> Double
 }
 
-use Mul<Double>: Double {
+use Mul: Double {
     fn external mul(self, other: Double) -> Double
 }
 
-use Div<Double>: Double {
+use Div: Double {
     fn external div(self, other: Double) -> Double
 }
 
-use Equal<Double>: Double {
+use Equal: Double {
     fn external eq(self, other: Double) -> Boolean
 }
 
-use Compare<Double>: Double {
+use Compare: Double {
     fn external lt(self, other: Double) -> Boolean
     fn external le(self, other: Double) -> Boolean
 
@@ -71,6 +71,6 @@ use Compare<Double>: Double {
     fn external ge(self, other: Double) -> Boolean
 }
 
-use Negate<Double>: Double {
+use Negate: Double {
     fn external negate(self) -> Double
 }

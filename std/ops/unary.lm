@@ -5,8 +5,8 @@ namespace std::ops
 /// Whenever the `-` operator is used on a value, the compiler looks to
 /// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "negate_trait")]
-pub trait Negate<T> {
-    fn negate(self) -> T;
+pub trait Negate {
+    fn negate(self) -> Self;
 }
 
 /// Trait for performing logical negation `!` operator.
@@ -14,6 +14,6 @@ pub trait Negate<T> {
 /// Whenever the `!` operator is used on a value, the compiler looks to
 /// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "not_trait")]
-pub trait Not<T> {
-    fn not(self) -> T;
+pub trait Not {
+    fn not(self) -> Self;
 }

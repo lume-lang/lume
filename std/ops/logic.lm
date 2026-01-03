@@ -5,8 +5,8 @@ namespace std::ops
 /// Whenever the `&&` operator is used on a value, the compiler looks to
 /// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "and_trait")]
-pub trait And<T> {
-    fn and(self, other: T) -> T;
+pub trait And {
+    fn and(self, other: Self) -> Self;
 }
 
 /// Trait for performing the logical OR operator, `||`.
@@ -14,6 +14,6 @@ pub trait And<T> {
 /// Whenever the `||` operator is used on a value, the compiler looks to
 /// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "or_trait")]
-pub trait Or<T> {
-    fn or(self, other: T) -> T;
+pub trait Or {
+    fn or(self, other: Self) -> Self;
 }
