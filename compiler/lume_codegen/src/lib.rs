@@ -800,7 +800,18 @@ impl<'ctx> LowerFunction<'ctx> {
     pub(crate) fn not(&mut self, val: &lume_mir::Operand) -> Value {
         let val = self.cg_operand(val);
 
-        self.builder.ins().bnot(val)
+        // We're not just using BNOT anymore, since the value in `val` is actually
+        // 8-bits.
+        //
+        // Applying only NOT would cause non-zero booleans to stay non-zero. For
+        // example, `!true` (`~0x1`) would turn into `0xFE`, which would
+        // always be truthy for `if` comparisons.
+        //
+        // Instead, we use BAND with a mask of 0x01 to ensure that the result is
+        // always 0x00 or 0x01.
+        let bnot = self.builder.ins().bnot(val);
+
+        self.builder.ins().band_imm(bnot, 0x01)
     }
 
     pub(crate) fn icast(&mut self, reg: RegisterId, to: u8) -> Value {
