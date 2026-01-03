@@ -6,10 +6,12 @@ use lume_infer::TyInferCtx;
 use lume_types::TypeDatabaseContext;
 
 pub mod check;
+pub mod dispatch;
 pub mod query;
+pub mod usefulness;
+
 #[cfg(test)]
 mod tests;
-pub mod usefulness;
 
 /// Central data structure for checking compatibility between types within the
 /// source package.

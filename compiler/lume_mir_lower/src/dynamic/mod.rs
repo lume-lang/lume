@@ -21,17 +21,17 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
         // metadata of the implemented type. Since this parameter shouldn't
         // be passed to the target function, we remove it from the parameters list.
 
-        let mut params = builder.func.parameter_registers().collect::<Vec<_>>();
-        params.pop();
+        let mut parameters = builder.func.parameter_registers().collect::<Vec<_>>();
+        parameters.pop();
 
         let mut signature = builder.func.signature.clone();
         signature.parameters.pop();
 
         Self {
             builder,
-            signature,
-            parameters: params,
             function,
+            signature,
+            parameters,
         }
     }
 

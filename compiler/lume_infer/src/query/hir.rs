@@ -12,6 +12,7 @@ use lume_hir::{Node, Path};
 use lume_span::*;
 
 use crate::TyInferCtx;
+use crate::query::CallReference;
 
 /// An iterator over the elements of a linked [`NodeId`]s.
 ///
@@ -259,6 +260,24 @@ impl TyInferCtx {
     #[track_caller]
     pub fn hir_parent_iter(&self, def: NodeId) -> impl Iterator<Item = &Node> {
         self.hir_parent_id_iter(def).filter_map(move |id| self.hir_node(id))
+    }
+
+    /// Attempts to get the callable which contains the given [`NodeId`].
+    ///
+    /// Otherwise, returns [`None`].
+    #[libftrace::traced(level = Trace)]
+    pub fn hir_parent_callable(&self, id: NodeId) -> Option<CallReference> {
+        for parent in self.hir_parent_iter(id) {
+            match parent {
+                lume_hir::Node::Method(method) => return Some(CallReference::Function(method.id)),
+                lume_hir::Node::TraitMethodDef(func) => return Some(CallReference::Function(func.id)),
+                lume_hir::Node::TraitMethodImpl(func) => return Some(CallReference::Function(func.id)),
+                lume_hir::Node::Function(func) => return Some(CallReference::Function(func.id)),
+                _ => {}
+            }
+        }
+
+        None
     }
 
     /// Attempts to get the body of the given [`NodeId`], if it contains a body.
