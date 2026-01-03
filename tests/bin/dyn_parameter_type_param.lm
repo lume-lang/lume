@@ -1,0 +1,27 @@
+//# test-return = 5
+
+trait Default {
+    fn default() -> Self;
+}
+
+struct Foo {
+    pub value: Int32;
+}
+
+use Default: Foo {
+    fn default() -> Self {
+        Foo {
+            value: 5
+        }
+    }
+}
+
+fn default<T: Default>() -> T {
+    T::default()
+}
+
+pub fn main() -> Int32 {
+    let foo = default<Foo>();
+
+    foo.value
+}
