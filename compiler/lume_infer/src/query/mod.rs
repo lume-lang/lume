@@ -28,6 +28,16 @@ pub enum CallReference {
     Method(NodeId),
 }
 
+impl CallReference {
+    /// Returns the [`NodeId`] of the referenced callable.
+    #[inline]
+    pub fn id(&self) -> NodeId {
+        match self {
+            Self::Function(id) | Self::Method(id) => *id,
+        }
+    }
+}
+
 /// Opaque reference to a callable node, such as a function, method definition
 /// or method implementation.
 ///

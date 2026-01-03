@@ -233,8 +233,10 @@ impl PartialEq for Parameter {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeParameter {
+    pub id: NodeId,
     pub var: VariableId,
     pub name: String,
+    pub type_ref: TypeRef,
     pub constraints: Vec<TypeRef>,
 }
 
