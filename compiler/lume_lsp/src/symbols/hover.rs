@@ -82,13 +82,8 @@ pub(crate) fn hover_content_of_function(package: &CheckedPackage, function: &lum
         None => String::new(),
     };
 
-    let identifier = lume_hir::Identifier {
-        name: format!("{:+}", function.name.name),
-        location: function.name.location,
-    };
-
     let signature = package.tcx.signature_of(Callable::Function(function))?;
-    let signature = package.tcx.sig_to_string(&identifier, signature.as_ref(), false)?;
+    let signature = package.tcx.sig_to_string(signature.as_ref(), false)?;
 
     let visibility = match package.tcx.visibility_of(function.id) {
         Some(visibility) => format!("{visibility} "),
@@ -116,13 +111,8 @@ pub(crate) fn hover_content_of_method(package: &CheckedPackage, method: &lume_ty
         None => String::new(),
     };
 
-    let identifier = lume_hir::Identifier {
-        name: format!("{:+}", method.name.name),
-        location: method.name.location,
-    };
-
     let signature = package.tcx.signature_of(Callable::Method(method))?;
-    let signature = package.tcx.sig_to_string(&identifier, signature.as_ref(), false)?;
+    let signature = package.tcx.sig_to_string(signature.as_ref(), false)?;
 
     let visibility = match package.tcx.visibility_of(method.id) {
         Some(visibility) => format!("{visibility} "),
