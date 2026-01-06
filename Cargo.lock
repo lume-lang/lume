@@ -246,6 +246,7 @@ dependencies = [
  "lume_tir_lower",
  "lume_typech",
  "lume_types",
+ "lume_unification",
 ]
 
 [[package]]
@@ -1590,6 +1591,7 @@ dependencies = [
  "lume_tir_lower",
  "lume_typech",
  "lume_types",
+ "lume_unification",
  "postcard",
 ]
 
@@ -1963,6 +1965,23 @@ dependencies = [
  "lume_session",
  "lume_span",
  "serde",
+]
+
+[[package]]
+name = "lume_unification"
+version = "0.1.1"
+dependencies = [
+ "error_snippet",
+ "error_snippet_derive",
+ "indexmap",
+ "libftrace",
+ "lume_architect",
+ "lume_errors",
+ "lume_hir",
+ "lume_infer",
+ "lume_session",
+ "lume_span",
+ "lume_types",
 ]
 
 [[package]]

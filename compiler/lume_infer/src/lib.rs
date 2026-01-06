@@ -4,9 +4,8 @@ use std::ops::Deref;
 use std::sync::RwLock;
 
 use error_snippet::Result;
-use indexmap::IndexMap;
 use lume_architect::DatabaseContext;
-use lume_errors::DiagCtx;
+use lume_errors::{DiagCtx, Error};
 use lume_hir::{Path, TypeParameter};
 use lume_span::*;
 use lume_types::{FunctionSig, NamedTypeRef, TyCtx, TypeDatabaseContext, TypeRef};
@@ -14,7 +13,6 @@ use lume_types::{FunctionSig, NamedTypeRef, TyCtx, TypeDatabaseContext, TypeRef}
 mod define;
 pub mod errors;
 pub mod query;
-mod unify;
 
 #[cfg(test)]
 mod tests;
@@ -54,8 +52,6 @@ pub struct TyInferCtx {
     ancestry: BTreeMap<NodeId, NodeId>,
 
     nested_inference_lock: RwLock<()>,
-
-    type_vars: RwLock<IndexMap<unify::TypeVariableId, unify::TypeVariable>>,
 }
 
 impl TyInferCtx {
@@ -66,7 +62,6 @@ impl TyInferCtx {
             hir,
             ancestry: BTreeMap::new(),
             nested_inference_lock: RwLock::new(()),
-            type_vars: RwLock::new(IndexMap::new()),
         }
     }
 
@@ -118,23 +113,6 @@ impl TyInferCtx {
         self.infer_type_arguments()?;
 
         libftrace::debug!("finished inference");
-
-        unify::verify_type_names(self);
-        self.unify_ctx()?;
-
-        // We need to invalidate the global cache for method calls, since the
-        // unification pass has altered some items in the HIR, making those
-        // entries in the cache incorrect and/or invalid.
-        //
-        // Very few method calls would've been cached at this point in the compile
-        // process, so we can safetly clear the entire thing, without having
-        // to worry too much about the potential performance loss.
-        libftrace::debug!("unification cache invalidation");
-
-        let ctx: &lume_session::GlobalCtx = &*self;
-        DatabaseContext::db(ctx).clear_all();
-
-        libftrace::debug!("finished type unification");
         self.dcx().ensure_untainted()?;
 
         Ok(())
@@ -462,6 +440,26 @@ impl TyInferCtx {
             name: name.clone(),
         }
         .into()
+    }
+
+    /// Returns an error indicating that the given types do not match.
+    pub fn mismatched_types(&self, expected: &TypeRef, found: &TypeRef) -> Error {
+        errors::MismatchedTypes {
+            reason_loc: expected.location,
+            found_loc: found.location,
+            expected: self
+                .new_named_type(expected, true)
+                .expect("could not expand type reference"),
+            found: self
+                .new_named_type(found, true)
+                .expect("could not expand type reference"),
+        }
+        .into()
+    }
+
+    /// Raises an error indicating that the given types do not match.
+    pub fn raise_mismatched_types(&self, expected: &TypeRef, found: &TypeRef) {
+        self.dcx().emit(self.mismatched_types(expected, found));
     }
 
     /// Creates a new [`NamedTypeRef`] from the given [`TypeRef`].

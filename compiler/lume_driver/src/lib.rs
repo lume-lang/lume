@@ -112,6 +112,10 @@ impl Compiler {
         ticx.infer()?;
         libftrace::info!("finished type inference");
 
+        // Unifies all the types within the type inference context.
+        lume_unification::unify(&mut ticx)?;
+        libftrace::info!("finished type unification");
+
         // Then, make sure they're all valid.
         let mut tccx = TyCheckCtx::new(ticx);
         tccx.typecheck()?;
