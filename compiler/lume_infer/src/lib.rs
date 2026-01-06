@@ -487,8 +487,12 @@ impl TyInferCtx {
     ///
     /// Returns `Err` if any types referenced by the given [`FunctionSig`], or
     /// any child instances are missing from the type context.
-    pub fn sig_to_string(&self, name: &lume_hir::Identifier, sig: FunctionSig<'_>, expand: bool) -> Result<String> {
-        let name = if expand { format!("{name:+}") } else { format!("{name}") };
+    pub fn sig_to_string(&self, sig: FunctionSig<'_>, expand: bool) -> Result<String> {
+        let name = if expand {
+            self.hir_path_of_node(sig.id).to_wide_string()
+        } else {
+            self.hir_path_of_node(sig.id).to_string()
+        };
 
         let type_parameters = if sig.type_params.is_empty() {
             String::new()
