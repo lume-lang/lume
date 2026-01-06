@@ -1,6 +1,22 @@
+use lume_errors::Diagnostic;
+use lume_hir::Path;
 use lume_span::Location;
 
 use crate::TyInferCtx;
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "type argument mismatch", code = "LM4119")]
+pub(crate) struct TypeArgumentCountMismatch {
+    #[label(
+        source,
+        "expected type {type_name:+} to have {expected} type arguments, but got {actual}"
+    )]
+    pub location: Location,
+
+    pub type_name: Path,
+    pub expected: usize,
+    pub actual: usize,
+}
 
 /// Verifies that all declared types within the HIR which *cannot* be inferred -
 /// such as return types, variable declaration types, trait implementation
@@ -8,7 +24,7 @@ use crate::TyInferCtx;
 /// arguments present.
 #[libftrace::traced(level = Debug)]
 pub(crate) fn verify_type_names(tcx: &TyInferCtx) {
-    for (id, item) in &tcx.hir.nodes {
+    for (id, item) in &tcx.hir().nodes {
         if !tcx.hir_is_local_node(*id) {
             continue;
         }
@@ -95,7 +111,7 @@ pub(crate) fn verify_type_name(tcx: &TyInferCtx, path: &lume_hir::Path, location
 
     if expected_arg_count != declared_arg_count {
         tcx.dcx().emit(
-            crate::unify::diagnostics::TypeArgumentCountMismatch {
+            TypeArgumentCountMismatch {
                 location,
                 type_name: path.clone(),
                 expected: expected_arg_count,

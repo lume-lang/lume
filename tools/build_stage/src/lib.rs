@@ -75,6 +75,8 @@ impl ManifoldDriver {
         let mut infer_ctx = TyInferCtx::new(tcx, hir);
         infer_ctx.infer()?;
 
+        lume_unification::unify(&mut infer_ctx)?;
+
         Ok(infer_ctx)
     }
 

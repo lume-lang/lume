@@ -24,6 +24,7 @@ lume_tir = { path = "../../compiler/lume_tir" }
 lume_tir_lower = { path = "../../compiler/lume_tir_lower" }
 lume_typech = { path = "../../compiler/lume_typech" }
 lume_types = { path = "../../compiler/lume_types" }
+lume_unification = { path = "../../compiler/lume_unification" }
 
 [lints]
 workspace = true
