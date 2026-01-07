@@ -138,9 +138,10 @@ impl UnificationPass<'_> {
                 };
 
                 let declared_type_args = path.bound_types().len();
+                let struct_definition = self.tcx.hir_expect_struct(type_def.id);
 
-                for type_param in type_def.name.bound_types().iter().skip(declared_type_args) {
-                    let type_var_id = TypeVariableId(expr, type_param.id);
+                for &type_param_id in struct_definition.type_parameters.iter().skip(declared_type_args) {
+                    let type_var_id = TypeVariableId(expr, TypeId::from(type_param_id));
 
                     self.create_constraints_of(expr, path, type_var_id)?;
                 }
@@ -223,7 +224,7 @@ impl UnificationPass<'_> {
                 let params = self.tcx.signature_of(callable)?.params;
 
                 for (param, arg) in params.into_iter().zip(args) {
-                    if !is_type_contained_within(type_variable.1.as_node_id(), &param.ty) {
+                    if !is_type_contained_within(type_variable.1, &param.ty) {
                         continue;
                     }
 
@@ -287,7 +288,7 @@ impl UnificationPass<'_> {
                 for (param, arg) in params.iter().zip(arguments) {
                     let param_ty = self.tcx.mk_type_ref_from(param, enum_def.id)?;
 
-                    if !is_type_contained_within(type_variable.1.as_node_id(), &param_ty) {
+                    if !is_type_contained_within(type_variable.1, &param_ty) {
                         continue;
                     }
 
@@ -431,7 +432,7 @@ fn normalize_equality_constraints(
             unreachable!();
         };
 
-        let (normalized_lhs, normalized_rhs) = normalize_constraint_types(tcx, type_variable, &lhs, &rhs)?;
+        let (normalized_lhs, normalized_rhs) = normalize_constraint_types(tcx, type_variable.1, &lhs, &rhs)?;
 
         match normalized_types.as_ref() {
             None => {
@@ -467,16 +468,14 @@ fn normalize_equality_constraints(
 }
 
 #[libftrace::traced(level = Trace, err)]
-fn normalize_constraint_types(
+pub(crate) fn normalize_constraint_types(
     tcx: &TyInferCtx,
-    type_variable: TypeVariableId,
+    target: TypeId,
     lhs: &TypeRef,
     rhs: &TypeRef,
 ) -> Result<(TypeRef, TypeRef)> {
-    let type_variable_target = type_variable.1.as_node_id();
-
     // If either of the items in the set are the target, we send them back.
-    if type_variable_target == lhs.instance_of || type_variable_target == rhs.instance_of {
+    if target == lhs.instance_of || target == rhs.instance_of {
         return Ok((lhs.to_owned(), rhs.to_owned()));
     }
 
@@ -495,20 +494,18 @@ fn normalize_constraint_types(
     // ```
     if lhs.instance_of == rhs.instance_of {
         for (bound_lhs, bound_rhs) in lhs.bound_types.iter().zip(rhs.bound_types.iter()) {
-            if !is_type_contained_within(type_variable_target, bound_lhs)
-                && !is_type_contained_within(type_variable_target, bound_rhs)
-            {
+            if !is_type_contained_within(target, bound_lhs) && !is_type_contained_within(target, bound_rhs) {
                 continue;
             }
 
-            return normalize_constraint_types(tcx, type_variable, bound_lhs, bound_rhs);
+            return normalize_constraint_types(tcx, target, bound_lhs, bound_rhs);
         }
     }
 
     Err(tcx.mismatched_types(lhs, rhs))
 }
 
-fn is_type_contained_within(target: NodeId, ty: &TypeRef) -> bool {
+pub(crate) fn is_type_contained_within(target: TypeId, ty: &TypeRef) -> bool {
     if target == ty.instance_of {
         return true;
     }

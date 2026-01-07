@@ -9,7 +9,34 @@ Map {
                         name: "Test",
                         location: generic_struct_single_generic.lm:7:11,
                     },
-                    bound_types: [],
+                    bound_types: [
+                        Type {
+                            id: TypeId(
+                                NodeId {
+                                    package: PackageId(
+                                        10850729242277675618,
+                                    ),
+                                    index: Idx(
+                                        2,
+                                    ),
+                                },
+                            ),
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "T",
+                                        location: generic_struct_single_generic.lm:12:13,
+                                    },
+                                    bound_types: [],
+                                    location: generic_struct_single_generic.lm:12:13,
+                                },
+                                location: generic_struct_single_generic.lm:12:13,
+                            },
+                            self_type: false,
+                            location: generic_struct_single_generic.lm:12:13,
+                        },
+                    ],
                     location: generic_struct_single_generic.lm:7:11,
                 },
                 location: generic_struct_single_generic.lm:7:11,

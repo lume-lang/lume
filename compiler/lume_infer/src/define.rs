@@ -932,15 +932,15 @@ impl TyInferCtx {
                 lume_hir::ExpressionKind::InstanceCall(call) => {
                     let callable = self.probe_callable_instance(call)?;
 
-                    let replacement = match self
+                    match self
                         .infer_type_arguments_callable(lume_hir::CallExpression::Instanced(call), callable)
                         .unwrap()
                     {
-                        TypeArgumentInference::Fulfilled => continue,
-                        TypeArgumentInference::Replace { replacement } => replacement,
-                    };
-
-                    call.name.place_bound_types(replacement);
+                        TypeArgumentInference::Fulfilled => (),
+                        TypeArgumentInference::Replace { replacement } => {
+                            call.name.place_bound_types(replacement);
+                        }
+                    }
                 }
                 lume_hir::ExpressionKind::IntrinsicCall(call) => {
                     self.probe_callable_intrinsic(call)?;
