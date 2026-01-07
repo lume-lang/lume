@@ -122,4 +122,34 @@ impl LowerModule {
 
         Ok(lume_hir::Path { name, root, location })
     }
+
+    #[libftrace::traced(level = Debug, err)]
+    pub(crate) fn lower_type_name(
+        &mut self,
+        name: lume_ast::Identifier,
+        type_parameters: Option<&[lume_ast::TypeParameter]>,
+    ) -> Result<lume_hir::Path> {
+        let bound_types = if let Some(type_parameters) = type_parameters {
+            type_parameters
+                .iter()
+                .map(|param| {
+                    lume_ast::Type::Named(lume_ast::NamedType {
+                        name: lume_ast::Path::rooted(lume_ast::PathSegment::ty(param.name.clone())),
+                    })
+                })
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
+
+        let location = name.location.clone();
+
+        let name_segment = lume_ast::PathSegment::Type {
+            name,
+            bound_types,
+            location,
+        };
+
+        self.expand_name(name_segment)
+    }
 }

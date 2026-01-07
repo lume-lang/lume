@@ -177,7 +177,7 @@ impl LowerModule {
         let id = self.next_node_id();
         self.add_lang_items(id, &expr.attributes)?;
 
-        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
+        let name = self.lower_type_name(expr.name, Some(&expr.type_parameters))?;
         let visibility = lower_visibility(expr.visibility.as_ref());
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
@@ -331,7 +331,7 @@ impl LowerModule {
 
         let self_name = self.expand_self_name(expr.name.clone(), &expr.type_parameters)?;
 
-        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
+        let name = self.lower_type_name(expr.name, Some(&expr.type_parameters))?;
         self.ensure_item_undefined(id, DefinedItem::Type(name.clone()))?;
 
         let visibility = lower_visibility(expr.visibility.as_ref());
@@ -405,7 +405,7 @@ impl LowerModule {
     fn enum_definition(&mut self, expr: lume_ast::EnumDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
 
-        let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
+        let name = self.lower_type_name(expr.name, Some(&expr.type_parameters))?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let visibility = lower_visibility(expr.visibility.as_ref());
         let location = self.location(expr.location);

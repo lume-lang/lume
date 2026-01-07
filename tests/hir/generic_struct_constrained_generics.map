@@ -9,7 +9,60 @@ Map {
                         name: "Test",
                         location: generic_struct_constrained_generics.lm:7:11,
                     },
-                    bound_types: [],
+                    bound_types: [
+                        Type {
+                            id: TypeId(
+                                NodeId {
+                                    package: PackageId(
+                                        10850729242277675618,
+                                    ),
+                                    index: Idx(
+                                        2,
+                                    ),
+                                },
+                            ),
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "T1",
+                                        location: generic_struct_constrained_generics.lm:12:14,
+                                    },
+                                    bound_types: [],
+                                    location: generic_struct_constrained_generics.lm:12:14,
+                                },
+                                location: generic_struct_constrained_generics.lm:12:14,
+                            },
+                            self_type: false,
+                            location: generic_struct_constrained_generics.lm:12:14,
+                        },
+                        Type {
+                            id: TypeId(
+                                NodeId {
+                                    package: PackageId(
+                                        10850729242277675618,
+                                    ),
+                                    index: Idx(
+                                        3,
+                                    ),
+                                },
+                            ),
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "T2",
+                                        location: generic_struct_constrained_generics.lm:25:27,
+                                    },
+                                    bound_types: [],
+                                    location: generic_struct_constrained_generics.lm:25:27,
+                                },
+                                location: generic_struct_constrained_generics.lm:25:27,
+                            },
+                            self_type: false,
+                            location: generic_struct_constrained_generics.lm:25:27,
+                        },
+                    ],
                     location: generic_struct_constrained_generics.lm:7:11,
                 },
                 location: generic_struct_constrained_generics.lm:7:11,
