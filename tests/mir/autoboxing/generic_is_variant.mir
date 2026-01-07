@@ -18,7 +18,7 @@ B2:  B0
 
 fn "main" () -> void {
 B0:
-    let #0: metadata std::Optional = metadata std::Optional()
+    let #0: metadata std::Optional<T> = metadata std::Optional<T>()
     #1 = alloc (u8, (box void), ())
     *#1[+x0] = #0
     *#1[+x8] = 0_u8
