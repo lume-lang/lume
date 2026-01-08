@@ -75,7 +75,7 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "Array",
-                                    location: function_definition_parameters.lm:0:0,
+                                    location: <internal>:0:0,
                                 },
                                 bound_types: [
                                     Type {
@@ -112,9 +112,9 @@ Map {
                                         location: function_definition_parameters.lm:25:31,
                                     },
                                 ],
-                                location: function_definition_parameters.lm:24:32,
+                                location: <internal>:0:0,
                             },
-                            location: function_definition_parameters.lm:24:32,
+                            location: <internal>:0:0,
                         },
                         self_type: false,
                         location: function_definition_parameters.lm:24:32,

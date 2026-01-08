@@ -586,12 +586,7 @@ impl TyInferCtx {
     ///
     /// Panics if the type is not found within the database.
     pub fn std_type(&self) -> TypeRef {
-        let name = lume_hir::Path::from_parts(
-            Some([lume_hir::PathSegment::namespace("std")]),
-            lume_hir::PathSegment::ty("Type"),
-        );
-
-        self.find_type_ref(&name).unwrap().unwrap()
+        self.std_type_ref("Type")
     }
 
     /// Creates a new [`TypeRef`] which refers to the type of the given name.

@@ -9,17 +9,13 @@ use crate::*;
 static ARRAY_INTERNAL_NAME: &str = "!array";
 
 static ARRAY_NEW_PATH: LazyLock<lume_hir::Path> = LazyLock::new(|| {
-    lume_hir::Path::from_parts(
-        Some(vec![
-            lume_hir::PathSegment::namespace("std"),
-            lume_hir::PathSegment::ty(ARRAY_STD_TYPE),
-        ]),
-        lume_hir::PathSegment::callable(ARRAY_NEW_FUNC),
+    lume_hir::Path::with_root(
+        lume_hir::hir_std_type_path!(Array),
+        lume_hir::PathSegment::callable("new"),
     )
 });
 
-static ARRAY_PUSH_PATH: LazyLock<lume_hir::PathSegment> =
-    LazyLock::new(|| lume_hir::PathSegment::callable(ARRAY_PUSH_FUNC));
+static ARRAY_PUSH_PATH: LazyLock<lume_hir::PathSegment> = LazyLock::new(|| lume_hir::PathSegment::callable("push"));
 
 impl LowerModule {
     #[libftrace::traced(level = Debug)]
@@ -501,19 +497,17 @@ impl LowerModule {
 
     #[libftrace::traced(level = Debug)]
     fn expr_range(&mut self, expr: lume_ast::Range) -> Result<lume_hir::Expression> {
-        let range_type_name = if expr.inclusive {
-            RANGE_INCLUSIVE_STD_TYPE
+        let range_new_name = if expr.inclusive {
+            lume_hir::Path::with_root(
+                lume_hir::hir_std_type_path!(RangeInclusive),
+                lume_hir::PathSegment::callable("new"),
+            )
         } else {
-            RANGE_STD_TYPE
+            lume_hir::Path::with_root(
+                lume_hir::hir_std_type_path!(Range),
+                lume_hir::PathSegment::callable("new"),
+            )
         };
-
-        let range_type = lume_ast::Path::with_root(
-            vec![
-                lume_ast::PathSegment::namespace("std"),
-                lume_ast::PathSegment::ty(range_type_name),
-            ],
-            lume_ast::PathSegment::callable(RANGE_NEW_FUNC),
-        );
 
         let id = self.next_node_id();
         let location = self.location(expr.location);
@@ -525,7 +519,7 @@ impl LowerModule {
             location,
             kind: lume_hir::ExpressionKind::StaticCall(lume_hir::StaticCall {
                 id,
-                name: self.resolve_symbol_name(&range_type)?,
+                name: range_new_name,
                 arguments: vec![lower, upper],
                 location,
             }),
