@@ -8,6 +8,9 @@ pub mod pretty;
 pub mod symbols;
 pub mod visitor;
 
+#[macro_use]
+pub mod macros;
+
 pub use lang::LangItem;
 pub use map::Map;
 pub use visitor::{Visitor, traverse};
@@ -416,66 +419,6 @@ impl Path {
         .intern()
     }
 
-    pub fn void() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Void"))
-    }
-
-    pub fn i8() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Int8"))
-    }
-
-    pub fn u8() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("UInt8"))
-    }
-
-    pub fn i16() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Int16"))
-    }
-
-    pub fn u16() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("UInt16"))
-    }
-
-    pub fn i32() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Int32"))
-    }
-
-    pub fn u32() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("UInt32"))
-    }
-
-    pub fn i64() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Int64"))
-    }
-
-    pub fn u64() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("UInt64"))
-    }
-
-    pub fn f32() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Float"))
-    }
-
-    pub fn f64() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Double"))
-    }
-
-    pub fn string() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("String"))
-    }
-
-    pub fn pointer() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Pointer"))
-    }
-
-    pub fn array() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Array"))
-    }
-
-    pub fn boolean() -> Self {
-        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Boolean"))
-    }
-
     /// Gets the parent symbol, which contains the current symbol instance.
     ///
     /// For example, given a [`Path`] of `std::io::File::open()`, returns
@@ -615,6 +558,37 @@ impl From<Vec<PathSegment>> for Path {
 
         Self::from_parts(Some(root.to_owned()), name.to_owned())
     }
+}
+
+macro_rules! std_type_paths {
+    ($($name:ident => $ty:ident),*) => {
+        impl Path {
+            $(
+                #[inline]
+                pub fn $name() -> Self {
+                    crate::hir_std_type_path!($ty)
+                }
+            )*
+        }
+    };
+}
+
+std_type_paths! {
+    void => Void,
+    i8 => Int8,
+    u8 => UInt8,
+    i16 => Int16,
+    u16 => UInt16,
+    i32 => Int32,
+    u32 => UInt32,
+    i64 => Int64,
+    u64 => UInt64,
+    f32 => Float,
+    f64 => Double,
+    string => String,
+    pointer => Pointer,
+    array => Array,
+    boolean => Boolean
 }
 
 #[derive(Debug, PartialEq, Eq)]

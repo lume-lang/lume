@@ -25,14 +25,6 @@ mod pattern;
 mod stmt;
 mod ty;
 
-const ARRAY_STD_TYPE: &str = "Array";
-const ARRAY_NEW_FUNC: &str = "new";
-const ARRAY_PUSH_FUNC: &str = "push";
-
-const RANGE_STD_TYPE: &str = "Range";
-const RANGE_INCLUSIVE_STD_TYPE: &str = "RangeInclusive";
-const RANGE_NEW_FUNC: &str = "new";
-
 const DEFAULT_STD_IMPORTS: &[&str] = &[
     "Boolean",
     "String",

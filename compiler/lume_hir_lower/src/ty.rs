@@ -2,8 +2,8 @@ use error_snippet::Result;
 use lume_ast::Node;
 use lume_hir::SELF_TYPE_NAME;
 
+use crate::LowerModule;
 use crate::errors::*;
-use crate::{ARRAY_STD_TYPE, LowerModule};
 
 impl LowerModule {
     #[libftrace::traced(level = Debug)]
@@ -55,11 +55,19 @@ impl LowerModule {
 
     #[libftrace::traced(level = Debug)]
     fn type_array(&mut self, expr: lume_ast::ArrayType) -> Result<lume_hir::Type> {
-        self.type_std(lume_ast::PathSegment::Type {
-            name: ARRAY_STD_TYPE.into(),
-            bound_types: vec![*expr.element_type],
-            location: expr.location,
-        })
+        let id = self.next_node_id();
+        let elemental_type = self.type_ref(*expr.element_type)?;
+        let location = self.location(expr.location.clone());
+
+        let mut path = lume_hir::hir_std_type_path!(Array);
+        path.name.place_bound_types(vec![elemental_type]);
+
+        Ok(self.add_type(lume_hir::Type {
+            id: lume_hir::TypeId::from(id),
+            name: path,
+            self_type: false,
+            location,
+        }))
     }
 
     #[libftrace::traced(level = Debug)]
@@ -82,22 +90,6 @@ impl LowerModule {
             id: lume_hir::TypeId::from(id),
             name,
             self_type: true,
-            location,
-        }))
-    }
-
-    #[libftrace::traced(level = Debug)]
-    fn type_std(&mut self, name: lume_ast::PathSegment) -> Result<lume_hir::Type> {
-        let id = self.next_node_id();
-        let location = self.location(name.location().clone());
-
-        let name = self.path_segment(name)?;
-        let path = lume_hir::Path::from_parts(Some(vec![lume_hir::PathSegment::namespace("std")]), name);
-
-        Ok(self.add_type(lume_hir::Type {
-            id: lume_hir::TypeId::from(id),
-            name: path,
-            self_type: false,
             location,
         }))
     }

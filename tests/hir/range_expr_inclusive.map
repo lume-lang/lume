@@ -73,27 +73,27 @@ Map {
                                     Namespace {
                                         name: Identifier {
                                             name: "std",
-                                            location: range_expr_inclusive.lm:0:0,
+                                            location: <internal>:0:0,
                                         },
                                     },
                                     Type {
                                         name: Identifier {
                                             name: "RangeInclusive",
-                                            location: range_expr_inclusive.lm:0:0,
+                                            location: <internal>:0:0,
                                         },
                                         bound_types: [],
-                                        location: range_expr_inclusive.lm:0:0,
+                                        location: <internal>:0:0,
                                     },
                                 ],
                                 name: Callable {
                                     name: Identifier {
                                         name: "new",
-                                        location: range_expr_inclusive.lm:0:0,
+                                        location: <internal>:0:0,
                                     },
                                     bound_types: [],
-                                    location: range_expr_inclusive.lm:0:0,
+                                    location: <internal>:0:0,
                                 },
-                                location: range_expr_inclusive.lm:0:0,
+                                location: <internal>:0:0,
                             },
                             arguments: [
                                 Variable {
