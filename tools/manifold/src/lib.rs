@@ -37,14 +37,16 @@ pub struct Config {
 }
 
 impl Config {
-    /// Determines whether the test with the given path should be run.
-    pub fn should_run_test(&self, path: &Path) -> bool {
+    /// Determines whether the given test should be run.
+    pub(crate) fn should_run_test(&self, test: &ManifoldCollectedTest) -> bool {
         // If no filters were defined, all tests should be run.
         if self.test_names.is_empty() {
             return true;
         }
 
-        self.test_names.iter().any(|name| path.to_string_lossy().contains(name))
+        self.test_names
+            .iter()
+            .any(|name| test.relative_path.to_string_lossy().contains(name))
     }
 }
 
@@ -228,7 +230,7 @@ fn collect_tests(root: &PathBuf, config: &Config) -> Result<Vec<ManifoldCollecte
             })
         })
         .filter(|test| match test {
-            Ok(test) => config.should_run_test(&test.relative_path),
+            Ok(test) => config.should_run_test(test),
             Err(_) => false,
         })
         .collect::<Result<Vec<_>>>()

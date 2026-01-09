@@ -53,8 +53,13 @@ pub fn is_dev() -> bool {
 ///
 /// Returns [`Err`] if current process is invoked outside of the source tree.
 pub fn compiler_root_dir() -> Result<PathBuf> {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../")
+    let relative_dir = if std::env!("CARGO_PKG_NAME") == "lume" {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+    } else {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../")
+    };
+
+    relative_dir
         .canonicalize()
         .map_cause("could not determine root project directory")
 }
