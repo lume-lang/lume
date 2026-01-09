@@ -42,13 +42,18 @@ pub struct ManifoldDriver {
 impl ManifoldDriver {
     /// Creates a new manifold driver from the given package.
     pub fn new(package: Package, dcx: DiagCtx) -> Self {
+        Self::with_options(package, dcx, Options::default())
+    }
+
+    /// Creates a new manifold driver from the given package.
+    pub fn with_options(package: Package, dcx: DiagCtx, options: Options) -> Self {
         let mut dependency_map = DependencyMap::default();
         dependency_map.packages.insert(package.id, package.clone());
 
         let session = Session {
             dep_graph: dependency_map,
             workspace_root: package.path.clone(),
-            options: Options::default(),
+            options,
         };
 
         let gcx = Arc::new(GlobalCtx::new(session, dcx));

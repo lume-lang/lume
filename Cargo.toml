@@ -19,6 +19,10 @@ name = "lbs"
 path = "src/lbs.rs"
 test = false
 
+[[bench]]
+name = "gc"
+harness = false
+
 [workspace.package]
 version = "0.1.1"
 rust-version = "1.88.0"
@@ -62,7 +66,10 @@ lume_cli = { path = "compiler/lume_cli" }
 lume_driver = { path = "compiler/lume_driver" }
 
 [dev-dependencies]
-manifold = { path = "tools/manifold" }
+lume_bench = { path = "./tools/bench" }
+lume_errors = { path = "./crates/lume_errors" }
+
+criterion = { version = "0.8.1", features = ["html_reports"] }
 
 [features]
 tracing = ["lume_cli/tracing", "libftrace/enabled"]
