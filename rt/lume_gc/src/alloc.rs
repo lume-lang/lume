@@ -1,14 +1,14 @@
 extern crate alloc;
 
 use alloc::alloc::{GlobalAlloc, Layout, alloc, dealloc};
-use std::cell::UnsafeCell;
+use std::cell::{Cell, UnsafeCell};
 use std::sync::OnceLock;
 
 use indexmap::{IndexMap, IndexSet};
 use lume_rt_metadata::TypeMetadata;
 use mimalloc::MiMalloc;
 
-use crate::FrameStackMap;
+use crate::{CollectCondition, CollectorInfo, FrameStackMap};
 
 unsafe extern "C" {
     pub fn memcpy(dst: *mut u8, src: *mut u8, len: usize);
@@ -19,7 +19,10 @@ unsafe extern "C" {
 
 pub(crate) type DropPointer = extern "C" fn(*mut u8);
 
+/// Only used for allocation alignment. Most systems use a page size of 4096
+/// bytes, but a different page size is not the end of the world.
 const PAGE_SIZE: usize = 0x1000;
+
 const POINTER_SIZE: usize = std::mem::size_of::<*const ()>();
 const POINTER_ALIGNMENT: usize = std::mem::align_of::<*const ()>();
 
@@ -291,6 +294,13 @@ impl YoungGeneration {
 
 pub(crate) struct OldGeneration {
     allocator: MiMalloc,
+
+    /// Mapping of all objects allocated in this generation.
+    ///
+    /// The key of the map is the pointer to the object.
+    /// The value is a tuple containing the size of the object and a pointer to
+    /// its destructor. If the allocation doesn't have any matching destructor,
+    /// the value is `null`.
     allocations: IndexMap<*mut u8, (usize, *const u8)>,
 }
 
@@ -346,6 +356,9 @@ impl OldGeneration {
 pub struct GenerationalAllocator {
     young: YoungGeneration,
     old: OldGeneration,
+
+    pub(crate) info: AllocatorInfo,
+    pub(crate) condition: Cell<CollectCondition>,
 }
 
 unsafe impl Send for GenerationalAllocator {}
@@ -358,6 +371,8 @@ impl GenerationalAllocator {
         Self {
             young: YoungGeneration::new(gen1_size),
             old: OldGeneration::new(),
+            info: AllocatorInfo::default(),
+            condition: Cell::new(crate::default_collect_condition),
         }
     }
 
@@ -381,11 +396,24 @@ impl GenerationalAllocator {
         Self::new(g1_size)
     }
 
+    /// Gets the current size of allocated memory in the young generation, in
+    /// bytes.
+    pub fn g1_current_size(&self) -> usize {
+        self.young.allocator.current_size()
+    }
+
+    /// Gets the total size of the memory arena in the young generation, in
+    /// bytes.
+    pub fn g1_total_size(&self) -> usize {
+        self.young.allocator.total_size()
+    }
+
     pub fn alloc(&mut self, size: usize, metadata: *const TypeMetadata, frame: &FrameStackMap) -> *mut u8 {
         // If the allocation request is large enough, we try to allocate
         // it directly into the 2nd generation, since it is likely going
         // to live for much longer than most smaller allocations.
         if size >= self.young.allocator.total_size() {
+            self.info.g2_object_count += 1;
             return self.old.alloc(size, metadata);
         }
 
@@ -393,6 +421,7 @@ impl GenerationalAllocator {
         // that's where most new allocations go. If it fails, it means we're out of
         // space in the 1st generation and must trigger a collection within it.
         if let Some(ptr) = self.young.alloc(size, metadata) {
+            self.info.g1_object_count += 1;
             return ptr;
         }
 
@@ -404,31 +433,23 @@ impl GenerationalAllocator {
 
         // After promotion, attempt to allocate in the 1st generation again.
         if let Some(ptr) = self.young.alloc(size, metadata) {
+            self.info.g1_object_count += 1;
             return ptr;
         }
 
         // While it is completely expected to allocate successfully, the fallback
-        // of use the 2nd generation allocator exists, in case of allocator changes.
+        // will use the 2nd generation allocator again in case of allocator changes.
         libftrace::error!("warning: expected allocation to G1 after promotion, but it failed");
 
+        self.info.g2_object_count += 1;
         self.old.alloc(size, metadata)
     }
 
     /// Determines whether the current allocator needs to be collected or not.
     pub fn is_collection_required(&self) -> bool {
-        let mem_in_use = self.young.allocator.current_size();
-        let mem_available = self.young.allocator.total_size();
+        let collector_info = CollectorInfo { _private: () };
 
-        #[allow(clippy::cast_precision_loss)]
-        let ratio = (mem_in_use as f64) / (mem_available as f64);
-
-        if ratio >= 0.95 {
-            libftrace::trace!("collection required, memory pressure at {}%", ratio * 100.0);
-
-            return true;
-        }
-
-        false
+        self.condition.get()(&collector_info)
     }
 
     /// Promote all living allocations from the 1st generation to the 2nd
@@ -480,6 +501,15 @@ impl GenerationalAllocator {
     }
 }
 
+#[derive(Default)]
+pub(crate) struct AllocatorInfo {
+    /// Amount of live objects in the 1st generation.
+    pub g1_object_count: usize,
+
+    /// Amount of live objects in the 2nd generation.
+    pub g2_object_count: usize,
+}
+
 #[allow(clippy::cast_possible_truncation)]
 fn get_total_memory() -> usize {
     let mut sys = sysinfo::System::new();
@@ -496,7 +526,8 @@ unsafe impl<T> Sync for Global<T> where T: Send {}
 
 static GA: OnceLock<Global<GenerationalAllocator>> = OnceLock::new();
 
-pub fn initialize_gc(opts: &lume_options::RuntimeOptions) {
+/// Initializes the garbage collector with the given options.
+pub(crate) fn initialize_gc(opts: &lume_options::RuntimeOptions) {
     let allocator = match opts.gc.heap_size {
         lume_options::GarbageCollectorSize::Static(size) => GenerationalAllocator::new(size),
         lume_options::GarbageCollectorSize::Rooted(root) => GenerationalAllocator::with_root(root),
@@ -507,7 +538,8 @@ pub fn initialize_gc(opts: &lume_options::RuntimeOptions) {
     });
 }
 
-pub fn with_allocator<R, F: FnOnce(&mut GenerationalAllocator) -> R>(f: F) -> R {
+/// Invokes the given closure with a mutable reference to the global allocator.
+pub(crate) fn with_allocator<R, F: FnOnce(&mut GenerationalAllocator) -> R>(f: F) -> R {
     let global = GA.get().expect("expected GC to be initialized!");
 
     unsafe { f(&mut *global.inner.get()) }

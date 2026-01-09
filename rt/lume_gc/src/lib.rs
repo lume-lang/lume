@@ -341,6 +341,26 @@ pub fn initialize(opts: &lume_options::RuntimeOptions) {
     initialize_gc(opts);
 }
 
+/// Sets the collection condition for the allocator and returns the previous
+/// condition.
+///
+/// # Examples
+///
+/// ```rust
+/// use lume_gc::{CollectCondition, set_collection_condition};
+/// use lume_options::RuntimeOptions;
+///
+/// // Initialize the garbage collector
+/// lume_gc::initialize(&RuntimeOptions::default());
+///
+/// set_collection_condition(|_collector_info| false);
+/// ```
+pub fn set_collection_condition(predicate: CollectCondition) -> CollectCondition {
+    libftrace::debug!("setting collection condition");
+
+    with_allocator(|alloc| alloc.condition.replace(predicate))
+}
+
 /// Static version of [`alloc::GenerationalAllocator::promote_allocations`], so
 /// it can be used as a function pointer in Cranelift.
 ///
@@ -396,4 +416,53 @@ pub fn drop_allocations() {
     libftrace::trace!("dropping all allocations");
 
     with_allocator(|alloc| alloc.drop_allocations());
+}
+
+/// A function predicate to determine whether a collection is required.
+pub type CollectCondition = fn(&CollectorInfo) -> bool;
+
+/// Default collection condition, which will trigger a collection if the number
+/// of allocations exceeds a certain threshold.
+pub fn default_collect_condition(info: &CollectorInfo) -> bool {
+    let mem_in_use = info.g1_current_size();
+    let mem_available = info.g1_total_size();
+
+    #[allow(clippy::cast_precision_loss)]
+    let ratio = (mem_in_use as f64) / (mem_available as f64);
+
+    if ratio >= 0.95 {
+        libftrace::trace!("collection required, memory pressure at {}%", ratio * 100.0);
+
+        return true;
+    }
+
+    false
+}
+
+/// Properties and statistics about the current garbage collector state, which
+/// can be used to determine whether a collection is required.
+pub struct CollectorInfo {
+    _private: (),
+}
+
+impl CollectorInfo {
+    /// Gets the current size of allocated memory in the young generation (G1),
+    /// in bytes.
+    pub fn g1_current_size(&self) -> usize {
+        with_allocator(|alloc| alloc.g1_current_size())
+    }
+
+    /// Gets the total size of the memory arena in the young generation (G1), in
+    /// bytes.
+    pub fn g1_total_size(&self) -> usize {
+        with_allocator(|alloc| alloc.g1_total_size())
+    }
+
+    /// Gets the amount of currently allocated objects in the collector.
+    ///
+    /// Returns a tuple containing the number of objects in the young generation
+    /// (G1) and old generation (G2).
+    pub fn current_object_count(&self) -> (usize, usize) {
+        with_allocator(|alloc| (alloc.info.g1_object_count, alloc.info.g2_object_count))
+    }
 }
