@@ -181,8 +181,10 @@ fn replace_reg_in_op(operand: &mut Operand, register: RegisterId, slot: SlotId) 
         OperandKind::Boolean { .. }
         | OperandKind::Integer { .. }
         | OperandKind::Float { .. }
-        | OperandKind::String { .. } => unreachable!(),
-        OperandKind::Bitcast { .. } => unreachable!("can't bitcast stack slot"),
+        | OperandKind::String { .. }
+        | OperandKind::Bitcast { .. }
+        | OperandKind::LoadSlot { .. }
+        | OperandKind::SlotAddress { .. } => {}
         OperandKind::Load { .. } => unimplemented!(),
         OperandKind::LoadField {
             target,
@@ -198,7 +200,6 @@ fn replace_reg_in_op(operand: &mut Operand, register: RegisterId, slot: SlotId) 
                 }
             }
         }
-        OperandKind::LoadSlot { .. } | OperandKind::SlotAddress { .. } => {}
         OperandKind::Reference { id } => {
             if *id == register {
                 operand.kind = OperandKind::SlotAddress { id: slot, offset: 0 }
