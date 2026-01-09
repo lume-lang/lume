@@ -11,6 +11,7 @@ use std::io::Write;
 use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
 use std::sync::Arc;
 
+use build_stage::ManifoldDriver;
 use error_snippet::{Result, SimpleDiagnostic};
 use glob::glob;
 use lume_errors::{DiagCtx, MapDiagnostic};
@@ -306,6 +307,34 @@ fn determine_test_type(root: &PathBuf, path: &Path) -> Result<ManifoldTestType> 
         Some("bin") => Ok(ManifoldTestType::Binary),
         _ => Err(SimpleDiagnostic::new(format!("could not determine type of test: {relative_path_str}")).into()),
     }
+}
+
+/// Compiles the given source file into a Lume binary executable and returns the
+/// path to the executable.
+///
+/// # Arguments
+///
+/// * `path` - The path to the source file to compile (does not need to exist).
+/// * `content` - The content of the source file.
+/// * `dcx` - The diagnostic context to use for reporting errors.
+///
+/// # Returns
+///
+/// A `Result` containing the path to the compiled binary executable, or an
+/// error if the compilation fails.
+pub(crate) fn compile_source_file(path: &Path, content: String, dcx: DiagCtx) -> Result<PathBuf> {
+    let package_name = path.file_name().unwrap().display().to_string();
+    let package_name = package_name.trim_end_matches(".lm");
+
+    let package = build_stage::PackageBuilder::new(package_name)
+        .with_root(path.parent().unwrap())
+        .with_source(path.file_name().unwrap(), content)
+        .with_standard_library()
+        .finish();
+
+    let manifold_driver = ManifoldDriver::new(package, dcx.clone());
+
+    manifold_driver.link()
 }
 
 #[cfg(test)]
