@@ -1,9 +1,8 @@
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::LazyLock;
 
-use build_stage::ManifoldDriver;
 use error_snippet::{IntoDiagnostic, SimpleDiagnostic};
 use lume_errors::{DiagCtx, Result};
 use owo_colors::OwoColorize;
@@ -22,7 +21,7 @@ pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
     stdout_path.set_extension("stdout");
 
     let file_content = std::fs::read_to_string(&path).map_err(IntoDiagnostic::into_diagnostic)?;
-    let binary_path = compile(&path, file_content.clone(), dcx)?;
+    let binary_path = crate::compile_source_file(&path, file_content.clone(), dcx)?;
 
     let test_case = TestCase {
         source_path: path.clone(),
@@ -74,21 +73,6 @@ pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
     }
 
     crate::diff::diff_output_of(stdout, path, stdout_path)
-}
-
-fn compile(path: &Path, content: String, dcx: DiagCtx) -> Result<PathBuf> {
-    let package_name = path.file_name().unwrap().display().to_string();
-    let package_name = package_name.trim_end_matches(".lm");
-
-    let package = build_stage::PackageBuilder::new(package_name)
-        .with_root(path.parent().unwrap())
-        .with_source(path.file_name().unwrap(), content)
-        .with_standard_library()
-        .finish();
-
-    let manifold_driver = ManifoldDriver::new(package, dcx.clone());
-
-    manifold_driver.link()
 }
 
 fn determine_expected_result_code(test_case: &TestCase) -> Option<u8> {
