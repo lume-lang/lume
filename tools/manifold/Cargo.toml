@@ -8,11 +8,12 @@ rust-version.workspace = true
 doctest = false
 
 [dependencies]
+build_stage = { path = "../build_stage" }
+lume_bench = { path = "../bench" }
 lume_errors = { path = "../../crates/lume_errors" }
 lume_gc = { path = "../../rt/lume_gc", features = ["paranoid"] }
 lume_span = { path = "../../crates/lume_span" }
 
-build_stage = { path = "../build_stage" }
 clap = { workspace = true }
 error_snippet = { workspace = true }
 glob = "^0"

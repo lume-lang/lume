@@ -1,0 +1,16 @@
+struct Foo {
+    pub a: Int32 = 8;
+    pub b: Int32 = 16;
+}
+
+fn main() -> UInt64 {
+    let i = 0;
+    let arr = Array<Foo>::new();
+
+    while i < 100 {
+        arr.push(Foo { });
+        i = i + 1;
+    }
+
+    arr.length
+}
