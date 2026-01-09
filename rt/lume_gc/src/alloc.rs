@@ -368,6 +368,11 @@ impl GenerationalAllocator {
     /// Creates a new [`GenerationalAllocator`], where the initial size of the
     /// 1st generation is the given value.
     pub fn new(gen1_size: usize) -> Self {
+        libftrace::trace!(
+            "[G1] initial memory block of {gen1_size}B (~{:.1} MB)",
+            (gen1_size as f64) / 1024.0 / 1024.0
+        );
+
         Self {
             young: YoungGeneration::new(gen1_size),
             old: OldGeneration::new(),
@@ -390,8 +395,6 @@ impl GenerationalAllocator {
 
         let total_memory = get_total_memory();
         let g1_size = total_memory.unbounded_shr(u32::from(root));
-
-        libftrace::trace!("[G1] initial memory block of {g1_size}B ({} MB)", g1_size / 1024 / 1024);
 
         Self::new(g1_size)
     }
@@ -488,14 +491,21 @@ impl GenerationalAllocator {
             // Unregister the allocation from the 1st generation, so the value isn't
             // disposed, when calling `clear`.
             self.young.unregister_object(alloc_start);
+
+            self.info.g1_object_count -= 1;
+            self.info.g2_object_count += 1;
         }
 
+        self.info.g1_object_count = 0;
         self.young.clear();
     }
 
     /// Drops all allocations made with the allocator, effectively resetting
     /// all the state within the allocator.
     pub fn drop_allocations(&mut self) {
+        self.info.g1_object_count = 0;
+        self.info.g2_object_count = 0;
+
         self.young.clear();
         self.old.clear();
     }
