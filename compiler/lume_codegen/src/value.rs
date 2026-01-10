@@ -95,7 +95,7 @@ impl LowerFunction<'_> {
                 lume_mir::Intrinsic::BooleanNot => self.not(&args[0]),
 
                 lume_mir::Intrinsic::Metadata { metadata } => {
-                    let Some(value) = self.reference_static_data(&metadata.full_name) else {
+                    let Some(value) = self.reference_static_data(&metadata.mangled_name) else {
                         panic!("bug!: no type metadata allocated for `{}`", metadata.full_name);
                     };
 
