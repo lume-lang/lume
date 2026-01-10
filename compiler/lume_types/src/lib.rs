@@ -31,6 +31,7 @@ pub const TYPEREF_UNKNOWN_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Parameter {
+    pub id: NodeId,
     pub idx: usize,
     pub name: String,
     pub ty: TypeRef,

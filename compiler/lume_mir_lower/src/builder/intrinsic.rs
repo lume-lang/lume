@@ -76,7 +76,7 @@ impl Builder<'_, '_> {
             lume_tir::IntrinsicKind::BooleanOr => lume_mir::Intrinsic::BooleanOr,
             lume_tir::IntrinsicKind::BooleanNot => lume_mir::Intrinsic::BooleanNot,
             lume_tir::IntrinsicKind::Metadata { id } => {
-                let metadata_store = &self.mcx.mir().metadata.metadata;
+                let metadata_store = &self.mcx.mir().metadata.types;
                 let metadata_entry = metadata_store.get(id).unwrap();
 
                 lume_mir::Intrinsic::Metadata {

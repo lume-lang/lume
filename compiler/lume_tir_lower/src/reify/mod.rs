@@ -1,5 +1,3 @@
-pub mod metadata;
-
 use indexmap::IndexMap;
 use lume_errors::Result;
 use lume_span::Internable;
@@ -12,8 +10,6 @@ use lume_types::TypeRef;
 pub(crate) struct ReificationPass<'tcx> {
     tcx: &'tcx TyCheckCtx,
 
-    pub(crate) static_metadata: StaticMetadata,
-
     dyn_type_params: IndexMap<TypeRef, usize>,
     dyn_instance_param: Option<VariableId>,
 }
@@ -22,7 +18,6 @@ impl<'tcx> ReificationPass<'tcx> {
     pub fn new(tcx: &'tcx TyCheckCtx) -> Self {
         Self {
             tcx,
-            static_metadata: StaticMetadata::default(),
             dyn_type_params: IndexMap::new(),
             dyn_instance_param: None,
         }
@@ -84,7 +79,7 @@ impl ReificationPass<'_> {
         }
     }
 
-    fn add_metadata_arguments_on_call(&mut self, call: &mut Call) -> Result<()> {
+    fn add_metadata_arguments_on_call(&mut self, call: &mut Call) {
         let type_param_len = self.tcx.available_type_params_at(call.function).len();
         let type_arg_len = call.type_arguments.len();
         let remaining_type_args = type_param_len.saturating_sub(type_arg_len);
@@ -93,13 +88,11 @@ impl ReificationPass<'_> {
             let argument = if self.tcx.is_type_parameter(type_arg) {
                 self.inherited_metadata_arg(call, format!("${idx}"), lume_tir::VariableId(idx))
             } else {
-                self.concrete_metadata_arg(type_arg)?
+                self.concrete_metadata_arg(type_arg)
             };
 
             call.arguments.push(argument);
         }
-
-        Ok(())
     }
 
     /// Creates a new TIR expression which references an existing function
@@ -124,10 +117,10 @@ impl ReificationPass<'_> {
 
     /// Creates a new TIR intrinsic expression which creates a new metadata
     /// instance for the given type.
-    fn concrete_metadata_arg(&mut self, type_arg: &TypeRef) -> Result<lume_tir::Expression> {
-        let id = self.build_type_metadata_of(type_arg)?;
+    fn concrete_metadata_arg(&mut self, type_arg: &TypeRef) -> lume_tir::Expression {
+        let id = TypeMetadataId::from(type_arg);
 
-        Ok(lume_tir::Expression {
+        lume_tir::Expression {
             kind: ExpressionKind::IntrinsicCall(Box::new(lume_tir::IntrinsicCall {
                 id: lume_span::NodeId::default(),
                 kind: lume_tir::IntrinsicKind::Metadata { id },
@@ -135,7 +128,7 @@ impl ReificationPass<'_> {
                 location: type_arg.location,
             })),
             ty: self.tcx.std_type(),
-        })
+        }
     }
 }
 
@@ -196,7 +189,7 @@ impl ReificationPass<'_> {
                     target = self.tcx.hir_path_of_node(call.function).to_wide_string()
                 );
 
-                self.concrete_metadata_arg(&source_type)?
+                self.concrete_metadata_arg(&source_type)
             }
 
             DispatchTypeSource::InheritDyn => {
@@ -242,7 +235,7 @@ impl ReificationPass<'_> {
 impl lume_tir::Visitor for ReificationPass<'_> {
     fn visit_expr(&mut self, expr: &mut lume_tir::Expression) -> Result<()> {
         if let ExpressionKind::Call(call) = &mut expr.kind {
-            self.add_metadata_arguments_on_call(call)?;
+            self.add_metadata_arguments_on_call(call);
 
             if self.tcx.is_callable_dynamic(call.function) {
                 self.add_dynamic_instance_argument(call)?;

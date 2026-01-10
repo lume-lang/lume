@@ -40,10 +40,6 @@ pub struct TypeMetadata {
     /// that they're declared.
     pub type_parameters: List<TypeParameterMetadata>,
 
-    /// Gets all the type arguments defined on the type, in the order
-    /// that they're declared.
-    pub type_arguments: List<TypeMetadata>,
-
     /// Gets the address of the `Dispose` method implementation, if any.
     ///
     /// If no `Dispose` method is defined, returns `null`.

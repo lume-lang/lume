@@ -736,6 +736,7 @@ impl TyInferCtx {
             let param_ty = self.instantiate_type_from(&param.ty, type_params, type_args);
 
             inst.params.push(lume_types::Parameter {
+                id: param.id,
                 idx: param.idx,
                 name: param.name.clone(),
                 ty: param_ty,
@@ -1072,6 +1073,7 @@ fn param_of(tcx: &TyInferCtx, parent: NodeId, param: &lume_hir::Parameter) -> Re
     let param_ty = tcx.mk_type_ref_from(&param.param_type, parent)?;
 
     Ok(lume_types::Parameter {
+        id: param.id,
         idx: param.index,
         name: param.name.to_string(),
         ty: param_ty,
