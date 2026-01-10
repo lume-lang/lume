@@ -212,6 +212,17 @@ impl GlobalCtx {
     pub fn binary_output_path(&self, bin_name: &str) -> PathBuf {
         self.bin_path().join(bin_name)
     }
+
+    /// Gets the name of the package with the given ID.
+    ///
+    /// If the package is not found, returns [`None`].
+    pub fn package_name(&self, id: PackageId) -> Option<&str> {
+        if id.is_std() {
+            return Some("std");
+        }
+
+        self.session.dep_graph.packages.get(&id).map(|pkg| pkg.name.as_str())
+    }
 }
 
 impl DatabaseContext for GlobalCtx {

@@ -96,6 +96,12 @@ impl PackageId {
     pub fn from_name<T: std::hash::Hash + ?Sized>(value: &T) -> Self {
         Self(crate::hash_id(value))
     }
+
+    /// Determines if the [`PackageId`] refers to the standard library.
+    #[inline]
+    pub fn is_std(self) -> bool {
+        self.0 == 0
+    }
 }
 
 impl<T: std::hash::Hash + ?Sized> From<&T> for PackageId {
