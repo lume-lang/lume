@@ -189,10 +189,10 @@ fn mangled_name_of_trait_method_impl(
 }
 
 fn mangled_package_segment(tcx: &TyCheckCtx, id: PackageId) -> String {
-    let package = tcx.gcx().session.dep_graph.packages.get(&id).unwrap();
-    let name_len = package.name.len();
+    let package_name = &tcx.gcx().package_name(id).expect("failed to find package");
+    let name_len = package_name.len();
 
-    format!("{PACKAGE_INDICATOR}{name_len}{}", package.name)
+    format!("{PACKAGE_INDICATOR}{name_len}{package_name}")
 }
 
 fn mangled_path_segment(name: &lume_hir::Path) -> String {
