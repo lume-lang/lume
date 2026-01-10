@@ -703,6 +703,7 @@ impl FunctionDefinition {
 
 #[derive(Serialize, Deserialize, Location, Debug, Clone, Eq)]
 pub struct Parameter {
+    pub id: NodeId,
     pub index: usize,
     pub name: Identifier,
     pub param_type: Type,

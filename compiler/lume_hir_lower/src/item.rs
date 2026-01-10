@@ -147,11 +147,13 @@ impl LowerModule {
                 .into());
             }
 
+            let id = self.next_node_id();
             let name = self.identifier(param.name);
             let param_type = self.type_ref(param.param_type)?;
             let location = self.location(param.location);
 
             parameters.push(lume_hir::Parameter {
+                id,
                 index,
                 name,
                 param_type,

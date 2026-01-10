@@ -1,20 +1,39 @@
+use std::hash::Hash;
+
 use indexmap::IndexMap;
 use lume_span::{NodeId, hash_id};
 use serde::{Deserialize, Serialize};
 
+pub mod visitor;
+
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct StaticMetadata {
-    pub metadata: IndexMap<TypeMetadataId, TypeMetadata>,
+    pub types: IndexMap<TypeMetadataId, TypeMetadata>,
+    pub fields: IndexMap<NodeId, FieldMetadata>,
+    pub methods: IndexMap<NodeId, MethodMetadata>,
+    pub parameters: IndexMap<NodeId, ParameterMetadata>,
+    pub type_parameters: IndexMap<NodeId, TypeParameterMetadata>,
 }
 
 impl StaticMetadata {
     /// Merges the current [`StaticMetadata`] into the other given map.
     pub fn merge_into(self, dest: &mut StaticMetadata) {
-        for (id, func) in self.metadata {
-            if !dest.metadata.contains_key(&id) {
-                dest.metadata.insert(id, func);
+        fn merge<K, V>(src: IndexMap<K, V>, dest: &mut IndexMap<K, V>)
+        where
+            K: Hash + Eq,
+        {
+            for (k, v) in src {
+                if !dest.contains_key(&k) {
+                    dest.insert(k, v);
+                }
             }
         }
+
+        merge(self.types, &mut dest.types);
+        merge(self.fields, &mut dest.fields);
+        merge(self.methods, &mut dest.methods);
+        merge(self.parameters, &mut dest.parameters);
+        merge(self.type_parameters, &mut dest.type_parameters);
     }
 }
 
@@ -39,6 +58,12 @@ pub struct TypeMetadata {
     /// Gets the fully qualified name of the type, including namespace.
     pub full_name: String,
 
+    /// Gets the mangled name of the type using the default mangling scheme.
+    pub mangled_name: String,
+
+    /// Gets the kind of the type.
+    pub kind: TypeKind,
+
     /// Gets the canonical size of the type, in bytes.
     pub size: usize,
 
@@ -50,19 +75,15 @@ pub struct TypeMetadata {
 
     /// Gets all the fields defined on the type, in the order that they're
     /// declared.
-    pub fields: Vec<FieldMetadata>,
+    pub fields: Vec<NodeId>,
 
     /// Gets all the methods defined on the type, in the order that they're
     /// declared.
-    pub methods: Vec<MethodMetadata>,
+    pub methods: Vec<NodeId>,
 
     /// Gets all the type parameters defined on the type, in the order
     /// that they're declared.
-    pub type_parameters: Vec<TypeParameterMetadata>,
-
-    /// Gets all the type arguments defined on the type, in the order
-    /// that they're declared.
-    pub type_arguments: Vec<TypeMetadataId>,
+    pub type_parameters: Vec<NodeId>,
 
     /// Gets the definition of the `Dispose` method implementation, if any.
     pub drop_method: Option<NodeId>,
@@ -96,6 +117,15 @@ impl PartialEq for TypeMetadata {
 
 impl Eq for TypeMetadata {}
 
+#[derive(Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TypeKind {
+    #[default]
+    Struct,
+    Enum,
+    Trait,
+    TypeParameter,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FieldMetadata {
     /// Gets the name of the field.
@@ -120,11 +150,11 @@ pub struct MethodMetadata {
 
     /// Gets all the parameters defined on the method, in the order that they're
     /// declared.
-    pub parameters: Vec<ParameterMetadata>,
+    pub parameters: Vec<NodeId>,
 
     /// Gets all the type parameters defined on the method, in the order
     /// that they're declared.
-    pub type_parameters: Vec<TypeParameterMetadata>,
+    pub type_parameters: Vec<NodeId>,
 
     /// Gets the return type of the method.
     pub return_type: TypeMetadataId,
@@ -140,6 +170,9 @@ impl MethodMetadata {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ParameterMetadata {
+    /// Gets the unique ID of the parameter.
+    pub id: NodeId,
+
     /// Gets the name of the parameter.
     pub name: String,
 

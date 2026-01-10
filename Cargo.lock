@@ -1999,6 +1999,7 @@ dependencies = [
  "libftrace",
  "lume_errors",
  "lume_hir",
+ "lume_mangle",
  "lume_span",
  "lume_tir",
  "lume_type_metadata",
@@ -2011,6 +2012,9 @@ name = "lume_type_metadata"
 version = "0.1.1"
 dependencies = [
  "indexmap",
+ "lume_errors",
+ "lume_hir",
+ "lume_infer",
  "lume_span",
  "lume_types",
  "serde",

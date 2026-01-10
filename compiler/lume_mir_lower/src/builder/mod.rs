@@ -476,7 +476,7 @@ impl Builder<'_, '_> {
             return *existing_register;
         }
 
-        let metadata_entry = self.mcx.mir().metadata.metadata.get(&metadata_id).unwrap();
+        let metadata_entry = self.mcx.mir().metadata.types.get(&metadata_id).unwrap();
         let metadata_type = Type {
             kind: TypeKind::Metadata {
                 inner: Box::new(metadata_entry.to_owned()),

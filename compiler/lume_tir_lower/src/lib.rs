@@ -1,6 +1,7 @@
 pub(crate) mod diagnostics;
 pub(crate) mod expr;
 pub(crate) mod generic;
+pub(crate) mod metadata;
 pub(crate) mod path;
 pub(crate) mod pattern;
 pub(crate) mod stmt;
@@ -49,18 +50,14 @@ impl<'tcx> Lower<'tcx> {
         self.define_callables()?;
         self.lower_callables()?;
 
-        let mut reification_pass = reify::ReificationPass::new(self.tcx);
+        let metadata_builder = metadata::MetadataBuilder::new(self.tcx);
+        self.ir.metadata = metadata_builder.build_metadata()?;
 
-        for ty in self.tcx.db().types() {
-            let type_ref = lume_types::TypeRef::new(ty.id, ty.name.location);
-            reification_pass.build_type_metadata_of(&type_ref)?;
-        }
+        let mut reification_pass = reify::ReificationPass::new(self.tcx);
 
         for function in self.ir.functions.values_mut() {
             reification_pass.execute(function)?;
         }
-
-        self.ir.metadata = reification_pass.static_metadata;
 
         Ok(self.ir)
     }
