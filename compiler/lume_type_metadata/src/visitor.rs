@@ -138,6 +138,9 @@ fn visit_type_parameter<V: Visitor>(
 
     visitor.visit_type_parameter(type_parameter)?;
 
+    let type_ref = lume_types::TypeRef::new(type_parameter.id, type_parameter.location);
+    visitor.visit_type(&type_ref)?;
+
     for constraint in &type_parameter.constraints {
         let constraint = state.tcx.mk_type_ref_from(constraint, type_parameter.id)?;
 

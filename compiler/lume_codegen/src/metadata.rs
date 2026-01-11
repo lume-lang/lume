@@ -1,8 +1,8 @@
-use std::fmt::Write;
 use std::ops::Rem;
 
 use cranelift_module::{DataDescription, DataId, FuncId, FuncOrDataId, Module};
-use indexmap::{IndexMap, IndexSet};
+use indexmap::IndexMap;
+use lume_span::NodeId;
 use lume_type_metadata::*;
 
 use crate::CraneliftBackend;
@@ -10,6 +10,73 @@ use crate::CraneliftBackend;
 const NATIVE_PTR_SIZE: usize = std::mem::size_of::<*const ()>();
 const NATIVE_PTR_ALIGN: usize = std::mem::align_of::<*const ()>();
 
+const TYPE_TABLE_NAME: &str = "type_table";
+const FIELD_TABLE_NAME: &str = "field_table";
+const METHOD_TABLE_NAME: &str = "method_table";
+const PARAMETER_TABLE_NAME: &str = "parameter_table";
+const TYPE_PARAMETER_TABLE_NAME: &str = "type_parameter_table";
+
+const OFFSET_TYPE_FIELDS: usize = NATIVE_PTR_SIZE * 6;
+const OFFSET_TYPE_METHODS: usize = NATIVE_PTR_SIZE * 8;
+const OFFSET_TYPE_TYPE_PARAMETERS: usize = NATIVE_PTR_SIZE * 10;
+const OFFSET_FIELD_TYPE: usize = NATIVE_PTR_SIZE * 2;
+const OFFSET_METHODS_PARAMETERS: usize = NATIVE_PTR_SIZE * 4;
+const OFFSET_METHODS_TYPE_PARAMETERS: usize = NATIVE_PTR_SIZE * 6;
+const OFFSET_METHODS_RETURN_TYPE: usize = NATIVE_PTR_SIZE * 7;
+const OFFSET_PARAMETER_TYPE: usize = NATIVE_PTR_SIZE * 2;
+const OFFSET_TYPE_PARAMETER_CONSTRAINTS: usize = NATIVE_PTR_SIZE * 3;
+
+/// Definitions for symbols and tables inside the module.
+struct Definitions<'back> {
+    pub tables: TableDefinitions,
+    pub offsets: TableOffsets,
+    pub builders: TableBuilders<'back>,
+    pub metadata_ptr: MetadataEntries,
+}
+
+/// Definitions for all tables inside the module.
+struct TableDefinitions {
+    pub types: DataId,
+    pub fields: DataId,
+    pub methods: DataId,
+    pub parameters: DataId,
+    pub type_parameters: DataId,
+}
+
+/// Builders for constructing tables inside the module, matching the IDs within
+/// [`TableDefinitions`].
+struct TableBuilders<'back> {
+    pub types: MemoryBlockBuilder<'back>,
+    pub fields: MemoryBlockBuilder<'back>,
+    pub methods: MemoryBlockBuilder<'back>,
+    pub parameters: MemoryBlockBuilder<'back>,
+    pub type_parameters: MemoryBlockBuilder<'back>,
+}
+
+impl<'back> TableBuilders<'back> {
+    pub fn new(backend: &'back CraneliftBackend) -> Self {
+        Self {
+            types: MemoryBlockBuilder::new(backend),
+            fields: MemoryBlockBuilder::new(backend),
+            methods: MemoryBlockBuilder::new(backend),
+            parameters: MemoryBlockBuilder::new(backend),
+            type_parameters: MemoryBlockBuilder::new(backend),
+        }
+    }
+}
+
+/// Defines the offset (in bytes) of each metadata symbol inside their own
+/// parent table.
+#[derive(Default)]
+struct TableOffsets {
+    pub types: IndexMap<TypeMetadataId, usize>,
+    pub fields: IndexMap<NodeId, usize>,
+    pub methods: IndexMap<NodeId, usize>,
+    pub parameters: IndexMap<NodeId, usize>,
+    pub type_parameters: IndexMap<NodeId, usize>,
+}
+
+/// Mangled names of metadata types.
 struct MetadataEntries {
     pub ty: String,
     pub field: String,
@@ -18,159 +85,131 @@ struct MetadataEntries {
     pub type_parameter: String,
 }
 
-#[inline]
-fn metadata_entry(entries: &IndexMap<TypeMetadataId, TypeMetadata>, name: &'static str) -> String {
-    entries
-        .values()
-        .find_map(|ty| {
-            if ty.full_name == name {
-                Some(ty.symbol_name())
-            } else {
-                None
-            }
-        })
-        .expect("expected to find metadata of `std::Type`")
+impl MetadataEntries {
+    pub fn new(metadata: &IndexMap<TypeMetadataId, TypeMetadata>) -> Self {
+        fn metadata_entry(metadata: &IndexMap<TypeMetadataId, TypeMetadata>, name: &'static str) -> String {
+            metadata
+                .values()
+                .find_map(|ty| {
+                    if ty.full_name == name {
+                        Some(ty.mangled_name.clone())
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or_else(|| panic!("expected to find metadata of `{name}`"))
+        }
+
+        Self {
+            ty: metadata_entry(metadata, "std::Type"),
+            field: metadata_entry(metadata, "std::Field"),
+            method: metadata_entry(metadata, "std::Method"),
+            parameter: metadata_entry(metadata, "std::Parameter"),
+            type_parameter: metadata_entry(metadata, "std::TypeParameter"),
+        }
+    }
 }
 
 impl CraneliftBackend {
+    /// Declares and defines metadata tables inside the module.
     #[libftrace::traced(level = Debug)]
     pub(crate) fn declare_type_metadata(&mut self) {
-        let metadata_store = &self.context.metadata;
-        let mut found_types = IndexMap::new();
+        let tables = self.declare_tables();
 
-        for metadata_entry in metadata_store.metadata.values() {
-            self.find_all_types_on(metadata_entry, &mut found_types);
-        }
-
-        self.declare_all_type_metadata(found_types.values());
-        self.declare_all_field_metadata(found_types.values());
-        self.declare_all_method_metadata(found_types.values());
-        self.declare_all_parameter_metadata(found_types.values());
-        self.declare_all_type_parameter_metadata(found_types.values());
-
-        let metadata_symbols = MetadataEntries {
-            ty: metadata_entry(&found_types, "std::Type"),
-            field: metadata_entry(&found_types, "std::Field"),
-            method: metadata_entry(&found_types, "std::Method"),
-            parameter: metadata_entry(&found_types, "std::Parameter"),
-            type_parameter: metadata_entry(&found_types, "std::TypeParameter"),
+        let mut definitions = Definitions {
+            tables,
+            builders: TableBuilders::new(self),
+            offsets: TableOffsets::default(),
+            metadata_ptr: MetadataEntries::new(&self.context.metadata.types),
         };
 
-        let mut defined_methods = IndexSet::new();
-
-        for metadata_entry in found_types.values() {
-            self.build_type_metadata_buffer(metadata_entry, &metadata_symbols);
-
-            for type_param_metadata in &metadata_entry.type_parameters {
-                self.build_type_parameter_metadata_buffer(
-                    type_param_metadata,
-                    metadata_entry.full_name.clone(),
-                    &metadata_symbols,
-                );
-            }
-
-            for field_metadata in &metadata_entry.fields {
-                self.build_field_metadata_buffer(field_metadata, metadata_entry, &metadata_symbols);
-            }
-
-            for method_metadata in &metadata_entry.methods {
-                if defined_methods.contains(&method_metadata.func_id) {
-                    continue;
-                }
-
-                defined_methods.insert(method_metadata.func_id);
-
-                self.build_method_metadata_buffer(method_metadata, &metadata_symbols);
-
-                for param_metadata in &method_metadata.parameters {
-                    self.build_parameter_metadata_buffer(param_metadata, method_metadata, &metadata_symbols);
-                }
-
-                for type_param_metadata in &method_metadata.type_parameters {
-                    self.build_type_parameter_metadata_buffer(
-                        type_param_metadata,
-                        method_metadata.full_name.clone(),
-                        &metadata_symbols,
-                    );
-                }
-            }
-        }
+        declare_builder_stubs(self, &mut definitions);
+        self.declare_type_aliases(&mut definitions);
+        self.populate_builder_stubs(&mut definitions);
+        self.write_table_contents(definitions);
     }
 }
 
 impl CraneliftBackend {
-    /// Recursively finds all the types on the given metadata type. Children
-    /// types can be defined within a parameter, field, type argument, etc.
-    ///
-    /// The `found` parameter defines which types have already been found,
-    /// preventing infinite looping from recursive types.
-    #[libftrace::traced(level = Trace, fields(id = metadata.id, name = metadata.full_name))]
-    fn find_all_types_on(&self, metadata: &TypeMetadata, found: &mut IndexMap<TypeMetadataId, TypeMetadata>) {
-        if found.contains_key(&metadata.id) {
-            return;
-        }
+    /// Declares all metadata table definitions in the module.
+    #[libftrace::traced(level = Debug)]
+    fn declare_tables(&self) -> TableDefinitions {
+        let types = self
+            .module_mut()
+            .declare_data(TYPE_TABLE_NAME, cranelift_module::Linkage::Local, false, false)
+            .unwrap();
 
-        found.insert(metadata.id, metadata.to_owned());
+        let fields = self
+            .module_mut()
+            .declare_data(FIELD_TABLE_NAME, cranelift_module::Linkage::Local, false, false)
+            .unwrap();
 
-        for field in &metadata.fields {
-            let field_ty = self.find_metadata(field.ty);
-            self.find_all_types_on(field_ty, found);
-        }
+        let methods = self
+            .module_mut()
+            .declare_data(METHOD_TABLE_NAME, cranelift_module::Linkage::Local, false, false)
+            .unwrap();
 
-        for method in &metadata.methods {
-            for param in &method.parameters {
-                let param_ty = self.find_metadata(param.ty);
-                self.find_all_types_on(param_ty, found);
-            }
+        let parameters = self
+            .module_mut()
+            .declare_data(PARAMETER_TABLE_NAME, cranelift_module::Linkage::Local, false, false)
+            .unwrap();
 
-            for type_param in &method.type_parameters {
-                for constraint in &type_param.constraints {
-                    let constraint_ty = self.find_metadata(*constraint);
-                    self.find_all_types_on(constraint_ty, found);
-                }
-            }
+        let type_parameters = self
+            .module_mut()
+            .declare_data(
+                TYPE_PARAMETER_TABLE_NAME,
+                cranelift_module::Linkage::Local,
+                false,
+                false,
+            )
+            .unwrap();
 
-            let return_ty = self.find_metadata(method.return_type);
-            self.find_all_types_on(return_ty, found);
-        }
-
-        for type_arg in &metadata.type_arguments {
-            let arg_ty = self.find_metadata(*type_arg);
-            self.find_all_types_on(arg_ty, found);
+        TableDefinitions {
+            types,
+            fields,
+            methods,
+            parameters,
+            type_parameters,
         }
     }
 
-    /// Finds an existing [`TypeMetadata`] instance from the given ID.
-    #[inline]
-    fn find_metadata(&self, id: TypeMetadataId) -> &TypeMetadata {
-        self.context.metadata.metadata.get(&id).unwrap()
+    #[libftrace::traced(level = Debug)]
+    fn write_table_contents(&self, defs: Definitions) {
+        self.define_metadata(
+            defs.tables.types,
+            TYPE_TABLE_NAME.to_owned(),
+            &defs.builders.types.finish(),
+        );
+
+        self.define_metadata(
+            defs.tables.fields,
+            FIELD_TABLE_NAME.to_owned(),
+            &defs.builders.fields.finish(),
+        );
+
+        self.define_metadata(
+            defs.tables.methods,
+            METHOD_TABLE_NAME.to_owned(),
+            &defs.builders.methods.finish(),
+        );
+
+        self.define_metadata(
+            defs.tables.parameters,
+            PARAMETER_TABLE_NAME.to_owned(),
+            &defs.builders.parameters.finish(),
+        );
+
+        self.define_metadata(
+            defs.tables.type_parameters,
+            TYPE_PARAMETER_TABLE_NAME.to_owned(),
+            &defs.builders.type_parameters.finish(),
+        );
     }
 
-    #[inline]
-    #[allow(clippy::unused_self)]
-    #[libftrace::traced(level = Trace, fields(name = field.name, ty = ty.full_name))]
-    fn metadata_name_of_field(&self, field: &FieldMetadata, ty: &TypeMetadata) -> String {
-        let mut field_metadata_name = ty.symbol_name();
-        field_metadata_name.push_str(&field.name);
-
-        field_metadata_name
-    }
-
-    #[inline]
-    #[allow(clippy::unused_self)]
-    #[libftrace::traced(level = Trace, fields(name = param.name, method = method.full_name))]
-    fn metadata_name_of_param(&self, param: &ParameterMetadata, method: &MethodMetadata) -> String {
-        let mut metadata_name = String::new();
-        write!(metadata_name, "{}_{}", method.symbol_name(), param.name).unwrap();
-        metadata_name
-    }
-
-    #[inline]
-    #[allow(clippy::unused_self)]
-    #[libftrace::traced(level = Trace, fields(name = param.name, owner = owner_name))]
-    fn metadata_name_of_type_param(&self, param: &TypeParameterMetadata, mut owner_name: String) -> String {
-        write!(owner_name, "`{}{}", param.name, param.id).unwrap();
-        owner_name
+    #[libftrace::traced(level = Trace, fields(data_id, name))]
+    fn define_metadata(&self, data_id: DataId, name: String, desc: &DataDescription) {
+        self.module_mut().define_data(data_id, desc).unwrap();
+        self.static_data.write().unwrap().insert(name, data_id);
     }
 
     /// Finds an existing data declaration for a metadata value with the given
@@ -184,365 +223,333 @@ impl CraneliftBackend {
 
         data_id
     }
+}
 
-    /// Finds an existing data declaration for the type metadata with the given
-    /// ID.
-    #[inline]
-    #[libftrace::traced(level = Trace)]
-    fn find_type_decl(&self, id: TypeMetadataId) -> DataId {
-        let metadata = self.find_metadata(id);
-        let metadata_name = metadata.symbol_name();
+/// Creates stubs for all metadata entries.
+///
+/// We can't define entire metadata entries yet, since we need to reference
+/// other metadata entries which might not exist yet.
+///
+/// This function also defines the offset of each metadata entry and saves it
+/// inside the [`Definitions::offsets`] field.
+#[libftrace::traced(level = Debug)]
+fn declare_builder_stubs(ctx: &CraneliftBackend, defs: &mut Definitions) {
+    let metadata_store = &ctx.context.metadata;
 
-        self.find_decl_by_name(&metadata_name)
+    for type_ in metadata_store.types.values() {
+        declare_type_metadata_stub(ctx, type_, defs);
     }
 
-    /// Declares type metadata for the types in the given iterator, but without
-    /// defining it.
-    #[libftrace::traced(level = Debug)]
-    fn declare_all_type_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
-        for metadata in iter {
-            let metadata_name = metadata.symbol_name();
-            let array_name = format!("{}__type_args", metadata.symbol_name());
-
-            self.module_mut()
-                .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
-                .unwrap();
-
-            libftrace::debug!("declaring type metadata: {metadata_name}");
-
-            self.module_mut()
-                .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
-                .unwrap();
-        }
+    for (&id, field) in &metadata_store.fields {
+        declare_field_metadata_stub(id, field, defs);
     }
 
-    /// Declares the field metadata for all the types in the given iterator, but
-    /// without defining it.
-    #[libftrace::traced(level = Debug)]
-    fn declare_all_field_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
-        for metadata in iter {
-            let array_name = format!("{}__fields", metadata.symbol_name());
-
-            self.module_mut()
-                .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
-                .unwrap();
-
-            for field in &metadata.fields {
-                let metadata_name = self.metadata_name_of_field(field, metadata);
-
-                libftrace::debug!("declaring field metadata: {metadata_name}");
-
-                self.module_mut()
-                    .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
-                    .unwrap();
-            }
-        }
+    for method in metadata_store.methods.values() {
+        declare_method_metadata_stub(ctx, method, defs);
     }
 
-    /// Declares the field metadata for all the types in the given iterator, but
-    /// without defining it.
-    #[libftrace::traced(level = Debug)]
-    fn declare_all_method_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
-        for metadata in iter {
-            let array_name = format!("{}__methods", metadata.symbol_name());
-
-            self.module_mut()
-                .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
-                .unwrap();
-
-            for method in &metadata.methods {
-                let metadata_name = method.symbol_name();
-
-                if self.module().declarations().get_name(&metadata_name).is_some() {
-                    continue;
-                }
-
-                libftrace::debug!("declaring method metadata: {metadata_name}");
-
-                self.module_mut()
-                    .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
-                    .unwrap();
-            }
-        }
+    for parameter in metadata_store.parameters.values() {
+        declare_parameter_metadata_stub(parameter, defs);
     }
 
-    /// Declares the parameter metadata for all the types in the given iterator,
-    /// but without defining it.
-    #[libftrace::traced(level = Debug)]
-    fn declare_all_parameter_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
-        for metadata in iter {
-            for method in &metadata.methods {
-                let array_name = format!("{}__params", method.symbol_name());
+    for type_parameter in metadata_store.type_parameters.values() {
+        declare_type_parameter_metadata_stub(type_parameter, defs);
+    }
+}
 
-                self.module_mut()
-                    .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
-                    .unwrap();
+#[libftrace::traced(level = Trace, fields(name = metadata.full_name))]
+fn declare_type_metadata_stub(ctx: &CraneliftBackend, metadata: &TypeMetadata, defs: &mut Definitions) {
+    let builder = &mut defs.builders.types;
+    let base_offset = builder.offset();
 
-                for param in &method.parameters {
-                    let metadata_name = self.metadata_name_of_param(param, method);
+    // Metadata entry
+    builder.append_null_ptr();
 
-                    libftrace::debug!("declaring parameter metadata: {metadata_name}");
+    // Type.type_id
+    builder.append(metadata.type_id_usize());
 
-                    self.module_mut()
-                        .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
-                        .unwrap();
-                }
-            }
-        }
+    // Type.name
+    builder.append_str_address(metadata.full_name.clone());
+
+    // Type.size
+    builder.append(metadata.size);
+
+    // Type.alignment
+    builder.append(metadata.alignment);
+
+    // Type.fields
+    builder.append(metadata.fields.len() as u64);
+    debug_assert_eq!(builder.offset() - base_offset, OFFSET_TYPE_FIELDS);
+    builder.append_null_ptr();
+
+    // Type.methods
+    builder.append(metadata.methods.len() as u64);
+    debug_assert_eq!(builder.offset() - base_offset, OFFSET_TYPE_METHODS);
+    builder.append_null_ptr();
+
+    // Type.type_parameters
+    builder.append(metadata.type_parameters.len() as u64);
+    debug_assert_eq!(builder.offset() - base_offset, OFFSET_TYPE_TYPE_PARAMETERS);
+    builder.append_null_ptr();
+
+    // Type.drop_ptr
+    if let Some(drop_method) = metadata.drop_method {
+        let drop_ptr = ctx.declared_funcs.get(&drop_method).unwrap();
+
+        builder.append_func_address(drop_ptr.id);
+    } else {
+        builder.append_null_ptr();
     }
 
-    /// Declares the type parameter metadata for all the types in the given
-    /// iterator, but without defining it.
-    #[libftrace::traced(level = Debug)]
-    fn declare_all_type_parameter_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
-        for metadata in iter {
-            let array_name = format!("{}__type_params", metadata.symbol_name());
+    defs.offsets.types.insert(metadata.id, base_offset);
+}
 
-            self.module_mut()
-                .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
+#[libftrace::traced(level = Trace, fields(name = metadata.name))]
+fn declare_field_metadata_stub(id: NodeId, metadata: &FieldMetadata, defs: &mut Definitions) {
+    let builder = &mut defs.builders.fields;
+    let base_offset = builder.offset();
+
+    // Metadata entry
+    builder.append_null_ptr();
+
+    // Field.name
+    builder.append_str_address(metadata.name.clone());
+
+    // Field.type
+    debug_assert_eq!(builder.offset() - base_offset, OFFSET_FIELD_TYPE);
+    builder.append_null_ptr();
+
+    defs.offsets.fields.insert(id, base_offset);
+}
+
+#[libftrace::traced(level = Trace, fields(name = metadata.full_name))]
+fn declare_method_metadata_stub(ctx: &CraneliftBackend, metadata: &MethodMetadata, defs: &mut Definitions) {
+    let builder = &mut defs.builders.methods;
+    let base_offset = builder.offset();
+
+    // Metadata entry
+    builder.append_null_ptr();
+
+    // Method.id
+    builder.append(metadata.definition_id.as_usize());
+
+    // Method.full_name
+    builder.append_str_address(metadata.full_name.clone());
+
+    // Method.parameters
+    builder.append(metadata.parameters.len() as u64);
+    debug_assert_eq!(builder.offset() - base_offset, OFFSET_METHODS_PARAMETERS);
+    builder.append_null_ptr();
+
+    // Method.type_parameters
+    builder.append(metadata.type_parameters.len() as u64);
+    debug_assert_eq!(builder.offset() - base_offset, OFFSET_METHODS_TYPE_PARAMETERS);
+    builder.append_null_ptr();
+
+    // Method.return_type
+    debug_assert_eq!(builder.offset() - base_offset, OFFSET_METHODS_RETURN_TYPE);
+    builder.append_null_ptr();
+
+    // Method.func_ptr
+    match ctx.declared_funcs.get(&metadata.func_id) {
+        Some(func) => builder.append_func_address(func.id),
+        None => builder.append_null_ptr(),
+    };
+
+    defs.offsets.methods.insert(metadata.func_id, base_offset);
+}
+
+#[libftrace::traced(level = Trace, fields(name = metadata.name))]
+fn declare_parameter_metadata_stub(metadata: &ParameterMetadata, defs: &mut Definitions) {
+    let builder = &mut defs.builders.parameters;
+    let base_offset = builder.offset();
+
+    // Metadata entry
+    builder.append_null_ptr();
+
+    // Parameter.name
+    builder.append_str_address(metadata.name.clone());
+
+    // Parameter.type
+    debug_assert_eq!(builder.offset() - base_offset, OFFSET_PARAMETER_TYPE);
+    builder.append_null_ptr();
+
+    // Parameter.vararg
+    builder.append_byte(u8::from(metadata.vararg));
+
+    defs.offsets.parameters.insert(metadata.id, base_offset);
+}
+
+#[libftrace::traced(level = Trace, fields(name = metadata.name))]
+fn declare_type_parameter_metadata_stub(metadata: &TypeParameterMetadata, defs: &mut Definitions) {
+    let builder = &mut defs.builders.type_parameters;
+    let base_offset = builder.offset();
+
+    // Metadata entry
+    builder.append_null_ptr();
+
+    // TypeParameter.name
+    builder.append_str_address(metadata.name.clone());
+
+    // TypeParameter.constraints
+    builder.append(metadata.constraints.len() as u64);
+    debug_assert_eq!(builder.offset() - base_offset, OFFSET_TYPE_PARAMETER_CONSTRAINTS);
+    builder.append_null_ptr();
+
+    defs.offsets.type_parameters.insert(metadata.id, base_offset);
+}
+
+impl CraneliftBackend {
+    /// Declares aliases for all type metadata entries, which contain a pointer
+    /// to the type's metadata entry. This is mostly used in the runtime, to
+    /// make it easier to access type metadata from the Rust-based runtime.
+    #[libftrace::traced(level = Debug)]
+    fn declare_type_aliases(&self, defs: &mut Definitions) {
+        let type_table_data_id = defs.tables.types;
+
+        for (&id, &symbol_offset) in &defs.offsets.types {
+            let metadata = self.context.metadata.types.get(&id).unwrap();
+
+            if metadata.kind == lume_type_metadata::TypeKind::TypeParameter {
+                continue;
+            }
+
+            libftrace::debug!("declaring type alias: {} at +{symbol_offset:0x}", metadata.mangled_name);
+
+            let alias_data_id = self
+                .module_mut()
+                .declare_data(&metadata.mangled_name, cranelift_module::Linkage::Local, false, false)
                 .unwrap();
 
-            for type_param in &metadata.type_parameters {
-                let metadata_name = self.metadata_name_of_type_param(type_param, metadata.full_name.clone());
+            let mut builder = MemoryBlockBuilder::new(self);
+            builder.append_data_address(type_table_data_id, symbol_offset.cast_signed() as i64);
 
-                libftrace::debug!("declaring type parameter metadata: {metadata_name}");
-
-                self.module_mut()
-                    .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
-                    .unwrap();
-            }
-
-            for method in &metadata.methods {
-                let array_name = format!("{}__type_params", method.symbol_name());
-
-                self.module_mut()
-                    .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
-                    .unwrap();
-
-                for type_param in &method.type_parameters {
-                    let metadata_name = self.metadata_name_of_type_param(type_param, method.full_name.clone());
-
-                    libftrace::debug!("declaring type parameter metadata: {metadata_name}");
-
-                    self.module_mut()
-                        .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
-                        .unwrap();
-                }
-            }
+            self.define_metadata(alias_data_id, metadata.mangled_name.clone(), &builder.finish());
         }
     }
 }
 
 impl CraneliftBackend {
-    #[libftrace::traced(level = Trace, fields(data_id, name))]
-    fn define_metadata(&self, data_id: DataId, name: String, desc: &DataDescription) {
-        self.module_mut().define_data(data_id, desc).unwrap();
-        self.static_data.write().unwrap().insert(name, data_id);
-    }
-
-    #[libftrace::traced(level = Trace, fields(name = metadata.full_name))]
-    fn build_type_metadata_buffer(&self, metadata: &TypeMetadata, metadata_symbols: &MetadataEntries) {
-        let data_id = self.find_type_decl(metadata.id);
-        let mut builder = MemoryBlockBuilder::new(self);
-
-        // Metadata entry
-        builder.append_metadata_address(&metadata_symbols.ty);
-
-        // Type.type_id
-        builder.append(metadata.type_id_usize());
-
-        // Type.name
-        builder.append_str_address(metadata.full_name.clone());
-
-        // Type.size
-        builder.append(metadata.size);
-
-        // Type.alignment
-        builder.append(metadata.alignment);
-
-        // Type.fields
-        builder.append_slice_ptr_of(
-            format!("{}__fields", metadata.symbol_name()),
-            &metadata.fields,
-            |builder, field| {
-                let name = self.metadata_name_of_field(field, metadata);
-                let data_id = self.find_decl_by_name(&name);
-
-                builder.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
-            },
-        );
-
-        // Type.methods
-        builder.append_slice_ptr_of(
-            format!("{}__methods", metadata.symbol_name()),
-            &metadata.methods,
-            |builder, method| {
-                let name = method.symbol_name();
-                let data_id = self.find_decl_by_name(&name);
-
-                builder.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
-            },
-        );
-
-        // Type.type_parameters
-        builder.append_slice_ptr_of(
-            format!("{}__type_params", metadata.symbol_name()),
-            &metadata.type_parameters,
-            |builder, type_param| {
-                let name = self.metadata_name_of_type_param(type_param, metadata.full_name.clone());
-                let data_id = self.find_decl_by_name(&name);
-
-                builder.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
-            },
-        );
-
-        // Type.type_arguments
-        builder.append_slice_ptr_of(
-            format!("{}__type_args", metadata.symbol_name()),
-            &metadata.type_arguments,
-            |builder, type_arg| {
-                let data_id = self.find_type_decl(*type_arg);
-                builder.append_data_address(data_id, 0);
-            },
-        );
-
-        // Type.drop_ptr
-        if let Some(drop_method) = metadata.drop_method {
-            let drop_ptr = self.declared_funcs.get(&drop_method).unwrap();
-
-            builder.append_func_address(drop_ptr.id);
-        } else {
-            builder.append_null_ptr();
+    /// Populates the stubs which were created in the [`declare_builder_stubs`]
+    /// function.
+    #[libftrace::traced(level = Debug)]
+    fn populate_builder_stubs(&self, defs: &mut Definitions) {
+        for (id, offset) in defs.offsets.types.clone() {
+            self.populate_type_metadata_stub(id, offset, defs);
         }
 
-        self.define_metadata(data_id, metadata.full_name.clone(), &builder.finish());
+        for (id, offset) in defs.offsets.fields.clone() {
+            self.populate_field_metadata_stub(id, offset, defs);
+        }
+
+        for (id, offset) in defs.offsets.methods.clone() {
+            self.populate_method_metadata_stub(id, offset, defs);
+        }
+
+        for (id, offset) in defs.offsets.parameters.clone() {
+            self.populate_parameter_metadata_stub(id, offset, defs);
+        }
+
+        for (id, offset) in defs.offsets.type_parameters.clone() {
+            self.populate_type_parameter_metadata_stub(id, offset, defs);
+        }
     }
 
-    #[libftrace::traced(level = Trace, fields(name = metadata.name, ty = type_metadata.full_name))]
-    fn build_field_metadata_buffer(
-        &self,
-        metadata: &FieldMetadata,
-        type_metadata: &TypeMetadata,
-        metadata_symbols: &MetadataEntries,
-    ) {
-        let metadata_name = self.metadata_name_of_field(metadata, type_metadata);
-        let data_id = self.find_decl_by_name(&metadata_name);
-        let mut builder = MemoryBlockBuilder::new(self);
+    #[libftrace::traced(level = Trace, fields(id, offset))]
+    fn populate_type_metadata_stub(&self, id: TypeMetadataId, offset: usize, defs: &mut Definitions) {
+        let builder = &mut defs.builders.types;
+        let metadata = self.context.metadata.types.get(&id).unwrap();
 
         // Metadata entry
-        builder.append_metadata_address(&metadata_symbols.field);
+        builder.append_metadata_address(&defs.metadata_ptr.ty, offset);
 
-        // Field.name
-        builder.append_str_address(metadata.name.clone());
+        // Type.fields
+        if let Some(first_field) = metadata.fields.first() {
+            let field_offset = *defs.offsets.fields.get(first_field).unwrap();
+            builder.append_at(offset + OFFSET_TYPE_FIELDS, field_offset as u64);
+        }
+
+        // Type.methods
+        if let Some(first_method) = metadata.methods.first() {
+            let method_offset = *defs.offsets.methods.get(first_method).unwrap();
+            builder.append_at(offset + OFFSET_TYPE_METHODS, method_offset as u64);
+        }
+
+        // Type.type_parameters
+        if let Some(first_type_parameter) = metadata.type_parameters.first() {
+            let type_parameter_offset = *defs.offsets.type_parameters.get(first_type_parameter).unwrap();
+            builder.append_at(offset + OFFSET_TYPE_TYPE_PARAMETERS, type_parameter_offset as u64);
+        }
+    }
+
+    #[libftrace::traced(level = Trace, fields(id, offset))]
+    fn populate_field_metadata_stub(&self, id: NodeId, offset: usize, defs: &mut Definitions) {
+        let builder = &mut defs.builders.fields;
+        let metadata = self.context.metadata.fields.get(&id).unwrap();
+
+        // Metadata entry
+        builder.append_metadata_address(&defs.metadata_ptr.field, offset);
 
         // Field.type
-        let type_data_id = self.find_type_decl(metadata.ty);
-        builder.append_data_address(type_data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
-
-        self.define_metadata(data_id, metadata_name, &builder.finish());
+        let type_offset = *defs.offsets.types.get(&metadata.ty).unwrap();
+        builder.append_at(offset + OFFSET_FIELD_TYPE, type_offset as u64);
     }
 
-    #[libftrace::traced(level = Trace, fields(name = metadata.full_name))]
-    fn build_method_metadata_buffer(&self, metadata: &MethodMetadata, metadata_symbols: &MetadataEntries) {
-        let metadata_name = metadata.symbol_name();
-        let data_id = self.find_decl_by_name(&metadata_name);
-        let mut builder = MemoryBlockBuilder::new(self);
+    #[libftrace::traced(level = Trace, fields(id, offset))]
+    fn populate_method_metadata_stub(&self, id: NodeId, offset: usize, defs: &mut Definitions) {
+        let builder = &mut defs.builders.methods;
+        let metadata = self.context.metadata.methods.get(&id).unwrap();
 
         // Metadata entry
-        builder.append_metadata_address(&metadata_symbols.method);
-
-        // Method.id
-        builder.append(metadata.definition_id.as_usize());
-
-        // Method.full_name
-        builder.append_str_address(metadata.full_name.clone());
+        builder.append_metadata_address(&defs.metadata_ptr.method, offset);
 
         // Method.parameters
-        builder.append_slice_ptr_of(
-            format!("{}__params", metadata.symbol_name()),
-            &metadata.parameters,
-            |builder, param| {
-                let name = self.metadata_name_of_param(param, metadata);
-                let data_id = self.find_decl_by_name(&name);
-
-                builder.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
-            },
-        );
+        if let Some(first_parameter) = metadata.parameters.first() {
+            let parameter_offset = *defs.offsets.parameters.get(first_parameter).unwrap();
+            builder.append_at(offset + OFFSET_METHODS_PARAMETERS, parameter_offset as u64);
+        }
 
         // Method.type_parameters
-        builder.append_slice_ptr_of(
-            format!("{}__type_params", metadata.symbol_name()),
-            &metadata.type_parameters,
-            |builder, param| {
-                let name = self.metadata_name_of_type_param(param, metadata.full_name.clone());
-                let data_id = self.find_decl_by_name(&name);
-
-                builder.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
-            },
-        );
+        if let Some(first_parameter) = metadata.type_parameters.first() {
+            let parameter_offset = *defs.offsets.type_parameters.get(first_parameter).unwrap();
+            builder.append_at(offset + OFFSET_METHODS_TYPE_PARAMETERS, parameter_offset as u64);
+        }
 
         // Method.return_type
-        let type_data_id = self.find_type_decl(metadata.return_type);
-        builder.append_data_address(type_data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
-
-        // Method.func_ptr
-        let func_ptr = self.declared_funcs.get(&metadata.func_id).unwrap();
-        builder.append_func_address(func_ptr.id);
-
-        self.define_metadata(data_id, metadata.full_name.clone(), &builder.finish());
+        let type_offset = *defs
+            .offsets
+            .types
+            .get(&metadata.return_type)
+            .unwrap_or_else(|| panic!("[{}] return_type {:0x}", metadata.full_name, metadata.return_type.0));
+        builder.append_at(offset + OFFSET_METHODS_RETURN_TYPE, type_offset as u64);
     }
 
-    #[libftrace::traced(level = Trace, fields(name = metadata.name, method = method_metadata.full_name))]
-    fn build_parameter_metadata_buffer(
-        &self,
-        metadata: &ParameterMetadata,
-        method_metadata: &MethodMetadata,
-        metadata_symbols: &MetadataEntries,
-    ) {
-        let metadata_name = self.metadata_name_of_param(metadata, method_metadata);
-        let data_id = self.find_decl_by_name(&metadata_name);
-        let mut builder = MemoryBlockBuilder::new(self);
+    #[libftrace::traced(level = Trace, fields(id, offset))]
+    fn populate_parameter_metadata_stub(&self, id: NodeId, offset: usize, defs: &mut Definitions) {
+        let builder = &mut defs.builders.parameters;
+        let metadata = self.context.metadata.parameters.get(&id).unwrap();
 
         // Metadata entry
-        builder.append_metadata_address(&metadata_symbols.parameter);
-
-        // Parameter.name
-        builder.append_str_address(metadata.name.clone());
+        builder.append_metadata_address(&defs.metadata_ptr.parameter, offset);
 
         // Parameter.type
-        let type_data_id = self.find_type_decl(metadata.ty);
-        builder.append_data_address(type_data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
-
-        // Parameter.vararg
-        builder.append_byte(u8::from(metadata.vararg));
-
-        self.define_metadata(data_id, metadata_name, &builder.finish());
+        let type_offset = *defs.offsets.types.get(&metadata.ty).unwrap();
+        builder.append_at(offset + OFFSET_PARAMETER_TYPE, type_offset as u64);
     }
 
-    #[libftrace::traced(level = Trace, fields(name = metadata.name, owner = owner_name))]
-    fn build_type_parameter_metadata_buffer(
-        &self,
-        metadata: &TypeParameterMetadata,
-        owner_name: String,
-        metadata_symbols: &MetadataEntries,
-    ) {
-        let metadata_name = self.metadata_name_of_type_param(metadata, owner_name);
-        let data_id = self.find_decl_by_name(&metadata_name);
-        let mut builder = MemoryBlockBuilder::new(self);
+    #[libftrace::traced(level = Trace, fields(id, offset))]
+    fn populate_type_parameter_metadata_stub(&self, id: NodeId, offset: usize, defs: &mut Definitions) {
+        let builder = &mut defs.builders.type_parameters;
+        let metadata = self.context.metadata.type_parameters.get(&id).unwrap();
 
         // Metadata entry
-        builder.append_metadata_address(&metadata_symbols.type_parameter);
-
-        // TypeParameter.name
-        builder.append_str_address(metadata.name.clone());
+        builder.append_metadata_address(&defs.metadata_ptr.type_parameter, offset);
 
         // TypeParameter.constraints
-        builder.append_slice_of(&metadata.constraints, |builder, constraint| {
-            let constraint_data_id = self.find_type_decl(*constraint);
-            builder.append_data_address(constraint_data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
-        });
-
-        self.define_metadata(data_id, metadata_name, &builder.finish());
+        if let Some(first_constraint) = metadata.constraints.first() {
+            let constraint_offset = *defs.offsets.types.get(first_constraint).unwrap();
+            builder.append_at(offset + OFFSET_TYPE_PARAMETER_CONSTRAINTS, constraint_offset as u64);
+        }
     }
 }
 
@@ -580,6 +587,7 @@ impl Encode for usize {
     }
 }
 
+/// Builds a memory block with support for data- and function relocations.
 struct MemoryBlockBuilder<'back> {
     backend: &'back CraneliftBackend,
 
@@ -598,6 +606,12 @@ impl<'back> MemoryBlockBuilder<'back> {
             func_relocs: Vec::new(),
             offset: 0,
         }
+    }
+
+    /// Gets the current offset of the builder.
+    #[inline]
+    fn offset(&self) -> usize {
+        self.offset
     }
 
     /// Checks whether the given value is aligned.
@@ -626,7 +640,6 @@ impl<'back> MemoryBlockBuilder<'back> {
     }
 
     /// Appends an encodable value onto the data block.
-    #[allow(clippy::needless_pass_by_value)]
     pub fn append<T: Encode>(&mut self, value: T) -> &mut Self {
         let encoded = value.encode();
         let len = encoded.len();
@@ -636,6 +649,18 @@ impl<'back> MemoryBlockBuilder<'back> {
 
         self.align_offset();
 
+        self
+    }
+
+    /// Appends an encodable value onto the data block at the given offset.
+    ///
+    /// This method **will overwrite** whatever existed at the offset.
+    /// The offset within the builder is not changed.
+    pub fn append_at<T: Encode>(&mut self, offset: usize, value: T) -> &mut Self {
+        let encoded = value.encode();
+        let len = encoded.len();
+
+        self.data[offset..offset + len].copy_from_slice(&encoded);
         self
     }
 
@@ -673,55 +698,6 @@ impl<'back> MemoryBlockBuilder<'back> {
         self
     }
 
-    /// Appends a slice of items, where each item is built from the given
-    /// closure.
-    pub fn append_slice_of<T, F: Fn(&mut MemoryBlockBuilder<'back>, &T)>(&mut self, slice: &[T], f: F) -> &mut Self {
-        self.append(slice.len());
-
-        for item in slice {
-            f(self, item);
-        }
-
-        self
-    }
-
-    /// Appends a slice of items, where each item is built from the given
-    /// closure.
-    pub fn append_slice_ptr_of<T, F: Fn(&mut MemoryBlockBuilder<'back>, &T)>(
-        &mut self,
-        decl_name: String,
-        slice: &[T],
-        f: F,
-    ) -> &mut Self {
-        let data_id = self.backend.find_decl_by_name(&decl_name);
-        let mut builder = MemoryBlockBuilder::new(self.backend);
-
-        // Array.length
-        builder.append(slice.len());
-
-        let ptr_decl_name = format!("{decl_name}__ptr");
-        let ptr_data_id = self
-            .backend
-            .module_mut()
-            .declare_data(&ptr_decl_name, cranelift_module::Linkage::Local, false, false)
-            .unwrap();
-
-        let mut ptr_builder = MemoryBlockBuilder::new(self.backend);
-
-        for item in slice {
-            f(&mut ptr_builder, item);
-        }
-
-        self.backend
-            .define_metadata(ptr_data_id, ptr_decl_name, &ptr_builder.finish());
-        builder.append_data_address(ptr_data_id, 0);
-
-        self.backend.define_metadata(data_id, decl_name, &builder.finish());
-        self.append_data_address(data_id, 0);
-
-        self
-    }
-
     /// Appends a pointer (relocation) to the given function to the data block.
     pub fn append_func_address(&mut self, id: FuncId) -> &mut Self {
         self.data.resize(self.data.len() + NATIVE_PTR_SIZE, 0x00);
@@ -740,6 +716,18 @@ impl<'back> MemoryBlockBuilder<'back> {
         self
     }
 
+    /// Appends a pointer (relocation) of the given data to the data block at
+    /// the given offset.
+    ///
+    /// This method **will overwrite** whatever existed at the offset.
+    /// The offset within the builder is not changed.
+    pub fn append_data_address_at(&mut self, id: DataId, offset: usize, addend: i64) -> &mut Self {
+        self.data.resize(self.data.len() + NATIVE_PTR_SIZE, 0x00);
+
+        self.data_relocs.push((offset, id, addend));
+        self
+    }
+
     /// Appends a pointer (relocation) of the given string data to the data
     /// block.
     pub fn append_str_address(&mut self, mut value: String) -> &mut Self {
@@ -753,11 +741,14 @@ impl<'back> MemoryBlockBuilder<'back> {
     }
 
     /// Appends a pointer (relocation) of the metadata with the given symbol
-    /// name.
-    pub fn append_metadata_address(&mut self, metadata_name: &str) -> &mut Self {
+    /// name at the given offset.
+    ///
+    /// This method **will overwrite** whatever existed at the offset.
+    /// The offset within the builder is not changed.
+    pub fn append_metadata_address(&mut self, metadata_name: &str, offset: usize) -> &mut Self {
         let data_id = self.backend.find_decl_by_name(metadata_name);
 
-        self.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64)
+        self.append_data_address_at(data_id, offset, NATIVE_PTR_SIZE.cast_signed() as i64)
     }
 
     /// Takes the builder instance and returns the underlying
