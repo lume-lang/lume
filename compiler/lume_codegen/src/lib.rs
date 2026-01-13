@@ -329,40 +329,68 @@ impl CraneliftBackend {
         Ok(())
     }
 
-    pub(crate) fn declare_static_data_ctx(&self, key: &str, ctx: &DataDescription) -> DataId {
-        if let Some(global) = self.static_data.read().unwrap().get(key) {
-            *global
-        } else {
-            let len = self.static_data.read().unwrap().len();
-            let name = format!("@__SYM_STATIC_{len}");
-
-            let data_id = self
-                .module_mut()
-                .declare_data(&name, Linkage::Local, false, false)
-                .unwrap();
-
-            self.static_data.try_write().unwrap().insert(key.to_owned(), data_id);
-            self.module_mut().define_data(data_id, ctx).unwrap();
-
-            data_id
+    /// Declares a data symbol with the given data description in the object
+    /// module and returns it's ID.
+    ///
+    /// # Returns
+    ///
+    /// If the name for the data symbol is already declared, this method will
+    /// return the ID of the existing symbol.
+    pub(crate) fn declare_data(&self, name: &str, linkage: Linkage) -> DataId {
+        if let Some(global) = self.static_data.read().unwrap().get(name).copied() {
+            return global;
         }
+
+        let data_id = self.module_mut().declare_data(name, linkage, false, false).unwrap();
+        self.static_data.try_write().unwrap().insert(name.to_owned(), data_id);
+
+        data_id
     }
 
-    pub(crate) fn declare_static_data<V: Into<Vec<u8>>>(&self, key: &str, value: V) -> DataId {
+    /// Defines the content of an existing data symbol with the given data
+    /// description in the object module.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if the data symbol is not declared or if the data
+    /// symbol is already defined.
+    pub(crate) fn define_data(&self, id: DataId, data: &DataDescription) {
+        self.module_mut().define_data(id, data).unwrap();
+    }
+
+    /// Defines the content of an existing data symbol with the given data
+    /// description in the object module.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if the data symbol is not declared or if the data
+    /// symbol is already defined.
+    pub(crate) fn define_data_bytes<V: Into<Vec<u8>>>(&self, id: DataId, value: V) {
         let mut data_ctx = DataDescription::new();
         data_ctx.set_align(8);
         data_ctx.set_used(true);
 
         data_ctx.define(value.into().into_boxed_slice());
 
-        self.declare_static_data_ctx(key, &data_ctx)
+        self.define_data(id, &data_ctx);
     }
 
-    pub(crate) fn reference_static_data(&self, key: &str) -> Option<DataId> {
-        self.static_data.read().unwrap().get(key).copied()
+    /// Gets the ID of a static data symbol with the given name.
+    ///
+    /// If no symbol with the given name exists, returns [`None`].
+    pub(crate) fn reference_data(&self, name: &str) -> Option<DataId> {
+        self.static_data.try_read().unwrap().get(name).copied()
     }
 
-    pub(crate) fn declare_static_string(&self, value: &str) -> DataId {
+    /// Declares a static data symbol with the given string content. If the
+    /// string is not null-terminated, it will be automatically appended
+    /// with a null byte.
+    ///
+    /// # Returns
+    ///
+    /// If a data symbol with the same string value already exists, this method
+    /// will return the ID of the existing symbol.
+    pub(crate) fn define_string(&self, value: &str) -> DataId {
         let mut bytes = value.as_bytes().to_vec();
 
         let has_terminator = bytes.last().is_some_and(|b| *b == 0);
@@ -370,7 +398,16 @@ impl CraneliftBackend {
             bytes.push(0);
         }
 
-        self.declare_static_data(value, bytes)
+        let key = format!("@__lumec_str_{}", lume_span::hash_id(value));
+
+        if let Some(existing_id) = self.reference_data(&key) {
+            return existing_id;
+        }
+
+        let data_id = self.declare_data(&key, Linkage::Local);
+        self.define_data_bytes(data_id, bytes);
+
+        data_id
     }
 
     pub(crate) fn calculate_source_loc(&self, loc: Location) -> SourceLoc {
@@ -919,14 +956,14 @@ impl<'ctx> LowerFunction<'ctx> {
     }
 
     pub(crate) fn reference_static_data(&mut self, key: &str) -> Option<Value> {
-        let data_id = self.backend.reference_static_data(key)?;
+        let data_id = self.backend.reference_data(key)?;
         let local_id = self.declare_data_in_func(data_id);
 
         Some(self.builder.ins().symbol_value(self.backend.cl_ptr_type(), local_id))
     }
 
     pub(crate) fn reference_static_string(&mut self, value: &str) -> Value {
-        let data_id = self.backend.declare_static_string(value);
+        let data_id = self.backend.define_string(value);
         let local_id = self.declare_data_in_func(data_id);
 
         self.builder.ins().symbol_value(self.backend.cl_ptr_type(), local_id)
