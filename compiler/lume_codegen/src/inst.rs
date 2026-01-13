@@ -66,6 +66,7 @@ impl LowerFunction<'_> {
                     kind: StackSlotKind::ExplicitSlot,
                     size,
                     align_shift: 4,
+                    key: None,
                 });
 
                 self.slots.insert(*slot, stack_slot);
