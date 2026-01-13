@@ -54,14 +54,49 @@ struct TableBuilders<'back> {
     pub type_parameters: MemoryBlockBuilder<'back>,
 }
 
+/// Gets the segment and section names for the metadata section.
+fn metadata_section(isa: &dyn TargetIsa) -> (&'static str, &'static str) {
+    if isa.triple().operating_system.is_like_darwin() {
+        ("__LUMEC", "__metadata")
+    } else {
+        ("", ".lumec.metadata.types")
+    }
+}
+
+/// Gets the segment and section names for the type alias section.
+fn alias_section(isa: &dyn TargetIsa) -> (&'static str, &'static str) {
+    if isa.triple().operating_system.is_like_darwin() {
+        ("__LUMEC", "__aliases")
+    } else {
+        ("", ".lumec.metadata.aliases")
+    }
+}
+
 impl<'back> TableBuilders<'back> {
     pub fn new(backend: &'back CraneliftBackend) -> Self {
+        let (segment, section) = metadata_section(backend.isa.as_ref());
+
+        let mut types = MemoryBlockBuilder::new(backend);
+        types.set_segment_section(segment, section);
+
+        let mut fields = MemoryBlockBuilder::new(backend);
+        fields.set_segment_section(segment, section);
+
+        let mut methods = MemoryBlockBuilder::new(backend);
+        methods.set_segment_section(segment, section);
+
+        let mut parameters = MemoryBlockBuilder::new(backend);
+        parameters.set_segment_section(segment, section);
+
+        let mut type_parameters = MemoryBlockBuilder::new(backend);
+        type_parameters.set_segment_section(segment, section);
+
         Self {
-            types: MemoryBlockBuilder::new(backend),
-            fields: MemoryBlockBuilder::new(backend),
-            methods: MemoryBlockBuilder::new(backend),
-            parameters: MemoryBlockBuilder::new(backend),
-            type_parameters: MemoryBlockBuilder::new(backend),
+            types,
+            fields,
+            methods,
+            parameters,
+            type_parameters,
         }
     }
 }
@@ -398,6 +433,7 @@ impl CraneliftBackend {
             }
 
             libftrace::debug!("declaring type alias: {} at +{symbol_offset:0x}", metadata.mangled_name);
+            let (segment, section) = alias_section(self.isa.as_ref());
 
             let alias_data_id = self
                 .module_mut()
@@ -405,6 +441,7 @@ impl CraneliftBackend {
                 .unwrap();
 
             let mut builder = MemoryBlockBuilder::new(self);
+            builder.set_segment_section(segment, section);
             builder.append_data_address(type_table_data_id, symbol_offset.cast_signed() as i64);
 
             self.define_metadata(alias_data_id, metadata.mangled_name.clone(), &builder.finish());
@@ -620,6 +657,8 @@ struct MemoryBlockBuilder<'back> {
     data_relocs: Vec<(usize, DataId, i64)>,
     func_relocs: Vec<(usize, FuncId)>,
     offset: usize,
+
+    seg_sect_name: Option<(&'static str, &'static str)>,
 }
 
 impl<'back> MemoryBlockBuilder<'back> {
@@ -630,6 +669,7 @@ impl<'back> MemoryBlockBuilder<'back> {
             data_relocs: Vec::new(),
             func_relocs: Vec::new(),
             offset: 0,
+            seg_sect_name: None,
         }
     }
 
@@ -751,23 +791,22 @@ impl<'back> MemoryBlockBuilder<'back> {
         self.append_data_address(name_data_id, 0)
     }
 
-    /// Appends a pointer (relocation) of the metadata with the given symbol
-    /// name at the given offset.
-    ///
-    /// This method **will overwrite** whatever existed at the offset.
-    /// The offset within the builder is not changed.
-    pub fn append_metadata_address(&mut self, metadata_name: &str, offset: usize) -> &mut Self {
-        let data_id = self.backend.find_decl_by_name(metadata_name);
-
-        self.append_data_address_at(data_id, offset, NATIVE_PTR_SIZE.cast_signed() as i64)
+    /// Sets the section and segment names for the metadata block.
+    pub fn set_segment_section(&mut self, segment: &'static str, section: &'static str) -> &mut Self {
+        self.seg_sect_name = Some((segment, section));
+        self
     }
 
     /// Takes the builder instance and returns the underlying
     /// [`DataDescription`]
-    pub fn finish(self) -> DataDescription {
+    pub fn finish(mut self) -> DataDescription {
         let mut ctx = DataDescription::new();
         ctx.set_align(8);
         ctx.set_used(true);
+
+        if let Some((segment, section)) = self.seg_sect_name.take() {
+            ctx.set_segment_section(segment, section);
+        }
 
         ctx.define(self.data.into_boxed_slice());
 
