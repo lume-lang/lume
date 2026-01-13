@@ -48,6 +48,9 @@ impl<T: std::hash::Hash + ?Sized> From<&T> for Idx {
     }
 }
 
+/// Gets the package ID of the standard library package.
+pub const STD_PACKAGE_ID: PackageId = PackageId::from_usize(0x70A1_7C43_DC63_DE1A);
+
 /// Uniquely identifies a package.
 ///
 /// Packages are identified by a unique ID, which is used to locate the
@@ -77,6 +80,13 @@ impl PackageId {
     #[must_use]
     pub const fn empty() -> Self {
         Self(0)
+    }
+
+    /// Creates a [`PackageId`] for the standard library package.
+    #[inline]
+    #[must_use]
+    pub const fn std() -> Self {
+        STD_PACKAGE_ID
     }
 
     /// Gets the [`PackageId`] as a value of `usize`.

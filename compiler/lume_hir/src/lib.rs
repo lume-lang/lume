@@ -1833,7 +1833,7 @@ pub struct Type {
 impl Type {
     pub fn void() -> Type {
         Self {
-            id: TypeId(NodeId::empty(PackageId::empty())),
+            id: TypeId(NodeId::empty(PackageId::std())),
             name: Path::void(),
             self_type: false,
             location: Location::empty(),
