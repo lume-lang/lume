@@ -1,6 +1,7 @@
 use std::ops::Rem;
 
-use cranelift_module::{DataDescription, DataId, FuncId, FuncOrDataId, Module};
+use cranelift_codegen::isa::TargetIsa;
+use cranelift_module::{DataDescription, DataId, FuncId, Module};
 use indexmap::IndexMap;
 use lume_span::NodeId;
 use lume_type_metadata::*;
@@ -78,25 +79,19 @@ struct TableOffsets {
 
 /// Mangled names of metadata types.
 struct MetadataEntries {
-    pub ty: String,
-    pub field: String,
-    pub method: String,
-    pub parameter: String,
-    pub type_parameter: String,
+    pub ty: TypeMetadataId,
+    pub field: TypeMetadataId,
+    pub method: TypeMetadataId,
+    pub parameter: TypeMetadataId,
+    pub type_parameter: TypeMetadataId,
 }
 
 impl MetadataEntries {
     pub fn new(metadata: &IndexMap<TypeMetadataId, TypeMetadata>) -> Self {
-        fn metadata_entry(metadata: &IndexMap<TypeMetadataId, TypeMetadata>, name: &'static str) -> String {
+        fn metadata_entry(metadata: &IndexMap<TypeMetadataId, TypeMetadata>, name: &'static str) -> TypeMetadataId {
             metadata
-                .values()
-                .find_map(|ty| {
-                    if ty.full_name == name {
-                        Some(ty.mangled_name.clone())
-                    } else {
-                        None
-                    }
-                })
+                .iter()
+                .find_map(|(&id, metadata)| (metadata.full_name == name).then_some(id))
                 .unwrap_or_else(|| panic!("expected to find metadata of `{name}`"))
         }
 
@@ -210,18 +205,6 @@ impl CraneliftBackend {
     fn define_metadata(&self, data_id: DataId, name: String, desc: &DataDescription) {
         self.module_mut().define_data(data_id, desc).unwrap();
         self.static_data.write().unwrap().insert(name, data_id);
-    }
-
-    /// Finds an existing data declaration for a metadata value with the given
-    /// name.
-    #[inline]
-    #[libftrace::traced(level = Trace)]
-    fn find_decl_by_name(&self, name: &str) -> DataId {
-        let Some(FuncOrDataId::Data(data_id)) = self.module().declarations().get_name(name) else {
-            panic!("bug!: metadata declaration not found: {name}");
-        };
-
-        data_id
     }
 }
 
@@ -461,24 +444,39 @@ impl CraneliftBackend {
         let metadata = self.context.metadata.types.get(&id).unwrap();
 
         // Metadata entry
-        builder.append_metadata_address(&defs.metadata_ptr.ty, offset);
+        let metadata_offset = *defs.offsets.types.get(&defs.metadata_ptr.ty).unwrap();
+        builder.append_data_address(defs.tables.types, metadata_offset.cast_signed() as i64);
 
         // Type.fields
         if let Some(first_field) = metadata.fields.first() {
             let field_offset = *defs.offsets.fields.get(first_field).unwrap();
-            builder.append_at(offset + OFFSET_TYPE_FIELDS, field_offset as u64);
+            builder.append_data_address_at(
+                defs.tables.fields,
+                offset + OFFSET_TYPE_FIELDS,
+                field_offset.cast_signed() as i64,
+            );
         }
 
         // Type.methods
         if let Some(first_method) = metadata.methods.first() {
             let method_offset = *defs.offsets.methods.get(first_method).unwrap();
-            builder.append_at(offset + OFFSET_TYPE_METHODS, method_offset as u64);
+
+            builder.append_data_address_at(
+                defs.tables.methods,
+                offset + OFFSET_TYPE_METHODS,
+                method_offset.cast_signed() as i64,
+            );
         }
 
         // Type.type_parameters
         if let Some(first_type_parameter) = metadata.type_parameters.first() {
             let type_parameter_offset = *defs.offsets.type_parameters.get(first_type_parameter).unwrap();
-            builder.append_at(offset + OFFSET_TYPE_TYPE_PARAMETERS, type_parameter_offset as u64);
+
+            builder.append_data_address_at(
+                defs.tables.type_parameters,
+                offset + OFFSET_TYPE_TYPE_PARAMETERS,
+                type_parameter_offset.cast_signed() as i64,
+            );
         }
     }
 
@@ -488,11 +486,16 @@ impl CraneliftBackend {
         let metadata = self.context.metadata.fields.get(&id).unwrap();
 
         // Metadata entry
-        builder.append_metadata_address(&defs.metadata_ptr.field, offset);
+        let metadata_offset = *defs.offsets.types.get(&defs.metadata_ptr.field).unwrap();
+        builder.append_data_address(defs.tables.types, metadata_offset.cast_signed() as i64);
 
         // Field.type
         let type_offset = *defs.offsets.types.get(&metadata.ty).unwrap();
-        builder.append_at(offset + OFFSET_FIELD_TYPE, type_offset as u64);
+        builder.append_data_address_at(
+            defs.tables.types,
+            offset + OFFSET_FIELD_TYPE,
+            type_offset.cast_signed() as i64,
+        );
     }
 
     #[libftrace::traced(level = Trace, fields(id, offset))]
@@ -501,27 +504,38 @@ impl CraneliftBackend {
         let metadata = self.context.metadata.methods.get(&id).unwrap();
 
         // Metadata entry
-        builder.append_metadata_address(&defs.metadata_ptr.method, offset);
+        let metadata_offset = *defs.offsets.types.get(&defs.metadata_ptr.method).unwrap();
+        builder.append_data_address(defs.tables.types, metadata_offset.cast_signed() as i64);
 
         // Method.parameters
         if let Some(first_parameter) = metadata.parameters.first() {
             let parameter_offset = *defs.offsets.parameters.get(first_parameter).unwrap();
-            builder.append_at(offset + OFFSET_METHODS_PARAMETERS, parameter_offset as u64);
+
+            builder.append_data_address_at(
+                defs.tables.parameters,
+                offset + OFFSET_METHODS_PARAMETERS,
+                parameter_offset.cast_signed() as i64,
+            );
         }
 
         // Method.type_parameters
         if let Some(first_parameter) = metadata.type_parameters.first() {
             let parameter_offset = *defs.offsets.type_parameters.get(first_parameter).unwrap();
-            builder.append_at(offset + OFFSET_METHODS_TYPE_PARAMETERS, parameter_offset as u64);
+
+            builder.append_data_address_at(
+                defs.tables.type_parameters,
+                offset + OFFSET_METHODS_TYPE_PARAMETERS,
+                parameter_offset.cast_signed() as i64,
+            );
         }
 
         // Method.return_type
-        let type_offset = *defs
-            .offsets
-            .types
-            .get(&metadata.return_type)
-            .unwrap_or_else(|| panic!("[{}] return_type {:0x}", metadata.full_name, metadata.return_type.0));
-        builder.append_at(offset + OFFSET_METHODS_RETURN_TYPE, type_offset as u64);
+        let type_offset = *defs.offsets.types.get(&metadata.return_type).unwrap();
+        builder.append_data_address_at(
+            defs.tables.types,
+            offset + OFFSET_METHODS_RETURN_TYPE,
+            type_offset.cast_signed() as i64,
+        );
     }
 
     #[libftrace::traced(level = Trace, fields(id, offset))]
@@ -530,11 +544,16 @@ impl CraneliftBackend {
         let metadata = self.context.metadata.parameters.get(&id).unwrap();
 
         // Metadata entry
-        builder.append_metadata_address(&defs.metadata_ptr.parameter, offset);
+        let metadata_offset = *defs.offsets.types.get(&defs.metadata_ptr.parameter).unwrap();
+        builder.append_data_address(defs.tables.types, metadata_offset.cast_signed() as i64);
 
         // Parameter.type
         let type_offset = *defs.offsets.types.get(&metadata.ty).unwrap();
-        builder.append_at(offset + OFFSET_PARAMETER_TYPE, type_offset as u64);
+        builder.append_data_address_at(
+            defs.tables.types,
+            offset + OFFSET_PARAMETER_TYPE,
+            type_offset.cast_signed() as i64,
+        );
     }
 
     #[libftrace::traced(level = Trace, fields(id, offset))]
@@ -543,12 +562,18 @@ impl CraneliftBackend {
         let metadata = self.context.metadata.type_parameters.get(&id).unwrap();
 
         // Metadata entry
-        builder.append_metadata_address(&defs.metadata_ptr.type_parameter, offset);
+        let metadata_offset = *defs.offsets.types.get(&defs.metadata_ptr.type_parameter).unwrap();
+        builder.append_data_address(defs.tables.types, metadata_offset.cast_signed() as i64);
 
         // TypeParameter.constraints
         if let Some(first_constraint) = metadata.constraints.first() {
             let constraint_offset = *defs.offsets.types.get(first_constraint).unwrap();
-            builder.append_at(offset + OFFSET_TYPE_PARAMETER_CONSTRAINTS, constraint_offset as u64);
+
+            builder.append_data_address_at(
+                defs.tables.types,
+                offset + OFFSET_TYPE_PARAMETER_CONSTRAINTS,
+                constraint_offset.cast_signed() as i64,
+            );
         }
     }
 }
@@ -652,18 +677,6 @@ impl<'back> MemoryBlockBuilder<'back> {
         self
     }
 
-    /// Appends an encodable value onto the data block at the given offset.
-    ///
-    /// This method **will overwrite** whatever existed at the offset.
-    /// The offset within the builder is not changed.
-    pub fn append_at<T: Encode>(&mut self, offset: usize, value: T) -> &mut Self {
-        let encoded = value.encode();
-        let len = encoded.len();
-
-        self.data[offset..offset + len].copy_from_slice(&encoded);
-        self
-    }
-
     /// Appends a null pointer onto the data block.
     pub fn append_null_ptr(&mut self) -> &mut Self {
         self.append_bytes(&[0x00; NATIVE_PTR_SIZE])
@@ -722,8 +735,6 @@ impl<'back> MemoryBlockBuilder<'back> {
     /// This method **will overwrite** whatever existed at the offset.
     /// The offset within the builder is not changed.
     pub fn append_data_address_at(&mut self, id: DataId, offset: usize, addend: i64) -> &mut Self {
-        self.data.resize(self.data.len() + NATIVE_PTR_SIZE, 0x00);
-
         self.data_relocs.push((offset, id, addend));
         self
     }
@@ -735,7 +746,7 @@ impl<'back> MemoryBlockBuilder<'back> {
             value.push('\0');
         }
 
-        let name_data_id = self.backend.declare_static_string(&value);
+        let name_data_id = self.backend.define_string(&value);
 
         self.append_data_address(name_data_id, 0)
     }
