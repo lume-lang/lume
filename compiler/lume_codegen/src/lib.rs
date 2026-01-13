@@ -1040,15 +1040,14 @@ impl<'ctx> LowerFunction<'ctx> {
         );
     }
 
-    pub(crate) fn switch(&mut self, operand: Value, arms: &[(i64, BlockBranchSite)], fallback: &BlockBranchSite) {
+    pub(crate) fn switch(&mut self, operand: Value, arms: &[(i128, BlockBranchSite)], fallback: &BlockBranchSite) {
         let mut switch = cranelift::frontend::Switch::new();
         let fallback = *self.blocks.get(&fallback.block).unwrap();
 
         for (index, block) in arms {
             let arm_block = *self.blocks.get(&block.block).unwrap();
 
-            #[allow(clippy::cast_sign_loss)]
-            switch.set_entry(u128::from(*index as u64), arm_block);
+            switch.set_entry(index.cast_unsigned(), arm_block);
         }
 
         switch.emit(&mut self.builder, operand, fallback);

@@ -767,7 +767,7 @@ impl Parser<'_> {
                     None => {}
                 }
 
-                let Ok(int_value) = i64::from_str_radix(&value, radix.base()) else {
+                let Ok(int_value) = i128::from_str_radix(&value, radix.base()) else {
                     return Err(InvalidLiteral {
                         source: self.source.clone(),
                         range: self.token().index,

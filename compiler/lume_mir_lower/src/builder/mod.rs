@@ -290,7 +290,7 @@ impl Builder<'_, '_> {
     pub(crate) fn switch(
         &mut self,
         operand: RegisterId,
-        arms: Vec<(i64, BlockBranchSite)>,
+        arms: Vec<(i128, BlockBranchSite)>,
         fallback: BlockBranchSite,
         location: Location,
     ) {

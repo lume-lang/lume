@@ -1142,7 +1142,7 @@ impl Expression {
             id,
             LiteralKind::Int(Box::new(IntLiteral {
                 id,
-                value: i64::try_from(value).map_err(error_snippet::IntoDiagnostic::into_diagnostic)?,
+                value: i128::from(value),
                 kind: Some(IntKind::U64),
             })),
         ))
@@ -1563,7 +1563,7 @@ pub enum LiteralKind {
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct IntLiteral {
     pub id: NodeId,
-    pub value: i64,
+    pub value: i128,
     pub kind: Option<IntKind>,
 }
 
@@ -1738,16 +1738,6 @@ impl PatternKind {
             &lit.literal
         } else {
             panic!("expectation failed: expected literal pattern");
-        }
-    }
-
-    #[track_caller]
-    #[expect(clippy::missing_panics_doc)]
-    pub fn expect_int_lit(&self) -> i64 {
-        if let LiteralKind::Int(int) = &self.expect_lit().kind {
-            int.value
-        } else {
-            panic!("expectation failed: expected integer literal pattern");
         }
     }
 }
