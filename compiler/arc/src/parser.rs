@@ -37,6 +37,10 @@ pub struct Manifest {
 
 impl Manifest {
     pub fn package_id(&self) -> PackageId {
+        if self.package.name.get_ref() == "std" {
+            return PackageId::std();
+        }
+
         PackageId::from_name(&self.package.name)
     }
 }
@@ -46,7 +50,7 @@ impl From<Manifest> for Package {
         Self {
             id: manifest.package_id(),
             path: manifest.path,
-            name: manifest.package.name,
+            name: manifest.package.name.into_inner(),
             lume_version: manifest.package.lume_version.map(Spanned::into_inner),
             version: manifest.package.version.into_inner(),
             description: manifest.package.description,
@@ -65,7 +69,7 @@ impl From<Manifest> for Package {
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct ManifestPackage {
     /// Defines the name of the package.
-    pub name: String,
+    pub name: Spanned<String>,
 
     /// Defines the current version of the package.
     pub version: Spanned<Version>,
@@ -235,7 +239,37 @@ impl PackageParser {
             .into());
         }
 
-        Self::new(&path)?.parse()
+        let mut parser = Self::new(&path)?;
+        let mut manifest = parser.parse()?;
+
+        if !manifest.package.no_std {
+            let required_version = manifest
+                .package
+                .lume_version
+                .clone()
+                .map_or_else(|| VersionReq::STAR, |req| req.into_inner());
+
+            let Some(std_path) = lume_assets::toolchain_std_path()? else {
+                return Err(SimpleDiagnostic::new("could not locate standard library for package")
+                    .with_help("are there an active Lume toolchain?")
+                    .with_label(Label::note(
+                        None,
+                        manifest.package.name.span(),
+                        format!("error occured in `{}`", manifest.package.name),
+                    ))
+                    .with_source(parser.source.clone())
+                    .into());
+            };
+
+            manifest.dependencies.insert(String::from("std"), ManifestDependency {
+                source: ManifestDependencySource::Local {
+                    path: std_path.display().to_string(),
+                },
+                required_version,
+            });
+        }
+
+        Ok(manifest)
     }
 
     /// Parses the [`Manifest`] instance from the input source code.

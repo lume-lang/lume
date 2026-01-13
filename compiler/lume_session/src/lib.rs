@@ -330,7 +330,7 @@ impl Package {
     ///
     /// This method will return `Err` if the current path to the `Arcfile`
     /// exists outside of any directory.
-    pub fn add_project_sources(&mut self) -> Result<()> {
+    pub fn add_package_sources(&mut self) -> Result<()> {
         for source_file in self.locate_source_files()? {
             // We get the relative path of the file within the project,
             // so error messages don't use the full path to a file.
@@ -341,24 +341,6 @@ impl Package {
 
             self.add_source(source_file);
         }
-
-        Ok(())
-    }
-
-    /// Adds all the discovered source files from the project root to
-    /// the projects files, as well as source files for the standard library (if
-    /// enabled.)
-    ///
-    /// # Errors
-    ///
-    /// This method will return `Err` if the current path to the `Arcfile`
-    /// exists outside of any directory.
-    pub fn add_package_sources(&mut self) -> Result<()> {
-        if !self.dependencies.no_std {
-            self.add_std_sources();
-        }
-
-        self.add_project_sources()?;
 
         Ok(())
     }

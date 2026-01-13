@@ -39,7 +39,7 @@ pub(crate) fn build_dependency_tree(root: &Path, dcx: DiagCtxHandle) -> Result<D
 
     let package = Dependency {
         id: root_id,
-        name: manifest.package.name,
+        name: manifest.package.name.into_inner(),
         source: ManifestDependencySource::Local {
             path: root.as_os_str().to_string_lossy().into(),
         },

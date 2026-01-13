@@ -143,6 +143,31 @@ pub fn toolchain_current_path() -> Result<Option<PathBuf>> {
     std::fs::read_link(link_path).map_diagnostic().map(Some)
 }
 
+/// Attempts to determine the absolute path of the standard library.
+///
+/// If no toolchain is selected, returns [`None`].
+///
+/// # Errors
+///
+/// Returns [`Err`] if the path could not be determined within the current
+/// environment.
+pub fn toolchain_std_path() -> Result<Option<PathBuf>> {
+    // If we're currently running from the source tree, return the path of the
+    // standard library within the tree.
+    if is_dev() {
+        let compiler_root = compiler_root_dir()?;
+
+        return Ok(Some(compiler_root.join("std")));
+    }
+
+    let toolchain_path = match toolchain_current_path() {
+        Ok(Some(path)) => path,
+        err => return err,
+    };
+
+    Ok(Some(toolchain_path.join("std")))
+}
+
 /// Determines the directory where the system runtime library would be stored.
 ///
 /// Depending on the directory returned, the directory might not exist.

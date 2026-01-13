@@ -129,6 +129,7 @@ dependencies = [
  "error_snippet_derive",
  "indexmap",
  "libftrace",
+ "lume_assets",
  "lume_errors",
  "lume_options",
  "lume_session",

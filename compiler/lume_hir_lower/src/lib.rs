@@ -286,7 +286,7 @@ impl LowerModule {
             .insert(type_param.name.name.clone(), TypeId::from(id));
 
         self.map.nodes.insert(
-            type_param.id,
+            id,
             lume_hir::Node::Type(lume_hir::TypeDefinition::TypeParameter(Box::new(type_param))),
         );
 
