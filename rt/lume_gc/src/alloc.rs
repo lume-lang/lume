@@ -268,7 +268,7 @@ impl YoungGeneration {
 
             let mut offset = 0;
 
-            for field_metadata_ptr in metadata.fields.items() {
+            for field_metadata in metadata.fields.items() {
                 let field_ptr = unsafe { obj_ptr.byte_add(offset).cast::<*const u8>() };
                 let field = unsafe { field_ptr.read() };
 
@@ -276,7 +276,6 @@ impl YoungGeneration {
                     worklist.insert(field_ptr);
                 }
 
-                let field_metadata = unsafe { field_metadata_ptr.read() };
                 offset += unsafe { field_metadata.ty.read() }.size;
             }
         }

@@ -96,12 +96,15 @@ impl LowerFunction<'_> {
 
                 lume_mir::Intrinsic::Metadata { metadata } => {
                     let Some(value) = self.reference_static_data(&metadata.mangled_name) else {
-                        panic!("bug!: no type metadata allocated for `{}`", metadata.full_name);
+                        panic!("bug!: no type metadata allocated for `{}`", metadata.mangled_name);
                     };
+
+                    // The static alias symbols contain the address of the start of the metadata
+                    // entry, so we must load it before returning it.
 
                     self.builder
                         .ins()
-                        .iadd_imm(value, lume_mir::POINTER_SIZE.cast_signed() as i64)
+                        .load(self.backend.cl_ptr_type(), MemFlags::trusted(), value, 0)
                 }
             },
         }

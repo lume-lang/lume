@@ -16,6 +16,9 @@ pub struct FunctionId(pub usize);
 
 #[repr(C)]
 pub struct TypeMetadata {
+    /// Metadata entry for the type metadata itself.
+    pub metadata: *const TypeMetadata,
+
     /// Gets the unique ID of the type, used mostly for internal referencing.
     pub type_id: TypeId,
 
@@ -46,8 +49,18 @@ pub struct TypeMetadata {
     pub drop_ptr: *const c_void,
 }
 
+impl TypeMetadata {
+    /// Gets the full name of the type as a [`String`].
+    pub fn full_name(&self) -> String {
+        cstr_to_string(self.full_name)
+    }
+}
+
 #[repr(C)]
 pub struct FieldMetadata {
+    /// Metadata entry for the field metadata itself.
+    pub metadata: *const TypeMetadata,
+
     /// Gets the name of the field.
     pub name: *const c_char,
 
@@ -55,8 +68,18 @@ pub struct FieldMetadata {
     pub ty: *const TypeMetadata,
 }
 
+impl FieldMetadata {
+    /// Gets the name of the field as a [`String`].
+    pub fn name(&self) -> String {
+        cstr_to_string(self.name)
+    }
+}
+
 #[repr(C)]
 pub struct MethodMetadata {
+    /// Metadata entry for the method metadata itself.
+    pub metadata: *const TypeMetadata,
+
     /// Gets the unique ID of the method, used mostly for internal referencing.
     pub func_id: FunctionId,
 
@@ -79,8 +102,18 @@ pub struct MethodMetadata {
     pub func_ptr: *const c_void,
 }
 
+impl MethodMetadata {
+    /// Gets the full name of the method as a [`String`].
+    pub fn full_name(&self) -> String {
+        cstr_to_string(self.full_name)
+    }
+}
+
 #[repr(C)]
 pub struct ParameterMetadata {
+    /// Metadata entry for the method parameter metadata itself.
+    pub metadata: *const TypeMetadata,
+
     /// Gets the name of the parameter.
     pub name: *const c_char,
 
@@ -91,14 +124,31 @@ pub struct ParameterMetadata {
     pub vararg: bool,
 }
 
+impl ParameterMetadata {
+    /// Gets the name of the parameter as a [`String`].
+    pub fn name(&self) -> String {
+        cstr_to_string(self.name)
+    }
+}
+
 #[repr(C)]
 pub struct TypeParameterMetadata {
+    /// Metadata entry for the type parameter metadata itself.
+    pub metadata: *const TypeMetadata,
+
     /// Gets the name of the type parameter.
     pub name: *const c_char,
 
     /// Gets all the constraints defined on the type parameter, in the order
     /// that they're declared.
     pub constraints: List<TypeMetadata>,
+}
+
+impl TypeParameterMetadata {
+    /// Gets the name of the type parameter as a [`String`].
+    pub fn name(&self) -> String {
+        cstr_to_string(self.name)
+    }
 }
 
 /// Owned list data structure.
@@ -108,6 +158,9 @@ pub struct TypeParameterMetadata {
 /// pointers to each of the elements in the list.
 #[repr(C)]
 pub struct List<T> {
+    /// The length of the list.
+    length: u64,
+
     /// Provides a pointer to the base of the list.
     base: *const (),
 
@@ -115,10 +168,17 @@ pub struct List<T> {
 }
 
 impl<T> List<T> {
+    /// Gets the pointer to the base of the list.
+    #[inline]
+    pub fn base(&self) -> *const T {
+        self.base.cast()
+    }
+
     /// Gets the length of the list.
     #[inline]
+    #[allow(clippy::cast_possible_truncation)]
     pub fn len(&self) -> usize {
-        unsafe { self.base.cast::<usize>().read() }
+        self.length as usize
     }
 
     /// Determines if the list is empty.
@@ -130,15 +190,22 @@ impl<T> List<T> {
     /// Gets a slice of all items in the list, as a slice of pointer.
     #[inline]
     #[must_use]
-    pub fn items(&self) -> &[*const T] {
+    pub fn items(&self) -> &[T] {
+        if self.is_empty() {
+            return &[];
+        }
+
         let len = self.len();
-        let ptr = unsafe {
-            self.base
-                .byte_add(std::mem::size_of::<usize>())
-                .cast::<*const *const T>()
-                .read()
-        };
+        let ptr = self.base.cast::<T>();
 
         unsafe { std::slice::from_raw_parts(ptr, len) }
+    }
+}
+
+fn cstr_to_string(ptr: *const std::ffi::c_char) -> String {
+    unsafe {
+        let c_str = std::ffi::CStr::from_ptr(ptr);
+
+        c_str.to_string_lossy().into_owned()
     }
 }
