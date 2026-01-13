@@ -23,9 +23,7 @@ pub extern "C" fn type_of(metadata: *const ()) -> *const () {
 pub unsafe extern "C" fn find_method_on(method_id: lume_rt_metadata::FunctionId, metadata: *const ()) -> *const () {
     let metadata = unsafe { metadata.cast::<lume_rt_metadata::TypeMetadata>().read() };
 
-    for method_ptr in metadata.methods.items() {
-        let method = unsafe { method_ptr.read() };
-
+    for method in metadata.methods.items() {
         if method.func_id == method_id {
             return method.func_ptr.cast();
         }
