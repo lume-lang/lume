@@ -428,10 +428,6 @@ impl CraneliftBackend {
         for (&id, &symbol_offset) in &defs.offsets.types {
             let metadata = self.context.metadata.types.get(&id).unwrap();
 
-            if metadata.kind == lume_type_metadata::TypeKind::TypeParameter {
-                continue;
-            }
-
             libftrace::debug!("declaring type alias: {} at +{symbol_offset:0x}", metadata.mangled_name);
             let (segment, section) = alias_section(self.isa.as_ref());
 
