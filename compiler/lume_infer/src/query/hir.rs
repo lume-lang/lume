@@ -42,6 +42,12 @@ impl TyInferCtx {
         self.hir.nodes.values()
     }
 
+    /// Returns an iterator of all HIR nodes which are local to the current HIR
+    /// map package.
+    pub fn hir_local_nodes(&self) -> impl Iterator<Item = &Node> {
+        self.hir_nodes().filter(|node| node.id().package == self.hir.package)
+    }
+
     /// Returns the [`lume_hir::Node`] with the given ID, if any.
     #[libftrace::traced(level = Trace, fields(id))]
     pub fn hir_node(&self, id: NodeId) -> Option<&Node> {

@@ -38,6 +38,19 @@ impl Map {
         }
     }
 
+    /// Merges the current HIR map into `target`.
+    pub fn merge_into(self, target: &mut Self) {
+        for (id, node) in self.nodes {
+            target.nodes.insert(id, node);
+        }
+
+        for (id, item) in self.types {
+            target.types.insert(id, item);
+        }
+
+        self.lang_items.merge_into(&mut target.lang_items);
+    }
+
     /// Gets all the nodes within the HIR map.
     pub fn nodes(&self) -> &IndexMap<NodeId, Node> {
         &self.nodes

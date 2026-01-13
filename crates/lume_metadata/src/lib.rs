@@ -63,10 +63,13 @@ fn partition_public_nodes(tcx: &TyCheckCtx) -> Map {
     let mut pub_hir = Map::empty(tcx.hir().package);
 
     pub_hir.nodes = tcx
-        .hir_nodes()
-        .filter(|node| tcx.is_visible_outside_package(node.id()))
+        .hir_local_nodes()
+        .filter(|node| tcx.should_export(node.id()))
         .map(|node| (node.id(), node.to_owned()))
         .collect();
+
+    tcx.hir().types.clone_into(&mut pub_hir.types);
+    tcx.hir().lang_items.clone_into(&mut pub_hir.lang_items);
 
     pub_hir
 }

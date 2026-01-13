@@ -644,4 +644,31 @@ impl TyCheckCtx {
     pub fn is_same_source(&self, a: NodeId, b: NodeId) -> bool {
         self.hir_span_of_node(a).file.id == self.hir_span_of_node(b).file.id
     }
+
+    /// Determines whether the given node should be exported to the package
+    /// metadata when building.
+    #[cached_query]
+    #[libftrace::traced(level = Trace)]
+    pub fn should_export(&self, id: NodeId) -> bool {
+        let Some(node) = self.hir_node(id) else {
+            return false;
+        };
+
+        match node {
+            Node::Type(def) => def.should_export(),
+            Node::Function(_) | Node::Field(_) | Node::Method(_) => self.is_visible_outside_package(id),
+
+            // Traits can be required by other packages, if the traits are public.
+            Node::TraitImpl(trait_impl) => self.is_visible_outside_package(trait_impl.name.id.as_node_id()),
+
+            // Just like trait implementations, the should be exported if the implemented type is visible.
+            Node::Impl(implementation) => self.is_visible_outside_package(implementation.target.id.as_node_id()),
+
+            // Trait methods should be exported if the parent trait object is exported.
+            Node::TraitMethodDef(_) | Node::TraitMethodImpl(_) => self.should_export(self.hir_parent_of(id).unwrap()),
+
+            // Non-item nodes shouldn't be exported since they have no effect on type-checking in other packages.
+            Node::Pattern(_) | Node::Statement(_) | Node::Expression(_) => false,
+        }
+    }
 }

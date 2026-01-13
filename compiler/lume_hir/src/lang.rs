@@ -85,6 +85,13 @@ impl LanguageItems {
         Self { items: HashMap::new() }
     }
 
+    /// Merges the current instance into `target`.
+    pub fn merge_into(self, target: &mut Self) {
+        for (key, item) in self.items {
+            target.items.insert(key, item);
+        }
+    }
+
     /// Adds the given language item to the list.
     ///
     /// # Errors

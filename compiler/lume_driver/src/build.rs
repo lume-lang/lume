@@ -68,10 +68,6 @@ impl Driver {
             let compiled = Compiler::build_package(dependency, gcx.clone(), &dependency_hir)?;
             let metadata = compiled_pkg_metadata(&compiled);
 
-            for (node_id, node) in &metadata.hir.nodes {
-                dependency_hir.nodes.insert(*node_id, node.clone());
-            }
-
             let object = lume_codegen::generate(compiled.mir)?;
             objects.push(lume_linker::ObjectSource::Compiled {
                 name: metadata.header.name.clone(),
@@ -79,6 +75,7 @@ impl Driver {
             });
 
             crate::incremental::write_metadata_object(&gcx, &metadata)?;
+            metadata.hir.merge_into(&mut dependency_hir);
         }
 
         let output_file_path = gcx.binary_output_path(&self.package.name);
@@ -129,9 +126,7 @@ impl Compiler {
         let mut sources = compiler.parse()?;
         libftrace::debug!("finished parsing");
 
-        for (node_id, node) in &dep_hir.nodes {
-            sources.nodes.insert(*node_id, node.clone());
-        }
+        dep_hir.clone().merge_into(&mut sources);
 
         let (tcx, typed_ir) = compiler.type_check(sources)?;
         let mir = compiler.codegen(&tcx, typed_ir);
