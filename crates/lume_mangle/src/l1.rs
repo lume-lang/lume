@@ -53,6 +53,9 @@ pub const STRUCT_TYPE_SYM: &str = "_S";
 /// Key for when the referenced symbol is a `trait` type definition.
 pub const TRAIT_TYPE_SYM: &str = "_Tt";
 
+/// Key for when the referenced symbol is a type parameter definition.
+pub const PARAM_TYPE_SYM: &str = "_Tp";
+
 /// Key for when the referenced symbol is a `enum` type definition.
 pub const ENUM_TYPE_SYM: &str = "_E";
 
@@ -71,7 +74,7 @@ pub fn mangled_name_of(tcx: &TyCheckCtx, id: NodeId) -> Result<String> {
             Ok(mangled_name_of_enum_definition(tcx, enum_def))
         }
         lume_hir::Node::Type(lume_hir::TypeDefinition::TypeParameter(type_param)) => {
-            Ok(mangled_name_of_type_parameter(type_param))
+            Ok(mangled_name_of_type_parameter(tcx, type_param))
         }
         lume_hir::Node::Method(method) => Ok(mangled_name_of_method(tcx, method)),
         lume_hir::Node::TraitMethodDef(method_def) => Ok(mangled_name_of_trait_method_def(tcx, method_def)),
@@ -125,16 +128,22 @@ fn mangled_name_of_enum_definition(tcx: &TyCheckCtx, enum_def: &lume_hir::EnumDe
     format!("{MANGLED_PREFIX}{ENUM_TYPE_SYM}{package_segment}{path_segment}")
 }
 
-fn mangled_name_of_type_parameter(type_param: &lume_hir::TypeParameter) -> String {
-    let type_param_name = type_param.name.as_str();
-    let mut name = format!("{TYPE_INDICATOR}{}{type_param_name}", type_param_name.len());
+fn mangled_name_of_type_parameter(tcx: &TyCheckCtx, type_param: &lume_hir::TypeParameter) -> String {
+    let package_segment = mangled_package_segment(tcx, type_param.id.package);
 
+    let full_name = tcx.hir_path_of_node(type_param.id);
+    let path_segment = mangled_path_segment(&full_name);
+
+    let mut constraints = String::new();
     for constraint in &type_param.constraints {
-        name.push_str(CONSTRAINT_INDICATOR);
-        name.push_str(&mangled_path_name(&constraint.name));
+        constraints.push_str(CONSTRAINT_INDICATOR);
+        constraints.push_str(&mangled_path_name(&constraint.name));
     }
 
-    name
+    format!(
+        "{MANGLED_PREFIX}{PARAM_TYPE_SYM}{package_segment}{path_segment}{constraints}_{}",
+        type_param.id
+    )
 }
 
 fn mangled_name_of_method(tcx: &TyCheckCtx, method: &lume_hir::MethodDefinition) -> String {
@@ -207,12 +216,24 @@ fn mangled_name_segment(name: &str) -> String {
 
 fn mangled_impl_segment(tcx: &TyCheckCtx, ty: &lume_hir::Type) -> String {
     let type_name = if let Some(type_param) = tcx.as_type_param(ty.id.as_node_id()) {
-        mangled_name_of_type_parameter(type_param)
+        mangled_type_parameter_segment(type_param)
     } else {
         mangled_path_name(&ty.name)
     };
 
     format!("{IMPL_INDICATOR}{type_name}")
+}
+
+fn mangled_type_parameter_segment(type_param: &lume_hir::TypeParameter) -> String {
+    let type_param_name = type_param.name.as_str();
+    let mut name = format!("{TYPE_INDICATOR}{}{type_param_name}", type_param_name.len());
+
+    for constraint in &type_param.constraints {
+        name.push_str(CONSTRAINT_INDICATOR);
+        name.push_str(&mangled_path_name(&constraint.name));
+    }
+
+    name
 }
 
 fn mangled_path_name(name: &lume_hir::Path) -> String {
