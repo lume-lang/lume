@@ -478,7 +478,7 @@ impl CraneliftBackend {
 
         // Metadata entry
         let metadata_offset = *defs.offsets.types.get(&defs.metadata_ptr.ty).unwrap();
-        builder.append_data_address(defs.tables.types, metadata_offset.cast_signed() as i64);
+        builder.append_data_address_at(defs.tables.types, offset, metadata_offset.cast_signed() as i64);
 
         // Type.fields
         if let Some(first_field) = metadata.fields.first() {
@@ -520,7 +520,7 @@ impl CraneliftBackend {
 
         // Metadata entry
         let metadata_offset = *defs.offsets.types.get(&defs.metadata_ptr.field).unwrap();
-        builder.append_data_address(defs.tables.types, metadata_offset.cast_signed() as i64);
+        builder.append_data_address_at(defs.tables.types, offset, metadata_offset.cast_signed() as i64);
 
         // Field.type
         let type_offset = *defs.offsets.types.get(&metadata.ty).unwrap();
@@ -538,7 +538,7 @@ impl CraneliftBackend {
 
         // Metadata entry
         let metadata_offset = *defs.offsets.types.get(&defs.metadata_ptr.method).unwrap();
-        builder.append_data_address(defs.tables.types, metadata_offset.cast_signed() as i64);
+        builder.append_data_address_at(defs.tables.types, offset, metadata_offset.cast_signed() as i64);
 
         // Method.parameters
         if let Some(first_parameter) = metadata.parameters.first() {
@@ -578,7 +578,7 @@ impl CraneliftBackend {
 
         // Metadata entry
         let metadata_offset = *defs.offsets.types.get(&defs.metadata_ptr.parameter).unwrap();
-        builder.append_data_address(defs.tables.types, metadata_offset.cast_signed() as i64);
+        builder.append_data_address_at(defs.tables.types, offset, metadata_offset.cast_signed() as i64);
 
         // Parameter.type
         let type_offset = *defs.offsets.types.get(&metadata.ty).unwrap();
@@ -596,7 +596,7 @@ impl CraneliftBackend {
 
         // Metadata entry
         let metadata_offset = *defs.offsets.types.get(&defs.metadata_ptr.type_parameter).unwrap();
-        builder.append_data_address(defs.tables.types, metadata_offset.cast_signed() as i64);
+        builder.append_data_address_at(defs.tables.types, offset, metadata_offset.cast_signed() as i64);
 
         // TypeParameter.constraints
         if let Some(first_constraint) = metadata.constraints.first() {
