@@ -771,6 +771,15 @@ impl TypeDefinition {
             Self::TypeParameter(_) => false,
         }
     }
+
+    pub fn should_export(&self) -> bool {
+        match self {
+            Self::Enum(def) => def.visibility == Visibility::Public,
+            Self::Struct(def) => def.visibility == Visibility::Public,
+            Self::Trait(def) => def.visibility == Visibility::Public,
+            Self::TypeParameter(_) => true,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
