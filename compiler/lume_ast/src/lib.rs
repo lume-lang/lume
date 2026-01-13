@@ -1041,7 +1041,7 @@ impl Node for Literal {
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct IntLiteral {
-    pub value: i64,
+    pub value: i128,
     pub location: Location,
     pub kind: Option<IntKind>,
 }

@@ -73,6 +73,17 @@ pub struct MissingVariant {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "cannot hold integer value",
+    code = "LM4164",
+    help = "Signed integers in Lume must be between -2^63 and 2^63-1"
+)]
+pub struct InvalidIntegerRange {
+    #[label(source, "value cannot be represented in Lume")]
+    pub source: Location,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "node cannot hold type parameters: {id}", code = "LM4215")]
 pub struct CannotHoldTypeParams {
     pub id: NodeId,

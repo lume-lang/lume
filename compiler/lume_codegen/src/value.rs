@@ -117,10 +117,22 @@ impl LowerFunction<'_> {
                 self.builder.ins().iconst(crate::ty::cl_bool_type(), i64::from(*value))
             }
             lume_mir::OperandKind::Integer { bits, value, .. } => match *bits {
-                8 => self.builder.ins().iconst(types::I8, *value),
-                16 => self.builder.ins().iconst(types::I16, *value),
-                32 => self.builder.ins().iconst(types::I32, *value),
-                64 => self.builder.ins().iconst(types::I64, *value),
+                8 => self.builder.ins().iconst(types::I8, i64::try_from(*value).unwrap()),
+                16 => self.builder.ins().iconst(types::I16, i64::try_from(*value).unwrap()),
+                32 => self.builder.ins().iconst(types::I32, i64::try_from(*value).unwrap()),
+                64 => {
+                    if *value > i128::from(i64::MAX) {
+                        // If the value is above 2^63-1, it's an unsigned value.
+                        //
+                        // Since Cranelift doesn't differentiate between signedness in `iconst`, we cast
+                        // it without any changes to the bit pattern.
+                        let unsigned = u64::try_from(*value).unwrap();
+
+                        self.builder.ins().iconst(types::I64, unsigned.cast_signed())
+                    } else {
+                        self.builder.ins().iconst(types::I64, i64::try_from(*value).unwrap())
+                    }
+                }
                 _ => unreachable!(),
             },
             lume_mir::OperandKind::Float { bits, value } => match *bits {

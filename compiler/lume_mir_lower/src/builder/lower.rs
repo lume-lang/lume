@@ -650,8 +650,8 @@ fn switch(builder: &mut Builder<'_, '_>, expr: &lume_tir::Switch) -> lume_mir::O
         builder.with_new_block(|builder, block| {
             let arm_pattern = match pattern {
                 lume_tir::SwitchConstantPattern::Literal(lit) => match lit {
-                    lume_tir::SwitchConstantLiteral::Boolean(lit) => i64::from(*lit),
-                    lume_tir::SwitchConstantLiteral::Float(lit) => lit.to_bits().cast_signed(),
+                    lume_tir::SwitchConstantLiteral::Boolean(lit) => i128::from(*lit),
+                    lume_tir::SwitchConstantLiteral::Float(lit) => i128::from(lit.to_bits().cast_signed()),
                     lume_tir::SwitchConstantLiteral::Integer(lit) => *lit,
                 },
                 lume_tir::SwitchConstantPattern::Variable(_) => unreachable!(),
@@ -700,7 +700,7 @@ fn variable_reference(builder: &mut Builder<'_, '_>, expr: &lume_tir::VariableRe
 
 fn variant_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Variant) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
-        let discriminant = lume_mir::Operand::integer(8, false, i64::from(expr.index));
+        let discriminant = lume_mir::Operand::integer(8, false, i128::from(expr.index));
         let metadata_register = builder.declare_metadata_of(&expr.ty, expr.location);
 
         let enum_union_type = builder.union_of(&expr.ty);

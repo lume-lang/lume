@@ -604,14 +604,14 @@ pub enum LiteralKind {
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum IntLiteral {
-    I8(i64),
-    U8(i64),
-    I16(i64),
-    U16(i64),
-    I32(i64),
-    U32(i64),
-    I64(i64),
-    U64(i64),
+    I8(i128),
+    U8(i128),
+    I16(i128),
+    U16(i128),
+    I32(i128),
+    U32(i128),
+    I64(i128),
+    U64(i128),
 }
 
 impl IntLiteral {
@@ -631,7 +631,7 @@ impl IntLiteral {
         }
     }
 
-    pub fn value(self) -> i64 {
+    pub fn value(self) -> i128 {
         match self {
             Self::I8(value)
             | Self::U8(value)
@@ -707,7 +707,7 @@ pub enum SwitchConstantPattern {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum SwitchConstantLiteral {
-    Integer(i64),
+    Integer(i128),
     Float(f64),
     Boolean(bool),
 }

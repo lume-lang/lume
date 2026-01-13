@@ -1385,7 +1385,7 @@ impl Operand {
         }
     }
 
-    pub fn integer(bits: u8, signed: bool, value: i64) -> Self {
+    pub fn integer(bits: u8, signed: bool, value: i128) -> Self {
         Self {
             kind: OperandKind::Integer { bits, signed, value },
             location: Location::empty(),
@@ -1414,7 +1414,7 @@ pub enum OperandKind {
     Boolean { value: bool },
 
     /// Represents a literal integer value.
-    Integer { bits: u8, signed: bool, value: i64 },
+    Integer { bits: u8, signed: bool, value: i128 },
 
     /// Represents a literal floating-point value.
     Float { bits: u8, value: f64 },
@@ -1565,7 +1565,7 @@ pub enum TerminatorKind {
     /// Switch table with constant integer patterns.
     Switch {
         operand: RegisterId,
-        arms: Vec<(i64, BlockBranchSite)>,
+        arms: Vec<(i128, BlockBranchSite)>,
         fallback: BlockBranchSite,
     },
 

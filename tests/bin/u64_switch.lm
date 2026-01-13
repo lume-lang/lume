@@ -1,0 +1,11 @@
+//# test-return = 2
+
+pub fn main() -> Int32 {
+    let value = 0x9CCD_135E_599F_C186;
+
+    switch value {
+        0x1CCD_135E_599F_C186 => 1_i32,
+        0x9CCD_135E_599F_C186 => 2_i32,
+        .. => 3_i32,
+    }
+}

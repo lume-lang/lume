@@ -234,6 +234,19 @@ impl TyInferCtx {
     /// Attempts to get the kind of an integer literal expression.
     #[cached_query(result)]
     pub fn kind_of_int(&self, lit: &lume_hir::IntLiteral) -> Result<lume_hir::IntKind> {
+        let required_bits = lit.value.abs().checked_ilog2().unwrap_or(32);
+
+        let default_kind = if required_bits <= 32 {
+            lume_hir::IntKind::I32
+        } else if required_bits <= 64 {
+            lume_hir::IntKind::I64
+        } else {
+            return Err(diagnostics::InvalidIntegerRange {
+                source: self.hir_span_of_node(lit.id),
+            }
+            .into());
+        };
+
         // Prevents stack-overflows when attempting to infer the literal kind in some
         // situations. If we've already attempted to lock, we're in a loop and
         // should return the default.
@@ -241,11 +254,11 @@ impl TyInferCtx {
         // TODO: This is a hacky workaround, until we get around to adding
         //       an effective cycle-handling implementation in `architect.`
         let Ok(_guard) = self.nested_inference_lock.try_write() else {
-            return Ok(lume_hir::IntKind::I32);
+            return Ok(default_kind);
         };
 
         let Some(guessed_type) = self.expected_type_of(lit.id)? else {
-            return Ok(lume_hir::IntKind::I32);
+            return Ok(default_kind);
         };
 
         match guessed_type {
@@ -257,7 +270,7 @@ impl TyInferCtx {
             t if t.is_u16() => Ok(lume_hir::IntKind::U16),
             t if t.is_u32() => Ok(lume_hir::IntKind::U32),
             t if t.is_u64() => Ok(lume_hir::IntKind::U64),
-            _ => Ok(lume_hir::IntKind::I32),
+            _ => Ok(default_kind),
         }
     }
 

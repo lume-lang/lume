@@ -183,7 +183,7 @@ impl Builder<'_, '_> {
 
     /// Declares a new register with the comparison result of the two given
     /// operands, as a boolean value.
-    pub(crate) fn ieq_imm(&mut self, val: Operand, imm: impl Into<i64>, bits: u8, signed: bool) -> RegisterId {
+    pub(crate) fn ieq_imm(&mut self, val: Operand, imm: impl Into<i128>, bits: u8, signed: bool) -> RegisterId {
         let imm_op = lume_mir::Operand {
             kind: lume_mir::OperandKind::Integer {
                 bits,
@@ -204,7 +204,7 @@ impl Builder<'_, '_> {
 
     /// Declares a new register with the value of the two given operands added
     /// together.
-    pub(crate) fn iadd_imm(&mut self, val: Operand, imm: impl Into<i64>, bits: u8, signed: bool) -> RegisterId {
+    pub(crate) fn iadd_imm(&mut self, val: Operand, imm: impl Into<i128>, bits: u8, signed: bool) -> RegisterId {
         let imm_op = lume_mir::Operand {
             kind: lume_mir::OperandKind::Integer {
                 bits,
@@ -327,7 +327,7 @@ impl Builder<'_, '_> {
                     func_id: array_alloc_func.id,
                     name: array_alloc_func.name,
                     args: vec![
-                        lume_mir::Operand::integer(64, false, args.len().cast_signed() as i64),
+                        lume_mir::Operand::integer(64, false, args.len().cast_signed() as i128),
                         lume_mir::Operand::reference_of(metadata_reg),
                     ],
                 }),
