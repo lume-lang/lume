@@ -175,6 +175,8 @@ impl lume_type_metadata::visitor::Visitor for MetadataBuilder<'_> {
         let drop_method = self.find_drop_method(type_ref);
         let type_parameters = self.tcx.available_type_params_at(type_id);
 
+        let is_local = self.tcx.hir_is_local_node(type_id);
+
         self.metadata.types.insert(id, TypeMetadata {
             id,
             full_name,
@@ -187,6 +189,7 @@ impl lume_type_metadata::visitor::Visitor for MetadataBuilder<'_> {
             methods,
             type_parameters,
             drop_method,
+            is_local,
         });
 
         Ok(())

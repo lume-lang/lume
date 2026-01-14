@@ -194,7 +194,10 @@ impl CraneliftBackend {
 
         let mut object = module.finish();
         self.declare_stack_maps(&mut object, function_metadata)?;
-        declare_runtime_options(&mut object, &self.context.package.runtime)?;
+
+        if self.context.is_root_package {
+            declare_runtime_options(&mut object, &self.context.package.runtime)?;
+        }
 
         if let Some(debug_ctx) = debug_ctx.take() {
             debug_ctx.finish(&mut object)?;

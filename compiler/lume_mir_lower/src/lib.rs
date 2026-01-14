@@ -20,8 +20,11 @@ pub struct ModuleTransformer<'tcx> {
 
 impl<'tcx> ModuleTransformer<'tcx> {
     pub fn create(package: Package, tcx: &'tcx TyCheckCtx, metadata: StaticMetadata, options: Options) -> Self {
+        let root_package_id = tcx.gcx().session.dep_graph.root;
+        let is_root_package = package.id == root_package_id;
+
         Self {
-            mcx: MirQueryCtx::new(tcx, ModuleMap::new(package, options, metadata)),
+            mcx: MirQueryCtx::new(tcx, ModuleMap::new(package, options, metadata, is_root_package)),
         }
     }
 
