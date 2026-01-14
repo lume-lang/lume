@@ -163,7 +163,11 @@ impl LowerModule {
     /// Creates a new lowerer for creating HIR maps from AST.
     pub fn new(package_id: PackageId, dcx: DiagCtxHandle) -> LowerModule {
         let map = Map::empty(package_id);
-        let current_node = NodeId::empty(package_id);
+
+        // TODO:
+        // Scuffed solution for not overwriting the static IDs of the compiler's scalar
+        // types. 0x100 is a completely arbitrary number.
+        let current_node = NodeId::from_usize(package_id, 0x100);
 
         LowerModule {
             file: Arc::default(),
