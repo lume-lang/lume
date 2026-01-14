@@ -87,6 +87,10 @@ pub struct TypeMetadata {
 
     /// Gets the definition of the `Dispose` method implementation, if any.
     pub drop_method: Option<NodeId>,
+
+    /// Defines whether this metadata node comes from the local package or a
+    /// dependency package.
+    pub is_local: bool,
 }
 
 impl TypeMetadata {

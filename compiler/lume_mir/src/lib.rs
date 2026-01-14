@@ -17,6 +17,8 @@ pub const POINTER_SIZE: usize = std::mem::size_of::<*const u32>();
 #[derive(Serialize, Deserialize, Default)]
 pub struct ModuleMap {
     pub package: Package,
+    pub is_root_package: bool,
+
     pub options: Options,
     pub metadata: StaticMetadata,
     pub functions: IndexMap<NodeId, Function>,
@@ -24,9 +26,10 @@ pub struct ModuleMap {
 
 impl ModuleMap {
     /// Creates a new empty [`ModuleMap`].
-    pub fn new(package: Package, options: Options, metadata: StaticMetadata) -> Self {
+    pub fn new(package: Package, options: Options, metadata: StaticMetadata, is_root_package: bool) -> Self {
         Self {
             package,
+            is_root_package,
             options,
             metadata,
             ..Default::default()

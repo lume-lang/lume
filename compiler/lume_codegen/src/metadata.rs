@@ -431,16 +431,31 @@ impl CraneliftBackend {
             libftrace::debug!("declaring type alias: {} at +{symbol_offset:0x}", metadata.mangled_name);
             let (segment, section) = alias_section(self.isa.as_ref());
 
-            let alias_data_id = self
-                .module_mut()
-                .declare_data(&metadata.mangled_name, cranelift_module::Linkage::Export, false, false)
-                .unwrap();
+            if metadata.is_local {
+                // If the type is defined within the package, declare it and allow other
+                // packages to link with it.
+                let alias_data_id = self
+                    .module_mut()
+                    .declare_data(&metadata.mangled_name, cranelift_module::Linkage::Export, false, false)
+                    .unwrap();
 
-            let mut builder = MemoryBlockBuilder::new(self);
-            builder.set_segment_section(segment, section);
-            builder.append_data_address(type_table_data_id, symbol_offset.cast_signed() as i64);
+                let mut builder = MemoryBlockBuilder::new(self);
+                builder.set_segment_section(segment, section);
+                builder.append_data_address(type_table_data_id, symbol_offset.cast_signed() as i64);
 
-            self.define_metadata(alias_data_id, metadata.mangled_name.clone(), &builder.finish());
+                self.define_metadata(alias_data_id, metadata.mangled_name.clone(), &builder.finish());
+            } else {
+                // If the type is non-local, declare it as a symbol to import.
+                let alias_data_id = self
+                    .module_mut()
+                    .declare_data(&metadata.mangled_name, cranelift_module::Linkage::Import, false, false)
+                    .unwrap();
+
+                self.static_data
+                    .write()
+                    .unwrap()
+                    .insert(metadata.mangled_name.clone(), alias_data_id);
+            }
         }
     }
 }
