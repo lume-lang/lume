@@ -9,6 +9,7 @@ use std::cmp::Ordering;
 use std::fmt::Display;
 use std::sync::LazyLock;
 
+use lume_rt_macros::link_section_data;
 use lume_rt_metadata::TypeMetadata;
 
 /// Stack-map for a given function.
@@ -91,33 +92,30 @@ unsafe impl Sync for CompiledFunctionMetadata {}
 
 static FUNC_STACK_MAPS: LazyLock<Vec<CompiledFunctionMetadata>> = LazyLock::new(declare_stack_maps);
 
-unsafe extern "C" {
-    /// Static reference to the `__STACK_MAPS` symbol.
-    ///
-    /// See `CraneliftBackend::declare_stack_maps`.
-    #[link_name = "__STACK_MAPS"]
-    static __STACK_MAPS: u8;
-}
+/// Static reference to the stack map section.
+///
+/// See `CraneliftBackend::declare_stack_maps`.
+#[link_section_data(section = "smaps")]
+pub static __LUME_STACK_MAPS: u8;
 
 /// Declares the stack maps for all generated functions in the runtime.
 ///
 /// This function should only ever be executed *once* at startup, since it's
 /// somewhat slow.
 pub fn declare_stack_maps() -> Vec<CompiledFunctionMetadata> {
-    let ptr = &raw const __STACK_MAPS;
+    let len: usize = __LUME_STACK_MAPS_END as usize - __LUME_STACK_MAPS_START as usize;
     let mut offset = 0;
 
     let read_u64 = |offset: &mut usize| -> u64 {
-        let val = unsafe { ptr.byte_add(*offset).cast::<u64>().read() };
+        let val = unsafe { __LUME_STACK_MAPS_START.byte_add(*offset).cast::<u64>().read() };
         *offset += 8;
 
         val
     };
 
-    let nfuncs = read_u64(&mut offset) as usize;
-    let mut metadata = Vec::with_capacity(nfuncs);
+    let mut metadata = Vec::new();
 
-    for _ in 0..nfuncs {
+    while len > offset {
         let addr = read_u64(&mut offset) as *const u8;
         let size = read_u64(&mut offset) as usize;
         let end = unsafe { addr.byte_add(size) };

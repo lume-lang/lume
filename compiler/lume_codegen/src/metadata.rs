@@ -54,15 +54,6 @@ struct TableBuilders<'back> {
     pub type_parameters: MemoryBlockBuilder<'back>,
 }
 
-/// Gets the segment and section names for the metadata section.
-fn metadata_section(isa: &dyn TargetIsa) -> (&'static str, &'static str) {
-    if isa.triple().operating_system.is_like_darwin() {
-        ("__LUMEC", "__metadata")
-    } else {
-        ("", ".lumec.metadata.types")
-    }
-}
-
 /// Gets the segment and section names for the type alias section.
 fn alias_section(isa: &dyn TargetIsa) -> (&'static str, &'static str) {
     if isa.triple().operating_system.is_like_darwin() {
@@ -74,22 +65,23 @@ fn alias_section(isa: &dyn TargetIsa) -> (&'static str, &'static str) {
 
 impl<'back> TableBuilders<'back> {
     pub fn new(backend: &'back CraneliftBackend) -> Self {
-        let (segment, section) = metadata_section(backend.isa.as_ref());
+        let is_darwinlike = backend.isa.triple().operating_system.is_like_darwin();
+        let segment = if is_darwinlike { "__LUMEC" } else { "" };
 
         let mut types = MemoryBlockBuilder::new(backend);
-        types.set_segment_section(segment, section);
+        types.set_segment_section(segment, if is_darwinlike { "__types" } else { ".lumec.types" });
 
         let mut fields = MemoryBlockBuilder::new(backend);
-        fields.set_segment_section(segment, section);
+        fields.set_segment_section(segment, if is_darwinlike { "__fields" } else { ".lumec.fields" });
 
         let mut methods = MemoryBlockBuilder::new(backend);
-        methods.set_segment_section(segment, section);
+        methods.set_segment_section(segment, if is_darwinlike { "__methods" } else { ".lumec.methods" });
 
         let mut parameters = MemoryBlockBuilder::new(backend);
-        parameters.set_segment_section(segment, section);
+        parameters.set_segment_section(segment, if is_darwinlike { "__params" } else { ".lumec.params" });
 
         let mut type_parameters = MemoryBlockBuilder::new(backend);
-        type_parameters.set_segment_section(segment, section);
+        type_parameters.set_segment_section(segment, if is_darwinlike { "__tparams" } else { ".lumec.tparams" });
 
         Self {
             types,
@@ -166,29 +158,29 @@ impl CraneliftBackend {
     fn declare_tables(&self) -> TableDefinitions {
         let types = self
             .module_mut()
-            .declare_data(TYPE_TABLE_NAME, cranelift_module::Linkage::Export, false, false)
+            .declare_data(TYPE_TABLE_NAME, cranelift_module::Linkage::Local, false, false)
             .unwrap();
 
         let fields = self
             .module_mut()
-            .declare_data(FIELD_TABLE_NAME, cranelift_module::Linkage::Export, false, false)
+            .declare_data(FIELD_TABLE_NAME, cranelift_module::Linkage::Local, false, false)
             .unwrap();
 
         let methods = self
             .module_mut()
-            .declare_data(METHOD_TABLE_NAME, cranelift_module::Linkage::Export, false, false)
+            .declare_data(METHOD_TABLE_NAME, cranelift_module::Linkage::Local, false, false)
             .unwrap();
 
         let parameters = self
             .module_mut()
-            .declare_data(PARAMETER_TABLE_NAME, cranelift_module::Linkage::Export, false, false)
+            .declare_data(PARAMETER_TABLE_NAME, cranelift_module::Linkage::Local, false, false)
             .unwrap();
 
         let type_parameters = self
             .module_mut()
             .declare_data(
                 TYPE_PARAMETER_TABLE_NAME,
-                cranelift_module::Linkage::Export,
+                cranelift_module::Linkage::Local,
                 false,
                 false,
             )
