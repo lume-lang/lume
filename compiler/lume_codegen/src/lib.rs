@@ -474,7 +474,6 @@ impl CraneliftBackend {
             cranelift_codegen::ir::Endianness::Little => gimli::RunTimeEndian::Little,
         };
 
-        let mut nfunc = 0_u64;
         let mut stack_maps = WriterRelocate::new(endian);
 
         for (def, func) in &self.declared_funcs {
@@ -510,29 +509,13 @@ impl CraneliftBackend {
                     stack_maps.write_u64(*stack_offset as u64).map_diagnostic()?;
                 }
             }
-
-            nfunc += 1;
         }
 
-        let section_id = product.object.section_id(object::write::StandardSection::Data);
-
-        let section_offset = product
-            .object
-            .append_section_data(section_id, &u64::to_ne_bytes(nfunc), 8);
-
-        // Size of the symbol must include the function found (`nfunc`).
-        let symbol_size = size_of::<u64>() + stack_maps.writer.slice().len();
-
-        product.object.add_symbol(object::write::Symbol {
-            name: b"__STACK_MAPS".to_vec(),
-            value: section_offset,
-            size: symbol_size as u64,
-            kind: object::write::SymbolKind::Data,
-            scope: object::write::SymbolScope::Linkage,
-            weak: false,
-            section: object::write::SymbolSection::Section(section_id),
-            flags: object::SymbolFlags::None,
-        });
+        let section_id = product.object.add_section(
+            b"__LUMEC".to_vec(),
+            b"__smaps".to_vec(),
+            object::write::SectionKind::ReadOnlyData,
+        );
 
         // Write the rest of the symbol content.
         let content_offset = product

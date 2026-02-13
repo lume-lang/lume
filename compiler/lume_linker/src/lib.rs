@@ -130,6 +130,8 @@ pub fn link_objects(objects: Vec<ObjectLocation>, output: &PathBuf, opts: &Optio
 
     // Target specific linker options.
     if cfg!(target_os = "linux") {
+        cmd.arg(link_script_path()?);
+
         cmd.arg("-ldl");
         cmd.arg("-lm");
         cmd.arg("-lpthread");
@@ -200,4 +202,30 @@ fn runtime_linker_arg(opts: &Options) -> Result<String> {
         // Otherwise, let the linker find the correct runtime library.
         Ok(String::from("-llume_runtime"))
     }
+}
+
+const LINK_SCRIPT_ELF: &str = include_str!("../assets/elf-link.lds");
+
+/// Returns the path to the linker script for ELF binaries.
+fn link_script_path() -> Result<PathBuf> {
+    // If we're currently running from the source tree, return the path of the
+    // linker script within the tree.
+    if lume_assets::is_dev() {
+        let package_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+
+        return Ok(package_root.join("assets/elf-link.lds"));
+    }
+
+    let toolchain_path = match lume_assets::toolchain_current_path() {
+        Ok(Some(path)) => path,
+        Ok(None) => return Err(SimpleDiagnostic::new("could not determine toolchain directory").into()),
+        Err(err) => return Err(err),
+    };
+
+    let link_script_path = toolchain_path.join("elf-link.lds");
+    if !link_script_path.exists() {
+        std::fs::write(&link_script_path, LINK_SCRIPT_ELF).map_cause("failed to write linker script")?;
+    }
+
+    Ok(link_script_path)
 }
