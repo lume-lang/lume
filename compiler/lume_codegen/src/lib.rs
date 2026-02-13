@@ -474,7 +474,7 @@ impl CraneliftBackend {
             cranelift_codegen::ir::Endianness::Little => gimli::RunTimeEndian::Little,
         };
 
-        let mut stack_maps = WriterRelocate::new(endian);
+        let mut stack_maps = WriterRelocate::new(endian, product.object.architecture(), product.object.format());
 
         for (def, func) in &self.declared_funcs {
             let func_def = self.context.functions.get(def).unwrap();
