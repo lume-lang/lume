@@ -200,7 +200,7 @@ impl TyInferCtx {
         let direct_impl = self.lookup_impl_methods_on(ty, name);
 
         match blanket_lookup {
-            BlanketLookup::Exclude => self.lookup_impl_methods_on(ty, name).collect(),
+            BlanketLookup::Exclude => direct_impl.collect(),
             BlanketLookup::Include => {
                 let trait_impl = self.lookup_trait_methods_on(ty, name, blanket_lookup);
 

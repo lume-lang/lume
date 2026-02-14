@@ -86,9 +86,14 @@ impl<'tcx> Lower<'tcx> {
             let signature = self.tcx.signature_of(Callable::Method(method))?;
             let location = self.tcx.hir_span_of_node(method.id);
             let kind = self.determine_method_kind(method, self.tcx.hir_body_of_node(method.id).is_some());
+            let visibility = if self.tcx.should_export(method.id)? {
+                lume_tir::Visibility::Exported
+            } else {
+                lume_tir::Visibility::Local
+            };
 
             let mut func_lower = LowerFunction::new(self);
-            let func = func_lower.define(method.id, &method.name, signature.as_ref(), kind, location)?;
+            let func = func_lower.define(method.id, &method.name, signature.as_ref(), kind, visibility, location)?;
 
             self.mappings.insert(method.id, func_lower.variables);
             self.ir.functions.insert(func.id, func);
@@ -99,6 +104,11 @@ impl<'tcx> Lower<'tcx> {
 
             let signature = self.tcx.signature_of(Callable::Function(func))?;
             let location = self.tcx.hir_span_of_node(func.id);
+            let visibility = if self.tcx.should_export(func.id)? {
+                lume_tir::Visibility::Exported
+            } else {
+                lume_tir::Visibility::Local
+            };
 
             let mut func_lower = LowerFunction::new(self);
             let func = func_lower.define(
@@ -106,6 +116,7 @@ impl<'tcx> Lower<'tcx> {
                 &func.name,
                 signature.as_ref(),
                 lume_tir::FunctionKind::Static,
+                visibility,
                 location,
             )?;
 
@@ -294,6 +305,7 @@ impl<'tcx> LowerFunction<'tcx> {
         name: &lume_hir::Path,
         signature: lume_types::FunctionSig,
         kind: lume_tir::FunctionKind,
+        visibility: lume_tir::Visibility,
         location: Location,
     ) -> Result<lume_tir::Function> {
         let name = self.path_hir(name, id)?;
@@ -307,6 +319,7 @@ impl<'tcx> LowerFunction<'tcx> {
             id,
             name,
             kind,
+            visibility,
             parameters,
             type_params,
             return_type,

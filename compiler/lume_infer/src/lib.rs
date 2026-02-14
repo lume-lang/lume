@@ -472,11 +472,15 @@ impl TyInferCtx {
         let path = self.type_ref_name(type_ref)?;
         let name = if expand { format!("{path:+}") } else { format!("{path}") };
 
-        let bound_types = type_ref
-            .bound_types
-            .iter()
-            .map(|arg| self.new_named_type(arg, expand))
-            .collect::<Result<Vec<_>>>()?;
+        let bound_types = if path.bound_types().is_empty() {
+            type_ref
+                .bound_types
+                .iter()
+                .map(|arg| self.new_named_type(arg, expand))
+                .collect::<Result<Vec<_>>>()?
+        } else {
+            Vec::new()
+        };
 
         Ok(NamedTypeRef { name, bound_types })
     }
