@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
+use lume_errors::{IntoDiagnostic, MapDiagnostic, Result, SimpleDiagnostic};
 use lume_metadata::PackageMetadata;
 use lume_session::{GlobalCtx, Package};
 
@@ -56,7 +56,7 @@ pub(crate) fn read_metadata_object(gcx: &Arc<GlobalCtx>, package: &Package) -> R
     }
 
     let metadata_bytes = std::fs::read(&metadata_path).map_diagnostic()?;
-    let deserialized = postcard::from_bytes::<PackageMetadata>(&metadata_bytes).map_diagnostic()?;
+    let deserialized = ciborium::from_reader::<PackageMetadata, &[u8]>(metadata_bytes.as_ref()).map_diagnostic()?;
 
     Ok(Some(deserialized))
 }
@@ -81,7 +81,13 @@ pub(crate) fn write_metadata_object(gcx: &Arc<GlobalCtx>, metadata: &PackageMeta
     let metadata_filename = lume_metadata::metadata_filename_of(&metadata.header.name);
     let metadata_path = metadata_directory.join(metadata_filename);
 
-    let serialized = postcard::to_allocvec(metadata).map_diagnostic()?;
+    let mut serialized = Vec::<u8>::new();
+    ciborium::into_writer(metadata, &mut serialized).map_err(|err| {
+        let diag = SimpleDiagnostic::new(format!("failed to serialize metadata ({})", metadata.header.name))
+            .add_cause(err.into_diagnostic());
+
+        Box::new(diag) as lume_errors::Error
+    })?;
 
     std::fs::write(metadata_path, serialized).map_err(|err| {
         Box::new(SimpleDiagnostic::new("failed to write metadata").add_cause(err)) as lume_errors::Error
