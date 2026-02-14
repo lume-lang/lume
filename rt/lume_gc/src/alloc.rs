@@ -2,7 +2,7 @@ extern crate alloc;
 
 use alloc::alloc::{GlobalAlloc, Layout, alloc, dealloc};
 use std::cell::{Cell, UnsafeCell};
-use std::sync::OnceLock;
+use std::sync::{LazyLock, OnceLock};
 
 use indexmap::{IndexMap, IndexSet};
 use lume_rt_metadata::TypeMetadata;
@@ -26,7 +26,17 @@ const PAGE_SIZE: usize = 0x1000;
 const POINTER_SIZE: usize = std::mem::size_of::<*const ()>();
 const POINTER_ALIGNMENT: usize = std::mem::align_of::<*const ()>();
 
-const BLOCK_TYPE_ID: usize = 0x61DB_19BC_D079_DE00;
+unsafe extern "C" {
+    #[link_name = "_L1_SP3stdN3std3mem5Block"]
+    static __STD_MEM_BLOCK: u8;
+}
+
+static BLOCK_TYPE_ID: LazyLock<usize> = LazyLock::new(|| {
+    let block_metadata_ptr = unsafe { (&raw const __STD_MEM_BLOCK).cast::<*const TypeMetadata>().read() };
+    let block_metadata = unsafe { block_metadata_ptr.read() };
+
+    block_metadata.type_id.0
+});
 
 /// Gets the metadata pointer of the given managed object pointer.
 #[inline]
@@ -240,11 +250,11 @@ impl YoungGeneration {
 
             // Niche handling for `std::mem::Block` types.
             //
-            // Since they only represent a block of contiguous memory, a
-            // pointer could theoretically exist anywhere within
-            // it. Instead of checking each byte within the block, we check all long words
-            // in the block, chunked by poitner size.
-            if metadata.type_id.0 == BLOCK_TYPE_ID {
+            // Since they only represent a block of contiguous memory, a pointer could
+            // theoretically exist anywhere within it. Instead of checking each
+            // byte within the block, we check all long words in the block,
+            // chunked by pointer size.
+            if metadata.type_id.0 == *BLOCK_TYPE_ID {
                 let block_len = unsafe { obj_ptr.cast::<u64>().read() } as usize;
                 let block_ptr = unsafe { obj_ptr.byte_add(POINTER_SIZE).cast::<*const u8>().read() };
 
