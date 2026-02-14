@@ -7,13 +7,20 @@ pub mod string;
 
 pub use lume_gc::*;
 
+pub const POINTER_SIZE: usize = size_of::<*const u8>();
+
 /// Retrieves of the type metadata of the first type parameter.
 ///
 /// Since Lume passes the metadata of type arguments after all other parameters,
-/// we can safely return the first input pointer.
+/// the first parameter would be the pointer to the type metadata.
+///
+/// However, since the type parameter metadata is retrieved from an alias
+/// symbol, the pointer would point to the metadata of the metadata. While this
+/// is expected in the Rust runtime, Lume programs expect the pointer to point
+/// to the first field of the type parameter metadata.
 #[unsafe(export_name = "std::type_of")]
-pub extern "C" fn type_of(metadata: *const ()) -> *const () {
-    metadata
+pub unsafe extern "C" fn type_of(metadata: *const ()) -> *const () {
+    unsafe { metadata.byte_add(POINTER_SIZE) }
 }
 
 /// Finds the method with the given ID on the given type metadata.
