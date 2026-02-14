@@ -64,7 +64,7 @@ fn partition_public_nodes(tcx: &TyCheckCtx) -> Map {
 
     pub_hir.nodes = tcx
         .hir_local_nodes()
-        .filter(|node| tcx.should_export(node.id()))
+        .filter(|node| tcx.should_export(node.id()).unwrap_or(false))
         .map(|node| (node.id(), node.to_owned()))
         .collect();
 

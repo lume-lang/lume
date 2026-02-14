@@ -83,17 +83,19 @@ impl<'tcx> ModuleTransformer<'tcx> {
         }
 
         // Limit symbol visibility according to the visiblity of the function.
-        //
-        // Unless it's the entrypoint - that should *always* be visible outside the
-        // object.
-        if !self.mcx.tcx().is_visible_outside_package(func.id) && !self.mcx.tcx().is_entrypoint(func.id) {
+        if func.visibility == lume_tir::Visibility::Local && !self.mcx.tcx().is_entrypoint(func.id) {
             signature.internal = true;
         }
 
-        if matches!(
-            func.kind,
-            lume_tir::FunctionKind::Static | lume_tir::FunctionKind::Dropper
-        ) && func.block.is_none()
+        if func.kind == lume_tir::FunctionKind::Dynamic && func.id.package != self.mcx.mir().package.id {
+            signature.external = true;
+        }
+
+        if func.block.is_none()
+            && matches!(
+                func.kind,
+                lume_tir::FunctionKind::Static | lume_tir::FunctionKind::Dropper
+            )
         {
             signature.external = true;
         }

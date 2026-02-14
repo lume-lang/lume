@@ -192,6 +192,7 @@ pub struct Function {
     pub id: NodeId,
     pub name: Path,
     pub kind: FunctionKind,
+    pub visibility: Visibility,
     pub parameters: Vec<Parameter>,
     pub type_params: Vec<TypeParameter>,
     pub return_type: TypeRef,
@@ -203,6 +204,12 @@ impl Function {
     pub fn name_as_str(&self) -> String {
         format!("{:+}", self.name)
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Visibility {
+    Local,
+    Exported,
 }
 
 #[derive(Debug, Clone, Eq)]
