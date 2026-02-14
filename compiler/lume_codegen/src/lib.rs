@@ -590,7 +590,7 @@ pub(crate) fn address_for_func(func_id: FuncId) -> Address {
 }
 
 fn declare_runtime_options(product: &mut ObjectProduct, options: &lume_options::RuntimeOptions) -> Result<()> {
-    let encoded = lume_options::to_vec(options).map_diagnostic()?;
+    let encoded = lume_options::to_vec(options).map_cause("failed to encode runtime options")?;
     let encoded_len = encoded.len() as u64;
 
     let section_id = product.object.section_id(object::write::StandardSection::Data);
