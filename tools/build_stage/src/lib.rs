@@ -47,7 +47,11 @@ impl ManifoldDriver {
 
     /// Creates a new manifold driver from the given package.
     pub fn with_options(package: Package, dcx: DiagCtx, options: Options) -> Self {
-        let mut dependency_map = DependencyMap::default();
+        let mut dependency_map = DependencyMap {
+            root: package.id,
+            ..Default::default()
+        };
+
         dependency_map.packages.insert(package.id, package.clone());
 
         let session = Session {

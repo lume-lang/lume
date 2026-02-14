@@ -110,7 +110,7 @@ impl PackageId {
     /// Determines if the [`PackageId`] refers to the standard library.
     #[inline]
     pub fn is_std(self) -> bool {
-        self.0 == 0
+        self == STD_PACKAGE_ID
     }
 }
 
