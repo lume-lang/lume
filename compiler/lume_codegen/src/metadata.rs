@@ -1,6 +1,5 @@
 use std::ops::Rem;
 
-use cranelift_codegen::isa::TargetIsa;
 use cranelift_module::{DataDescription, DataId, FuncId, Module};
 use indexmap::IndexMap;
 use lume_span::NodeId;
@@ -52,15 +51,6 @@ struct TableBuilders<'back> {
     pub methods: MemoryBlockBuilder<'back>,
     pub parameters: MemoryBlockBuilder<'back>,
     pub type_parameters: MemoryBlockBuilder<'back>,
-}
-
-/// Gets the segment and section names for the type alias section.
-fn alias_section(isa: &dyn TargetIsa) -> (&'static str, &'static str) {
-    if isa.triple().operating_system.is_like_darwin() {
-        ("__LUMEC", "__aliases")
-    } else {
-        ("", ".lumec.metadata.aliases")
-    }
 }
 
 impl<'back> TableBuilders<'back> {
@@ -417,11 +407,15 @@ impl CraneliftBackend {
     fn declare_type_aliases(&self, defs: &mut Definitions) {
         let type_table_data_id = defs.tables.types;
 
+        let is_darwinlike = self.isa.triple().operating_system.is_like_darwin();
+
+        let segment = if is_darwinlike { "__LUMEC" } else { "" };
+        let section = if is_darwinlike { "__aliases" } else { ".lumec.aliases" };
+
         for (&id, &symbol_offset) in &defs.offsets.types {
             let metadata = self.context.metadata.types.get(&id).unwrap();
 
             libftrace::debug!("declaring type alias: {} at +{symbol_offset:0x}", metadata.mangled_name);
-            let (segment, section) = alias_section(self.isa.as_ref());
 
             if metadata.is_local {
                 // If the type is defined within the package, declare it and allow other
