@@ -1,0 +1,4 @@
+---
+source: compiler/lume_driver/src/test_support.rs
+---
+× error[ARC0101]: missing Arcfile within /lume-test-support/

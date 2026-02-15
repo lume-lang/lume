@@ -1,4 +1,4 @@
-pub use {error_snippet, owo_colors};
+pub use {error_snippet, insta, owo_colors};
 
 /// Asserts that the given [`lume_errors::DiagCtx`] renders the same output as
 /// has been saved and snapshot in a previous iteration.
@@ -15,8 +15,8 @@ macro_rules! assert_dcx_snapshot {
         $crate::owo_colors::set_override(false);
         let buffer = $dcx.render_buffer(&mut renderer).unwrap_or_default();
 
-        insta::with_settings!({ omit_expression => true }, {
-            insta::assert_snapshot!(buffer);
+        $crate::insta::with_settings!({ omit_expression => true }, {
+            $crate::insta::assert_snapshot!(buffer);
         });
     };
     ($input:expr, $dcx:expr) => {
@@ -26,11 +26,11 @@ macro_rules! assert_dcx_snapshot {
         $crate::owo_colors::set_override(false);
         let buffer = $dcx.render_buffer(&mut renderer).unwrap_or_default();
 
-        insta::with_settings!({
+        $crate::insta::with_settings!({
             description => $input,
             omit_expression => true,
         }, {
-            insta::assert_snapshot!(buffer);
+            $crate::insta::assert_snapshot!(buffer);
         });
     };
 }

@@ -3,8 +3,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::LazyLock;
 
-use error_snippet::{IntoDiagnostic, SimpleDiagnostic};
-use lume_errors::{DiagCtx, Result};
+use lume_errors::{DiagCtx, MapDiagnostic, Result, SimpleDiagnostic};
 use owo_colors::OwoColorize;
 use regex::Regex;
 
@@ -20,8 +19,22 @@ pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
     let mut stdout_path = path.clone();
     stdout_path.set_extension("stdout");
 
-    let file_content = std::fs::read_to_string(&path).map_err(IntoDiagnostic::into_diagnostic)?;
-    let binary_path = crate::compile_source_file(&path, file_content.clone(), dcx)?;
+    let file_name = path.file_name().expect("expected file path");
+    let file_content = std::fs::read_to_string(&path).map_diagnostic()?;
+
+    let binary_path = lume_driver::test_support::workspace(path.parent().unwrap())
+        .with_option(|opts| opts.enable_incremental = false)
+        .with_file(
+            "Arcfile",
+            r#"
+                [package]
+                name = "foo"
+                version = "1.0.0"
+                lume_version = "^0"
+            "#,
+        )
+        .with_file(PathBuf::from("src").join(file_name), &file_content)
+        .build(dcx.handle())?;
 
     let test_case = TestCase {
         source_path: path.clone(),
