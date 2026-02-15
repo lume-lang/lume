@@ -669,7 +669,13 @@ impl TyCheckCtx {
             }
 
             // Traits can be required by other packages, if the traits are public.
-            Node::TraitImpl(trait_impl) => Ok(self.is_visible_outside_package(trait_impl.name.id.as_node_id())),
+            Node::TraitImpl(trait_impl) => {
+                let trait_type = self.mk_type_ref_from(&trait_impl.name, trait_impl.id)?;
+                let trait_target = self.mk_type_ref_from(&trait_impl.target, trait_impl.id)?;
+
+                Ok(self.is_visible_outside_package(trait_type.instance_of)
+                    && self.is_visible_outside_package(trait_target.instance_of))
+            }
 
             // Just like trait implementations, the should be exported if the implemented type is visible.
             Node::Impl(implementation) => {
@@ -679,7 +685,7 @@ impl TyCheckCtx {
             }
 
             // Trait methods should be exported if the parent trait object is exported.
-            Node::TraitMethodDef(_) => Ok(self.is_visible_outside_package(self.hir_parent_of(id).unwrap())),
+            Node::TraitMethodDef(_) => self.should_export(self.hir_parent_of(id).unwrap()),
 
             // Trait methods should be exported if the parent trait object is exported, as well as the trait target
             // type.
