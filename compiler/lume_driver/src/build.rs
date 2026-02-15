@@ -75,7 +75,7 @@ impl Driver {
                 data: object,
             });
 
-            if gcx.session.options.enable_incremental {
+            if gcx.session.options.enable_incremental && !self.config.dry_run {
                 crate::incremental::write_metadata_object(&gcx, &metadata)?;
             }
 
@@ -84,8 +84,10 @@ impl Driver {
 
         let output_file_path = gcx.binary_output_path(&self.package.name);
 
-        let object_files = lume_linker::write_object_files(&gcx, objects)?;
-        lume_linker::link_objects(object_files, &output_file_path, &gcx.session.options)?;
+        if !self.config.dry_run {
+            let object_files = lume_linker::write_object_files(&gcx, objects)?;
+            lume_linker::link_objects(object_files, &output_file_path, &gcx.session.options)?;
+        }
 
         Ok(CompiledExecutable {
             binary: output_file_path,

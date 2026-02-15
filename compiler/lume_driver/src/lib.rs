@@ -24,6 +24,9 @@ pub use build::*;
 pub mod check;
 pub use check::*;
 
+#[cfg(feature = "test-support")]
+pub mod test_support;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompiledExecutable {
     pub binary: PathBuf,
@@ -33,6 +36,9 @@ pub struct CompiledExecutable {
 pub struct Config {
     /// Command-line input options.
     pub options: Options,
+
+    /// Don't write any files to disk.
+    pub dry_run: bool,
 
     /// Abstract loader for loading source files.
     pub loader: Box<dyn FileLoader>,
@@ -49,6 +55,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             options: Options::default(),
+            dry_run: false,
             loader: Box::new(lume_session::FileSystemLoader),
             source_overrides: None,
         }

@@ -4,9 +4,6 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
-[lib]
-doctest = false
-
 [dependencies]
 arc = { path = "../arc" }
 lume_errors = { path = "../../crates/lume_errors" }
@@ -27,14 +24,18 @@ lume_types = { path = "../lume_types" }
 lume_unification = { path = "../lume_unification" }
 
 ciborium = { version = "=0.2.2" }
-libftrace = { workspace = true }
 indexmap = { workspace = true }
+libftrace = { workspace = true }
 
 lume_codegen = { path = "../lume_codegen", optional = true }
 
+[dev-dependencies]
+lume_errors_test = { path = "../../crates/lume_errors_test" }
+
 [features]
-default = ["codegen"]
+default = ["codegen", "test-support"]
 codegen = ["dep:lume_codegen"]
+test-support = []
 
 [lints]
 workspace = true

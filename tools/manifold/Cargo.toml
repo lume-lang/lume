@@ -10,6 +10,7 @@ doctest = false
 [dependencies]
 build_stage = { path = "../build_stage" }
 lume_bench = { path = "../bench" }
+lume_driver = { path = "../../compiler/lume_driver", features = ["test-support"] }
 lume_errors = { path = "../../crates/lume_errors" }
 lume_gc = { path = "../../rt/lume_gc", features = ["paranoid"] }
 lume_span = { path = "../../crates/lume_span" }
