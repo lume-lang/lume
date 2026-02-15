@@ -20,18 +20,21 @@ pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
     stdout_path.set_extension("stdout");
 
     let file_name = path.file_name().expect("expected file path");
+    let file_base = file_name.to_str().unwrap().split('.').next().unwrap();
     let file_content = std::fs::read_to_string(&path).map_diagnostic()?;
 
     let binary_path = lume_driver::test_support::workspace(path.parent().unwrap())
         .with_option(|opts| opts.enable_incremental = false)
         .with_file(
             "Arcfile",
-            r#"
+            format!(
+                r#"
                 [package]
-                name = "foo"
+                name = "{file_base}"
                 version = "1.0.0"
                 lume_version = "^0"
-            "#,
+            "#
+            ),
         )
         .with_file(PathBuf::from("src").join(file_name), &file_content)
         .build(dcx.handle())?;
