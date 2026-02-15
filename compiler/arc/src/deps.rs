@@ -5,7 +5,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use lume_errors::{DiagCtxHandle, Result, SimpleDiagnostic};
-use lume_session::DependencyMap;
+use lume_session::{DependencyMap, FileLoader};
 use lume_span::PackageId;
 use pubgrub::{Dependencies, PackageResolutionStatistics, VersionSet as _};
 use semver::Version;
@@ -33,8 +33,8 @@ impl Display for Dependency {
 }
 
 /// Builds a dependency from the root package, found at `root`.
-pub(crate) fn build_dependency_tree(root: &Path, dcx: DiagCtxHandle) -> Result<DependencyMap> {
-    let manifest = PackageParser::locate(root)?;
+pub(crate) fn build_dependency_tree(root: &Path, loader: &dyn FileLoader, dcx: DiagCtxHandle) -> Result<DependencyMap> {
+    let manifest = PackageParser::locate(root, loader)?;
     let root_id = manifest.package_id();
 
     let package = Dependency {
@@ -46,7 +46,7 @@ pub(crate) fn build_dependency_tree(root: &Path, dcx: DiagCtxHandle) -> Result<D
     };
 
     let version = manifest.package.version.into_inner();
-    let solver = DependencyResolver::new(dcx.clone());
+    let solver = DependencyResolver::new(loader, dcx.clone());
 
     let solution = match pubgrub::resolve(&solver, package, version) {
         Ok(solution) => solution,
@@ -84,7 +84,7 @@ pub(crate) fn build_dependency_tree(root: &Path, dcx: DiagCtxHandle) -> Result<D
 
     for (dependency, version) in &solution {
         let local_path = dependency.source.fetch()?;
-        let manifest = PackageParser::locate(&local_path)?;
+        let manifest = PackageParser::locate(&local_path, loader)?;
         let package = manifest.into();
 
         map.packages.insert(dependency.id, package);
@@ -110,15 +110,17 @@ pub(crate) fn build_dependency_tree(root: &Path, dcx: DiagCtxHandle) -> Result<D
     Ok(map)
 }
 
-struct DependencyResolver {
+struct DependencyResolver<'fs> {
     dcx: DiagCtxHandle,
     metadata: RefCell<HashMap<ManifestDependencySource, Arc<PackageMetadata>>>,
+    loader: &'fs dyn FileLoader,
 }
 
-impl DependencyResolver {
-    pub fn new(dcx: DiagCtxHandle) -> Self {
+impl<'fs> DependencyResolver<'fs> {
+    pub fn new(loader: &'fs dyn FileLoader, dcx: DiagCtxHandle) -> Self {
         Self {
             dcx,
+            loader,
             metadata: RefCell::new(HashMap::new()),
         }
     }
@@ -130,7 +132,7 @@ impl DependencyResolver {
             return Ok(existing.clone());
         }
 
-        let metadata = Arc::new(source.get_metadata()?);
+        let metadata = Arc::new(source.get_metadata(self.loader)?);
         let inserted = self
             .metadata
             .borrow_mut()
@@ -149,7 +151,7 @@ impl DependencyResolver {
     }
 }
 
-impl pubgrub::DependencyProvider for DependencyResolver {
+impl pubgrub::DependencyProvider for DependencyResolver<'_> {
     type Err = DependencyError;
     type M = DependencyError;
     type P = Dependency;

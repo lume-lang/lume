@@ -1,4 +1,6 @@
-use lume_driver::Driver;
+use std::path::PathBuf;
+
+use lume_driver::{Config, Driver};
 use lume_errors::DiagCtxHandle;
 
 use crate::commands::project_or_cwd;
@@ -27,7 +29,12 @@ impl BuildCommand {
             }
         };
 
-        let driver = match Driver::from_root(&std::path::PathBuf::from(project_path), dcx.clone()) {
+        let config = Config {
+            options: self.build.options(),
+            ..Default::default()
+        };
+
+        let driver = match Driver::from_root(&PathBuf::from(project_path), config, dcx.clone()) {
             Ok(driver) => driver,
             Err(err) => {
                 dcx.emit_and_push(err);
@@ -35,7 +42,7 @@ impl BuildCommand {
             }
         };
 
-        if let Err(err) = driver.build(self.build.options()) {
+        if let Err(err) = driver.build() {
             dcx.emit_and_push(err);
         }
     }

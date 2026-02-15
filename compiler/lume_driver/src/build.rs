@@ -14,10 +14,10 @@ impl Driver {
     /// - an error occured while writing the output executable
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn build_package(root: &Path, opts: Options, dcx: DiagCtxHandle) -> Result<CompiledExecutable> {
-        let driver = Self::from_root(root, dcx.clone())?;
+    pub fn build_package(root: &Path, config: Config, dcx: DiagCtxHandle) -> Result<CompiledExecutable> {
+        let driver = Self::from_root(root, config, dcx.clone())?;
 
-        driver.build(opts)
+        driver.build()
     }
 
     /// Builds the given compiler state into an executable.
@@ -29,13 +29,14 @@ impl Driver {
     /// - an error occured while writing the output executable
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[libftrace::traced(level = Info, fields(root = self.package.path.display()))]
-    pub fn build(mut self, mut options: Options) -> Result<CompiledExecutable> {
-        self.override_root_sources(&mut options);
+    pub fn build(mut self) -> Result<CompiledExecutable> {
+        self.override_root_sources();
 
         let session = Session {
             dep_graph: self.dependencies.clone(),
             workspace_root: self.package.path.clone(),
-            options,
+            options: self.config.options,
+            loader: self.config.loader,
         };
 
         let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
@@ -74,7 +75,10 @@ impl Driver {
                 data: object,
             });
 
-            crate::incremental::write_metadata_object(&gcx, &metadata)?;
+            if gcx.session.options.enable_incremental {
+                crate::incremental::write_metadata_object(&gcx, &metadata)?;
+            }
+
             metadata.hir.merge_into(&mut dependency_hir);
         }
 

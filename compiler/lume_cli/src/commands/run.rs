@@ -1,6 +1,7 @@
+use std::path::PathBuf;
 use std::process::Command;
 
-use lume_driver::Driver;
+use lume_driver::{Config, Driver};
 use lume_errors::DiagCtxHandle;
 
 use crate::commands::project_or_cwd;
@@ -33,7 +34,12 @@ impl RunCommand {
             }
         };
 
-        let driver = match Driver::from_root(&std::path::PathBuf::from(project_path), dcx.clone()) {
+        let config = Config {
+            options: self.build.options(),
+            ..Default::default()
+        };
+
+        let driver = match Driver::from_root(&PathBuf::from(project_path), config, dcx.clone()) {
             Ok(driver) => driver,
             Err(err) => {
                 dcx.emit(err);
@@ -41,7 +47,7 @@ impl RunCommand {
             }
         };
 
-        match driver.build(self.build.options()) {
+        match driver.build() {
             Ok(exec) => {
                 let exit_code = Command::new(exec.binary)
                     .args(&self.args)

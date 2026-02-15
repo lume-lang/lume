@@ -1603,6 +1603,7 @@ version = "0.1.1"
 dependencies = [
  "arc",
  "ciborium",
+ "indexmap",
  "libftrace",
  "lume_codegen",
  "lume_errors",

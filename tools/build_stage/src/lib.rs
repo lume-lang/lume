@@ -58,6 +58,7 @@ impl ManifoldDriver {
             dep_graph: dependency_map,
             workspace_root: package.path.clone(),
             options,
+            ..Default::default()
         };
 
         let gcx = Arc::new(GlobalCtx::new(session, dcx));

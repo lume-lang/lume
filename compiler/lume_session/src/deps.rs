@@ -4,7 +4,7 @@ use lume_errors::Result;
 use lume_span::PackageId;
 use semver::Version;
 
-use crate::Package;
+use crate::{FileLoader, Package};
 
 #[derive(Default, Debug, Clone)]
 pub struct DependencyMap {
@@ -40,9 +40,9 @@ impl DependencyMap {
 
     /// Adds all expected source files to all the [`Package`]s inside
     /// the dependency tree.
-    pub fn add_package_sources_recursive(&mut self) -> Result<()> {
+    pub fn add_package_sources_recursive(&mut self, loader: &dyn FileLoader) -> Result<()> {
         for dependency in self.packages.values_mut() {
-            dependency.add_package_sources()?;
+            dependency.add_package_sources(loader)?;
         }
 
         Ok(())
