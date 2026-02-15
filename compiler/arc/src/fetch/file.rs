@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use error_snippet::{Result, SimpleDiagnostic};
+use lume_session::FileLoader;
 use semver::VersionReq;
 
 use crate::fetch::{DependencyFetcher, PackageMetadata};
@@ -12,13 +13,13 @@ use crate::parser::{ManifestDependencySource, PackageParser};
 pub struct FileDependencyFetcher;
 
 impl DependencyFetcher for FileDependencyFetcher {
-    fn metadata(&self, dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
+    fn metadata(&self, loader: &dyn FileLoader, dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
         let ManifestDependencySource::Local { path } = dependency else {
             unreachable!();
         };
 
         let path = PathBuf::from(path);
-        let manifest = PackageParser::locate(&path)?;
+        let manifest = PackageParser::locate(&path, loader)?;
 
         let package_id = manifest.package_id();
         let version = manifest.package.version.get_ref().clone();

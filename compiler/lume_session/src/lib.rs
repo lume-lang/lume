@@ -45,13 +45,6 @@ pub struct Options {
 
     /// Defines whether the generated codegen IR should be printed to `stdio`.
     pub dump_codegen_ir: bool,
-
-    /// Defines an optional list of overrides for source files.
-    ///
-    /// Currently, only the source files of the root package are attempted
-    /// to be overriden. If the file doesn't exist within the package, it is
-    /// skipped.
-    pub source_overrides: Option<IndexMap<FileName, String>>,
 }
 
 /// Defines how much the generated IR should be optimized.
@@ -143,15 +136,46 @@ pub enum LinkerPreference {
 }
 
 /// Represents a compilation session, invoked by the driver.
-#[derive(Default)]
 pub struct Session {
     pub options: Options,
+    pub loader: Box<dyn FileLoader>,
     pub workspace_root: PathBuf,
     pub dep_graph: DependencyMap,
 }
 
+impl Default for Session {
+    fn default() -> Self {
+        Self {
+            options: Options::default(),
+            loader: Box::new(FileSystemLoader),
+            workspace_root: PathBuf::new(),
+            dep_graph: DependencyMap::default(),
+        }
+    }
+}
+
 unsafe impl Send for Session {}
 unsafe impl Sync for Session {}
+
+pub trait FileLoader: Send + Sync {
+    /// Determines whether a file exists at the given path.
+    fn exists(&self, path: &Path) -> bool;
+
+    /// Reads the contents of a file at the given path into memory.
+    fn read(&self, path: &Path) -> std::io::Result<String>;
+}
+
+pub struct FileSystemLoader;
+
+impl FileLoader for FileSystemLoader {
+    fn exists(&self, path: &Path) -> bool {
+        path.exists()
+    }
+
+    fn read(&self, path: &Path) -> std::io::Result<String> {
+        std::fs::read_to_string(path)
+    }
+}
 
 /// Global context for all compiler operations and is used to pass around data
 /// to segmented stages of the compiler processs, such as parsing, analysis,
@@ -330,13 +354,13 @@ impl Package {
     ///
     /// This method will return `Err` if the current path to the `Arcfile`
     /// exists outside of any directory.
-    pub fn add_package_sources(&mut self) -> Result<()> {
+    pub fn add_package_sources(&mut self, loader: &dyn FileLoader) -> Result<()> {
         for source_file in self.locate_source_files()? {
             // We get the relative path of the file within the project,
             // so error messages don't use the full path to a file.
             let relative_path = self.relative_source_path(&source_file).to_string_lossy().to_string();
 
-            let content = std::fs::read_to_string(source_file)?;
+            let content = loader.read(&source_file)?;
             let source_file = Arc::new(SourceFile::new(self.id, relative_path, content));
 
             self.add_source(source_file);

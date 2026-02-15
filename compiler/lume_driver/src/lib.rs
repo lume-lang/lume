@@ -3,10 +3,11 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use arc::locate_package;
+use indexmap::IndexMap;
 use lume_errors::{DiagCtxHandle, Result};
 use lume_infer::TyInferCtx;
-use lume_session::{DependencyMap, GlobalCtx, Options, Package, Session};
-use lume_span::{PackageId, SourceFile, SourceMap};
+use lume_session::{DependencyMap, FileLoader, GlobalCtx, Options, Package, Session};
+use lume_span::{FileName, PackageId, SourceFile, SourceMap};
 use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
 use lume_types::TyCtx;
@@ -28,10 +29,37 @@ pub struct CompiledExecutable {
     pub binary: PathBuf,
 }
 
+/// Compiler configuration
+pub struct Config {
+    /// Command-line input options.
+    pub options: Options,
+
+    /// Abstract loader for loading source files.
+    pub loader: Box<dyn FileLoader>,
+
+    /// Defines an optional list of overrides for source files.
+    ///
+    /// Currently, only the source files of the root package are attempted
+    /// to be overriden. If the file doesn't exist within the package, it is
+    /// skipped.
+    pub source_overrides: Option<IndexMap<FileName, String>>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            options: Options::default(),
+            loader: Box::new(lume_session::FileSystemLoader),
+            source_overrides: None,
+        }
+    }
+}
+
 pub struct Driver {
     /// Defines the structure of the Arcfile within the package.
     pub package: Package,
 
+    config: Config,
     dependencies: DependencyMap,
 
     /// Defines the diagnostics context for reporting errors during compilation.
@@ -48,13 +76,13 @@ impl Driver {
     /// # Errors
     ///
     /// Returns `Err` if the given path has no `Arcfile` within it.
-    pub fn from_root(root: &Path, dcx: DiagCtxHandle) -> Result<Self> {
-        let mut dependencies = dcx.with(|handle| locate_package(root, handle))?;
-
-        dependencies.add_package_sources_recursive()?;
+    pub fn from_root(root: &Path, config: Config, dcx: DiagCtxHandle) -> Result<Self> {
+        let mut dependencies = dcx.with(|handle| locate_package(root, config.loader.as_ref(), handle))?;
+        dependencies.add_package_sources_recursive(config.loader.as_ref())?;
 
         Ok(Driver {
             package: dependencies.root_package().clone(),
+            config,
             dependencies,
             dcx,
         })
@@ -63,8 +91,8 @@ impl Driver {
     /// Overrides the source files of the root package, if the
     /// [`Options::source_overrides`] is set. If it is set, it is taken and
     /// consumed to replace source files in the root package.
-    fn override_root_sources(&mut self, options: &mut Options) {
-        if let Some(source_overrides) = options.source_overrides.take() {
+    fn override_root_sources(&mut self) {
+        if let Some(source_overrides) = self.config.source_overrides.take() {
             for (file_name, content) in source_overrides {
                 let root_package = self.dependencies.root_package();
                 if !root_package.files.contains_key(&file_name) {

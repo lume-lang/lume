@@ -6,7 +6,7 @@ use std::sync::Arc;
 use error_snippet::{Label, WithSource};
 use indexmap::IndexMap;
 use lume_errors::{Result, SimpleDiagnostic};
-use lume_session::{Dependencies, Package};
+use lume_session::{Dependencies, FileLoader, Package};
 use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
 use serde::Deserialize;
@@ -176,8 +176,8 @@ impl PackageParser {
     ///
     /// This method may fail if the given path is unreadable or
     /// otherwise inaccessible.
-    fn new(path: &Path) -> Result<Self> {
-        let content = match std::fs::read_to_string(path) {
+    fn new(path: &Path, loader: &dyn FileLoader) -> Result<Self> {
+        let content = match loader.read(path) {
             Ok(content) => content,
             Err(err) => {
                 return Err(ArcfileIoError { inner: err.into() }.into());
@@ -218,7 +218,7 @@ impl PackageParser {
     /// - the given path has no `Arcfile` stored within it,
     /// - the located `Arcfile` doesn't refer to a file
     /// - or if the given `Arcfile` is otherwise invalid
-    pub fn locate(root: &Path) -> Result<Manifest> {
+    pub fn locate(root: &Path, loader: &dyn FileLoader) -> Result<Manifest> {
         let url = normalize_path_url(root)?;
 
         if url.scheme() != "file" {
@@ -232,14 +232,14 @@ impl PackageParser {
         let root = url.to_file_path().unwrap();
         let path = root.join(DEFAULT_ARCFILE);
 
-        if !path.is_file() {
+        if !loader.exists(&path) {
             return Err(ArcfileMissing {
                 dir: root.display().to_string(),
             }
             .into());
         }
 
-        let mut parser = Self::new(&path)?;
+        let mut parser = Self::new(&path, loader)?;
         let mut manifest = parser.parse()?;
 
         if !manifest.package.no_std {

@@ -57,15 +57,15 @@ impl Engine {
         self.reporter.check_started();
 
         let result = self.with_result(|engine| {
-            let driver = lume_driver::Driver::from_root(&engine.root, engine.diagnostics.dcx.handle())?;
-
             let source_overrides = engine.io.build_source_overrides(&engine.root);
-            let options = lume_session::Options {
+            let config = lume_driver::Config {
                 source_overrides: Some(source_overrides),
                 ..Default::default()
             };
 
-            driver.check(options)
+            let driver = lume_driver::Driver::from_root(&engine.root, config, engine.diagnostics.dcx.handle())?;
+
+            driver.check()
         });
 
         if let Some(checked_graph) = result {

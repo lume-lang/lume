@@ -4,6 +4,7 @@ use std::process::{Command, Stdio};
 
 use error_snippet::{IntoDiagnostic, Result, SimpleDiagnostic};
 use lume_errors::MapDiagnostic;
+use lume_session::FileLoader;
 use semver::VersionReq;
 use url::Url;
 
@@ -24,9 +25,9 @@ fn is_git_installed() -> bool {
 pub struct GitDependencyFetcher;
 
 impl DependencyFetcher for GitDependencyFetcher {
-    fn metadata(&self, dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
+    fn metadata(&self, loader: &dyn FileLoader, dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
         let path = clone_repository(dependency)?;
-        let manifest = PackageParser::locate(&path)?;
+        let manifest = PackageParser::locate(&path, loader)?;
 
         let package_id = manifest.package_id();
         let version = manifest.package.version.get_ref().clone();

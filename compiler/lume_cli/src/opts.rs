@@ -133,7 +133,6 @@ impl BuildOptions {
             dump_mir: self.dev.dump_mir.clone(),
             dump_mir_func: self.dev.dump_mir_func.clone(),
             dump_codegen_ir: self.dev.dump_codegen_ir,
-            source_overrides: None,
         }
     }
 }
