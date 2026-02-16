@@ -474,7 +474,7 @@ impl CraneliftBackend {
             cranelift_codegen::ir::Endianness::Little => gimli::RunTimeEndian::Little,
         };
 
-        let mut stack_maps = WriterRelocate::new(endian);
+        let mut stack_maps = WriterRelocate::new(endian, product.object.architecture(), product.object.format());
 
         for (def, func) in &self.declared_funcs {
             let func_def = self.context.functions.get(def).unwrap();
@@ -511,16 +511,9 @@ impl CraneliftBackend {
             }
         }
 
-        let is_darwinlike = self.isa.triple().operating_system.is_like_darwin();
-        let (segment, section) = if is_darwinlike {
-            ("__LUMEC", "__smaps")
-        } else {
-            ("", ".lumec.smaps")
-        };
-
         let section_id = product.object.add_section(
-            segment.as_bytes().to_vec(),
-            section.as_bytes().to_vec(),
+            b"__LUMEC".to_vec(),
+            b"__smaps".to_vec(),
             object::write::SectionKind::ReadOnlyData,
         );
 
