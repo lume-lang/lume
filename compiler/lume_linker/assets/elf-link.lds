@@ -44,4 +44,4 @@ SECTIONS {
     *(.lumec.tparams)
     __lumec_tparams_end = .;
   }
-} INSERT AFTER .data; /* Using `INSERT` causes the default linker script to also be loaded */
+}
