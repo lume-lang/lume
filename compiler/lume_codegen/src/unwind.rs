@@ -68,12 +68,7 @@ impl RootUnwindContext {
             .object
             .add_section(segment, b".eh_frame".to_vec(), SectionKind::ReadOnlyData);
 
-        let mut eh_frame = EhFrame::from(WriterRelocate::new(
-            self.endianess,
-            product.object.architecture(),
-            product.object.format(),
-        ));
-
+        let mut eh_frame = EhFrame::from(WriterRelocate::new(self.endianess));
         self.frame_table.write_eh_frame(&mut eh_frame).unwrap();
 
         // Some unwinding implementations expect a terminating "empty" length so
