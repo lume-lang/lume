@@ -250,7 +250,12 @@ impl<'ctx> RootDebugContext<'ctx> {
     /// Finish building the final DWARF debugging sections in given object file,
     /// as well as adding unwind frames.
     pub fn finish(mut self, product: &mut ObjectProduct) -> Result<()> {
-        let mut sections = Sections::new(WriterRelocate::new(self.endianess));
+        let mut sections = Sections::new(WriterRelocate::new(
+            self.endianess,
+            product.object.architecture(),
+            product.object.format(),
+        ));
+
         self.dwarf.write(&mut sections).unwrap();
 
         sections.for_each_mut(|id, section| {
@@ -356,13 +361,17 @@ pub(crate) enum DebugRelocName {
 /// A [`Writer`] that collects all necessary relocations.
 #[derive(Clone)]
 pub(super) struct WriterRelocate {
+    pub(super) arch: object::Architecture,
+    pub(super) format: object::BinaryFormat,
     pub(super) relocs: Vec<DebugReloc>,
     pub(super) writer: EndianVec<RunTimeEndian>,
 }
 
 impl WriterRelocate {
-    pub(super) fn new(endian: RunTimeEndian) -> Self {
+    pub(super) fn new(endian: RunTimeEndian, arch: object::Architecture, format: object::BinaryFormat) -> Self {
         WriterRelocate {
+            arch,
+            format,
             relocs: Vec::new(),
             writer: EndianVec::new(endian),
         }
@@ -413,7 +422,16 @@ impl Writer for WriterRelocate {
                     size,
                     name: DebugRelocName::Symbol(symbol),
                     addend,
-                    kind: object::RelocationKind::Absolute,
+                    kind: match (self.arch, self.format) {
+                        // LLVM lld does not support absolute AArch64 relocations for position-independent ELF
+                        // executables. We'd prefer to always compile PIC executables, so we use relative relocations.
+                        (
+                            object::Architecture::Aarch64 | object::Architecture::Aarch64_Ilp32,
+                            object::BinaryFormat::Elf,
+                        ) => object::RelocationKind::Relative,
+
+                        _ => object::RelocationKind::Absolute,
+                    },
                 });
 
                 self.write_udata(0, size)
