@@ -25,6 +25,15 @@ pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
 
     let binary_path = lume_driver::test_support::workspace(path.parent().unwrap())
         .with_option(|opts| opts.enable_incremental = false)
+        .with_option(|opts| {
+            // Giving each test it's own output directory.
+            //
+            // This is to avoid race conditions between tests where some packages have the
+            // same name (for example, `std`). If not defined, multiple threads might try to
+            // write `bc/std.o`, which will cause the linkers to throw errors.
+            let relative_dir = PathBuf::from(format!("obj/{file_base}/"));
+            opts.output_directory = Some(relative_dir);
+        })
         .with_file(
             "Arcfile",
             format!(
