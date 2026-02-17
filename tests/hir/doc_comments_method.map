@@ -30,9 +30,26 @@ Map {
             methods: [
                 MethodDefinition {
                     visibility: Public,
-                    name: Identifier {
-                        name: "bar",
-                        location: doc_comments_method.lm:52:55,
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "Foo",
+                                    location: doc_comments_method.lm:0:0,
+                                },
+                                bound_types: [],
+                                location: doc_comments_method.lm:0:0,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "bar",
+                                location: doc_comments_method.lm:52:55,
+                            },
+                            bound_types: [],
+                            location: doc_comments_method.lm:52:55,
+                        },
+                        location: doc_comments_method.lm:0:0,
                     },
                     parameters: [],
                     type_parameters: [],

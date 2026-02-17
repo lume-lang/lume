@@ -16,9 +16,26 @@ Map {
             },
             methods: [
                 TraitMethodDefinition {
-                    name: Identifier {
-                        name: "add",
-                        location: trait_method_impl.lm:15:18,
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "Add",
+                                    location: trait_method_impl.lm:6:9,
+                                },
+                                bound_types: [],
+                                location: trait_method_impl.lm:6:9,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "add",
+                                location: trait_method_impl.lm:15:18,
+                            },
+                            bound_types: [],
+                            location: trait_method_impl.lm:15:18,
+                        },
+                        location: trait_method_impl.lm:6:9,
                     },
                     parameters: [
                         Parameter {

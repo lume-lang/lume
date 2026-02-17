@@ -16,9 +16,26 @@ Map {
             },
             methods: [
                 TraitMethodDefinition {
-                    name: Identifier {
-                        name: "bar",
-                        location: doc_comments_trait_method.lm:49:52,
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "Foo",
+                                    location: doc_comments_trait_method.lm:6:9,
+                                },
+                                bound_types: [],
+                                location: doc_comments_trait_method.lm:6:9,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "bar",
+                                location: doc_comments_trait_method.lm:49:52,
+                            },
+                            bound_types: [],
+                            location: doc_comments_trait_method.lm:49:52,
+                        },
+                        location: doc_comments_trait_method.lm:6:9,
                     },
                     parameters: [],
                     type_parameters: [],

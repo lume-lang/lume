@@ -30,9 +30,26 @@ Map {
             methods: [
                 MethodDefinition {
                     visibility: Private,
-                    name: Identifier {
-                        name: "bar",
-                        location: struct_ext_method.lm:27:30,
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "Foo",
+                                    location: struct_ext_method.lm:0:0,
+                                },
+                                bound_types: [],
+                                location: struct_ext_method.lm:0:0,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "bar",
+                                location: struct_ext_method.lm:27:30,
+                            },
+                            bound_types: [],
+                            location: struct_ext_method.lm:27:30,
+                        },
+                        location: struct_ext_method.lm:0:0,
                     },
                     parameters: [],
                     type_parameters: [],
