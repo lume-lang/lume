@@ -66,6 +66,10 @@ pub struct CodegenOptions {
     #[arg(long, value_name = "LIB", value_hint = ValueHint::FilePath)]
     pub runtime_path: Option<PathBuf>,
 
+    /// Path to the artifact output directory
+    #[arg(long, value_name = "PATH", value_hint = ValueHint::DirPath)]
+    pub output: Option<PathBuf>,
+
     /// Which linker to use when linking objects together
     #[arg(long, value_enum)]
     pub linker: Option<Linker>,
@@ -130,6 +134,7 @@ impl BuildOptions {
                 None => None,
             },
             runtime_path: self.codegen.runtime_path.clone(),
+            output_directory: self.codegen.output.clone(),
             dump_mir: self.dev.dump_mir.clone(),
             dump_mir_func: self.dev.dump_mir_func.clone(),
             dump_codegen_ir: self.dev.dump_codegen_ir,

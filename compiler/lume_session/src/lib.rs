@@ -36,6 +36,12 @@ pub struct Options {
     /// Defines the absolute path to the runtime library.
     pub runtime_path: Option<PathBuf>,
 
+    /// Defines the path to the for the output artifacts.
+    ///
+    /// If the path is relative, it will be resolved relative to the root
+    /// package directory. If it is absolute, it will be used as is.
+    pub output_directory: Option<PathBuf>,
+
     /// Defines whether the generated MIR should be printed to `stdio`.
     pub dump_mir: Option<Vec<String>>,
 
@@ -235,7 +241,11 @@ impl GlobalCtx {
     ///
     /// The directory is guranteed to exist within the workspace root.
     pub fn obj_path(&self) -> PathBuf {
-        self.session.workspace_root.join("obj")
+        match self.session.options.output_directory.as_ref() {
+            Some(output_path) if output_path.is_relative() => self.session.workspace_root.join(output_path),
+            Some(output_path) => output_path.to_owned(),
+            None => self.session.workspace_root.join("obj"),
+        }
     }
 
     /// Defines the absolute path of the directory to
