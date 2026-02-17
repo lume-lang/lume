@@ -370,7 +370,13 @@ pub fn set_collection_condition(predicate: CollectCondition) -> CollectCondition
 #[unsafe(export_name = "std::mem::GC::step")]
 pub fn trigger_collection() {
     if with_allocator(|alloc| alloc.is_collection_required()) {
-        trigger_collection_force();
+        let Some(frame) = find_current_stack_map() else {
+            panic!("bug!: could not find stack map for allocation call");
+        };
+
+        libftrace::trace!("collection triggered");
+
+        with_allocator(|alloc| alloc.promote_allocations(&frame, alloc::PromotionReason::ConditionMet));
     }
 }
 
@@ -390,7 +396,7 @@ pub fn trigger_collection_force() {
 
     libftrace::trace!("collection triggered");
 
-    with_allocator(|alloc| alloc.promote_allocations(&frame));
+    with_allocator(|alloc| alloc.promote_allocations(&frame, alloc::PromotionReason::Explicit));
 }
 
 /// Static version of [`alloc::GenerationalAllocator::alloc`], so it can be
