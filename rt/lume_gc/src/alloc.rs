@@ -374,6 +374,28 @@ impl OldGeneration {
     }
 }
 
+/// Represents the reason for object promotion within the GC.
+///
+/// This reason does not represent the actual reason for a single promotion, but
+/// the reason why all living objects were promoted.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PromotionReason {
+    /// The collect condition, definable using
+    /// [`crate::set_collection_condition`], returned [`true`].
+    ConditionMet,
+
+    /// The collection was triggered explicitly, either via a direct call to
+    /// [`crate::trigger_collection_force`] or using the Lume method
+    /// `std::mem::GC:invoke()`.
+    Explicit,
+
+    /// The allocator for the first generation failed to allocate memory.
+    ///
+    /// This can happen because the allocated memory block for the allocator is
+    /// full and is not immediately cause for concern.
+    AllocatorFailed,
+}
+
 pub struct GenerationalAllocator {
     young: YoungGeneration,
     old: OldGeneration,
@@ -459,7 +481,7 @@ impl GenerationalAllocator {
 
         // Promote all living allocations to the 2nd generation, effectively clearing
         // the entire 1st generation for new allocations.
-        self.promote_allocations(frame);
+        self.promote_allocations(frame, PromotionReason::AllocatorFailed);
 
         // After promotion, attempt to allocate in the 1st generation again.
         if let Some(ptr) = self.young.alloc(size, metadata) {
@@ -484,7 +506,10 @@ impl GenerationalAllocator {
     /// generation, moving all allocations to that generation. All the objects
     /// who where not alive in the 1st generation are deallocated. After
     /// all the allocations have been handled, the 1st generation is cleared.
-    pub fn promote_allocations(&mut self, frame: &FrameStackMap) {
+    pub fn promote_allocations(&mut self, frame: &FrameStackMap, reason: PromotionReason) {
+        let _ = reason;
+        libftrace::debug!("[GC] promotion triggered (reason: {reason:?})");
+
         // Reverse the list of all objects. Object references are added in the order
         // that they're found, but we must promote child objects first, so that
         // any parent object doesn't copy the old location of the child.
