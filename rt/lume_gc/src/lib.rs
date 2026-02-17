@@ -419,6 +419,10 @@ pub fn drop_allocations() {
 /// A function predicate to determine whether a collection is required.
 pub type CollectCondition = fn(&CollectorInfo) -> bool;
 
+/// Limit of memory pressure before a collection is triggered, when using the
+/// default collection condition.
+pub const DEFAULT_MEMORY_PRESSURE_LIMIT: f64 = 0.95;
+
 /// Default collection condition, which will trigger a collection if the number
 /// of allocations exceeds a certain threshold.
 pub fn default_collect_condition(info: &CollectorInfo) -> bool {
@@ -428,7 +432,7 @@ pub fn default_collect_condition(info: &CollectorInfo) -> bool {
     #[allow(clippy::cast_precision_loss)]
     let ratio = (mem_in_use as f64) / (mem_available as f64);
 
-    if ratio >= 0.95 {
+    if ratio >= DEFAULT_MEMORY_PRESSURE_LIMIT {
         libftrace::trace!("collection required, memory pressure at {}%", ratio * 100.0);
 
         return true;
@@ -461,6 +465,6 @@ impl CollectorInfo {
     /// Returns a tuple containing the number of objects in the young generation
     /// (G1) and old generation (G2).
     pub fn current_object_count(&self) -> (usize, usize) {
-        with_allocator(|alloc| (alloc.info.g1_object_count, alloc.info.g2_object_count))
+        with_allocator(|alloc| (alloc.g1().info.object_count, alloc.g2().info.object_count))
     }
 }
