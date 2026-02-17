@@ -244,6 +244,11 @@ impl PathSegment {
         }
     }
 
+    /// Gets the name of the path segment as a string.
+    pub fn as_str(&self) -> &str {
+        self.name().as_str()
+    }
+
     /// Gets the bound types of the path segment.
     pub fn bound_types(&self) -> &[Type] {
         match self {
@@ -344,6 +349,22 @@ pub struct Path {
 }
 
 impl Path {
+    pub fn new(root: Vec<PathSegment>, name: PathSegment) -> Self {
+        let mut location = name.location().clone_inner();
+
+        location.index.start = root
+            .iter()
+            .map(|r| r.name().location.start())
+            .min()
+            .unwrap_or(location.index.start);
+
+        Self {
+            root,
+            name,
+            location: location.intern(),
+        }
+    }
+
     pub fn rooted(name: impl Into<PathSegment>) -> Self {
         let name = name.into();
 
@@ -678,6 +699,16 @@ impl std::fmt::Display for Visibility {
 }
 
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
+pub struct FnSignature {
+    pub name: Path,
+    pub parameters: Vec<Parameter>,
+    pub type_parameters: Vec<NodeId>,
+    pub return_type: Type,
+
+    pub location: Location,
+}
+
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
     pub id: NodeId,
 
@@ -685,10 +716,7 @@ pub struct FunctionDefinition {
     pub doc_comment: Option<String>,
 
     pub visibility: Visibility,
-    pub name: Path,
-    pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<NodeId>,
-    pub return_type: Type,
+    pub signature: FnSignature,
 
     #[serde(skip)]
     pub block: Option<Block>,
@@ -696,8 +724,14 @@ pub struct FunctionDefinition {
 }
 
 impl FunctionDefinition {
+    #[inline]
+    pub fn path(&self) -> &Path {
+        &self.signature.name
+    }
+
+    #[inline]
     pub fn ident(&self) -> &PathSegment {
-        &self.name.name
+        &self.path().name
     }
 }
 
@@ -876,10 +910,7 @@ pub struct MethodDefinition {
     pub doc_comment: Option<String>,
 
     pub visibility: Visibility,
-    pub name: Identifier,
-    pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<NodeId>,
-    pub return_type: Type,
+    pub signature: FnSignature,
 
     #[serde(skip)]
     pub block: Option<Block>,
@@ -913,10 +944,7 @@ pub struct TraitMethodDefinition {
     #[serde(skip)]
     pub doc_comment: Option<String>,
 
-    pub name: Identifier,
-    pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<NodeId>,
-    pub return_type: Type,
+    pub signature: FnSignature,
 
     #[serde(skip)]
     pub block: Option<Block>,
@@ -926,10 +954,10 @@ pub struct TraitMethodDefinition {
 impl TraitMethodDefinition {
     pub fn signature(&'_ self) -> Signature<'_> {
         Signature {
-            name: &self.name,
-            type_parameters: &self.type_parameters,
-            parameters: &self.parameters,
-            return_type: &self.return_type,
+            name: self.signature.name.name(),
+            type_parameters: &self.signature.type_parameters,
+            parameters: &self.signature.parameters,
+            return_type: &self.signature.return_type,
         }
     }
 }

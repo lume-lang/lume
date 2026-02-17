@@ -17,7 +17,7 @@ static ARRAY_NEW_PATH: LazyLock<lume_hir::Path> = LazyLock::new(|| {
 
 static ARRAY_PUSH_PATH: LazyLock<lume_hir::PathSegment> = LazyLock::new(|| lume_hir::PathSegment::callable("push"));
 
-impl LowerModule {
+impl LoweringContext<'_> {
     #[libftrace::traced(level = Debug)]
     pub(super) fn expressions(&mut self, expressions: Vec<lume_ast::Expression>) -> Vec<lume_span::NodeId> {
         expressions
@@ -183,7 +183,7 @@ impl LowerModule {
     fn expr_cast(&mut self, expr: lume_ast::Cast) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let source = self.expression(expr.source)?;
-        let target = self.type_ref(expr.target_type)?;
+        let target = self.hir_type(expr.target_type)?;
         let location = self.location(expr.location);
 
         Ok(lume_hir::Expression {
@@ -528,13 +528,13 @@ impl LowerModule {
 
     #[libftrace::traced(level = Debug)]
     fn expr_scope(&mut self, expr: lume_ast::Scope) -> lume_hir::Expression {
-        self.locals.push_frame();
+        self.current_locals.push_frame();
 
         let id = self.next_node_id();
         let body = self.statements(expr.body);
         let location = self.location(expr.location);
 
-        self.locals.pop_frame();
+        self.current_locals.pop_frame();
 
         lume_hir::Expression {
             id,
@@ -569,13 +569,13 @@ impl LowerModule {
 
     #[libftrace::traced(level = Debug)]
     fn expr_switch_case(&mut self, expr: lume_ast::SwitchCase) -> Result<lume_hir::SwitchCase> {
-        self.locals.push_frame();
+        self.current_locals.push_frame();
 
         let pattern = self.pattern(expr.pattern)?;
         let branch = self.expression(expr.branch)?;
         let location = self.location(expr.location);
 
-        self.locals.pop_frame();
+        self.current_locals.pop_frame();
 
         Ok(lume_hir::SwitchCase {
             pattern,
@@ -589,9 +589,9 @@ impl LowerModule {
         let id = self.next_node_id();
         let location = self.location(expr.location().clone());
 
-        let Some(var_source) = self.locals.retrieve(&expr.name.name) else {
+        let Some(var_source) = self.current_locals.retrieve(&expr.name.name) else {
             return Err(UndeclaredVariable {
-                source: self.file.clone(),
+                source: self.current_file().clone(),
                 range: location.index.clone(),
                 name: expr.name.name,
             }

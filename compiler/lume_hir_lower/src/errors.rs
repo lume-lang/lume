@@ -175,6 +175,16 @@ pub struct DuplicateVariant {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "unknown or unsupported attribute", code = "LM3060")]
+pub struct UnknownAttribute {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("`attributes are currently not user-defined")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "no `name` argument in `lang_item` attribute", code = "LM3061")]
 pub struct LangItemMissingName {
     #[span]

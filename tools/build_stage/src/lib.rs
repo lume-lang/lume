@@ -8,7 +8,6 @@ use lume_hir::map::Map;
 use lume_infer::TyInferCtx;
 use lume_mir::ModuleMap;
 use lume_session::{DependencyMap, GlobalCtx, Options, Package, Session};
-use lume_span::SourceMap;
 use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
 use lume_types::TyCtx;
@@ -68,12 +67,9 @@ impl ManifoldDriver {
 
     /// Builds the HIR map from the current [`ManifoldDriver`] instance.
     pub fn build_hir(&self) -> Result<Map> {
-        self.gcx.dcx.with(|dcx| {
-            let mut source_map = SourceMap::default();
-            let mut lower = lume_hir_lower::LowerState::new(&self.package, &mut source_map, dcx);
-
-            lower.lower_into()
-        })
+        self.gcx
+            .dcx
+            .with(|dcx| lume_hir_lower::lower_to_hir(&self.package, dcx))
     }
 
     /// Infers the types of all expressions and statements within the source

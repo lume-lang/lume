@@ -1,55 +1,96 @@
-use error_snippet::Result;
-use lume_hir::WithLocation;
-use lume_span::Internable;
+use crate::*;
 
-use crate::LowerModule;
-use crate::errors::*;
+impl LoweringContext<'_> {
+    /// Lowers an import path to an HIR path.
+    ///
+    /// For example, the import path `std::io (File)` would become
+    /// `std::io::File`.
+    #[libftrace::traced(level = Debug)]
+    pub(crate) fn expand_import_path(&mut self, path: lume_ast::ImportPath) -> Result<lume_hir::Path> {
+        let location = self.location(path.location);
 
-impl LowerModule {
-    pub(crate) fn identifier(&self, expr: lume_ast::Identifier) -> lume_hir::Identifier {
-        let location = self.location(expr.location.clone());
+        let Some((name, root)) = path.path.split_last() else {
+            return Err(crate::errors::InvalidNamespacePath {
+                source: self.current_file().clone(),
+                range: location.index.clone(),
+                path: Box::new(path.path),
+            }
+            .into());
+        };
 
-        lume_hir::Identifier {
-            name: expr.name,
-            location,
-        }
-    }
+        let name = lume_hir::PathSegment::namespace(self.identifier(name.clone()));
 
-    pub(crate) fn expand_name(&mut self, name: lume_ast::PathSegment) -> Result<lume_hir::Path> {
-        if let Some(ns) = &self.namespace {
-            Ok(lume_hir::Path::with_root(ns.clone(), self.path_segment(name)?))
-        } else {
-            Ok(lume_hir::Path::rooted(self.path_segment(name)?))
-        }
-    }
-
-    pub(crate) fn path(&mut self, path: lume_ast::Path) -> Result<lume_hir::Path> {
-        let root = self.path_root(path.root)?;
-        let name = self.path_segment(path.name)?;
-
-        let mut location = name.location().clone_inner();
-
-        location.index.start = root
+        let root = root
             .iter()
-            .map(|r| r.name().location.start())
-            .min()
-            .unwrap_or(location.index.start);
+            .map(|r| lume_hir::PathSegment::namespace(self.identifier(r.clone())))
+            .collect();
 
-        Ok(lume_hir::Path {
-            root,
+        Ok(lume_hir::Path { name, root, location })
+    }
+
+    /// Expands the given AST path segment to a full HIR path by prepending the
+    /// current namespace.
+    pub(crate) fn expand_to_path(&mut self, segment: lume_ast::PathSegment) -> Result<lume_hir::Path> {
+        match self.namespace.as_ref() {
+            Some(namespace) => Ok(lume_hir::Path::with_root(
+                namespace.clone(),
+                self.path_segment(segment)?,
+            )),
+            None => Ok(lume_hir::Path::rooted(self.path_segment(segment)?)),
+        }
+    }
+
+    /// Expands the given AST type name to a full HIR path by prepending the
+    /// current namespace.
+    pub(crate) fn expand_type_name<N: Into<lume_ast::Identifier>>(&mut self, name: N) -> Result<lume_hir::Path> {
+        self.expand_to_path(lume_ast::PathSegment::ty(name))
+    }
+
+    /// Expands the given AST callable name to a full HIR path by prepending the
+    /// current namespace.
+    pub(crate) fn expand_callable_name<N: Into<lume_ast::Identifier>>(&mut self, name: N) -> Result<lume_hir::Path> {
+        self.expand_to_path(lume_ast::PathSegment::callable(name))
+    }
+
+    pub(crate) fn expand_generic_name<
+        N: Into<lume_ast::Identifier>,
+        P: IntoIterator<Item = lume_ast::TypeParameter>,
+    >(
+        &mut self,
+        name: N,
+        bound_types: P,
+    ) -> Result<lume_hir::Path> {
+        let name = name.into();
+        let location = name.location.clone();
+
+        self.expand_to_path(lume_ast::PathSegment::Type {
             name,
-            location: location.intern(),
+            bound_types: bound_types
+                .into_iter()
+                .map(|type_param| {
+                    lume_ast::Type::Named(lume_ast::NamedType {
+                        name: lume_ast::Path::rooted(lume_ast::PathSegment::ty(type_param.name)),
+                    })
+                })
+                .collect(),
+            location,
         })
     }
 
-    pub(crate) fn path_root(&mut self, expr: Vec<lume_ast::PathSegment>) -> Result<Vec<lume_hir::PathSegment>> {
-        expr.into_iter()
-            .map(|seg| self.path_segment(seg))
-            .collect::<Result<Vec<_>>>()
+    pub(crate) fn path(&mut self, path: lume_ast::Path) -> Result<lume_hir::Path> {
+        let root = self.path_segments(path.root)?;
+        let name = self.path_segment(path.name)?;
+
+        Ok(lume_hir::Path::new(root, name))
     }
 
-    pub(crate) fn path_segment(&mut self, expr: lume_ast::PathSegment) -> Result<lume_hir::PathSegment> {
-        match expr {
+    #[inline]
+    pub(crate) fn path_segments(&mut self, segments: Vec<lume_ast::PathSegment>) -> Result<Vec<lume_hir::PathSegment>> {
+        segments.into_iter().map(|seg| self.path_segment(seg)).collect()
+    }
+
+    pub(crate) fn path_segment(&mut self, segment: lume_ast::PathSegment) -> Result<lume_hir::PathSegment> {
+        match segment {
             lume_ast::PathSegment::Namespace { name } => Ok(lume_hir::PathSegment::namespace(self.identifier(name))),
             lume_ast::PathSegment::Type {
                 name,
@@ -60,7 +101,7 @@ impl LowerModule {
                 let location = self.location(location);
                 let bound_types = bound_types
                     .into_iter()
-                    .map(|arg| self.type_ref(arg))
+                    .map(|arg| self.hir_type(arg))
                     .collect::<Result<Vec<_>>>()?;
 
                 Ok(lume_hir::PathSegment::Type {
@@ -78,7 +119,7 @@ impl LowerModule {
                 let location = self.location(location);
                 let bound_types = bound_types
                     .into_iter()
-                    .map(|arg| self.type_ref(arg))
+                    .map(|arg| self.hir_type(arg))
                     .collect::<Result<Vec<_>>>()?;
 
                 Ok(lume_hir::PathSegment::Callable {
@@ -94,62 +135,5 @@ impl LowerModule {
                 Ok(lume_hir::PathSegment::Variant { name, location })
             }
         }
-    }
-
-    /// Lowers an import path to an HIR path.
-    ///
-    /// For example, the import path `std::io (File)` would become
-    /// `std::io::File`.
-    #[libftrace::traced(level = Debug)]
-    pub(super) fn import_path(&mut self, path: lume_ast::ImportPath) -> Result<lume_hir::Path> {
-        let location = self.location(path.location);
-
-        let Some((name, root)) = path.path.split_last() else {
-            return Err(InvalidNamespacePath {
-                source: self.file.clone(),
-                range: location.index.clone(),
-                path: Box::new(path.path),
-            }
-            .into());
-        };
-
-        let name = lume_hir::PathSegment::namespace(self.identifier(name.clone()));
-
-        let root = root
-            .iter()
-            .map(|r| lume_hir::PathSegment::namespace(self.identifier(r.clone())))
-            .collect();
-
-        Ok(lume_hir::Path { name, root, location })
-    }
-
-    #[libftrace::traced(level = Debug, err)]
-    pub(crate) fn lower_type_name(
-        &mut self,
-        name: lume_ast::Identifier,
-        type_parameters: Option<&[lume_ast::TypeParameter]>,
-    ) -> Result<lume_hir::Path> {
-        let bound_types = if let Some(type_parameters) = type_parameters {
-            type_parameters
-                .iter()
-                .map(|param| {
-                    lume_ast::Type::Named(lume_ast::NamedType {
-                        name: lume_ast::Path::rooted(lume_ast::PathSegment::ty(param.name.clone())),
-                    })
-                })
-                .collect::<Vec<_>>()
-        } else {
-            Vec::new()
-        };
-
-        let location = name.location.clone();
-
-        let name_segment = lume_ast::PathSegment::Type {
-            name,
-            bound_types,
-            location,
-        };
-
-        self.expand_name(name_segment)
     }
 }

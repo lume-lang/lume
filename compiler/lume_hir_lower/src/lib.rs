@@ -1,29 +1,26 @@
+pub(crate) mod attr;
+pub(crate) mod errors;
+pub(crate) mod expr;
+pub(crate) mod generics;
+pub(crate) mod item;
+pub(crate) mod lit;
+pub(crate) mod path;
+pub(crate) mod pattern;
+pub(crate) mod stmt;
+pub(crate) mod ty;
+
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::hash::Hash;
 use std::sync::Arc;
 
-use error_snippet::Result;
-use lume_ast::Node;
-use lume_errors::{DiagCtxHandle, Error};
-use lume_hir::map::Map;
-use lume_hir::symbols::*;
-use lume_hir::{Path, PathSegment, TypeId};
-use lume_lexer::Lexer;
-use lume_parser::Parser;
+pub use lume_ast;
+pub use lume_ast::Node as _;
+use lume_errors::{DiagCtxHandle, Result};
+pub use lume_hir::WithLocation as _;
+use lume_hir::symbols::SymbolTable;
+use lume_hir::{Map, Path, PathSegment};
 use lume_session::Package;
-use lume_span::{Internable, Location, NodeId, PackageId, SourceFile, SourceMap};
-
-mod errors;
-
-mod expr;
-mod generic;
-mod item;
-mod lit;
-mod path;
-mod pattern;
-mod stmt;
-mod ty;
+use lume_span::{Internable, Location, NodeId, SourceFile, SourceFileId};
 
 const DEFAULT_STD_IMPORTS: &[&str] = &[
     "Boolean",
@@ -46,64 +43,24 @@ const DEFAULT_STD_IMPORTS: &[&str] = &[
     "RangeInclusive",
 ];
 
-pub struct LowerState<'a> {
-    /// Defines the package of the current project.
-    package: &'a Package,
+pub fn lower_to_hir(package: &Package, dcx: DiagCtxHandle) -> Result<Map> {
+    let mut ctx = LoweringContext::new(package, dcx);
 
-    /// Defines the global source map for all source files.
-    source_map: &'a mut SourceMap,
+    for (_file_name, source_file) in ctx.package.files.clone() {
+        let items = ctx.dcx.with(|handle| {
+            let mut lexer = lume_lexer::Lexer::new(source_file.clone());
+            let tokens = lexer.lex()?;
 
-    /// Defines the diagnostics context from the build context.
-    dcx: DiagCtxHandle,
-}
+            let mut parser = lume_parser::Parser::new(source_file.clone(), tokens, handle);
+            parser.parse()
+        })?;
 
-impl<'a> LowerState<'a> {
-    /// Creates a new [`LowerState`] instance.
-    pub fn new(package: &'a Package, source_map: &'a mut SourceMap, dcx: DiagCtxHandle) -> Self {
-        Self {
-            package,
-            source_map,
-            dcx,
+        if let Err(err) = ctx.lower_items(source_file.id, items) {
+            ctx.dcx.emit_and_push(err);
         }
     }
 
-    /// Lowers the current project and state into a HIR map.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if any AST nodes are invalid or exist in invalid
-    /// locations.
-    #[libftrace::traced(level = Info, fields(package = self.package.name))]
-    pub fn lower_into(&mut self) -> Result<Map> {
-        let map = self.dcx.with(|dcx| {
-            let mut lower = LowerModule::new(self.package.id, dcx);
-
-            for (_, source_file) in self.package.files.clone() {
-                // Register source file in the state.
-                self.source_map.insert(source_file.clone());
-
-                // Parse the contents of the source file.
-                let expressions = self.dcx.with(|handle| {
-                    let mut lexer = Lexer::new(source_file.clone());
-                    let tokens = lexer.lex()?;
-
-                    let mut parser = Parser::new(source_file.clone(), tokens, handle);
-                    parser.parse()
-                })?;
-
-                // Lowers the parsed module expressions down to HIR.
-                if let Err(err) = lower.lower(source_file, expressions) {
-                    lower.dcx.emit_and_push(err);
-                }
-            }
-
-            Ok(lower.map)
-        })?;
-
-        self.dcx.ensure_untainted()?;
-
-        Ok(map)
-    }
+    Ok(ctx.map)
 }
 
 #[derive(Hash, Debug, PartialEq, Eq)]
@@ -126,117 +83,91 @@ impl DefinedItem {
     }
 }
 
-pub struct LowerModule {
-    /// Defines the file is being lowered.
-    file: Arc<SourceFile>,
-
-    /// Handle to the diagnostics context which will handle parsing errors.
+pub struct LoweringContext<'pkg> {
+    package: &'pkg Package,
     dcx: DiagCtxHandle,
-
-    /// Defines the type map to register types to.
     map: Map,
 
-    /// List of all defined items in the current file.
+    current_node: NodeId,
+    current_file_id: SourceFileId,
+
+    namespace: Option<Path>,
+    imports: HashMap<String, Path>,
     defined: HashMap<DefinedItem, NodeId>,
 
-    /// Defines all the local symbols within the current scope.
-    locals: SymbolTable<String, lume_hir::VariableSource>,
-
-    /// Mapping between all imported items and their corresponding item IDs.
-    imports: HashMap<String, Path>,
-
-    /// Defines the currently containing namespace expressions exist within, if
-    /// any.
-    namespace: Option<Path>,
-
-    /// Defines the currently containing class expressions exist within, if any.
     self_type: Option<Path>,
-
-    /// Defines the currently visible type parameters.
-    type_parameters: Vec<HashMap<String, lume_hir::TypeId>>,
-
-    /// Defines the ID of the current item being lowered, if any.
-    current_node: NodeId,
+    current_locals: SymbolTable<String, lume_hir::VariableSource>,
+    current_type_params: SymbolTable<String, lume_hir::TypeId>,
 }
 
-impl LowerModule {
-    /// Creates a new lowerer for creating HIR maps from AST.
-    pub fn new(package_id: PackageId, dcx: DiagCtxHandle) -> LowerModule {
-        let map = Map::empty(package_id);
+impl<'pkg> LoweringContext<'pkg> {
+    /// Creates a new lowering context for creating HIR maps from AST.
+    pub fn new(package: &'pkg Package, dcx: DiagCtxHandle) -> Self {
+        let map = Map::empty(package.id);
 
         // TODO:
         // Scuffed solution for not overwriting the static IDs of the compiler's scalar
         // types. 0x100 is a completely arbitrary number.
-        let current_node = NodeId::from_usize(package_id, 0x100);
+        let current_node = NodeId::from_usize(package.id, 0x100);
 
-        LowerModule {
-            file: Arc::default(),
-            map,
+        Self {
+            package,
             dcx,
-            defined: HashMap::new(),
-            locals: SymbolTable::new(),
-            imports: HashMap::new(),
-            namespace: None,
-            self_type: None,
-            type_parameters: Vec::new(),
+            map,
             current_node,
+            current_file_id: SourceFileId::empty(),
+            namespace: None,
+            imports: HashMap::new(),
+            defined: HashMap::new(),
+            self_type: None,
+            current_locals: SymbolTable::new(),
+            current_type_params: SymbolTable::new(),
         }
     }
+}
 
-    /// Resets the lowerer to its initial state.
-    pub fn reset(&mut self) {
-        self.locals.clear();
-        self.imports.clear();
-        self.namespace = None;
-        self.self_type = None;
-        self.type_parameters.clear();
-    }
-
-    /// Lowers the single given source module into HIR.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if any AST nodes are invalid or exist in invalid
-    /// locations.
-    #[libftrace::traced(level = Info, fields(file = file.name))]
-    pub fn lower(&mut self, file: Arc<SourceFile>, expressions: Vec<lume_ast::Item>) -> Result<()> {
-        self.file = file;
-        self.insert_implicit_imports()?;
-        self.lower_items(expressions)?;
-
-        for import in self.imports.values() {
-            self.map.imports.insert(import.clone());
-        }
-
-        for (id, node) in &self.map.nodes {
-            debug_assert_eq!(
-                *id,
-                node.id(),
-                "mismatched between ID key and value: {id:?} != {:?}",
-                node.id()
-            );
-        }
-
-        self.dcx.ensure_untainted()?;
-        self.reset();
-
-        Ok(())
-    }
-
-    /// Adds implicit imports to the module.
-    #[libftrace::traced(level = Trace)]
-    fn insert_implicit_imports(&mut self) -> Result<()> {
-        let import_item = lume_ast::Import::std(DEFAULT_STD_IMPORTS);
-
-        self.import(import_item)
+impl LoweringContext<'_> {
+    /// Gets a reference to the current source file.
+    fn current_file(&self) -> &Arc<SourceFile> {
+        self.package
+            .iter_sources()
+            .find(|file| file.id == self.current_file_id)
+            .expect("invalid source file ID")
     }
 
     /// Gets the next [`NodeId`] in the sequence.
+    #[inline]
     #[libftrace::traced(level = Trace)]
     fn next_node_id(&mut self) -> NodeId {
         self.current_node = self.current_node.next();
-
         self.current_node
+    }
+
+    /// Lowers the given AST identifier into a [`lume_hir::Identifier`].
+    pub(crate) fn identifier(&self, expr: lume_ast::Identifier) -> lume_hir::Identifier {
+        let location = self.location(expr.location.clone());
+
+        lume_hir::Identifier {
+            name: expr.name,
+            location,
+        }
+    }
+
+    /// Lowers the given AST location into a [`Location`].
+    fn location(&self, expr: lume_ast::Location) -> Location {
+        lume_span::source::Location {
+            file: self.current_file().clone(),
+            index: expr.0,
+        }
+        .intern()
+    }
+
+    /// Executes a closure with the current `Self` type set to the given name.
+    pub(crate) fn with_self_as<R, F: FnOnce(&mut Self) -> R>(&mut self, name: Path, f: F) -> R {
+        self.self_type = Some(name);
+        let result = f(self);
+        self.self_type = None;
+        result
     }
 
     /// Ensure that the item with the given name is undefined within the file.
@@ -248,7 +179,7 @@ impl LowerModule {
         if let Some((existing, _)) = self.defined.get_key_value(&item) {
             return Err(crate::errors::DuplicateDefinition {
                 duplicate_range: lume_span::source::Location {
-                    file: self.file.clone(),
+                    file: self.current_file().clone(),
                     index: item.location().index.clone(),
                 }
                 .intern(),
@@ -263,42 +194,8 @@ impl LowerModule {
         Ok(())
     }
 
-    /// Gets the [`lume_hir::TypeId`] if the currently visible type parameter
-    /// with the name of `name`, if any.
-    fn id_of_type_param(&self, name: &str) -> Option<lume_hir::TypeId> {
-        for layer in self.type_parameters.iter().rev() {
-            if let Some(id) = layer.get(name) {
-                return Some(*id);
-            }
-        }
-
-        None
-    }
-
-    /// Adds a new type parameter scope, which can be popped later.
-    fn add_type_param_scope(&mut self) {
-        self.type_parameters.push(HashMap::new());
-    }
-
-    /// Adds a new type parameter, which is currently visible.
-    fn add_type_param(&mut self, type_param: lume_hir::TypeParameter) -> NodeId {
-        let id = type_param.id;
-
-        self.type_parameters
-            .last_mut()
-            .unwrap()
-            .insert(type_param.name.name.clone(), TypeId::from(id));
-
-        self.map.nodes.insert(
-            id,
-            lume_hir::Node::Type(lume_hir::TypeDefinition::TypeParameter(Box::new(type_param))),
-        );
-
-        id
-    }
-
     /// Gets the [`lume_hir::Path`] for the item with the given name.
-    fn resolve_symbol_name(&mut self, path: &lume_ast::Path) -> Result<Path> {
+    pub(crate) fn resolve_symbol_name(&mut self, path: &lume_ast::Path) -> Result<Path> {
         if path.root.first().is_some_and(|segment| segment.is_self_type()) {
             return self.resolve_self_name(path);
         }
@@ -320,7 +217,7 @@ impl LowerModule {
             Vec::new()
         };
 
-        root.extend(self.path_root(path.root.clone())?);
+        root.extend(self.path_segments(path.root.clone())?);
 
         Ok(Path {
             root,
@@ -342,7 +239,7 @@ impl LowerModule {
         }
 
         Err(errors::SelfOutsideObjectContext {
-            source: self.file.clone(),
+            source: self.current_file().clone(),
             range: self_segment.location().0.clone(),
             ty: String::from("Self"),
         }
@@ -350,7 +247,7 @@ impl LowerModule {
     }
 
     /// Attemps to resolve a [`lume_hir::Path`] for an imported symbol.
-    fn resolve_imported_symbol(&mut self, path: &lume_ast::Path) -> Result<Option<Path>> {
+    pub(crate) fn resolve_imported_symbol(&mut self, path: &lume_ast::Path) -> Result<Option<Path>> {
         for (import, symbol) in &self.imports {
             // Match against imported paths, which match the first segment of the imported
             // path.
@@ -399,42 +296,44 @@ impl LowerModule {
         Ok(None)
     }
 
-    /// Adds the given node `![lang_item(name = ...)]` to the `lang_items` map,
-    /// if present in the given slice.
-    fn add_lang_items(&mut self, node: NodeId, attrs: &[lume_ast::Attribute]) -> Result<()> {
-        for attr in attrs {
-            if attr.name.as_str() != "lang_item" {
-                continue;
-            }
+    pub(crate) fn lower_items<I>(&mut self, source_file_id: SourceFileId, items: I) -> Result<()>
+    where
+        I: IntoIterator<Item = lume_ast::Item>,
+    {
+        self.current_file_id = source_file_id;
+        self.namespace = None;
 
-            let Some(name_arg) = attr.arguments.iter().find(|arg| arg.key.as_str() == "name") else {
-                return Err(errors::LangItemMissingName {
-                    source: self.file.clone(),
-                    range: attr.location.0.clone(),
-                }
-                .into());
-            };
+        self.imports.clear();
+        self.import(lume_ast::Import::std(DEFAULT_STD_IMPORTS))?;
 
-            let lume_ast::Literal::String(lang_name) = &name_arg.value else {
-                return Err(errors::LangItemInvalidNameType {
-                    source: self.file.clone(),
-                    range: attr.location.0.clone(),
-                }
-                .into());
-            };
-
-            self.map.lang_items.add_name(lang_name.value.as_str(), node)?;
+        for item in items {
+            self.lower_item(item)?;
         }
 
-        Ok(())
+        for (id, node) in &self.map.nodes {
+            debug_assert_eq!(
+                *id,
+                node.id(),
+                "mismatched between ID key and value: {id:?} != {:?}",
+                node.id()
+            );
+        }
+
+        for import in self.imports.values() {
+            self.map.imports.insert(import.clone());
+        }
+
+        self.dcx.ensure_untainted()
     }
 
-    fn location(&self, expr: lume_ast::Location) -> Location {
-        lume_span::source::Location {
-            file: self.file.clone(),
-            index: expr.0,
-        }
-        .intern()
+    pub(crate) fn lower_item(&mut self, item: lume_ast::Item) -> Result<()> {
+        self.current_locals.clear();
+        self.current_type_params.clear();
+        self.self_type = None;
+
+        self.item(item)?;
+
+        self.dcx.ensure_untainted()
     }
 }
 
@@ -493,13 +392,13 @@ impl Unique for lume_hir::Field {
 
 impl Unique for lume_hir::MethodDefinition {
     fn name(&self) -> Cow<'_, str> {
-        Cow::Borrowed(&self.name.name)
+        Cow::Borrowed(self.signature.name.name().as_str())
     }
 }
 
 impl Unique for lume_hir::TraitMethodDefinition {
     fn name(&self) -> Cow<'_, str> {
-        Cow::Borrowed(&self.name.name)
+        Cow::Borrowed(self.signature.name.name().as_str())
     }
 }
 
@@ -515,7 +414,7 @@ impl Unique for lume_hir::EnumDefinitionCase {
     }
 }
 
-impl LowerModule {
+impl LoweringContext<'_> {
     /// Ensures that the given series of items are unique.
     ///
     /// If a duplicate is found, the provided closure is called with the
@@ -524,7 +423,7 @@ impl LowerModule {
     pub(crate) fn ensure_unique_series<'a, T, F>(&self, items: &'a [T], on_duplicate: F) -> Result<()>
     where
         T: Unique,
-        F: Fn(&T, &T) -> Error,
+        F: Fn(&T, &T) -> lume_errors::Error,
     {
         let mut seen = HashMap::<Cow<'a, str>, &T>::with_capacity(items.len());
 

@@ -1,24 +1,20 @@
-use error_snippet::Result;
+use crate::*;
 
-use crate::LowerModule;
-
-impl LowerModule {
+impl LoweringContext<'_> {
     /// Lowers the given AST block into a HIR block, within an nested scope.
     #[libftrace::traced(level = Debug)]
     pub(super) fn block(&mut self, expr: lume_ast::Block) -> lume_hir::Block {
-        self.locals.push_frame();
+        lume_hir::with_frame!(self.current_locals, || {
+            let id = self.next_node_id();
+            let statements = self.statements(expr.statements);
+            let location = self.location(expr.location);
 
-        let id = self.next_node_id();
-        let statements = self.statements(expr.statements);
-        let location = self.location(expr.location);
-
-        self.locals.pop_frame();
-
-        lume_hir::Block {
-            id,
-            statements,
-            location,
-        }
+            lume_hir::Block {
+                id,
+                statements,
+                location,
+            }
+        })
     }
 
     /// Lowers the given AST block into a HIR block, within an isolated scope.
@@ -28,26 +24,24 @@ impl LowerModule {
     /// parent scope.
     #[libftrace::traced(level = Debug)]
     pub(super) fn isolated_block(&mut self, expr: lume_ast::Block, params: &[lume_hir::Parameter]) -> lume_hir::Block {
-        self.locals.push_boundary();
+        lume_hir::with_boundary!(self.current_locals, || {
+            for param in params {
+                self.current_locals.define(
+                    param.name.to_string(),
+                    lume_hir::VariableSource::Parameter(param.clone()),
+                );
+            }
 
-        for param in params {
-            self.locals.define(
-                param.name.to_string(),
-                lume_hir::VariableSource::Parameter(param.clone()),
-            );
-        }
+            let id = self.next_node_id();
+            let statements = self.statements(expr.statements);
+            let location = self.location(expr.location);
 
-        let id = self.next_node_id();
-        let statements = self.statements(expr.statements);
-        let location = self.location(expr.location);
-
-        self.locals.pop_boundary();
-
-        lume_hir::Block {
-            id,
-            statements,
-            location,
-        }
+            lume_hir::Block {
+                id,
+                statements,
+                location,
+            }
+        })
     }
 
     #[libftrace::traced(level = Debug)]
@@ -104,7 +98,7 @@ impl LowerModule {
         let location = self.location(statement.location);
 
         let declared_type = match statement.variable_type {
-            Some(t) => Some(self.type_ref(t)?),
+            Some(t) => Some(self.hir_type(t)?),
             None => None,
         };
 
@@ -116,7 +110,7 @@ impl LowerModule {
             location,
         };
 
-        self.locals
+        self.current_locals
             .define(name.to_string(), lume_hir::VariableSource::Variable(decl.clone()));
 
         let statement = lume_hir::Statement {

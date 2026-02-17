@@ -94,9 +94,9 @@ impl TyInferCtx {
 
         for parent in self.hir_parent_iter(def) {
             let params = match parent {
-                lume_hir::Node::Function(func) => &func.parameters,
-                lume_hir::Node::Method(method) => &method.parameters,
-                lume_hir::Node::TraitMethodDef(method) => &method.parameters,
+                lume_hir::Node::Function(func) => &func.signature.parameters,
+                lume_hir::Node::Method(method) => &method.signature.parameters,
+                lume_hir::Node::TraitMethodDef(method) => &method.signature.parameters,
                 lume_hir::Node::TraitMethodImpl(method) => &method.parameters,
                 _ => continue,
             };
@@ -128,9 +128,9 @@ impl TyInferCtx {
     #[libftrace::traced(level = Trace)]
     pub fn return_type_of(&self, id: NodeId) -> Option<&lume_hir::Type> {
         match self.hir_node(id)? {
-            Node::Function(method) => Some(&method.return_type),
-            Node::Method(method) => Some(&method.return_type),
-            Node::TraitMethodDef(method) => Some(&method.return_type),
+            Node::Function(func) => Some(&func.signature.return_type),
+            Node::Method(method) => Some(&method.signature.return_type),
+            Node::TraitMethodDef(method) => Some(&method.signature.return_type),
             Node::TraitMethodImpl(method) => Some(&method.return_type),
             _ => None,
         }

@@ -98,14 +98,14 @@ impl PrettyPrint for Node {
 
 impl PrettyPrint for FunctionDefinition {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let parameters = pretty_list!(self.parameters, map);
+        let parameters = pretty_list!(self.signature.parameters, map);
 
         f.debug_struct("FunctionDefinition")
             .field("visibility", &self.visibility)
-            .field("name", &self.name)
+            .field("name", &self.signature.name)
             .field("parameters", &parameters)
-            .field("type_parameters", &pretty_list!(self.type_parameters, map))
-            .field("return_type", pretty_item!(self.return_type, map))
+            .field("type_parameters", &pretty_list!(self.signature.type_parameters, map))
+            .field("return_type", pretty_item!(self.signature.return_type, map))
             .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
@@ -201,14 +201,14 @@ impl PrettyPrint for Field {
 
 impl PrettyPrint for MethodDefinition {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let parameters = pretty_list!(self.parameters, map);
+        let parameters = pretty_list!(self.signature.parameters, map);
 
         f.debug_struct("MethodDefinition")
             .field("visibility", &self.visibility)
-            .field("name", &self.name)
+            .field("name", &self.signature.name)
             .field("parameters", &parameters)
-            .field("type_parameters", &pretty_list!(self.type_parameters, map))
-            .field("return_type", pretty_item!(self.return_type, map))
+            .field("type_parameters", &pretty_list!(self.signature.type_parameters, map))
+            .field("return_type", pretty_item!(self.signature.return_type, map))
             .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
@@ -231,13 +231,13 @@ impl PrettyPrint for TraitDefinition {
 
 impl PrettyPrint for TraitMethodDefinition {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let parameters = pretty_list!(self.parameters, map);
+        let parameters = pretty_list!(self.signature.parameters, map);
 
         f.debug_struct("TraitMethodDefinition")
-            .field("name", &self.name)
+            .field("name", &self.signature.name)
             .field("parameters", &parameters)
-            .field("type_parameters", &pretty_list!(self.type_parameters, map))
-            .field("return_type", pretty_item!(self.return_type, map))
+            .field("type_parameters", &pretty_list!(self.signature.type_parameters, map))
+            .field("return_type", pretty_item!(self.signature.return_type, map))
             .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()

@@ -43,7 +43,7 @@ impl TyCheckCtx {
             let Some(method_impl) = trait_impl
                 .methods
                 .iter()
-                .find(|method_impl| method_impl.name == method_def.name)
+                .find(|method_impl| &method_impl.name == method_def.signature.name.name())
             else {
                 // If a block is defined in the trait definition for the method,
                 // we can default back to that when resolving.
@@ -54,7 +54,7 @@ impl TyCheckCtx {
                 // Otherwise, the trait impl is missing a method implementation.
                 return Err(crate::check::errors::TraitImplMissingMethod {
                     source: trait_impl.location,
-                    name: method_def.name.clone(),
+                    name: method_def.signature.name.name().clone(),
                 }
                 .into());
             };
@@ -66,7 +66,7 @@ impl TyCheckCtx {
             if !trait_def
                 .methods
                 .iter()
-                .any(|method_def| method_def.name == method_impl.name)
+                .any(|method_def| method_def.signature.name.name() == &method_impl.name)
             {
                 return Err(crate::check::errors::TraitImplExtraneousMethod {
                     source: trait_impl.location,
@@ -86,13 +86,19 @@ impl TyCheckCtx {
         method_def: &'a lume_hir::TraitMethodDefinition,
         method_impl: &'a lume_hir::TraitMethodImplementation,
     ) -> Result<()> {
-        let type_params = [&trait_def.type_parameters[..], &method_def.type_parameters[..]].concat();
+        let type_params = [
+            &trait_def.type_parameters[..],
+            &method_def.signature.type_parameters[..],
+        ]
+        .concat();
 
         let type_args = self.mk_type_refs_from(trait_impl.type_args(), trait_impl.id)?;
 
         let def_sig = self.signature_of_call_ref(CallReference::Method(method_def.id))?;
         let mut inst_def_sig = self.instantiate_signature_isolate(def_sig.as_ref(), &type_params, &type_args);
-        inst_def_sig.type_params.clone_from(&method_def.type_parameters);
+        inst_def_sig
+            .type_params
+            .clone_from(&method_def.signature.type_parameters);
 
         let impl_sig = self.signature_of_call_ref(CallReference::Method(method_impl.id))?;
         let mut inst_impl_sig = self.instantiate_signature_isolate(impl_sig.as_ref(), &type_params, &type_args);

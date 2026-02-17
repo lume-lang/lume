@@ -25,12 +25,12 @@ impl TyInferCtx {
                 lume_hir::TypeDefinition::Enum(enum_def) => Ok(&enum_def.type_parameters),
                 lume_hir::TypeDefinition::TypeParameter(_) => Ok(&[]),
             },
-            lume_hir::Node::Function(func) => Ok(&func.type_parameters),
+            lume_hir::Node::Function(func) => Ok(&func.signature.type_parameters),
             lume_hir::Node::Impl(implementation) => Ok(&implementation.type_parameters),
             lume_hir::Node::TraitImpl(trait_impl) => Ok(&trait_impl.type_parameters),
-            lume_hir::Node::TraitMethodDef(method_def) => Ok(&method_def.type_parameters),
+            lume_hir::Node::TraitMethodDef(method_def) => Ok(&method_def.signature.type_parameters),
             lume_hir::Node::TraitMethodImpl(method_impl) => Ok(&method_impl.type_parameters),
-            lume_hir::Node::Method(method) => Ok(&method.type_parameters),
+            lume_hir::Node::Method(method) => Ok(&method.signature.type_parameters),
             _ => Err(crate::query::diagnostics::CannotHoldTypeParams { id }.into()),
         }
     }

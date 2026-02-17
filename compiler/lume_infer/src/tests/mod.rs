@@ -3,9 +3,8 @@ use std::sync::Arc;
 use error_snippet::Result;
 use lume_errors::DiagCtx;
 use lume_hir::map::Map;
-use lume_hir_lower::LowerState;
 use lume_session::{GlobalCtx, Package};
-use lume_span::{PackageId, SourceFile, SourceMap};
+use lume_span::{PackageId, SourceFile};
 use lume_types::TyCtx;
 
 use crate::TyInferCtx;
@@ -30,11 +29,9 @@ fn package_with_src(input: &str) -> Package {
 #[track_caller]
 fn lower_into_hir(input: &str) -> Result<Map> {
     let dcx = DiagCtx::new().handle();
-    let mut source_map = SourceMap::new();
-
     let package = package_with_src(input);
 
-    dcx.with(|handle| LowerState::new(&package, &mut source_map, handle).lower_into())
+    dcx.with(|handle| lume_hir_lower::lower_to_hir(&package, handle))
 }
 
 #[track_caller]

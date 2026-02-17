@@ -124,7 +124,7 @@ impl Visitor for LocationVisitor {
                     kind: SymbolKind::Callable {
                         reference: CallReference::Function(func.id),
                     },
-                    location: func.name.location,
+                    location: func.path().location,
                 });
             }
             lume_hir::Node::Method(method) => {
@@ -132,7 +132,7 @@ impl Visitor for LocationVisitor {
                     kind: SymbolKind::Callable {
                         reference: CallReference::Method(method.id),
                     },
-                    location: method.name.location,
+                    location: method.signature.location,
                 });
             }
             lume_hir::Node::TraitMethodDef(method) => {
@@ -140,7 +140,7 @@ impl Visitor for LocationVisitor {
                     kind: SymbolKind::Callable {
                         reference: CallReference::Method(method.id),
                     },
-                    location: method.name.location,
+                    location: method.signature.location,
                 });
             }
             lume_hir::Node::TraitMethodImpl(method) => {
