@@ -138,6 +138,8 @@ impl Drop for BumpAllocator {
 pub(crate) struct YoungGeneration {
     allocator: BumpAllocator,
     drop_list: IndexMap<*mut u8, DropPointer>,
+
+    pub(crate) info: AllocatorInfo,
 }
 
 impl YoungGeneration {
@@ -145,12 +147,14 @@ impl YoungGeneration {
         Self {
             allocator: BumpAllocator::new(initial_size),
             drop_list: IndexMap::new(),
+            info: AllocatorInfo::default(),
         }
     }
 
     pub(crate) fn alloc(&mut self, size: usize, metadata: *const TypeMetadata) -> Option<*mut u8> {
         if let Some(ptr) = self.allocator.alloc(size) {
             libftrace::trace!("[G1] allocated {size} bytes ({ptr:p})");
+            self.info.object_count += 1;
 
             if !metadata.is_null() {
                 let drop_ptr = unsafe { metadata.read() }.drop_ptr;
@@ -172,6 +176,7 @@ impl YoungGeneration {
     /// without invoking the associated drop pointer, if any.
     pub(crate) fn unregister_object(&mut self, ptr: *mut u8) {
         self.drop_list.shift_remove(&ptr);
+        self.info.object_count -= 1;
     }
 
     /// "Clears" the generation by resetting the bump pointer, as well
@@ -182,6 +187,7 @@ impl YoungGeneration {
         }
 
         self.allocator.clear();
+        self.info.object_count = 0;
     }
 
     /// Attempts to find all GC roots found inside of the given stack map.
@@ -311,6 +317,8 @@ pub(crate) struct OldGeneration {
     /// its destructor. If the allocation doesn't have any matching destructor,
     /// the value is `null`.
     allocations: IndexMap<*mut u8, (usize, *const u8)>,
+
+    pub(crate) info: AllocatorInfo,
 }
 
 impl OldGeneration {
@@ -318,6 +326,7 @@ impl OldGeneration {
         Self {
             allocator: MiMalloc,
             allocations: IndexMap::new(),
+            info: AllocatorInfo::default(),
         }
     }
 
@@ -335,6 +344,7 @@ impl OldGeneration {
             unsafe { metadata.read() }.drop_ptr.cast::<u8>()
         };
 
+        self.info.object_count += 1;
         self.allocations.insert(ptr, (size, drop_ptr));
 
         ptr
@@ -359,6 +369,8 @@ impl OldGeneration {
 
             unsafe { self.allocator.dealloc(ptr, layout) }
         }
+
+        self.info.object_count = 0;
     }
 }
 
@@ -366,7 +378,6 @@ pub struct GenerationalAllocator {
     young: YoungGeneration,
     old: OldGeneration,
 
-    pub(crate) info: AllocatorInfo,
     pub(crate) condition: Cell<CollectCondition>,
 }
 
@@ -385,7 +396,6 @@ impl GenerationalAllocator {
         Self {
             young: YoungGeneration::new(gen1_size),
             old: OldGeneration::new(),
-            info: AllocatorInfo::default(),
             condition: Cell::new(crate::default_collect_condition),
         }
     }
@@ -408,6 +418,16 @@ impl GenerationalAllocator {
         Self::new(g1_size)
     }
 
+    /// Gets a shared reference to the young generation.
+    pub(crate) fn g1(&self) -> &YoungGeneration {
+        &self.young
+    }
+
+    /// Gets a shared reference to the old generation.
+    pub(crate) fn g2(&self) -> &OldGeneration {
+        &self.old
+    }
+
     /// Gets the current size of allocated memory in the young generation, in
     /// bytes.
     pub fn g1_current_size(&self) -> usize {
@@ -425,7 +445,6 @@ impl GenerationalAllocator {
         // it directly into the 2nd generation, since it is likely going
         // to live for much longer than most smaller allocations.
         if size >= self.young.allocator.total_size() {
-            self.info.g2_object_count += 1;
             return self.old.alloc(size, metadata);
         }
 
@@ -433,7 +452,6 @@ impl GenerationalAllocator {
         // that's where most new allocations go. If it fails, it means we're out of
         // space in the 1st generation and must trigger a collection within it.
         if let Some(ptr) = self.young.alloc(size, metadata) {
-            self.info.g1_object_count += 1;
             return ptr;
         }
 
@@ -445,7 +463,6 @@ impl GenerationalAllocator {
 
         // After promotion, attempt to allocate in the 1st generation again.
         if let Some(ptr) = self.young.alloc(size, metadata) {
-            self.info.g1_object_count += 1;
             return ptr;
         }
 
@@ -453,7 +470,6 @@ impl GenerationalAllocator {
         // will use the 2nd generation allocator again in case of allocator changes.
         libftrace::error!("warning: expected allocation to G1 after promotion, but it failed");
 
-        self.info.g2_object_count += 1;
         self.old.alloc(size, metadata)
     }
 
@@ -500,20 +516,16 @@ impl GenerationalAllocator {
             // Unregister the allocation from the 1st generation, so the value isn't
             // disposed, when calling `clear`.
             self.young.unregister_object(alloc_start);
-
-            self.info.g1_object_count -= 1;
-            self.info.g2_object_count += 1;
         }
 
-        self.info.g1_object_count = 0;
         self.young.clear();
     }
 
     /// Drops all allocations made with the allocator, effectively resetting
     /// all the state within the allocator.
     pub fn drop_allocations(&mut self) {
-        self.info.g1_object_count = 0;
-        self.info.g2_object_count = 0;
+        self.young.info.object_count = 0;
+        self.old.info.object_count = 0;
 
         self.young.clear();
         self.old.clear();
@@ -522,11 +534,8 @@ impl GenerationalAllocator {
 
 #[derive(Default)]
 pub(crate) struct AllocatorInfo {
-    /// Amount of live objects in the 1st generation.
-    pub g1_object_count: usize,
-
-    /// Amount of live objects in the 2nd generation.
-    pub g2_object_count: usize,
+    /// Amount of live objects in the generation.
+    pub object_count: usize,
 }
 
 #[allow(clippy::cast_possible_truncation)]
