@@ -49,7 +49,7 @@ impl Config {
     }
 }
 
-pub(crate) enum TestResult {
+pub enum TestResult {
     /// The test succeeded.
     Success,
 
@@ -71,7 +71,7 @@ impl PartialEq for TestResult {
 
 impl Eq for TestResult {}
 
-pub(crate) type TestFailureCallback = Box<dyn FnOnce() -> String + Send + Sync>;
+pub type TestFailureCallback = Box<dyn FnOnce() -> String + Send + Sync>;
 
 /// Main entrypoint for the Manifold CLI.
 pub fn manifold_entry(config: Config, dcx: DiagCtx) -> Result<i32> {
@@ -93,7 +93,7 @@ fn find_compiler_root() -> PathBuf {
 }
 
 /// Attempts to find the root of the `tests` folder in the compiler project.
-fn find_test_root() -> Result<PathBuf> {
+pub fn find_test_root() -> Result<PathBuf> {
     let compiler_root = find_compiler_root();
     let test_root = compiler_root.join("tests");
 
@@ -110,8 +110,8 @@ fn find_test_root() -> Result<PathBuf> {
 }
 
 /// Represents the type of a given Manifold test.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum ManifoldTestType {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ManifoldTestType {
     /// # UI Tests
     ///
     /// UI tests are stored in the `ui/` subdirectory and verify the console
@@ -142,7 +142,7 @@ pub(crate) enum ManifoldTestType {
 }
 
 #[derive(Clone, PartialEq, Eq)]
-pub(crate) struct ManifoldCollectedTest {
+pub struct ManifoldCollectedTest {
     pub absolute_path: PathBuf,
     pub relative_path: PathBuf,
     pub test_type: ManifoldTestType,
@@ -204,7 +204,7 @@ fn run_test_suite(config: Config, root: &PathBuf, dcx: DiagCtx) -> Result<i32> {
     Ok(i32::from(failure_count > 0))
 }
 
-fn collect_tests(root: &PathBuf, config: &Config) -> Result<Vec<ManifoldCollectedTest>> {
+pub fn collect_tests(root: &PathBuf, config: &Config) -> Result<Vec<ManifoldCollectedTest>> {
     let glob_pattern_str = format!("{}/**/*.lm", root.display());
     let glob_pattern = glob(&glob_pattern_str).expect("should have valid glob pattern");
 
@@ -235,7 +235,7 @@ fn collect_tests(root: &PathBuf, config: &Config) -> Result<Vec<ManifoldCollecte
         .collect::<Result<Vec<_>>>()
 }
 
-fn run_test_file(test_case: ManifoldCollectedTest, dcx: DiagCtx) -> Result<TestResult> {
+pub fn run_test_file(test_case: ManifoldCollectedTest, dcx: DiagCtx) -> Result<TestResult> {
     panic::set_capture_buf(Arc::default());
 
     let _ = {
@@ -279,7 +279,7 @@ fn run_test_file(test_case: ManifoldCollectedTest, dcx: DiagCtx) -> Result<TestR
     })
 }
 
-fn run_single_test(test_type: ManifoldTestType, test_file_path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
+pub fn run_single_test(test_type: ManifoldTestType, test_file_path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
     Ok(match test_type {
         ManifoldTestType::Ui => ui::run_test(test_file_path)?,
         ManifoldTestType::Hir => hir::run_test(test_file_path)?,
@@ -307,28 +307,5 @@ fn determine_test_type(root: &PathBuf, path: &Path) -> Result<ManifoldTestType> 
         Some("mir") => Ok(ManifoldTestType::Mir),
         Some("bin") => Ok(ManifoldTestType::Binary),
         _ => Err(SimpleDiagnostic::new(format!("could not determine type of test: {relative_path_str}")).into()),
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn manifold_tests() -> lume_errors::Result<()> {
-        let dcx = DiagCtx::new();
-
-        match manifold_entry(Config::default(), dcx.clone()) {
-            Ok(0) => return Ok(()),
-            Ok(_) => {}
-            Err(err) => dcx.emit(err),
-        }
-
-        let mut renderer = error_snippet::GraphicalRenderer::new();
-        renderer.use_colors = true;
-        renderer.highlight_source = true;
-
-        dcx.render_stderr(&mut renderer);
-        dcx.ensure_untainted()
     }
 }
