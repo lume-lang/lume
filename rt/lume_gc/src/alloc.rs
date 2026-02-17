@@ -190,119 +190,10 @@ impl YoungGeneration {
         self.info.object_count = 0;
     }
 
-    /// Attempts to find all GC roots found inside of the given stack map.
-    /// The returned iterator will iterate over a list of pointers, which
-    /// point to an item inside the current stack frame.
-    ///
-    /// To get the address of the underlying allocation, simply read the
-    /// pointer. This is to facilitate the GC moving the underlying
-    /// allocation to a different address, whereafter it can write the new
-    /// address to the pointer in the stack frame.
-    pub(crate) fn living_gc_roots(&self, frame: &FrameStackMap) -> impl Iterator<Item = *const *const u8> {
-        frame.iter_stack_value_locations().filter_map(|(stack_ptr, obj_ptr)| {
-            // Since the pointer is pointer to an object, the allocation will actually start
-            // just before the given pointer, since the metadata is defined at [-0x8].
-            let obj_ptr = unsafe { obj_ptr.byte_sub(POINTER_SIZE) };
-
-            if self.is_ptr_object(obj_ptr) {
-                Some(stack_ptr)
-            } else {
-                None
-            }
-        })
-    }
-
-    /// Attempts to find all GC references found inside of the given stack map.
-    /// The returned iterator will iterate over a list of pointers, which
-    /// point to an item inside the current stack frame.
-    ///
-    /// To get the address of the underlying allocation, simply read the
-    /// pointer. This is to facilitate the GC moving the underlying
-    /// allocation to a different address, whereafter it can write the new
-    /// address to the pointer in the stack frame.
-    ///
-    /// This method is an expansion of [`living_gc_roots`]. It expands the
-    /// returned GC roots into a tree of all GC references, which can
-    /// be referenced by any existing GC reference.
-    ///
-    /// Objects are pushed to the iterator in the order that they're found. This
-    /// means that objects closer to the roots appear earlier in the
-    /// iterator, than any child objects.
-    pub(crate) fn living_gc_objects(
-        &self,
-        frame: &FrameStackMap,
-    ) -> impl DoubleEndedIterator<Item = ObjectReference> + use<> {
-        let mut object_refs = IndexMap::<*const u8, ObjectReference>::new();
-        let mut worklist = self.living_gc_roots(frame).collect::<IndexSet<_>>();
-
-        while let Some(root_ptr) = worklist.pop() {
-            let obj_ptr = unsafe { root_ptr.read() };
-
-            if let Some(obj_ref) = object_refs.get_mut(&obj_ptr) {
-                // We've already visited the pointer - skip it and all it's descendants.
-                if !obj_ref.references.insert(root_ptr) {
-                    continue;
-                }
-            } else {
-                object_refs.insert(obj_ptr, ObjectReference {
-                    object: obj_ptr,
-                    references: indexmap::indexset! {
-                        root_ptr
-                    },
-                });
-            }
-
-            let metadata = unsafe { metadata_of(obj_ptr).read() };
-
-            // Niche handling for `std::mem::Block` types.
-            //
-            // Since they only represent a block of contiguous memory, a pointer could
-            // theoretically exist anywhere within it. Instead of checking each
-            // byte within the block, we check all long words in the block,
-            // chunked by pointer size.
-            if metadata.type_id.0 == *BLOCK_TYPE_ID {
-                let block_len = unsafe { obj_ptr.cast::<u64>().read() } as usize;
-                let block_ptr = unsafe { obj_ptr.byte_add(POINTER_SIZE).cast::<*const u8>().read() };
-
-                let mut offset = 0;
-
-                // If the block size isn't divisible by the pointer size, we skip any
-                // remaining bytes, since they couldn't fit a pointer anyway.
-                while offset + POINTER_SIZE <= block_len {
-                    let block_item_ptr = unsafe { block_ptr.byte_add(offset).cast::<*const u8>() };
-                    let block_item = unsafe { block_item_ptr.read().byte_sub(POINTER_SIZE) };
-
-                    if self.is_ptr_object(block_item) {
-                        worklist.insert(block_item_ptr);
-                    }
-
-                    offset += POINTER_SIZE;
-                }
-
-                continue;
-            }
-
-            let mut offset = 0;
-
-            for field_metadata in metadata.fields.items() {
-                let field_ptr = unsafe { obj_ptr.byte_add(offset).cast::<*const u8>() };
-                let field = unsafe { field_ptr.read() };
-
-                if self.is_ptr_object(field) {
-                    worklist.insert(field_ptr);
-                }
-
-                offset += unsafe { field_metadata.ty.read() }.size;
-            }
-        }
-
-        object_refs.into_values()
-    }
-
     /// Discerns whether the given pointer is a reference to an
     /// object within the current allocator generation.
     #[inline]
-    fn is_ptr_object(&self, obj_ptr: *const u8) -> bool {
+    fn contains_allocation(&self, obj_ptr: *const u8) -> bool {
         obj_ptr >= self.allocator.base && obj_ptr <= self.allocator.current
     }
 }
@@ -371,6 +262,13 @@ impl OldGeneration {
         }
 
         self.info.object_count = 0;
+    }
+
+    /// Discerns whether the given pointer is a reference to an
+    /// object within the current allocator generation.
+    #[inline]
+    fn contains_allocation(&self, obj_ptr: *const u8) -> bool {
+        self.allocations.contains_key(&obj_ptr.cast_mut())
     }
 }
 
@@ -513,7 +411,11 @@ impl GenerationalAllocator {
         // Reverse the list of all objects. Object references are added in the order
         // that they're found, but we must promote child objects first, so that
         // any parent object doesn't copy the old location of the child.
-        for ObjectReference { object, references } in self.young.living_gc_objects(frame).rev() {
+        for ObjectReference { object, references } in self.living_gc_objects(frame).rev() {
+            if !self.young.contains_allocation(object) {
+                continue;
+            }
+
             // The metadata of the object is stored at [-0x08], so the actual start of
             // the allocation is there.
             let alloc_start = unsafe { object.byte_sub(POINTER_SIZE) }.cast_mut();
@@ -546,6 +448,128 @@ impl GenerationalAllocator {
         self.young.clear();
     }
 
+    /// Attempts to find all GC roots found inside of the given stack map.
+    /// The returned iterator will iterate over a list of pointers, which
+    /// point to an item inside the current stack frame.
+    ///
+    /// To get the address of the underlying allocation, simply read the
+    /// pointer. This is to facilitate the GC moving the underlying
+    /// allocation to a different address, whereafter it can write the new
+    /// address to the pointer in the stack frame.
+    pub(crate) fn living_gc_roots(&self, frame: &FrameStackMap) -> impl Iterator<Item = *const *const u8> {
+        frame.iter_stack_value_locations().filter_map(|(stack_ptr, obj_ptr)| {
+            // Since the pointer is pointer to an object, the allocation will actually start
+            // just before the given pointer, since the metadata is defined at [-0x8].
+            let obj_ptr = unsafe { obj_ptr.byte_sub(POINTER_SIZE) };
+
+            if self.owning_generation(obj_ptr).is_some() {
+                Some(stack_ptr)
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Attempts to find all GC references found inside of the given stack map.
+    /// The returned iterator will iterate over a list of pointers, which
+    /// point to an item inside the current stack frame.
+    ///
+    /// To get the address of the underlying allocation, simply read the
+    /// pointer. This is to facilitate the GC moving the underlying
+    /// allocation to a different address, whereafter it can write the new
+    /// address to the pointer in the stack frame.
+    ///
+    /// This method is an expansion of [`living_gc_roots`]. It expands the
+    /// returned GC roots into a tree of all GC references, which can
+    /// be referenced by any existing GC reference.
+    ///
+    /// Objects are pushed to the iterator in the order that they're found. This
+    /// means that objects closer to the roots appear earlier in the
+    /// iterator, than any child objects.
+    pub(crate) fn living_gc_objects(
+        &self,
+        frame: &FrameStackMap,
+    ) -> impl DoubleEndedIterator<Item = ObjectReference> + use<> {
+        let mut object_refs = IndexMap::<*const u8, ObjectReference>::new();
+        let mut worklist = self.living_gc_roots(frame).collect::<IndexSet<_>>();
+
+        while let Some(root_ptr) = worklist.pop() {
+            let obj_ptr = unsafe { root_ptr.read() };
+
+            if let Some(obj_ref) = object_refs.get_mut(&obj_ptr) {
+                // We've already visited the pointer - skip it and all it's descendants.
+                if !obj_ref.references.insert(root_ptr) {
+                    continue;
+                }
+            } else {
+                object_refs.insert(obj_ptr, ObjectReference {
+                    object: obj_ptr,
+                    references: indexmap::indexset! {
+                        root_ptr
+                    },
+                });
+            }
+
+            let metadata = unsafe { metadata_of(obj_ptr).read() };
+
+            // Niche handling for `std::mem::Block` types.
+            //
+            // Since they only represent a block of contiguous memory, a pointer could
+            // theoretically exist anywhere within it. Instead of checking each
+            // byte within the block, we check all long words in the block,
+            // chunked by pointer size.
+            if metadata.type_id.0 == *BLOCK_TYPE_ID {
+                let block_len = unsafe { obj_ptr.cast::<u64>().read() } as usize;
+                let block_ptr = unsafe { obj_ptr.byte_add(POINTER_SIZE).cast::<*const u8>().read() };
+
+                let mut offset = 0;
+
+                // If the block size isn't divisible by the pointer size, we skip any
+                // remaining bytes, since they couldn't fit a pointer anyway.
+                while offset + POINTER_SIZE <= block_len {
+                    let block_item_ptr = unsafe { block_ptr.byte_add(offset).cast::<*const u8>() };
+                    let block_item = unsafe { block_item_ptr.read().byte_sub(POINTER_SIZE) };
+
+                    if self.owning_generation(block_item).is_some() {
+                        worklist.insert(block_item_ptr);
+                    }
+
+                    offset += POINTER_SIZE;
+                }
+
+                continue;
+            }
+
+            let mut offset = 0;
+
+            for field_metadata in metadata.fields.items() {
+                let field_ptr = unsafe { obj_ptr.byte_add(offset).cast::<*const u8>() };
+                let field = unsafe { field_ptr.read().byte_sub(POINTER_SIZE) };
+
+                if self.owning_generation(field).is_some() {
+                    worklist.insert(field_ptr);
+                }
+
+                offset += unsafe { field_metadata.ty.read() }.size;
+            }
+        }
+
+        object_refs.into_values()
+    }
+
+    /// Discerns whether the given pointer is a reference to an
+    /// object within the current allocator generation.
+    #[inline]
+    fn owning_generation(&self, obj_ptr: *const u8) -> Option<Generation> {
+        if self.young.contains_allocation(obj_ptr) {
+            Some(Generation::Young)
+        } else if self.old.contains_allocation(obj_ptr) {
+            Some(Generation::Old)
+        } else {
+            None
+        }
+    }
+
     /// Drops all allocations made with the allocator, effectively resetting
     /// all the state within the allocator.
     pub fn drop_allocations(&mut self) {
@@ -555,6 +579,12 @@ impl GenerationalAllocator {
         self.young.clear();
         self.old.clear();
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Generation {
+    Young,
+    Old,
 }
 
 #[derive(Default)]
