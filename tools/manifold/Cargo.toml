@@ -23,6 +23,9 @@ rayon = "=1.11.0"
 regex = { workspace = true }
 similar = { version = "=2.7.0", features = ["inline"] }
 
+[dev-dependencies]
+manifold_macros = { path = "../manifold_macros" }
+
 [lints]
 workspace = true
 

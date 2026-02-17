@@ -23,3 +23,7 @@ fn main() {
         std::process::exit(5);
     }
 }
+
+#[cfg(test)]
+#[manifold_macros::manifold_tests]
+mod tests {}

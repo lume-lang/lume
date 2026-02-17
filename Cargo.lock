@@ -2042,10 +2042,21 @@ dependencies = [
  "lume_errors",
  "lume_gc",
  "lume_span",
+ "manifold_macros",
  "owo-colors",
  "rayon",
  "regex",
  "similar",
+]
+
+[[package]]
+name = "manifold_macros"
+version = "0.1.1"
+dependencies = [
+ "manifold",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
