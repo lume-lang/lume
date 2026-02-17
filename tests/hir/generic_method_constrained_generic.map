@@ -30,9 +30,26 @@ Map {
             methods: [
                 MethodDefinition {
                     visibility: Private,
-                    name: Identifier {
-                        name: "test",
-                        location: generic_method_constrained_generic.lm:15:19,
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "Test",
+                                    location: generic_method_constrained_generic.lm:0:0,
+                                },
+                                bound_types: [],
+                                location: generic_method_constrained_generic.lm:0:0,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "test",
+                                location: generic_method_constrained_generic.lm:15:19,
+                            },
+                            bound_types: [],
+                            location: generic_method_constrained_generic.lm:15:19,
+                        },
+                        location: generic_method_constrained_generic.lm:0:0,
                     },
                     parameters: [],
                     type_parameters: [

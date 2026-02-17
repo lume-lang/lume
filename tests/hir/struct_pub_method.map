@@ -30,9 +30,26 @@ Map {
             methods: [
                 MethodDefinition {
                     visibility: Public,
-                    name: Identifier {
-                        name: "bar",
-                        location: struct_pub_method.lm:22:25,
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "Foo",
+                                    location: struct_pub_method.lm:0:0,
+                                },
+                                bound_types: [],
+                                location: struct_pub_method.lm:0:0,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "bar",
+                                location: struct_pub_method.lm:22:25,
+                            },
+                            bound_types: [],
+                            location: struct_pub_method.lm:22:25,
+                        },
+                        location: struct_pub_method.lm:0:0,
                     },
                     parameters: [],
                     type_parameters: [],

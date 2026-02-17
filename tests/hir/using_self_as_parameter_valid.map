@@ -30,9 +30,26 @@ Map {
             methods: [
                 MethodDefinition {
                     visibility: Public,
-                    name: Identifier {
-                        name: "bar",
-                        location: using_self_as_parameter_valid.lm:22:25,
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "Foo",
+                                    location: using_self_as_parameter_valid.lm:0:0,
+                                },
+                                bound_types: [],
+                                location: using_self_as_parameter_valid.lm:0:0,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "bar",
+                                location: using_self_as_parameter_valid.lm:22:25,
+                            },
+                            bound_types: [],
+                            location: using_self_as_parameter_valid.lm:22:25,
+                        },
+                        location: using_self_as_parameter_valid.lm:0:0,
                     },
                     parameters: [
                         Parameter {
