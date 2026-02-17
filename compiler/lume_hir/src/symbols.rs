@@ -2,6 +2,34 @@ use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::hash::Hash;
 
+/// Executes the given closure within a new symbol table frame.
+///
+/// When the closure returns, the symbol table will be restored to its previous
+/// state.
+#[macro_export]
+macro_rules! with_frame {
+    ($table:expr,$f:expr) => {{
+        $table.push_frame();
+        let result = $f();
+        $table.pop_frame();
+        result
+    }};
+}
+
+/// Executes the given closure within a new symbol table boundary.
+///
+/// When the closure returns, the symbol table will be restored to its previous
+/// state.
+#[macro_export]
+macro_rules! with_boundary {
+    ($table:expr,$f:expr) => {{
+        $table.push_boundary();
+        let result = $f();
+        $table.pop_boundary();
+        result
+    }};
+}
+
 /// Defines a single frame within the symbol table. Each frame can contain
 /// multiple entries.
 #[derive(Debug, Clone, PartialEq)]

@@ -420,6 +420,11 @@ impl Package {
             .into()),
         }
     }
+
+    /// Returns an iterator over all the Lume source files within the package.
+    pub fn iter_sources(&self) -> impl Iterator<Item = &Arc<SourceFile>> {
+        self.files.values()
+    }
 }
 
 impl Default for Package {

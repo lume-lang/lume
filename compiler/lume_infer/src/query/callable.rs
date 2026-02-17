@@ -862,15 +862,15 @@ impl TyInferCtx {
             Callable::Method(method) => match self.hir_expect_node(method.id) {
                 lume_hir::Node::Method(method) => Ok(FunctionSigOwned {
                     id: method.id,
-                    params: params_of(self, method.id, &method.parameters)?,
-                    type_params: method.type_parameters.clone(),
-                    ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                    params: params_of(self, method.id, &method.signature.parameters)?,
+                    type_params: method.signature.type_parameters.clone(),
+                    ret_ty: self.mk_type_ref_from(&method.signature.return_type, method.id)?,
                 }),
                 lume_hir::Node::TraitMethodDef(method) => Ok(FunctionSigOwned {
                     id: method.id,
-                    params: params_of(self, method.id, &method.parameters)?,
-                    type_params: method.type_parameters.clone(),
-                    ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                    params: params_of(self, method.id, &method.signature.parameters)?,
+                    type_params: method.signature.type_parameters.clone(),
+                    ret_ty: self.mk_type_ref_from(&method.signature.return_type, method.id)?,
                 }),
                 lume_hir::Node::TraitMethodImpl(method) => Ok(FunctionSigOwned {
                     id: method.id,
@@ -887,9 +887,9 @@ impl TyInferCtx {
 
                 Ok(FunctionSigOwned {
                     id: function.id,
-                    params: params_of(self, func.id, &func.parameters)?,
-                    type_params: func.type_parameters.clone(),
-                    ret_ty: self.mk_type_ref_from(&func.return_type, func.id)?,
+                    params: params_of(self, func.id, &func.signature.parameters)?,
+                    type_params: func.signature.type_parameters.clone(),
+                    ret_ty: self.mk_type_ref_from(&func.signature.return_type, func.id)?,
                 })
             }
         }
@@ -907,15 +907,15 @@ impl TyInferCtx {
                 let mut signature = match self.hir_expect_node(method.id) {
                     lume_hir::Node::Method(method) => FunctionSigOwned {
                         id: method.id,
-                        params: params_of(self, method.id, &method.parameters)?,
-                        type_params: method.type_parameters.clone(),
-                        ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                        params: params_of(self, method.id, &method.signature.parameters)?,
+                        type_params: method.signature.type_parameters.clone(),
+                        ret_ty: self.mk_type_ref_from(&method.signature.return_type, method.id)?,
                     },
                     lume_hir::Node::TraitMethodDef(method) => FunctionSigOwned {
                         id: method.id,
-                        params: params_of(self, method.id, &method.parameters)?,
-                        type_params: method.type_parameters.clone(),
-                        ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                        params: params_of(self, method.id, &method.signature.parameters)?,
+                        type_params: method.signature.type_parameters.clone(),
+                        ret_ty: self.mk_type_ref_from(&method.signature.return_type, method.id)?,
                     },
                     lume_hir::Node::TraitMethodImpl(method) => FunctionSigOwned {
                         id: method.id,
@@ -939,9 +939,9 @@ impl TyInferCtx {
 
                 Ok(FunctionSigOwned {
                     id: function.id,
-                    params: params_of(self, func.id, &func.parameters)?,
-                    type_params: func.type_parameters.clone(),
-                    ret_ty: self.mk_type_ref_from(&func.return_type, func.id)?,
+                    params: params_of(self, func.id, &func.signature.parameters)?,
+                    type_params: func.signature.type_parameters.clone(),
+                    ret_ty: self.mk_type_ref_from(&func.signature.return_type, func.id)?,
                 })
             }
         }
@@ -990,8 +990,8 @@ impl TyInferCtx {
         let Some(node) = self.hir.node(id) else { return false };
 
         match node {
-            Node::Method(method) => method.parameters.iter().any(|param| param.is_self()),
-            Node::TraitMethodDef(method) => method.parameters.iter().any(|param| param.is_self()),
+            Node::Method(method) => method.signature.parameters.iter().any(|param| param.is_self()),
+            Node::TraitMethodDef(method) => method.signature.parameters.iter().any(|param| param.is_self()),
             Node::TraitMethodImpl(method) => method.parameters.iter().any(|param| param.is_self()),
             _ => false,
         }
@@ -1014,7 +1014,7 @@ impl TyInferCtx {
             return false;
         };
 
-        func.name.root.is_empty() && func.name.name.name().as_str() == "main"
+        func.path().root.is_empty() && func.ident().as_str() == "main"
     }
 
     /// Returns the [`NodeId`] of the `Dispose::dispose()` method from

@@ -157,7 +157,7 @@ impl TyInferCtx {
         let Some(trait_method_def) = trait_def
             .methods
             .iter()
-            .find(|method| method.name == trait_method_impl.name)
+            .find(|method| method.signature.name.name() == &trait_method_impl.name)
         else {
             panic!("bug!: trait method implementation exists without trait method definition");
         };

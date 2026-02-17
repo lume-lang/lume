@@ -1,8 +1,6 @@
-use error_snippet::Result;
+use crate::*;
 
-use crate::LowerModule;
-
-impl LowerModule {
+impl LoweringContext<'_> {
     #[libftrace::traced(level = Debug)]
     pub(super) fn pattern(&mut self, pattern: lume_ast::Pattern) -> Result<lume_hir::Pattern> {
         let id = self.next_node_id();
@@ -31,7 +29,7 @@ impl LowerModule {
                     location,
                 };
 
-                self.locals
+                self.current_locals
                     .define(name.to_string(), lume_hir::VariableSource::Pattern(pattern.clone()));
 
                 pattern
@@ -88,7 +86,7 @@ impl LowerModule {
                     location,
                 };
 
-                self.locals
+                self.current_locals
                     .define(name.to_string(), lume_hir::VariableSource::Pattern(pattern.clone()));
 
                 Ok(pattern)

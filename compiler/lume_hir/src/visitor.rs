@@ -47,10 +47,10 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
 
     match node {
         Node::Function(n) => {
-            traverse_path(hir, visitor, &n.name)?;
-            traverse_type_params(hir, visitor, n.type_parameters.iter().copied())?;
+            traverse_path(hir, visitor, &n.signature.name)?;
+            traverse_type_params(hir, visitor, n.signature.type_parameters.iter().copied())?;
 
-            for param in &n.parameters {
+            for param in &n.signature.parameters {
                 visitor.visit_identifier(&param.name)?;
 
                 traverse_type(hir, visitor, &param.param_type)?;
@@ -62,7 +62,7 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
                 }
             }
 
-            traverse_type(hir, visitor, &n.return_type)?;
+            traverse_type(hir, visitor, &n.signature.return_type)?;
         }
         Node::Type(ty) => match ty {
             TypeDefinition::Struct(struct_def) => {
@@ -83,10 +83,10 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
                 traverse_type_params(hir, visitor, trait_def.type_parameters.iter().copied())?;
 
                 for method in &trait_def.methods {
-                    visitor.visit_identifier(&method.name)?;
-                    traverse_type_params(hir, visitor, method.type_parameters.iter().copied())?;
+                    traverse_path(hir, visitor, &method.signature.name)?;
+                    traverse_type_params(hir, visitor, method.signature.type_parameters.iter().copied())?;
 
-                    for param in &method.parameters {
+                    for param in &method.signature.parameters {
                         visitor.visit_identifier(&param.name)?;
 
                         traverse_type(hir, visitor, &param.param_type)?;
@@ -98,7 +98,7 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
                         }
                     }
 
-                    traverse_type(hir, visitor, &method.return_type)?;
+                    traverse_type(hir, visitor, &method.signature.return_type)?;
                 }
             }
             TypeDefinition::Enum(enum_def) => {
@@ -150,10 +150,10 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
             traverse_type_params(hir, visitor, type_impl.type_parameters.iter().copied())?;
 
             for method in &type_impl.methods {
-                visitor.visit_identifier(&method.name)?;
-                traverse_type_params(hir, visitor, method.type_parameters.iter().copied())?;
+                traverse_path(hir, visitor, &method.signature.name)?;
+                traverse_type_params(hir, visitor, method.signature.type_parameters.iter().copied())?;
 
-                for param in &method.parameters {
+                for param in &method.signature.parameters {
                     visitor.visit_identifier(&param.name)?;
 
                     traverse_type(hir, visitor, &param.param_type)?;
@@ -165,7 +165,7 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
                     }
                 }
 
-                traverse_type(hir, visitor, &method.return_type)?;
+                traverse_type(hir, visitor, &method.signature.return_type)?;
             }
         }
         Node::Field(_)

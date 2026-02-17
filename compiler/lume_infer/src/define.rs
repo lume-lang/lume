@@ -286,7 +286,7 @@ impl TyInferCtx {
         )?;
 
         for method in &trait_def.methods {
-            let method_name = method.name.clone();
+            let method_name = method.signature.name.name().clone();
             let mut qualified_name =
                 Path::with_root(trait_def.name.clone(), PathSegment::callable(method_name.clone()));
 
@@ -354,7 +354,7 @@ impl TyInferCtx {
         let is_type_intrinsic = type_ref.is_bool() || type_ref.is_integer() || type_ref.is_float();
 
         for method in &implementation.methods {
-            let method_name = method.name.clone();
+            let method_name = method.signature.name.name().clone();
 
             let mut qualified_name = Path::with_root(
                 implementation.target.name.clone(),
@@ -383,7 +383,7 @@ impl TyInferCtx {
             unreachable!()
         };
 
-        let name = func.name.clone();
+        let name = func.signature.name.clone();
 
         self.tcx.db_mut().func_alloc(func.id, name);
 
@@ -479,7 +479,7 @@ impl TyInferCtx {
         }
 
         for method in &trait_def.methods {
-            for &type_param_id in &method.type_parameters {
+            for &type_param_id in &method.signature.type_parameters {
                 let type_param_name = self.hir_expect_type_parameter(type_param_id).name.clone();
 
                 self.tcx.db_mut().type_alloc(
@@ -541,7 +541,7 @@ impl TyInferCtx {
         }
 
         for method in &implementation.methods {
-            for &type_param_id in &method.type_parameters {
+            for &type_param_id in &method.signature.type_parameters {
                 let type_param_name = self.hir_expect_type_parameter(type_param_id).name.clone();
 
                 self.tcx.db_mut().type_alloc(
@@ -561,7 +561,7 @@ impl TyInferCtx {
             unreachable!()
         };
 
-        for &type_param_id in &function.type_parameters {
+        for &type_param_id in &function.signature.type_parameters {
             let type_param_name = self.hir_expect_type_parameter(type_param_id).name.clone();
 
             self.tcx.db_mut().type_alloc(
@@ -667,7 +667,7 @@ impl TyInferCtx {
                 assert_eq!(existing, parent);
             }
 
-            for &type_param in &method.type_parameters {
+            for &type_param in &method.signature.type_parameters {
                 tree.insert(type_param, method.id);
             }
 
@@ -714,7 +714,7 @@ impl TyInferCtx {
     ) -> Result<()> {
         let parent = func.id;
 
-        for &type_param in &func.type_parameters {
+        for &type_param in &func.signature.type_parameters {
             tree.insert(type_param, parent);
         }
 

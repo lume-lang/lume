@@ -92,7 +92,7 @@ pub fn mangled_name_of(tcx: &TyCheckCtx, id: NodeId) -> Result<String> {
 
 fn mangled_name_of_function(tcx: &TyCheckCtx, func: &lume_hir::FunctionDefinition) -> String {
     if func.block.is_none() {
-        return format!("{:+}", func.name);
+        return format!("{:+}", func.path());
     }
 
     // If the function is the package entrypoint, give it a specific name so we can
@@ -102,7 +102,7 @@ fn mangled_name_of_function(tcx: &TyCheckCtx, func: &lume_hir::FunctionDefinitio
     }
 
     let package_segment = mangled_package_segment(tcx, func.id.package);
-    let path_segment = mangled_path_segment(&func.name);
+    let path_segment = mangled_path_segment(func.path());
 
     format!("{MANGLED_PREFIX}{FUNCTION_SYM}{package_segment}{path_segment}")
 }
@@ -158,7 +158,7 @@ fn mangled_name_of_method(tcx: &TyCheckCtx, method: &lume_hir::MethodDefinition)
 
     let package_segment = mangled_package_segment(tcx, method.id.package);
     let impl_segment = mangled_impl_segment(tcx, &implementation.target);
-    let path_segment = mangled_name_segment(method.name.as_str());
+    let path_segment = mangled_name_segment(method.signature.name.name().as_str());
 
     format!("{MANGLED_PREFIX}{METHOD_SYM}{package_segment}{impl_segment}{path_segment}")
 }

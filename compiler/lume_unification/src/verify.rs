@@ -38,11 +38,15 @@ pub(crate) fn verify_type_names(tcx: &TyInferCtx) {
                 }
                 lume_hir::TypeDefinition::Trait(trait_def) => {
                     for method in &trait_def.methods {
-                        for param in &method.parameters {
+                        for param in &method.signature.parameters {
                             verify_type_name(tcx, &param.param_type.name, param.param_type.location);
                         }
 
-                        verify_type_name(tcx, &method.return_type.name, method.return_type.location);
+                        verify_type_name(
+                            tcx,
+                            &method.signature.return_type.name,
+                            method.signature.return_type.location,
+                        );
                     }
                 }
                 lume_hir::TypeDefinition::Enum(enum_def) => {
@@ -58,11 +62,15 @@ pub(crate) fn verify_type_names(tcx: &TyInferCtx) {
                 verify_type_name(tcx, &impl_block.target.name, impl_block.target.location);
 
                 for method in &impl_block.methods {
-                    for param in &method.parameters {
+                    for param in &method.signature.parameters {
                         verify_type_name(tcx, &param.param_type.name, param.param_type.location);
                     }
 
-                    verify_type_name(tcx, &method.return_type.name, method.return_type.location);
+                    verify_type_name(
+                        tcx,
+                        &method.signature.return_type.name,
+                        method.signature.return_type.location,
+                    );
                 }
             }
             lume_hir::Node::TraitImpl(trait_impl) => {
@@ -78,11 +86,15 @@ pub(crate) fn verify_type_names(tcx: &TyInferCtx) {
                 }
             }
             lume_hir::Node::Function(func) => {
-                for param in &func.parameters {
+                for param in &func.signature.parameters {
                     verify_type_name(tcx, &param.param_type.name, param.location);
                 }
 
-                verify_type_name(tcx, &func.return_type.name, func.return_type.location);
+                verify_type_name(
+                    tcx,
+                    &func.signature.return_type.name,
+                    func.signature.return_type.location,
+                );
             }
             _ => {}
         }

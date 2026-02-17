@@ -322,23 +322,9 @@ impl TyInferCtx {
 
                 Path::with_root(target_name, trait_impl.name.name.name.clone())
             }
-            Node::Function(func) => func.name.clone(),
-            Node::Method(method) => {
-                let parent = self
-                    .hir_parent_of(method.id)
-                    .expect("expected parent of method definition");
-
-                let parent_name = self.hir_path_of_node(parent);
-                Path::with_root(parent_name, lume_hir::PathSegment::callable(method.name.clone()))
-            }
-            Node::TraitMethodDef(method) => {
-                let parent = self
-                    .hir_parent_of(method.id)
-                    .expect("expected parent of method definition");
-
-                let parent_name = self.hir_path_of_node(parent);
-                Path::with_root(parent_name, lume_hir::PathSegment::callable(method.name.clone()))
-            }
+            Node::Function(func) => func.path().clone(),
+            Node::Method(method) => method.signature.name.clone(),
+            Node::TraitMethodDef(method) => method.signature.name.clone(),
             Node::TraitMethodImpl(method) => {
                 let parent = self
                     .hir_parent_of(method.id)
