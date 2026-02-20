@@ -8,6 +8,7 @@ rust-version.workspace = true
 lume_options = { path = "../lume_options" }
 lume_rt_macros = { path = "../lume_rt_macros" }
 lume_rt_metadata = { path = "../lume_rt_metadata" }
+lume_tagged = { path = "../lume_tagged" }
 
 libftrace = { workspace = true }
 indexmap = { workspace = true }

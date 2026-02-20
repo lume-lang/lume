@@ -1265,6 +1265,9 @@ pub enum DeclarationKind {
         signature: Signature,
         args: Vec<Operand>,
     },
+
+    /// Represents an untagged operand.
+    Untagged { operand: Operand },
 }
 
 impl Declaration {
@@ -1281,6 +1284,7 @@ impl Declaration {
 
                 args
             }
+            DeclarationKind::Untagged { operand } => operand.register_refs(),
         }
     }
 }
@@ -1305,6 +1309,7 @@ impl std::fmt::Display for Declaration {
                 "call indirect {ptr}({})",
                 args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
             ),
+            DeclarationKind::Untagged { operand } => write!(f, "untagged {operand}"),
         }
     }
 }

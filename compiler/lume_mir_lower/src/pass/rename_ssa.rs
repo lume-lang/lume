@@ -235,7 +235,9 @@ impl RenameSsaVariables {
 
     fn update_regs_decl(decl: &mut Declaration, block: BasicBlockId, mapping: &mut RegisterMapping) {
         match decl.kind.as_mut() {
-            DeclarationKind::Operand(op) => Self::update_regs_op(op, block, mapping),
+            DeclarationKind::Operand(operand) | DeclarationKind::Untagged { operand } => {
+                Self::update_regs_op(operand, block, mapping);
+            }
             DeclarationKind::Cast { operand, .. } => {
                 *operand = mapping.get(block, *operand);
             }

@@ -1,11 +1,8 @@
 [package]
-name = "lume_rt_metadata"
+name = "lume_tagged"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-
-[dependencies]
-lume_tagged = { path = "../lume_tagged" }
 
 [lib]
 doctest = false

@@ -13,6 +13,7 @@ lume_mir = { path = "../lume_mir" }
 lume_options = { path = "../../rt/lume_options" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
+lume_tagged = { path = "../../rt/lume_tagged" }
 lume_type_metadata = { path = "../lume_type_metadata" }
 gimli = { version = "0.32.3" }
 indexmap = { workspace = true }

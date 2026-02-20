@@ -1585,6 +1585,7 @@ dependencies = [
  "lume_options",
  "lume_session",
  "lume_span",
+ "lume_tagged",
  "lume_type_metadata",
  "object",
  "target-lexicon",
@@ -1667,6 +1668,7 @@ dependencies = [
  "lume_options",
  "lume_rt_macros",
  "lume_rt_metadata",
+ "lume_tagged",
  "mimalloc",
  "sysinfo",
 ]
@@ -1893,6 +1895,9 @@ dependencies = [
 [[package]]
 name = "lume_rt_metadata"
 version = "0.1.1"
+dependencies = [
+ "lume_tagged",
+]
 
 [[package]]
 name = "lume_runtime"
@@ -1932,6 +1937,10 @@ dependencies = [
  "indexmap",
  "serde",
 ]
+
+[[package]]
+name = "lume_tagged"
+version = "0.1.1"
 
 [[package]]
 name = "lume_tir"

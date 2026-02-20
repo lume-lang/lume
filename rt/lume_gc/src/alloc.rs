@@ -6,9 +6,10 @@ use std::sync::{LazyLock, OnceLock};
 
 use indexmap::{IndexMap, IndexSet};
 use lume_rt_metadata::TypeMetadata;
+use lume_tagged::strip_tags;
 use mimalloc::MiMalloc;
 
-use crate::{CollectCondition, CollectorInfo, FrameStackMap};
+use crate::*;
 
 unsafe extern "C" {
     pub fn memcpy(dst: *mut u8, src: *mut u8, len: usize);
@@ -156,17 +157,23 @@ impl YoungGeneration {
             libftrace::trace!("[G1] allocated {size} bytes ({ptr:p})");
             self.info.object_count += 1;
 
+            let mut has_dropper = false;
+
             if !metadata.is_null() {
                 let drop_ptr = unsafe { metadata.read() }.drop_ptr;
 
                 if !drop_ptr.is_null() {
+                    has_dropper = true;
+
                     self.drop_list.insert(ptr, unsafe {
                         std::mem::transmute::<*const std::ffi::c_void, DropPointer>(drop_ptr)
                     });
                 }
             }
 
-            Some(ptr)
+            let tagged_ptr = lume_tagged::tagged_ptr(ptr, has_dropper);
+
+            Some(tagged_ptr)
         } else {
             None
         }
@@ -235,10 +242,12 @@ impl OldGeneration {
             unsafe { metadata.read() }.drop_ptr.cast::<u8>()
         };
 
-        self.info.object_count += 1;
-        self.allocations.insert(ptr, (size, drop_ptr));
+        let tagged_ptr = lume_tagged::tagged_ptr(ptr, !drop_ptr.is_null());
 
-        ptr
+        self.info.object_count += 1;
+        self.allocations.insert(tagged_ptr, (size, drop_ptr));
+
+        tagged_ptr
     }
 
     /// Clears the generation deallocating all allocations made by the
@@ -258,7 +267,7 @@ impl OldGeneration {
 
             let layout = Layout::from_size_align(size, POINTER_ALIGNMENT).unwrap();
 
-            unsafe { self.allocator.dealloc(ptr, layout) }
+            unsafe { self.allocator.dealloc(strip_tags(ptr), layout) }
         }
 
         self.info.object_count = 0;
@@ -416,16 +425,18 @@ impl GenerationalAllocator {
                 continue;
             }
 
+            let untagged_object = strip_tags(object.cast_mut());
+
             // The metadata of the object is stored at [-0x08], so the actual start of
             // the allocation is there.
-            let alloc_start = unsafe { object.byte_sub(POINTER_SIZE) }.cast_mut();
+            let alloc_start = unsafe { untagged_object.byte_sub(POINTER_SIZE) };
 
-            let metadata_ptr = metadata_of(object);
+            let metadata_ptr = metadata_of(untagged_object);
             let obj_size = unsafe { metadata_ptr.read() }.size;
 
             // Copy the 1st generation object to the 2nd generation.
             let new_live_ptr = self.old.alloc(obj_size, metadata_ptr);
-            unsafe { memcpy(new_live_ptr, alloc_start, obj_size) };
+            unsafe { memcpy(strip_tags(new_live_ptr), alloc_start, obj_size) };
 
             libftrace::trace!("[G1->G2] promoted {alloc_start:p} (now {new_live_ptr:p})");
 
