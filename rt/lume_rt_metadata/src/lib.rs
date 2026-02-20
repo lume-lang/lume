@@ -2,6 +2,7 @@
 //!
 //! None of these structs are meant to be exported - they exist purely to
 //! better read type information from passed metadata arguments.
+#![allow(clippy::cast_ptr_alignment)]
 
 use std::marker::PhantomData;
 use std::os::raw::{c_char, c_void};

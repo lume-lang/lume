@@ -329,6 +329,7 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
         let struct_type = lume_mir::Type::structure(struct_name, field_types);
 
         let struct_alloc_reg = builder.alloca(struct_type.clone(), &expr.ty, expr.location);
+        let struct_untagged_reg = builder.declare_untagged(lume_mir::Operand::reference_of(struct_alloc_reg));
 
         // Store the metadata reference in the first element in the structure.
         let metadata_value = lume_mir::Operand {
@@ -336,7 +337,7 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
             location: expr.location,
         };
 
-        builder.store_field(struct_alloc_reg, metadata_value, 0, expr.location);
+        builder.store_field(struct_untagged_reg, metadata_value, 0, expr.location);
 
         // Since the element at offset 0 is the metadata, we start just after it.
         let mut offset = metadata_ptr_size;
@@ -345,7 +346,7 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
             let (value_reg, _) = builder.use_value(&field.value);
             let value_op = builder.use_register(value_reg, field.value.location());
 
-            builder.store_field(struct_alloc_reg, value_op, offset, expr.location);
+            builder.store_field(struct_untagged_reg, value_op, offset, expr.location);
 
             offset += size;
         }
@@ -372,9 +373,22 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
 
 fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
+        let is_ffi_call = builder.tcx().hir_is_callable_external(expr.function);
         let mut call_arguments = Vec::with_capacity(expr.arguments.len());
+
         for argument in &expr.arguments {
-            call_arguments.push(expression(builder, argument));
+            let mut arg_operand = expression(builder, argument);
+
+            // If the argument is passed to an FFI function or may otherwise be used as a
+            // direct memory pointer, the pointer must be untagged.
+            //
+            // If the argument is passed whilst tagged, the pointer would point to an
+            // incorrect memory location.
+            if is_ffi_call && builder.type_of_value(&arg_operand).requires_stack_map() {
+                arg_operand = lume_mir::Operand::reference_of(builder.declare_untagged(arg_operand));
+            }
+
+            call_arguments.push(arg_operand);
         }
 
         let mut signature = builder.signature_of(expr.function);
@@ -592,7 +606,7 @@ fn logical(builder: &mut Builder<'_, '_>, expr: &lume_tir::Logical) -> lume_mir:
 fn member_field(builder: &mut Builder<'_, '_>, expr: &lume_tir::Member) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
         let callee = expression(builder, &expr.callee);
-        let callee = builder.declare_operand(callee, OperandRef::Implicit);
+        let callee = builder.declare_untagged(callee);
 
         let field = builder.tcx().hir_expect_field(expr.field);
         let (offset, field_type) = builder.field_offset(field);

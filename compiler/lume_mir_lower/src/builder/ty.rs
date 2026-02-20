@@ -82,6 +82,7 @@ impl Builder<'_, '_> {
             }
             lume_mir::DeclarationKind::Call { func_id, .. } => self.function_ret_type(*func_id),
             lume_mir::DeclarationKind::IndirectCall { signature, .. } => signature.return_type.clone(),
+            lume_mir::DeclarationKind::Untagged { operand } => self.type_of_value(operand),
         }
     }
 

@@ -355,4 +355,14 @@ impl TyInferCtx {
     pub fn hir_is_local_node(&self, node: NodeId) -> bool {
         self.hir.is_local_node(node)
     }
+
+    /// Determines whether the given callable is declared as external.
+    pub fn hir_is_callable_external(&self, id: NodeId) -> bool {
+        match self.hir_expect_node(id) {
+            Node::Function(func) => func.block.is_none(),
+            Node::Method(method) => method.block.is_none(),
+            Node::TraitMethodImpl(method) => method.block.is_none(),
+            _ => false,
+        }
+    }
 }

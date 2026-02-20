@@ -107,6 +107,13 @@ impl LowerFunction<'_> {
                         .load(self.backend.cl_ptr_type(), MemFlags::trusted(), value, 0)
                 }
             },
+            lume_mir::DeclarationKind::Untagged { operand } => {
+                let value = self.cg_operand(operand);
+
+                self.builder
+                    .ins()
+                    .band_imm(value, !lume_tagged::TAG_MASK.cast_signed() as i64)
+            }
         }
     }
 

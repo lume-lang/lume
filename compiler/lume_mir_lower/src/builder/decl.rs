@@ -90,6 +90,14 @@ impl Builder<'_, '_> {
             OperandRef::Explicit => self.func.declare_value_raw(ty, value),
         }
     }
+
+    /// Declares a new register with the given value as untagged.
+    pub(crate) fn declare_untagged(&mut self, value: Operand) -> RegisterId {
+        self.declare(Declaration {
+            location: value.location,
+            kind: Box::new(DeclarationKind::Untagged { operand: value }),
+        })
+    }
 }
 
 impl Builder<'_, '_> {
