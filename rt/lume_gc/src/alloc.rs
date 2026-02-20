@@ -170,13 +170,16 @@ impl YoungGeneration {
 pub(crate) struct OldGeneration {
     allocator: MiMalloc,
 
-    /// Mapping of all objects allocated in this generation.
+    /// List of all objects allocated in this generation.
     ///
-    /// The key of the map is the pointer to the object.
-    /// The value is a tuple containing the size of the object and a pointer to
-    /// its destructor. If the allocation doesn't have any matching destructor,
-    /// the value is `null`.
-    allocations: IndexMap<*mut u8, (usize, *const u8)>,
+    /// The items in this list contains a tuple:
+    /// - `0`: pointer to the allocated object
+    /// - `1`: size of the allocated object
+    /// - `2`: pointer to the destructor of the allocated object.
+    ///
+    /// If the allocation doesn't have any matching destructor, the second value
+    /// is `null`.
+    allocations: Vec<(*mut u8, usize, *const u8)>,
 
     pub(crate) info: AllocatorInfo,
 }
@@ -185,7 +188,7 @@ impl OldGeneration {
     pub(crate) fn new() -> Self {
         Self {
             allocator: MiMalloc,
-            allocations: IndexMap::new(),
+            allocations: Vec::new(),
             info: AllocatorInfo::default(),
         }
     }
@@ -207,7 +210,7 @@ impl OldGeneration {
         let tagged_ptr = lume_tagged::tagged_ptr(ptr, !drop_ptr.is_null());
 
         self.info.object_count += 1;
-        self.allocations.insert(tagged_ptr, (size, drop_ptr));
+        self.allocations.push((tagged_ptr, size, drop_ptr));
 
         tagged_ptr
     }
@@ -217,11 +220,11 @@ impl OldGeneration {
     pub(crate) fn clear(&mut self) {
         #[cfg(debug_assertions)]
         #[allow(unused, reason = "iterator values will be unused when tracing is disabled")]
-        for (alloc, (size, _)) in &self.allocations {
+        for (alloc, size, _) in &self.allocations {
             libftrace::trace!("[G2] deallocated {size} bytes ({:p})", *alloc);
         }
 
-        for (ptr, (size, drop_ptr)) in self.allocations.drain(..) {
+        for (ptr, size, drop_ptr) in self.allocations.drain(..) {
             if !drop_ptr.is_null() {
                 let drop_ptr: DropPointer = unsafe { std::mem::transmute(drop_ptr) };
                 drop_ptr(unsafe { ptr.byte_add(POINTER_SIZE) });
