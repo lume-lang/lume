@@ -43,13 +43,13 @@ impl<'tcx> MetadataBuilder<'tcx> {
 
     fn kind_of_type(&self, ty: &TypeRef) -> TypeKind {
         match self.tcx.tdb().expect_type(ty.instance_of).unwrap().kind {
-            lume_types::TypeKind::Struct
-            | lume_types::TypeKind::Void
+            lume_types::TypeKind::Void
             | lume_types::TypeKind::Bool
             | lume_types::TypeKind::Int(_)
             | lume_types::TypeKind::UInt(_)
             | lume_types::TypeKind::Float(_)
-            | lume_types::TypeKind::String => TypeKind::Struct,
+            | lume_types::TypeKind::String => TypeKind::Scalar,
+            lume_types::TypeKind::Struct => TypeKind::Struct,
             lume_types::TypeKind::Enum => TypeKind::Enum,
             lume_types::TypeKind::Trait => TypeKind::Trait,
             lume_types::TypeKind::TypeParameter => TypeKind::TypeParameter,

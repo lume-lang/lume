@@ -292,6 +292,12 @@ fn declare_type_metadata_stub(ctx: &CraneliftBackend, metadata: &TypeMetadata, d
     debug_assert_eq!(builder.offset() - base_offset, OFFSET_TYPE_TYPE_PARAMETERS);
     builder.append_null_ptr();
 
+    // Type.kind
+    builder.append(match metadata.kind {
+        TypeKind::Scalar => 0_u64,
+        TypeKind::Struct | TypeKind::Enum | TypeKind::Trait | TypeKind::TypeParameter => 1_u64,
+    });
+
     // Type.drop_ptr
     if let Some(drop_method) = metadata.drop_method {
         let drop_ptr = ctx.declared_funcs.get(&drop_method).unwrap();
