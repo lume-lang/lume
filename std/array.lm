@@ -45,15 +45,14 @@ impl<T> Array<T> {
     /// Allocates a new, empty array with at least the given capacity.
     ![lang_item(name = "array_with_capacity")]
     pub fn with_capacity(capacity: UInt64) -> Array<T> {
-        let type_size = std::type_of<Pointer<T>>().size;
-        let mem = Block<T>::new(type_size * capacity);
+        let mem = Block<T>::new(capacity);
 
         return Array<T> { length: 0_u64, mem };
     }
 
     /// Gets the capacity of the array.
     pub fn capacity(self) -> UInt64 {
-        self.mem.size() / std::type_of<Pointer<T>>().size
+        self.mem.count()
     }
 
     /// Gets the element at position `index` within the array.
@@ -64,8 +63,7 @@ impl<T> Array<T> {
             return Optional<T>::None;
         }
 
-        let offset = std::type_of<Pointer<T>>().size * index;
-        let value = self.mem.read(offset);
+        let value = self.mem.get(index);
 
         Optional<T>::Some(value)
     }
@@ -76,9 +74,7 @@ impl<T> Array<T> {
             std::process::bail("index out of bounds");
         }
 
-        let offset = std::type_of<Pointer<T>>().size * index;
-
-        self.mem.write(value, offset);
+        self.mem.set(value, index);
     }
 
     /// Appends a new element to the end of the array.
@@ -104,6 +100,6 @@ impl<T> Array<T> {
             return;
         }
 
-        self.mem.expand(std::type_of<Pointer<T>>().size * capacity);
+        self.mem.expand(capacity);
     }
 }

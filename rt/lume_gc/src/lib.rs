@@ -9,8 +9,25 @@ use std::cmp::Ordering;
 use std::fmt::Display;
 use std::sync::LazyLock;
 
+use indexmap::{IndexMap, IndexSet};
 use lume_rt_macros::link_section_data;
 use lume_rt_metadata::TypeMetadata;
+use lume_tagged::strip_tags;
+
+const POINTER_SIZE: usize = std::mem::size_of::<*const ()>();
+const POINTER_ALIGNMENT: usize = std::mem::align_of::<*const ()>();
+
+unsafe extern "C" {
+    #[link_name = "_L1_SP3stdN3std3mem5Block"]
+    static __STD_MEM_BLOCK: u8;
+}
+
+static BLOCK_TYPE_ID: LazyLock<usize> = LazyLock::new(|| {
+    let block_metadata_ptr = unsafe { (&raw const __STD_MEM_BLOCK).cast::<*const TypeMetadata>().read() };
+    let block_metadata = unsafe { block_metadata_ptr.read() };
+
+    block_metadata.type_id.0
+});
 
 /// Stack-map for a given function.
 ///
@@ -163,6 +180,16 @@ fn find_current_stack_map_of_addr(pc: *const u8) -> Option<&'static CompiledFunc
     None
 }
 
+/// Gets the metadata pointer of the given managed object pointer.
+#[inline]
+pub(crate) fn metadata_of(obj_ptr: *const u8) -> *const TypeMetadata {
+    // The metadata of the object is stored at [-0x08], so the actual start of
+    // the allocation is there.
+    let alloc_start = unsafe { obj_ptr.byte_sub(POINTER_SIZE) }.cast_mut();
+
+    unsafe { alloc_start.cast::<*const TypeMetadata>().read_unaligned() }
+}
+
 /// Represents a single stack map, corresponding to a specific
 /// safepoint location within a compiled Lume function.
 #[derive(Debug)]
@@ -286,6 +313,112 @@ impl FrameStackMap {
             frame.stack_value_locations().collect::<Vec<_>>()
         })
     }
+
+    /// Attempts to find all GC references found inside of the given stack map.
+    ///
+    /// The returned iterator will iterate over a list of tuples. The first
+    /// element in the tuple is an entry in the current stack frame
+    /// containing the GC reference and the second element is a pointer to
+    /// the GC reference itself.
+    ///
+    /// This method is an expansion of
+    /// [`FrameStackMap::iter_stack_value_locations`]. It expands the
+    /// returned GC roots into a tree of all GC references, which can
+    /// be referenced by any existing GC reference.
+    ///
+    /// Objects are pushed to the iterator in the order that they're found. This
+    /// means that objects closer to the roots appear earlier in the
+    /// iterator, than any child objects.
+    ///
+    /// All object pointers within the [`ObjectReference::object`] are tagged.
+    pub(crate) fn living_gc_objects(&self) -> impl DoubleEndedIterator<Item = ObjectReference> + use<> {
+        let mut object_refs = IndexMap::<*const u8, ObjectReference>::new();
+        let mut worklist = self.iter_stack_value_locations().collect::<IndexSet<_>>();
+
+        while let Some((root_ptr, tagged_obj_ptr)) = worklist.pop() {
+            let untagged_obj_ptr = strip_tags(tagged_obj_ptr.cast_mut());
+
+            if let Some(obj_ref) = object_refs.get_mut(&tagged_obj_ptr) {
+                // We've already visited the pointer - skip it and all it's descendants.
+                if !obj_ref.references.insert(root_ptr) {
+                    continue;
+                }
+            } else {
+                object_refs.insert(tagged_obj_ptr, ObjectReference {
+                    object: tagged_obj_ptr,
+                    references: indexmap::indexset! {
+                        root_ptr
+                    },
+                });
+            }
+
+            let metadata = unsafe { metadata_of(untagged_obj_ptr).read() };
+
+            // Niche handling for `std::mem::Block` types.
+            //
+            // While they only represent a block of contiguous memory, they do have an
+            // associated type. And since each object within the block has
+            // attached type information, we can read the metadata of the first
+            // item in the block to get the type of all items within the block.
+            if metadata.type_id.0 == *BLOCK_TYPE_ID {
+                let block_len = unsafe { untagged_obj_ptr.cast::<u64>().read() } as usize;
+                if block_len == 0 {
+                    continue;
+                }
+
+                let block_ptr = unsafe { untagged_obj_ptr.byte_add(POINTER_SIZE).cast::<*const u8>().read() };
+
+                // SAFETY:
+                // Since all values within the block are ensured to be object pointers or boxed
+                // scalars, all pointers will have metadata attached.
+                let elemental_item_ptr = strip_tags(unsafe { block_ptr.cast::<*mut u8>().read() });
+                let elemental_metadata = unsafe { metadata_of(elemental_item_ptr).read() };
+
+                // Ignore scalar blocks, since scalars cannot be collected.
+                if elemental_metadata.kind != lume_rt_metadata::TypeKind::Object {
+                    continue;
+                }
+
+                libftrace::trace!(
+                    "found heap block, ptr = {untagged_obj_ptr:p}, size = 0x{block_len:X}, elemental = {:?}",
+                    elemental_metadata.full_name()
+                );
+
+                let mut offset = 0;
+
+                // Since all `Block`s hold poiners to objects, we check all long words in the
+                // block, chunked by pointer size.
+                while offset + POINTER_SIZE <= block_len {
+                    let block_item_ptr = unsafe { block_ptr.byte_add(offset).cast::<*const u8>() };
+                    let block_item = unsafe { block_item_ptr.read() };
+
+                    worklist.insert((block_item_ptr, block_item));
+                    offset += POINTER_SIZE;
+                }
+
+                continue;
+            }
+
+            let mut offset = 0;
+
+            for field_metadata in metadata.fields.items() {
+                let field_type_metadata = unsafe { field_metadata.ty.read() };
+                let field_ptr = unsafe { untagged_obj_ptr.byte_add(offset).cast::<*const u8>() };
+
+                offset += field_type_metadata.size;
+
+                // Ignore scalar fields, since scalars cannot be traced.
+                if field_type_metadata.kind != lume_rt_metadata::TypeKind::Object {
+                    continue;
+                }
+
+                let field_value = unsafe { field_ptr.read() };
+                worklist.insert((field_ptr, field_value));
+            }
+        }
+
+        object_refs.into_values()
+    }
 }
 
 impl Display for FrameStackMap {
@@ -297,6 +430,19 @@ impl Display for FrameStackMap {
             self.stack_pointer()
         ))
     }
+}
+
+/// Record of a single object reference, along with all pointers which reference
+/// it.
+pub(crate) struct ObjectReference {
+    /// The object pointer itself.
+    pub object: *const u8,
+
+    /// Set of all pointers pointing to `object`.
+    ///
+    /// Pointers within this set can be from various different locations
+    /// in memory, such as stack locations, fields within other objects, etc.
+    pub references: IndexSet<*const *const u8>,
 }
 
 /// Attempts to find a frame stack map which corresponds to the current frame

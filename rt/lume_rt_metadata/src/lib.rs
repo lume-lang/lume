@@ -44,6 +44,9 @@ pub struct TypeMetadata {
     /// that they're declared.
     pub type_parameters: List<TypeParameterMetadata>,
 
+    /// Gets the kind of the type.
+    pub kind: TypeKind,
+
     /// Gets the address of the `Dispose` method implementation, if any.
     ///
     /// If no `Dispose` method is defined, returns `null`.
@@ -55,6 +58,13 @@ impl TypeMetadata {
     pub fn full_name(&self) -> String {
         cstr_to_string(self.full_name)
     }
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TypeKind {
+    Scalar,
+    Object,
 }
 
 #[repr(C)]

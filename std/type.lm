@@ -25,20 +25,18 @@ pub struct Type {
     /// that they're declared.
     pub type_parameters: ReadOnlyArray<TypeParameter>;
 
+    /// Gets the kind of the type.
+    pub kind: TypeKind;
+
     /// Gets the address of the `Dispose` method implementation, if any.
     ///
     /// If no `Dispose` method is defined, returns `null`.
     pub drop_method: UInt64;
 }
 
-impl Type {
-    /// Attempts to determine whether the given type is a scalar or not.
-    pub fn is_scalar(self) -> Boolean {
-        // 11 (0xB) is the TypeID of Double, the last scalar type in Lume.
-        //
-        // See lume_types/src/lib.rs for all the scalar type IDs.
-        self.type_id <= 11_u64
-    }
+pub enum TypeKind {
+    Scalar,
+    Object,
 }
 
 pub struct Field {

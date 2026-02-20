@@ -50,7 +50,7 @@ impl From<&lume_types::TypeRef> for TypeMetadataId {
     }
 }
 
-#[derive(Serialize, Deserialize, Default, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TypeMetadata {
     /// Gets the unique ID of the type metadata.
     pub id: TypeMetadataId,
@@ -115,9 +115,9 @@ impl PartialEq for TypeMetadata {
 
 impl Eq for TypeMetadata {}
 
-#[derive(Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TypeKind {
-    #[default]
+    Scalar,
     Struct,
     Enum,
     Trait,
