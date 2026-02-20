@@ -370,7 +370,7 @@ impl CraneliftBackend {
     /// symbol is already defined.
     pub(crate) fn define_data_bytes<V: Into<Vec<u8>>>(&self, id: DataId, value: V) {
         let mut data_ctx = DataDescription::new();
-        data_ctx.set_align(8);
+        data_ctx.set_align(lume_mir::POINTER_SIZE as u64);
         data_ctx.set_used(true);
 
         data_ctx.define(value.into().into_boxed_slice());
