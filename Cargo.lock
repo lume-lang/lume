@@ -1538,6 +1538,7 @@ name = "lume_bench"
 version = "0.1.1"
 dependencies = [
  "build_stage",
+ "lume_driver",
  "lume_errors",
  "lume_session",
 ]
