@@ -11,6 +11,7 @@ doctest = false
 
 [dependencies]
 build_stage = { path = "../build_stage" }
+lume_driver = { path = "../../compiler/lume_driver", features = ["test-support"] }
 lume_errors = { path = "../../crates/lume_errors" }
 lume_session = { path = "../../compiler/lume_session" }
 

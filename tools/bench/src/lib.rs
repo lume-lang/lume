@@ -3,49 +3,39 @@ use std::process::{Command, Stdio};
 
 use lume_errors::{DiagCtx, MapDiagnostic, Result, SimpleDiagnostic};
 
-/// Compiles the given source file into a Lume binary executable and returns the
-/// path to the executable.
-///
-/// # Arguments
-///
-/// * `path` - The path to the source file to compile (does not need to exist).
-/// * `content` - The content of the source file.
-/// * `dcx` - The diagnostic context to use for reporting errors.
-///
-/// # Returns
-///
-/// A `Result` containing the path to the compiled binary executable, or an
-/// error if the compilation fails.
-pub(crate) fn compile_source_file(path: &Path, content: String, dcx: DiagCtx) -> Result<PathBuf> {
-    let package_name = path.file_name().unwrap().display().to_string();
-    let package_name = package_name.trim_end_matches(".lm");
-
-    let package = build_stage::PackageBuilder::new(package_name)
-        .with_root(path.parent().unwrap())
-        .with_source(path.file_name().unwrap(), content)
-        .with_standard_library()
-        .finish();
-
-    let options = lume_session::Options {
-        optimize: lume_session::OptimizationLevel::O1,
-        enable_incremental: false,
-        ..Default::default()
-    };
-
-    let manifold_driver = build_stage::ManifoldDriver::with_options(package, dcx.clone(), options);
-    manifold_driver.link()
-}
-
 /// Compiles the source file at the given path and returns the path to the
 /// compiled binary executable.
 pub fn compile(path: &Path) -> Result<PathBuf> {
     let dcx = DiagCtx::new();
+
+    let file_name = path.file_name().unwrap();
+    let file_base = file_name.to_str().unwrap().split('.').next().unwrap();
     let file_content = std::fs::read_to_string(path).map_diagnostic()?;
 
-    let binary_path = compile_source_file(path, file_content, dcx.clone())?;
-    dcx.ensure_untainted()?;
-
-    Ok(binary_path)
+    lume_driver::test_support::workspace(path.parent().unwrap())
+        .with_option(|opts| opts.enable_incremental = false)
+        .with_option(|opts| {
+            // Giving each test it's own output directory.
+            //
+            // This is to avoid race conditions between tests where some packages have the
+            // same name (for example, `std`). If not defined, multiple threads might try to
+            // write `bc/std.o`, which will cause the linkers to throw errors.
+            let relative_dir = PathBuf::from(format!("obj/{file_base}/"));
+            opts.output_directory = Some(relative_dir);
+        })
+        .with_file(
+            "Arcfile",
+            format!(
+                r#"
+                [package]
+                name = "{file_base}"
+                version = "1.0.0"
+                lume_version = "^0"
+            "#
+            ),
+        )
+        .with_file(PathBuf::from("src").join(file_name), &file_content)
+        .build(dcx.handle())
 }
 
 /// Runs the benchmark which is located at the given path.
