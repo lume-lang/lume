@@ -1,0 +1,14 @@
+//# test-return = 3
+
+struct Foo {
+    pub a: Int32 = 3;
+}
+
+fn main() -> Int32 {
+    let block = std::mem::Block<Foo>::new(1);
+    block.set(Foo { }, 0);
+
+    std::mem::GC::invoke();
+
+    block.get(0_u64).a
+}
