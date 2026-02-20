@@ -1,0 +1,10 @@
+//# test-return = 3
+
+fn main() -> Int32 {
+    let block = std::mem::Block<Int32>::new(1);
+    block.set(3_i32, 0);
+
+    std::mem::GC::invoke();
+
+    block.get(0_u64)
+}
