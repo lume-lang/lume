@@ -336,6 +336,10 @@ impl FrameStackMap {
         let mut worklist = self.iter_stack_value_locations().collect::<IndexSet<_>>();
 
         while let Some((root_ptr, tagged_obj_ptr)) = worklist.pop() {
+            if tagged_obj_ptr.is_null() {
+                continue;
+            }
+
             let untagged_obj_ptr = strip_tags(tagged_obj_ptr.cast_mut());
 
             if let Some(obj_ref) = object_refs.get_mut(&tagged_obj_ptr) {
@@ -392,8 +396,13 @@ impl FrameStackMap {
                     let block_item_ptr = unsafe { block_ptr.byte_add(offset).cast::<*const u8>() };
                     let block_item = unsafe { block_item_ptr.read() };
 
-                    worklist.insert((block_item_ptr, block_item));
                     offset += POINTER_SIZE;
+
+                    if block_item.is_null() {
+                        continue;
+                    }
+
+                    worklist.insert((block_item_ptr, block_item));
                 }
 
                 continue;
@@ -413,6 +422,10 @@ impl FrameStackMap {
                 }
 
                 let field_value = unsafe { field_ptr.read() };
+                if field_value.is_null() {
+                    continue;
+                }
+
                 worklist.insert((field_ptr, field_value));
             }
         }
