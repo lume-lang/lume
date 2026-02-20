@@ -332,7 +332,7 @@ impl FrameStackMap {
     ///
     /// All object pointers within the [`ObjectReference::object`] are tagged.
     pub(crate) fn living_gc_objects(&self) -> impl DoubleEndedIterator<Item = ObjectReference> + use<> {
-        let mut object_refs = IndexMap::<*const u8, ObjectReference>::new();
+        let mut object_refs = IndexMap::<*const u8, ObjectReference>::with_capacity(1000);
         let mut worklist = self.iter_stack_value_locations().collect::<IndexSet<_>>();
 
         while let Some((root_ptr, tagged_obj_ptr)) = worklist.pop() {
