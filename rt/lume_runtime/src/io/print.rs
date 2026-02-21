@@ -28,7 +28,6 @@ fn flush_stdout() {
 /// printed or sent back to the Lume application.
 fn internal_format_ffi(fmt: *const c_char, args: *const Array<*const c_char>) -> String {
     let fmt_str = crate::string::cstr_to_string(fmt);
-
     let args = unsafe { args.read() };
 
     #[allow(clippy::cast_possible_truncation)]
@@ -36,16 +35,15 @@ fn internal_format_ffi(fmt: *const c_char, args: *const Array<*const c_char>) ->
 
     for arg in &args {
         let arg_str = crate::string::cstr_to_string(unsafe { arg.read() }.cast());
-
         args_strings.push(arg_str);
     }
 
-    internal_format_str(&fmt_str, &args_strings)
+    internal_format_str(fmt_str, &args_strings)
 }
 
 /// Formats the given Rust strings into a formatted [`String`], which can be
 /// printed or sent back to the Lume application.
-fn internal_format_str(fmt: &str, args: &[String]) -> String {
+fn internal_format_str(fmt: &str, args: &[&str]) -> String {
     let mut idx = 0;
     let mut formatted = String::with_capacity(fmt.len());
 
@@ -64,7 +62,7 @@ fn internal_format_str(fmt: &str, args: &[String]) -> String {
         formatted.push_str(unformatted_slice);
 
         let arg_idx = fmt[(start_idx + 1)..end_idx].parse::<u8>().unwrap();
-        formatted.push_str(&args[arg_idx as usize]);
+        formatted.push_str(args[arg_idx as usize]);
 
         idx = end_idx + 1;
     }
@@ -76,50 +74,50 @@ fn internal_format_str(fmt: &str, args: &[String]) -> String {
 
 #[unsafe(export_name = "std::Int8::ToString::to_string")]
 pub extern "C" fn int8_tostring(val: i8) -> LumeString {
-    cstr_from_string(format!("{val}"))
+    cstr_from_string(&format!("{val}"))
 }
 
 #[unsafe(export_name = "std::Int16::ToString::to_string")]
 pub extern "C" fn int16_tostring(val: i16) -> LumeString {
-    cstr_from_string(format!("{val}"))
+    cstr_from_string(&format!("{val}"))
 }
 
 #[unsafe(export_name = "std::Int32::ToString::to_string")]
 pub extern "C" fn int32_tostring(val: i32) -> LumeString {
-    cstr_from_string(format!("{val}"))
+    cstr_from_string(&format!("{val}"))
 }
 
 #[unsafe(export_name = "std::Int64::ToString::to_string")]
 pub extern "C" fn int64_tostring(val: i64) -> LumeString {
-    cstr_from_string(format!("{val}"))
+    cstr_from_string(&format!("{val}"))
 }
 
 #[unsafe(export_name = "std::UInt8::ToString::to_string")]
 pub extern "C" fn uint8_tostring(val: u8) -> LumeString {
-    cstr_from_string(format!("{val}"))
+    cstr_from_string(&format!("{val}"))
 }
 
 #[unsafe(export_name = "std::UInt16::ToString::to_string")]
 pub extern "C" fn uint16_tostring(val: u16) -> LumeString {
-    cstr_from_string(format!("{val}"))
+    cstr_from_string(&format!("{val}"))
 }
 
 #[unsafe(export_name = "std::UInt32::ToString::to_string")]
 pub extern "C" fn uint32_tostring(val: u32) -> LumeString {
-    cstr_from_string(format!("{val}"))
+    cstr_from_string(&format!("{val}"))
 }
 
 #[unsafe(export_name = "std::UInt64::ToString::to_string")]
 pub extern "C" fn uint64_tostring(val: u64) -> LumeString {
-    cstr_from_string(format!("{val}"))
+    cstr_from_string(&format!("{val}"))
 }
 
 #[unsafe(export_name = "std::Float::ToString::to_string")]
 pub extern "C" fn float_tostring(val: f32) -> LumeString {
-    cstr_from_string(format!("{val}"))
+    cstr_from_string(&format!("{val}"))
 }
 
 #[unsafe(export_name = "std::Double::ToString::to_string")]
 pub extern "C" fn double_tostring(val: f64) -> LumeString {
-    cstr_from_string(format!("{val}"))
+    cstr_from_string(&format!("{val}"))
 }

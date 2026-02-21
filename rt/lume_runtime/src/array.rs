@@ -3,23 +3,36 @@
 //! None of these structs are meant to be exported - they exist purely to
 //! better read arguments passed to Rust from Lume.
 
+use lume_tagged::strip_tags;
+
 #[repr(C)]
 pub struct Array<T> {
     /// Defines the amount of items within the list.
     pub length: std::os::raw::c_ulonglong,
 
     /// Defines all the items in the list.
-    pub items: *const T,
+    pub items: *const Block<T>,
 }
 
 impl<T> Array<T> {
     pub fn iter(&self) -> ArrayIterator<T> {
+        let base = unsafe { strip_tags(self.items.cast_mut()).read() };
+
         ArrayIterator {
             idx: 0,
             length: self.length,
-            items: self.items,
+            items: strip_tags(base.ptr.cast_mut()),
         }
     }
+}
+
+#[repr(C)]
+pub struct Block<T> {
+    /// Defines the amount of space allocated for the block, measure in bytes.
+    pub size: std::os::raw::c_ulonglong,
+
+    /// Pointer to the start of the memory block, which exists within the heap.
+    pub ptr: *const T,
 }
 
 impl<T> IntoIterator for &Array<T> {

@@ -14,8 +14,8 @@ use lume_rt_macros::link_section_data;
 use lume_rt_metadata::TypeMetadata;
 use lume_tagged::strip_tags;
 
-const POINTER_SIZE: usize = std::mem::size_of::<*const ()>();
-const POINTER_ALIGNMENT: usize = std::mem::align_of::<*const ()>();
+pub const POINTER_SIZE: usize = std::mem::size_of::<*const ()>();
+pub const POINTER_ALIGNMENT: usize = std::mem::align_of::<*const ()>();
 
 unsafe extern "C" {
     #[link_name = "_L1_SP3stdN3std3mem5Block"]
