@@ -379,11 +379,14 @@ impl GenerationalAllocator {
         // that they're found, but we must promote child objects first, so that
         // any parent object doesn't copy the old location of the child.
         for ObjectReference { object, references } in frame.living_gc_objects().rev() {
-            if !self.young.contains_allocation(object) {
+            let untagged_object = strip_tags(object.cast_mut());
+
+            // If the allocation wasn't made by the first generation, it either exists
+            // outside the managed heap or was allocated by the second generation. Either
+            // way, we shouldn't promote it.
+            if !self.young.contains_allocation(untagged_object) {
                 continue;
             }
-
-            let untagged_object = strip_tags(object.cast_mut());
 
             // The metadata of the object is stored at [-0x08], so the actual start of
             // the allocation is there.
