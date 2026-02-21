@@ -352,6 +352,8 @@ impl Builder<'_, '_> {
                 location: vararg_loc,
             });
 
+        let vararg_arr_reg = self.declare_untagged(lume_mir::Operand::reference_of(vararg_arr_reg));
+
         for arg in args {
             self.call(
                 array_push_func_id,

@@ -356,8 +356,13 @@ fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume
         }
 
         let mut call_arguments = Vec::with_capacity(expr.arguments.len());
-        for (argument, param) in expr.arguments.iter().zip(signature.parameters.iter()) {
+        for (idx, argument) in expr.arguments.iter().enumerate() {
             let mut arg_operand = expression(builder, argument);
+
+            let Some(param) = signature.parameters.get(idx) else {
+                call_arguments.push(arg_operand);
+                break;
+            };
 
             // If the argument is passed to an FFI function or may otherwise be used as a
             // direct memory pointer, the pointer must be untagged.
