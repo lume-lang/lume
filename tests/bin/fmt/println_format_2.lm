@@ -1,0 +1,3 @@
+fn main() {
+    std::io::println("Name: {0}, age: {1}", "John", "30");
+}

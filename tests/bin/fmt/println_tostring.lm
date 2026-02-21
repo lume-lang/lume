@@ -1,0 +1,5 @@
+fn main() {
+    let msg = 1.1234.to_string();
+
+    std::io::println(msg);
+}

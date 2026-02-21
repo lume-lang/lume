@@ -67,7 +67,7 @@ pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
         .wait_with_output()
         .map_err(|err| Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("binary time-out: {err}"))))?;
 
-    let stdout = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
 
     if let Some(expected_return_code) = determine_expected_result_code(&test_case)
         && let Some(return_code) = output.status.code()
