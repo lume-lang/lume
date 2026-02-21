@@ -93,10 +93,29 @@ impl Builder<'_, '_> {
 
     /// Declares a new register with the given value as untagged.
     pub(crate) fn declare_untagged(&mut self, value: Operand) -> RegisterId {
-        self.declare(Declaration {
+        let current_block = self.func.current_block().id;
+
+        let tagged_register = if let &OperandKind::Reference { id } = &value.kind {
+            if let Some(untagged_id) = self.untagged_registers.get(&(self.func.current_block().id, id)) {
+                return *untagged_id;
+            }
+
+            Some(id)
+        } else {
+            None
+        };
+
+        let untagged_register = self.declare(Declaration {
             location: value.location,
             kind: Box::new(DeclarationKind::Untagged { operand: value }),
-        })
+        });
+
+        if let Some(tagged_register) = tagged_register {
+            self.untagged_registers
+                .insert((current_block, tagged_register), untagged_register);
+        }
+
+        untagged_register
     }
 }
 

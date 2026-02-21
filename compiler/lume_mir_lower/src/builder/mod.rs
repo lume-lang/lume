@@ -25,6 +25,12 @@ pub(crate) struct Builder<'mir, 'tcx> {
     /// Map of all metadata declarations within the current function, mapping
     /// each type to the containing register.
     metadata_registers: HashMap<(BasicBlockId, TypeMetadataId), RegisterId>,
+
+    /// Map of all untagging declarations within the current function, mapping
+    /// each tagged register to an already-untagged register.
+    ///
+    /// This is used to avoid re-untagging the same register multiple times.
+    untagged_registers: HashMap<(BasicBlockId, RegisterId), RegisterId>,
 }
 
 impl<'mir, 'tcx> Builder<'mir, 'tcx> {
@@ -33,6 +39,7 @@ impl<'mir, 'tcx> Builder<'mir, 'tcx> {
             mcx,
             func,
             metadata_registers: HashMap::new(),
+            untagged_registers: HashMap::new(),
         }
     }
 
