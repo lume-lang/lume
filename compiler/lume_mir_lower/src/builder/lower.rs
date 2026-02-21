@@ -320,28 +320,13 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
             })
             .collect::<Vec<_>>();
 
-        // The first type in all object allocations must be a pointer to the metadata
-        // of the type, so it can be reflected at runtime.
-        let metadata_reg = builder.declare_metadata_of(&expr.ty, expr.location);
-        let metadata_ptr_size = std::mem::size_of::<*const ()>();
-
         let prop_sizes = field_types.iter().map(lume_mir::Type::bytesize).collect::<Vec<_>>();
         let struct_type = lume_mir::Type::structure(struct_name, field_types);
 
         let struct_alloc_reg = builder.alloca(struct_type.clone(), &expr.ty, expr.location);
         let struct_untagged_reg = builder.declare_untagged(lume_mir::Operand::reference_of(struct_alloc_reg));
 
-        // Store the metadata reference in the first element in the structure.
-        let metadata_value = lume_mir::Operand {
-            kind: lume_mir::OperandKind::Reference { id: metadata_reg },
-            location: expr.location,
-        };
-
-        builder.store_field(struct_untagged_reg, metadata_value, 0, expr.location);
-
-        // Since the element at offset 0 is the metadata, we start just after it.
-        let mut offset = metadata_ptr_size;
-
+        let mut offset = 0;
         for (field, size) in field_exprs.iter().zip(prop_sizes) {
             let (value_reg, _) = builder.use_value(&field.value);
             let value_op = builder.use_register(value_reg, field.value.location());
@@ -351,21 +336,8 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
             offset += size;
         }
 
-        // Whenever we return the constructed type, we *must* offset the pointer so it
-        // points to the first field in the type. Otherwise `*ptr[+0x0]` would return
-        // the first field within the metadata instead.
-        let offset_reg = builder.iadd_imm(
-            lume_mir::Operand {
-                kind: lume_mir::OperandKind::Reference { id: struct_alloc_reg },
-                location: expr.location,
-            },
-            lume_mir::POINTER_SIZE.cast_signed() as i64,
-            64,
-            false,
-        );
-
         lume_mir::Operand {
-            kind: lume_mir::OperandKind::Reference { id: offset_reg },
+            kind: lume_mir::OperandKind::Reference { id: struct_alloc_reg },
             location: expr.location,
         }
     })
@@ -715,24 +687,15 @@ fn variable_reference(builder: &mut Builder<'_, '_>, expr: &lume_tir::VariableRe
 fn variant_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Variant) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
         let discriminant = lume_mir::Operand::integer(8, false, i128::from(expr.index));
-        let metadata_register = builder.declare_metadata_of(&expr.ty, expr.location);
 
         let enum_union_type = builder.union_of(&expr.ty);
         let variant_alloc = builder.alloca(enum_union_type, &expr.ty, expr.location);
+        let variant_untagged_reg = builder.declare_untagged(lume_mir::Operand::reference_of(variant_alloc));
 
-        // Store the metadata reference in the first element in the union.
-        let metadata_value = lume_mir::Operand {
-            kind: lume_mir::OperandKind::Reference { id: metadata_register },
-            location: expr.location,
-        };
-
-        builder.store_field(variant_alloc, metadata_value, 0, expr.location);
-
-        // Since the element at offset 0 is the metadata, we start just after it.
-        let mut offset = std::mem::size_of::<*const ()>();
+        let mut offset = 0;
 
         // Store the discriminant of the variant right after the metadata
-        builder.store_field(variant_alloc, discriminant, offset, expr.location);
+        builder.store_field(variant_untagged_reg, discriminant, offset, expr.location);
         offset += 1;
 
         // Store all of the arguments of the variant inside the allocation.
@@ -740,26 +703,13 @@ fn variant_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Variant) -
             let value = expression(builder, argument);
             let value_size = value.byte_size();
 
-            builder.store_field(variant_alloc, value, offset, expr.location);
+            builder.store_field(variant_untagged_reg, value, offset, expr.location);
 
             offset += value_size;
         }
 
-        // Whenever we return the constructed type, we *must* offset the pointer so it
-        // points to the first field in the type. Otherwise `*ptr[+0x0]` would return
-        // the first field within the metadata instead.
-        let offset_reg = builder.iadd_imm(
-            lume_mir::Operand {
-                kind: lume_mir::OperandKind::Reference { id: variant_alloc },
-                location: expr.location,
-            },
-            lume_mir::POINTER_SIZE.cast_signed() as i64,
-            64,
-            false,
-        );
-
         lume_mir::Operand {
-            kind: lume_mir::OperandKind::Reference { id: offset_reg },
+            kind: lume_mir::OperandKind::Reference { id: variant_alloc },
             location: expr.location,
         }
     })

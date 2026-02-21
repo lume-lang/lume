@@ -561,12 +561,25 @@ pub fn trigger_collection_force() {
 /// Static version of [`alloc::GenerationalAllocator::alloc`], so it can be
 /// used as a function pointer in Cranelift.
 #[unsafe(export_name = "std::mem::GC::alloc")]
-pub fn allocate_object(size: usize, metadata: *const TypeMetadata) -> *mut u8 {
+pub unsafe fn allocate_object(size: usize, metadata: *const TypeMetadata) -> *mut u8 {
     let Some(frame) = find_current_stack_map() else {
         panic!("bug!: could not find stack map for allocation call");
     };
 
-    with_allocator(|alloc| alloc.alloc(size, metadata, &frame))
+    let alloc_ptr = with_allocator(|alloc| alloc.alloc(size, metadata, &frame));
+    let offset_ptr = unsafe { alloc_ptr.byte_add(POINTER_SIZE) };
+
+    if metadata.is_null() {
+        return offset_ptr;
+    }
+
+    // Write the metadata pointer into the first word of the allocation.
+    //
+    // Previously, this was done at the MIR level, which added alot of unnecessary
+    // noise to the IR.
+    unsafe { *strip_tags(alloc_ptr.cast::<*const TypeMetadata>()) = metadata };
+
+    offset_ptr
 }
 
 /// Static version of [`alloc::GenerationalAllocator::drop_allocations`], so it

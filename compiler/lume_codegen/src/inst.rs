@@ -169,13 +169,17 @@ impl LowerFunction<'_> {
 
                 self.alloca(size, Some(metadata))
             }
-            lume_mir::TypeKind::Tuple { .. }
-            | lume_mir::TypeKind::Integer { .. }
+            lume_mir::TypeKind::Integer { .. }
             | lume_mir::TypeKind::Float { .. }
             | lume_mir::TypeKind::Boolean
-            | lume_mir::TypeKind::String
-            | lume_mir::TypeKind::Box { .. }
-            | lume_mir::TypeKind::Pointer { .. } => self.alloca(ty.bytesize(), None),
+            | lume_mir::TypeKind::String => {
+                let size = ty.bytesize() + lume_mir::POINTER_SIZE;
+
+                self.alloca(size, Some(metadata))
+            }
+            lume_mir::TypeKind::Tuple { .. } | lume_mir::TypeKind::Box { .. } | lume_mir::TypeKind::Pointer { .. } => {
+                self.alloca(ty.bytesize(), None)
+            }
             lume_mir::TypeKind::Metadata { .. } | lume_mir::TypeKind::Void | lume_mir::TypeKind::Never => {
                 unreachable!()
             }
