@@ -6,9 +6,9 @@ B0:
 fn "main" () -> void {
 B0:
     let #0: metadata std::Int32 = metadata std::Int32()
-    let #1: metadata foo::T = metadata foo::T()
-    #2 = alloc i32
+    #1 = alloc i32
+    let #2: ptr i32 = untagged #1
     *#2 = 42_i32
-    let #3: void = call foo(#2, #0)
+    let #3: void = call foo(#1, #0)
     return
 }

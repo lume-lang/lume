@@ -1,18 +1,20 @@
 fn "force_or_zero" (opt: ptr (u8, ) #0) -> i32 {
 B0:
     let #1: ptr (u8, ) = #0
-    let #2: u8 = *#0[+x0]
-    let #3: bool = ==(#2, 0_u8)
-    let #4: box void = *#0[+x1]
-    let #5: bool = &&(#3, true)
-    if #5 goto B1(#4) else B2
-B1(#7):  B0
-    let #8: i32 = *#7
-    let #9: i32 = #8
-    return #8
+    let #2: ptr (u8, ) = untagged #0
+    let #3: u8 = *#2[+x0]
+    let #4: bool = ==(#3, 0_u8)
+    let #5: box void = *#2[+x1]
+    let #6: bool = &&(#4, true)
+    if #6 goto B1(#5) else B2
+B1(#8):  B0
+    let #9: box void = untagged #8
+    let #10: i32 = *#9
+    let #11: i32 = #10
+    return #10
 B2:  B0
-    let #11: i32 = 0_i32
-    let #12: bool = false
+    let #13: i32 = 0_i32
+    let #14: bool = false
     return 0_i32
 }
 
@@ -20,10 +22,9 @@ fn "main" () -> void {
 B0:
     let #0: metadata std::Optional<T> = metadata std::Optional<T>()
     #1 = alloc (u8, (box void), ())
-    *#1[+x0] = #0
-    *#1[+x8] = 0_u8
-    *#1[+x9] = 42_i32
-    let #2: ptr (u8, (box void), ()) = +(#1, 8_u64)
-    let #3: i32 = call force_or_zero(#2)
+    let #2: ptr (u8, (box void), ()) = untagged #1
+    *#2[+x0] = 0_u8
+    *#2[+x1] = 42_i32
+    let #3: i32 = call force_or_zero(#1)
     return
 }
