@@ -57,6 +57,15 @@ impl ModuleMap {
         self.functions.get_mut(&id).unwrap()
     }
 
+    /// Returns a reference to the entrypoint function.
+    pub fn entrypoint(&self) -> Option<&Function> {
+        let entrypoint_name = self.options.entrypoint.as_str();
+
+        self.functions
+            .values()
+            .find(|func| func.name.as_str() == entrypoint_name)
+    }
+
     /// Merges the current [`ModuleMap`] into the other given map.
     pub fn merge_into(self, dest: &mut ModuleMap) {
         self.metadata.merge_into(&mut dest.metadata);

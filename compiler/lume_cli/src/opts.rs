@@ -33,6 +33,10 @@ pub struct BuildOptions {
     )]
     pub optimize: String,
 
+    /// Name of the entrypoint function
+    #[arg(long)]
+    pub entrypoint: Option<String>,
+
     #[clap(flatten, next_help_heading = "Codegen")]
     pub codegen: CodegenOptions,
 
@@ -133,6 +137,7 @@ impl BuildOptions {
                 Some(Linker::Gcc) => Some(lume_session::LinkerPreference::Gcc),
                 None => None,
             },
+            entrypoint: self.entrypoint.clone().unwrap_or_else(|| String::from("main")),
             runtime_path: self.codegen.runtime_path.clone(),
             output_directory: self.codegen.output.clone(),
             dump_mir: self.dev.dump_mir.clone(),
