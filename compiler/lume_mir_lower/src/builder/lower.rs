@@ -346,9 +346,17 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
 fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
         let is_ffi_call = builder.tcx().hir_is_callable_external(expr.function);
-        let mut call_arguments = Vec::with_capacity(expr.arguments.len());
 
-        for argument in &expr.arguments {
+        let mut signature = builder.signature_of(expr.function);
+        signature.return_type = builder.lower_type(&expr.return_type);
+
+        let return_type = expr.uninst_return_type.as_ref().unwrap_or(&expr.return_type);
+        if builder.tcx().is_type_parameter(return_type) {
+            signature.return_type = lume_mir::Type::boxed(signature.return_type);
+        }
+
+        let mut call_arguments = Vec::with_capacity(expr.arguments.len());
+        for (argument, param) in expr.arguments.iter().zip(signature.parameters.iter()) {
             let mut arg_operand = expression(builder, argument);
 
             // If the argument is passed to an FFI function or may otherwise be used as a
@@ -360,15 +368,16 @@ fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume
                 arg_operand = lume_mir::Operand::reference_of(builder.declare_untagged(arg_operand));
             }
 
+            // Generic parameters are lowering into accepting pointer types, so all
+            // types of argument can be passed.
+            //
+            // When passing a non-reference argument into a generic parameter, we then
+            // need to pass an address to the argument, so the callee can load it. When
+            // lowering these arguments, we create a slot in the stack to store the
+            // argument, then we pass the address of the stack slot to the function.
+            arg_operand = builder.box_value_if_needed(arg_operand, &argument.ty, &param.type_ref);
+
             call_arguments.push(arg_operand);
-        }
-
-        let mut signature = builder.signature_of(expr.function);
-        signature.return_type = builder.lower_type(&expr.return_type);
-
-        let return_type = expr.uninst_return_type.as_ref().unwrap_or(&expr.return_type);
-        if builder.tcx().is_type_parameter(return_type) {
-            signature.return_type = lume_mir::Type::boxed(signature.return_type);
         }
 
         let return_value = builder.call_with_signature(expr.function, &signature, call_arguments, expr.location);

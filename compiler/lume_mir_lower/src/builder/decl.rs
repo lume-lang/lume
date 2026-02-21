@@ -277,7 +277,7 @@ impl Builder<'_, '_> {
     ) -> RegisterId {
         let func_name = self.mcx.mir().function(func_id).name;
 
-        let args = self.normalize_call_argumets(signature, &args);
+        let args = self.normalize_call_argumets(signature, args);
         let return_type = signature.return_type.clone();
 
         self.declare_as(return_type, lume_mir::Declaration {
@@ -299,7 +299,7 @@ impl Builder<'_, '_> {
         args: Vec<Operand>,
         location: Location,
     ) -> RegisterId {
-        let args = self.normalize_call_argumets(&signature, &args);
+        let args = self.normalize_call_argumets(&signature, args);
         let return_type = signature.return_type.clone();
 
         self.declare_as(return_type, lume_mir::Declaration {
@@ -308,20 +308,11 @@ impl Builder<'_, '_> {
         })
     }
 
-    fn normalize_call_argumets(&mut self, signature: &Signature, args: &[lume_mir::Operand]) -> Vec<lume_mir::Operand> {
-        let mut args = args.to_vec();
-
-        // Generic parameters are lowering into accepting pointer types, so all
-        // types of argument can be passed.
-        //
-        // When passing a non-reference argument into a generic parameter, we then
-        // need to pass an address to the argument, so the callee can load it. When
-        // lowering these arguments, we create a slot in the stack to store the
-        // argument, then we pass the address of the stack slot to the function.
-        for (arg, param) in args.iter_mut().zip(signature.parameters.iter()) {
-            *arg = self.box_value_if_needed(arg.clone(), &param.type_ref);
-        }
-
+    fn normalize_call_argumets(
+        &mut self,
+        signature: &Signature,
+        mut args: Vec<lume_mir::Operand>,
+    ) -> Vec<lume_mir::Operand> {
         if signature.vararg && args.len() >= signature.parameters.len() - 1 {
             args = self.merge_vararg_operands(&signature.parameters, args);
         }
@@ -408,7 +399,7 @@ impl Builder<'_, '_> {
     /// |---------|---------------|
     /// | No      | Boxed (stack) |
     /// | Yes     | Boxed (heap)  |
-    pub(crate) fn box_value(&mut self, value: lume_mir::Operand, expected_type: &TypeRef) -> lume_mir::Operand {
+    pub(crate) fn box_value(&mut self, value: lume_mir::Operand, value_type: &TypeRef) -> lume_mir::Operand {
         let location = value.location;
 
         #[allow(clippy::match_same_arms, reason = "explaitory comments differ")]
@@ -436,7 +427,7 @@ impl Builder<'_, '_> {
         };
 
         if allocate_on_heap {
-            self.store_on_heap(value, expected_type, location)
+            self.store_on_heap(value, value_type, location)
         } else {
             self.store_on_stack(value, location)
         }
@@ -450,10 +441,11 @@ impl Builder<'_, '_> {
     pub(crate) fn box_value_if_needed(
         &mut self,
         value: lume_mir::Operand,
+        value_type: &TypeRef,
         expected_type: &TypeRef,
     ) -> lume_mir::Operand {
         if self.needs_boxing(&value, expected_type) {
-            self.box_value(value, expected_type)
+            self.box_value(value, value_type)
         } else {
             value
         }
