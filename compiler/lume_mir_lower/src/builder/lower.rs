@@ -192,7 +192,7 @@ pub(crate) fn expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Express
         lume_tir::ExpressionKind::If(expr) => if_condition(builder, expr),
         lume_tir::ExpressionKind::Is(expr) => is_condition(builder, expr),
         lume_tir::ExpressionKind::IntrinsicCall(expr) => intrinsic_expression(builder, expr),
-        lume_tir::ExpressionKind::Literal(expr) => literal(&expr.kind, expr.location),
+        lume_tir::ExpressionKind::Literal(expr) => literal(builder, expr),
         lume_tir::ExpressionKind::Logical(expr) => logical(builder, expr),
         lume_tir::ExpressionKind::Member(expr) => member_field(builder, expr),
         lume_tir::ExpressionKind::Scope(expr) => scope(builder, expr),
@@ -525,11 +525,11 @@ fn is_condition(builder: &mut Builder<'_, '_>, expr: &lume_tir::Is) -> lume_mir:
     })
 }
 
-fn literal(expr: &lume_tir::LiteralKind, location: Location) -> lume_mir::Operand {
-    match expr {
+fn literal(builder: &mut Builder<'_, '_>, expr: &lume_tir::Literal) -> lume_mir::Operand {
+    match &expr.kind {
         lume_tir::LiteralKind::Boolean(val) => lume_mir::Operand {
             kind: lume_mir::OperandKind::Boolean { value: *val },
-            location,
+            location: expr.location,
         },
         lume_tir::LiteralKind::Int(val) => {
             let (bits, signed, value) = match val {
@@ -545,7 +545,7 @@ fn literal(expr: &lume_tir::LiteralKind, location: Location) -> lume_mir::Operan
 
             lume_mir::Operand {
                 kind: lume_mir::OperandKind::Integer { value, bits, signed },
-                location,
+                location: expr.location,
             }
         }
         lume_tir::LiteralKind::Float(val) => {
@@ -556,13 +556,27 @@ fn literal(expr: &lume_tir::LiteralKind, location: Location) -> lume_mir::Operan
 
             lume_mir::Operand {
                 kind: lume_mir::OperandKind::Float { value, bits },
-                location,
+                location: expr.location,
             }
         }
-        lume_tir::LiteralKind::String(val) => lume_mir::Operand {
-            kind: lume_mir::OperandKind::String { value: *val },
-            location,
-        },
+        lume_tir::LiteralKind::String(val) => {
+            let string_operand = lume_mir::Operand {
+                kind: lume_mir::OperandKind::String { value: *val },
+                location: expr.location,
+            };
+
+            let string_type = builder.tcx().type_of(expr.id).unwrap();
+
+            let alloc_ptr = builder.alloca(lume_mir::Type::string(), &string_type, expr.location);
+            let untagged_ptr = builder.declare_untagged(lume_mir::Operand::reference_of(alloc_ptr));
+
+            builder.store(untagged_ptr, string_operand, expr.location);
+
+            lume_mir::Operand {
+                kind: lume_mir::OperandKind::Reference { id: alloc_ptr },
+                location: expr.location,
+            }
+        }
     }
 }
 

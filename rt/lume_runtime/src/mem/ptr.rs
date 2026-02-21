@@ -1,9 +1,5 @@
 use lume_rt_metadata::TypeMetadata;
 
-unsafe extern "C" {
-    pub fn memcpy(dest: *mut (), src: *const (), n: usize) -> *mut ();
-}
-
 /// Gets the given pointer as a reference, to the value which the pointer is
 /// pointing to.
 #[unsafe(export_name = "std::mem::ptr_ref")]
