@@ -372,17 +372,6 @@ impl FrameStackMap {
 
                 let block_ptr = unsafe { untagged_obj_ptr.byte_add(POINTER_SIZE).cast::<*const u8>().read() };
 
-                // SAFETY:
-                // Since all values within the block are ensured to be object pointers or boxed
-                // scalars, all pointers will have metadata attached.
-                let elemental_item_ptr = strip_tags(unsafe { block_ptr.cast::<*mut u8>().read() });
-                let elemental_metadata = unsafe { metadata_of(elemental_item_ptr).read() };
-
-                // Ignore scalar blocks, since scalars cannot be collected.
-                if elemental_metadata.kind != lume_rt_metadata::TypeKind::Object {
-                    continue;
-                }
-
                 libftrace::trace!(
                     "found heap block, ptr = {untagged_obj_ptr:p}, size = 0x{block_len:X}, elemental = {:?}",
                     elemental_metadata.full_name()
