@@ -1908,6 +1908,7 @@ dependencies = [
  "lume_gc",
  "lume_options",
  "lume_rt_metadata",
+ "lume_tagged",
  "owo-colors",
 ]
 
