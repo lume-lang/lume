@@ -15,7 +15,7 @@ use lume_span::{FileName, PackageId, SourceFile};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Default, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Options {
     /// Defines whether the type context should be printed to `stdio`, after
     /// it's been inferred and type checked.
@@ -53,6 +53,24 @@ pub struct Options {
 
     /// Defines whether the generated codegen IR should be printed to `stdio`.
     pub dump_codegen_ir: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            print_type_context: false,
+            optimize: OptimizationLevel::default(),
+            linker: None,
+            debug_info: DebugInfo::default(),
+            entrypoint: String::from("main"),
+            enable_incremental: true,
+            runtime_path: None,
+            output_directory: None,
+            dump_mir: None,
+            dump_mir_func: Vec::new(),
+            dump_codegen_ir: false,
+        }
+    }
 }
 
 /// Defines how much the generated IR should be optimized.
