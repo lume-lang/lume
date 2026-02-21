@@ -11,6 +11,9 @@ use serde::{Deserialize, Serialize};
 
 pub const POINTER_SIZE: usize = std::mem::size_of::<*const u32>();
 
+#[allow(clippy::cast_possible_truncation, reason = "infallible")]
+pub const POINTER_BITS: u8 = std::mem::size_of::<*const u32>() as u8 * 8;
+
 /// Represents a map of all functions within a compilation
 /// module. Functions are identified by their unique ID,
 /// which is referenced by later expressions, such as call sites.

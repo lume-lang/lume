@@ -390,7 +390,14 @@ impl GenerationalAllocator {
             let alloc_start = unsafe { untagged_object.byte_sub(POINTER_SIZE) };
 
             let metadata_ptr = metadata_of(untagged_object);
-            let obj_size = unsafe { metadata_ptr.read() }.size;
+            let metadata = unsafe { metadata_ptr.read() };
+
+            let obj_size = metadata.size
+                + if metadata.kind == lume_rt_metadata::TypeKind::Scalar {
+                    POINTER_SIZE
+                } else {
+                    0
+                };
 
             // Copy the 1st generation object to the 2nd generation.
             let new_live_ptr = self.old.alloc(obj_size, metadata_ptr);
