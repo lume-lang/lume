@@ -98,6 +98,8 @@ fn variant_pattern(
     variant: &lume_tir::VariantPattern,
     location: Location,
 ) -> lume_mir::Operand {
+    let untagged_op = builder.declare_untagged(lume_mir::Operand::reference_of(loaded_op));
+
     let discriminant_value = builder
         .tcx()
         .discriminant_of_variant(variant.ty.instance_of, variant.name.name.name())
@@ -107,7 +109,7 @@ fn variant_pattern(
         lume_mir::Type::u8(),
         lume_mir::Operand {
             kind: lume_mir::OperandKind::LoadField {
-                target: loaded_op,
+                target: untagged_op,
                 offset: 0,
                 field_type: lume_mir::Type::u8(),
             },
@@ -167,6 +169,8 @@ fn load_variant_subpattern(
     subpattern: &lume_tir::Pattern,
     field_idx: usize,
 ) -> lume_mir::Operand {
+    let untagged_op = builder.declare_untagged(lume_mir::Operand::reference_of(parent_operand));
+
     let field_offset = variant_field_offset(builder, parent_pattern.id, field_idx);
     let field_type = variant_field_type(builder, parent_pattern.id, field_idx);
 
@@ -175,7 +179,7 @@ fn load_variant_subpattern(
     if !field_type.is_reference_type() || field_type.is_generic {
         let field_operand = lume_mir::Operand {
             kind: lume_mir::OperandKind::LoadField {
-                target: parent_operand,
+                target: untagged_op,
                 offset: field_offset,
                 field_type: field_type.clone(),
             },

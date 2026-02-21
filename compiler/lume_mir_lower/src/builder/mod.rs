@@ -193,7 +193,8 @@ impl Builder<'_, '_> {
         let operand_type = self.type_of_value(&value);
 
         let alloc = self.alloca(operand_type, ty, location);
-        self.func.current_block_mut().store(alloc, value, location);
+        let untagged = self.declare_untagged(lume_mir::Operand::reference_of(alloc));
+        self.func.current_block_mut().store(untagged, value, location);
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id: alloc },
