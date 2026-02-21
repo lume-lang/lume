@@ -18,9 +18,8 @@ B0:
     let #0: metadata Foo = metadata Foo()
     #1 = alloc Foo
     mark object(#1)
-    *#1[+x0] = #0
-    let #2: ptr Foo = +(#1, 8_u64)
+    let #2: ptr Foo = untagged #1
     mark object(#2)
-    let #3: i32 = call Dynamic::func(#2, #0)
+    let #3: i32 = call Dynamic::func(#1, #0)
     return #3
 }
