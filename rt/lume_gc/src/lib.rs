@@ -332,6 +332,8 @@ impl FrameStackMap {
     ///
     /// All object pointers within the [`ObjectReference::object`] are tagged.
     pub(crate) fn living_gc_objects(&self) -> impl DoubleEndedIterator<Item = ObjectReference> + use<> {
+        let stack_pointer = self.stack_pointer();
+
         let mut object_refs = IndexMap::<*const u8, ObjectReference>::with_capacity(1000);
         let mut worklist = self.iter_stack_value_locations().collect::<IndexSet<_>>();
 
@@ -341,6 +343,12 @@ impl FrameStackMap {
             }
 
             let untagged_obj_ptr = strip_tags(tagged_obj_ptr.cast_mut());
+
+            // Ignore stack-allocated objects since they'll be automatically collected when
+            // the frame pops.
+            if untagged_obj_ptr.cast_const() >= stack_pointer {
+                continue;
+            }
 
             if let Some(obj_ref) = object_refs.get_mut(&tagged_obj_ptr) {
                 // We've already visited the pointer - skip it and all it's descendants.
