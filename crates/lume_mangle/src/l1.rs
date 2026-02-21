@@ -95,12 +95,6 @@ fn mangled_name_of_function(tcx: &TyCheckCtx, func: &lume_hir::FunctionDefinitio
         return format!("{:+}", func.path());
     }
 
-    // If the function is the package entrypoint, give it a specific name so we can
-    // reference it in the runtime.
-    if tcx.is_entrypoint(func.id) {
-        return String::from("__lume_entry");
-    }
-
     let package_segment = mangled_package_segment(tcx, func.id.package);
     let path_segment = mangled_path_segment(func.path());
 

@@ -3,7 +3,7 @@ use cranelift_codegen::Context;
 use cranelift_module::Module;
 use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 
-use crate::CraneliftBackend;
+use crate::{CraneliftBackend, MAIN_ENTRY};
 
 impl CraneliftBackend {
     /// Creates the main entrypoint for all Lume binaries.
@@ -18,29 +18,18 @@ impl CraneliftBackend {
     /// returned, the same parts need to be torn down and cleared up. These
     /// lifetime routines are invoked from the "real" entrypoint, which
     /// itself ends up calling the `main` function.
-    ///
-    /// To prevent linker issues, the `main` function of the Lume binary is
-    /// implicitly renamed to `__lume_entry`. The code generator then
-    /// creates a new function which handles startup, calls `__lume_entry`
-    /// and cleans up.
     #[libftrace::traced(level = Debug)]
     pub(crate) fn create_entry_fn(
         &mut self,
         ctx: &mut Context,
         builder_ctx: &mut FunctionBuilderContext,
     ) -> Result<()> {
-        let Some(entry_node_id) = self
-            .context
-            .functions
-            .iter()
-            .find_map(|(&id, func)| (func.mangled_name == super::LUME_ENTRY).then_some(id))
-        else {
+        let Some(entrypoint_func) = self.context.entrypoint() else {
             libftrace::warning!("skipping entrypoint generation: no entry found");
-
             return Ok(());
         };
 
-        let entry_decl = self.declared_funcs.get(&entry_node_id).unwrap();
+        let entry_decl = self.declared_funcs.get(&entrypoint_func.id).unwrap();
         let entry_func_id = entry_decl.id;
 
         let entry_has_own_return = !entry_decl.sig.returns.is_empty();
@@ -55,11 +44,7 @@ impl CraneliftBackend {
 
         let main_func_id = self
             .module_mut()
-            .declare_function(
-                super::MAIN_ENTRY,
-                cranelift_module::Linkage::Export,
-                &ctx.func.signature,
-            )
+            .declare_function(MAIN_ENTRY, cranelift_module::Linkage::Export, &ctx.func.signature)
             .map_diagnostic()?;
 
         let mut builder = FunctionBuilder::new(&mut ctx.func, builder_ctx);

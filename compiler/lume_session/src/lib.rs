@@ -30,6 +30,9 @@ pub struct Options {
     /// Defines the amount of debug information to preserve in the binary.
     pub debug_info: DebugInfo,
 
+    /// Defines the name of the entrypoint function.
+    pub entrypoint: String,
+
     /// Defines whether incremental compilation is enabled.
     pub enable_incremental: bool,
 

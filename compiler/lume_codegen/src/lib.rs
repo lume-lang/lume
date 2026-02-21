@@ -31,7 +31,6 @@ use crate::dwarf::{DebugRelocName, RootDebugContext, WriterRelocate};
 use crate::unwind::RootUnwindContext;
 
 pub const MAIN_ENTRY: &str = "main";
-pub const LUME_ENTRY: &str = "__lume_entry";
 
 pub const LUME_START: &str = "__lume_start";
 pub const LUME_END: &str = "__lume_end";
