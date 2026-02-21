@@ -467,8 +467,8 @@ impl Builder<'_, '_> {
         let location = value.location;
         let return_type = self.lower_type(expected_type);
 
-        let declared_operand = self.declare_operand(value, OperandRef::Implicit);
-        let loaded_operand = self.load_as(return_type, declared_operand, location);
+        let untagged_operand = self.declare_untagged(value);
+        let loaded_operand = self.load_as(return_type, untagged_operand, location);
 
         self.use_register(loaded_operand, location)
     }

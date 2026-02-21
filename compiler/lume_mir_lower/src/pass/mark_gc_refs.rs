@@ -101,15 +101,14 @@ impl MarkObjectReferences {
                 match &inst.kind {
                     InstructionKind::Let { register, decl, .. } => {
                         match decl.kind.as_ref() {
-                            DeclarationKind::Operand(operand) | DeclarationKind::Untagged { operand } => self
-                                .find_object_references_operand(
-                                    func,
-                                    block.id,
-                                    inst_id,
-                                    operand,
-                                    Placement::Before,
-                                    location,
-                                ),
+                            DeclarationKind::Operand(operand) => self.find_object_references_operand(
+                                func,
+                                block.id,
+                                inst_id,
+                                operand,
+                                Placement::Before,
+                                location,
+                            ),
                             DeclarationKind::Call { args, .. } | DeclarationKind::IndirectCall { args, .. } => {
                                 for arg in args {
                                     self.find_object_references_operand(
@@ -122,7 +121,9 @@ impl MarkObjectReferences {
                                     );
                                 }
                             }
-                            DeclarationKind::Cast { .. } | DeclarationKind::Intrinsic { .. } => {}
+                            DeclarationKind::Cast { .. }
+                            | DeclarationKind::Intrinsic { .. }
+                            | DeclarationKind::Untagged { .. } => {}
                         }
 
                         self.register_gc_object(func, block.id, inst_id, *register, Placement::After, location);
