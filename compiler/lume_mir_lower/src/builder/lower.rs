@@ -27,11 +27,7 @@ pub(crate) fn lower_function(mut builder: Builder<'_, '_>, func: &lume_tir::Func
 
             builder.run_passes();
         }
-        lume_tir::FunctionKind::Unreachable => {
-            builder.with_new_block(|builder, _| {
-                builder.unreachable(func.location);
-            });
-        }
+        lume_tir::FunctionKind::Intrinsic => unreachable!(),
     }
 
     builder.func
