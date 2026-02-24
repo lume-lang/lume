@@ -1908,6 +1908,7 @@ dependencies = [
  "lume_gc",
  "lume_options",
  "lume_rt_metadata",
+ "lume_signals",
  "lume_tagged",
  "owo-colors",
 ]
@@ -1927,6 +1928,14 @@ dependencies = [
  "rust-embed",
  "semver",
  "serde",
+]
+
+[[package]]
+name = "lume_signals"
+version = "0.1.1"
+dependencies = [
+ "libc",
+ "owo-colors",
 ]
 
 [[package]]

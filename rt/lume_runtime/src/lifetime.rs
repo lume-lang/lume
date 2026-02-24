@@ -14,6 +14,8 @@ use lume_options::RuntimeOptions;
 
 #[unsafe(export_name = "__lume_start")]
 pub extern "C" fn lm_start() {
+    lume_signals::install_handlers();
+
     // Initialize the GC with the runtime options, so we have a heap we can allocate
     // into.
     lume_gc::initialize(&RUNTIME_OPTIONS);
@@ -23,6 +25,8 @@ pub extern "C" fn lm_start() {
 pub extern "C" fn lm_end() {
     // Drop all GC allocations and call their disposing methods.
     lume_gc::drop_allocations();
+
+    lume_signals::uninstall_handlers();
 }
 
 unsafe extern "C" {

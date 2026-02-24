@@ -1,32 +1,28 @@
 [package]
-name = "lume_runtime"
+name = "lume_signals"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [lib]
+test = false
 doctest = false
-crate-type = ["lib", "staticlib"]
 
 [dependencies]
-backtrace = { version = "=0.3.76" }
-lume_gc = { path = "../lume_gc" }
-lume_options = { path = "../lume_options" }
-lume_rt_metadata = { path = "../lume_rt_metadata" }
-lume_signals = { path = "../../crates/lume_signals" }
-lume_tagged = { path = "../lume_tagged" }
-
 owo-colors = { version = "4.2", optional = true, features = ["supports-colors"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = { version = "0.2.178" }
 
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }
+cast_possible_truncation = "allow"
+cast_possible_wrap = "allow"
 must_use_candidate = "allow"
 wildcard_imports = "allow"
-range_plus_one = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 missing_safety_doc = "allow"
-disallowed_macros = "allow"
 
 [features]
 default = ["color"]
