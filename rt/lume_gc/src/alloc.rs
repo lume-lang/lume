@@ -3,6 +3,7 @@ extern crate alloc;
 use alloc::alloc::{GlobalAlloc, Layout, alloc, dealloc};
 use std::cell::{Cell, UnsafeCell};
 use std::sync::OnceLock;
+use std::sync::atomic::{AtomicPtr, Ordering};
 
 use indexmap::IndexMap;
 use lume_rt_metadata::TypeMetadata;
@@ -460,6 +461,11 @@ unsafe impl<T> Sync for Global<T> where T: Send {}
 
 static GA: OnceLock<Global<GenerationalAllocator>> = OnceLock::new();
 
+/// Atomic pointer to the top of the stack.
+///
+/// Helps determine the bounds of the stack when tracing objects.
+static TOP_SP: AtomicPtr<u8> = AtomicPtr::new(std::ptr::null_mut());
+
 /// Initializes the garbage collector with the given options.
 pub(crate) fn initialize_gc(opts: &lume_options::RuntimeOptions) {
     let allocator = match opts.gc.heap_size {
@@ -470,6 +476,13 @@ pub(crate) fn initialize_gc(opts: &lume_options::RuntimeOptions) {
     let _ = GA.set(Global {
         inner: UnsafeCell::new(allocator),
     });
+
+    let mut fp = arch::read_frame_pointer();
+    while fp != 0 {
+        TOP_SP.store(fp as *mut u8, Ordering::Relaxed);
+
+        fp = unsafe { arch::parent_frame_pointer(fp) };
+    }
 }
 
 /// Invokes the given closure with a mutable reference to the global allocator.
@@ -477,4 +490,10 @@ pub(crate) fn with_allocator<R, F: FnOnce(&mut GenerationalAllocator) -> R>(f: F
     let global = GA.get().expect("expected GC to be initialized!");
 
     unsafe { f(&mut *global.inner.get()) }
+}
+
+/// Returns a pointer to the top of the stack.
+#[inline]
+pub(crate) fn top_stack_pointer() -> *mut u8 {
+    TOP_SP.load(Ordering::Relaxed)
 }
