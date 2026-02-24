@@ -26,6 +26,7 @@ pub(crate) struct LumeCli {
 #[derive(Debug, clap::Parser)]
 pub enum LumeSubcommands {
     Arc(commands::ArcCommand),
+    Check(commands::CheckCommand),
     Build(commands::BuildCommand),
     Format(commands::FormatCommand),
     Run(commands::RunCommand),
@@ -77,6 +78,7 @@ pub fn lume_cli_entry() {
 
     dcx.with_none(|dcx| match matches.subcommand {
         LumeSubcommands::Arc(cmd) => cmd.run(dcx),
+        LumeSubcommands::Check(cmd) => cmd.run(dcx),
         LumeSubcommands::Build(cmd) => cmd.run(dcx),
         LumeSubcommands::Format(cmd) => cmd.run(dcx),
         LumeSubcommands::Run(cmd) => cmd.run(dcx),
