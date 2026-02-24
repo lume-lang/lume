@@ -17,6 +17,7 @@ lume_infer = { path = "../lume_infer" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 lume_types = { path = "../lume_types" }
+
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
 env_logger = { version = "=0.11.8" }
 error_snippet = { workspace = true }

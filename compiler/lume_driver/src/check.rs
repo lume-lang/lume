@@ -81,9 +81,6 @@ pub struct CheckedPackage {
 
     /// Defines the checked type context.
     pub tcx: TyCheckCtx,
-
-    /// Defines all the sources within the package.
-    pub sources: SourceMap,
 }
 
 impl Compiler {
@@ -112,7 +109,6 @@ impl Compiler {
         Ok(CheckedPackage {
             package: package_id,
             tcx,
-            sources: compiler.source_map,
         })
     }
 }

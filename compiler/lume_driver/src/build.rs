@@ -123,11 +123,7 @@ impl Compiler {
         gcx: Arc<GlobalCtx>,
         dep_hir: &lume_hir::map::Map,
     ) -> Result<CompiledPackage> {
-        let mut compiler = Self {
-            package,
-            gcx,
-            source_map: SourceMap::default(),
-        };
+        let mut compiler = Self { package, gcx };
 
         let mut sources = compiler.parse()?;
         libftrace::debug!("finished parsing");
