@@ -59,6 +59,10 @@ impl Engine {
         let result = self.with_result(|engine| {
             let source_overrides = engine.io.build_source_overrides(&engine.root);
             let config = lume_driver::Config {
+                // The language client may still perform go-to requests on
+                // non-public symbols from other crates.
+                export_private_nodes: true,
+
                 source_overrides: Some(source_overrides),
                 ..Default::default()
             };

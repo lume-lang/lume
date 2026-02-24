@@ -45,15 +45,26 @@ impl Driver {
         // dependencies without any sub-dependencies can be built first.
         dependencies.reverse();
 
-        let mut graph = CheckedPackageGraph {
-            root: gcx.session.dep_graph.root,
-            packages: HashMap::new(),
-        };
+        let mut graph = CheckedPackageGraph::new(gcx.session.dep_graph.root);
+        let mut dependency_hir = lume_hir::map::Map::empty(PackageId::empty());
 
         for dependency in dependencies {
-            let checked = Compiler::check_package(dependency, gcx.clone())?;
+            libftrace::info!(
+                "checking {} v{} ({})",
+                dependency.name,
+                dependency.version,
+                dependency.path.display()
+            );
 
-            graph.packages.insert(checked.package, checked);
+            let checked = Compiler::check_package(dependency, gcx.clone(), &dependency_hir)?;
+            let exposed_hir = if self.config.export_private_nodes {
+                checked.tcx.hir().clone()
+            } else {
+                lume_metadata::partition_public_nodes(&checked.tcx)
+            };
+
+            graph.packages.insert(checked.package.id, checked);
+            exposed_hir.merge_into(&mut dependency_hir);
         }
 
         Ok(graph)
@@ -70,14 +81,21 @@ pub struct CheckedPackageGraph {
 }
 
 impl CheckedPackageGraph {
+    pub fn new(root: PackageId) -> Self {
+        Self {
+            root,
+            packages: HashMap::new(),
+        }
+    }
+
     pub fn root_package(&self) -> &CheckedPackage {
         self.packages.get(&self.root).unwrap()
     }
 }
 
 pub struct CheckedPackage {
-    /// Defines the ID of the checked [`Package`].
-    pub package: PackageId,
+    /// Defines the checked [`Package`].
+    pub package: Package,
 
     /// Defines the checked type context.
     pub tcx: TyCheckCtx,
@@ -93,21 +111,22 @@ impl Compiler {
     /// - an error occured while compiling the project,
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[libftrace::traced(level = Info, fields(package = package.name))]
-    pub fn check_package(package: Package, gcx: Arc<GlobalCtx>) -> Result<CheckedPackage> {
-        let package_id = package.id;
-        let mut compiler = Self {
-            package,
-            gcx,
-            source_map: SourceMap::default(),
-        };
+    pub fn check_package(
+        package: Package,
+        gcx: Arc<GlobalCtx>,
+        dep_hir: &lume_hir::map::Map,
+    ) -> Result<CheckedPackage> {
+        let mut compiler = Self { package, gcx };
 
-        let sources = compiler.parse()?;
+        let mut sources = compiler.parse()?;
         libftrace::debug!("finished parsing");
+
+        dep_hir.clone().merge_into(&mut sources);
 
         let (tcx, _) = compiler.type_check(sources)?;
 
         Ok(CheckedPackage {
-            package: package_id,
+            package: compiler.package,
             tcx,
         })
     }

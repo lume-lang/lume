@@ -59,7 +59,7 @@ impl PackageMetadata {
 /// Any item or node which is not visible outside of the package is
 /// not included. As a result of this function, a new HIR map is created
 /// with all public items cloned into it.
-fn partition_public_nodes(tcx: &TyCheckCtx) -> Map {
+pub fn partition_public_nodes(tcx: &TyCheckCtx) -> Map {
     let mut pub_hir = Map::empty(tcx.hir().package);
 
     pub_hir.nodes = tcx
