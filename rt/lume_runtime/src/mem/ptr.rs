@@ -1,5 +1,12 @@
 use lume_rt_metadata::TypeMetadata;
 
+/// Creates a null pointer of type `T`.
+#[unsafe(export_name = "std::mem::ptr_null")]
+#[expect(clippy::missing_safety_doc, reason = "early alpha stage")]
+pub unsafe extern "C" fn lumert_ptr_null(_metadata: *const TypeMetadata) -> *mut () {
+    std::ptr::null_mut()
+}
+
 /// Gets the given pointer as a reference, to the value which the pointer is
 /// pointing to.
 #[unsafe(export_name = "std::mem::ptr_ref")]

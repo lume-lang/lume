@@ -1,0 +1,5 @@
+//# test-return = 132
+
+fn main() -> UInt8 {
+    1_u8 / 0_u8
+}
