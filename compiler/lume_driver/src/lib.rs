@@ -7,7 +7,7 @@ use indexmap::IndexMap;
 use lume_errors::{DiagCtxHandle, Result};
 use lume_infer::TyInferCtx;
 use lume_session::{DependencyMap, FileLoader, GlobalCtx, Options, Package, Session};
-use lume_span::{FileName, PackageId, SourceFile, SourceMap};
+use lume_span::{FileName, PackageId, SourceFile};
 use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
 use lume_types::TyCtx;
@@ -123,9 +123,6 @@ pub struct Compiler {
 
     /// Defines the global compilation context.
     gcx: Arc<GlobalCtx>,
-
-    /// Defines the global source map for all source files.
-    source_map: SourceMap,
 }
 
 impl Compiler {

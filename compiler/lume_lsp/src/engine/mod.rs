@@ -107,8 +107,8 @@ impl Engine {
 
     /// Gets the package source file which exists to the given path.
     pub(crate) fn source_of_uri<'a>(&'a self, file_path: &Path) -> Option<&'a Arc<SourceFile>> {
-        for package in self.packages.values() {
-            for source in package.sources.iter() {
+        for checked in self.packages.values() {
+            for source in checked.package.iter_sources() {
                 if file_path.ends_with(source.name.to_pathbuf()) {
                     return Some(source);
                 }
