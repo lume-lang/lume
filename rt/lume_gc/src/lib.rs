@@ -332,7 +332,8 @@ impl FrameStackMap {
     ///
     /// All object pointers within the [`ObjectReference::object`] are tagged.
     pub(crate) fn living_gc_objects(&self) -> impl DoubleEndedIterator<Item = ObjectReference> + use<> {
-        let stack_pointer = self.stack_pointer();
+        let curr_sp = self.stack_pointer();
+        let start_sp = crate::alloc::top_stack_pointer();
 
         let mut object_refs = IndexMap::<*const u8, ObjectReference>::with_capacity(1000);
         let mut worklist = self.iter_stack_value_locations().collect::<IndexSet<_>>();
@@ -346,7 +347,7 @@ impl FrameStackMap {
 
             // Ignore stack-allocated objects since they'll be automatically collected when
             // the frame pops.
-            if untagged_obj_ptr.cast_const() >= stack_pointer {
+            if curr_sp <= untagged_obj_ptr.cast_const() && untagged_obj_ptr.cast_const() <= start_sp {
                 continue;
             }
 
@@ -382,7 +383,15 @@ impl FrameStackMap {
 
                 libftrace::trace!(
                     "found heap block, ptr = {untagged_obj_ptr:p}, size = 0x{block_len:X}, elemental = {:?}",
-                    elemental_metadata.full_name()
+                    {
+                        // SAFETY:
+                        // Since all values within the block are ensured to be object pointers or boxed
+                        // scalars, all pointers will have metadata attached.
+                        let elemental_item_ptr = strip_tags(unsafe { block_ptr.cast::<*mut u8>().read() });
+                        let elemental_metadata = unsafe { metadata_of(elemental_item_ptr).read() };
+
+                        elemental_metadata.full_name()
+                    }
                 );
 
                 let mut offset = 0;
