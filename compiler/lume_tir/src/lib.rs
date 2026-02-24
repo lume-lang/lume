@@ -173,18 +173,7 @@ pub enum FunctionKind {
     Static,
     Dynamic,
     Dropper,
-    Unreachable,
-}
-
-impl FunctionKind {
-    /// Determines whether this function kind should be lowered.
-    pub fn should_be_lowered(self) -> bool {
-        if matches!(self, FunctionKind::Dynamic | FunctionKind::Unreachable) {
-            return false;
-        }
-
-        true
-    }
+    Intrinsic,
 }
 
 #[derive(Debug, Clone, PartialEq)]

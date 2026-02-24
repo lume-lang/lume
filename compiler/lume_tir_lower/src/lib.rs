@@ -85,7 +85,7 @@ impl<'tcx> Lower<'tcx> {
 
             let signature = self.tcx.signature_of(Callable::Method(method))?;
             let location = self.tcx.hir_span_of_node(method.id);
-            let kind = self.determine_method_kind(method, self.tcx.hir_body_of_node(method.id).is_some());
+            let kind = self.determine_method_kind(method);
             let visibility = if self.tcx.should_export(method.id)? {
                 lume_tir::Visibility::Exported
             } else {
@@ -130,7 +130,7 @@ impl<'tcx> Lower<'tcx> {
     #[libftrace::traced(level = Debug, err)]
     fn lower_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
-            if !self.tcx.hir_is_local_node(method.id) || !self.should_lower_method(method) {
+            if !self.tcx.hir_is_local_node(method.id) || method.kind == lume_types::MethodKind::Intrinsic {
                 continue;
             }
 
@@ -177,7 +177,7 @@ impl<'tcx> Lower<'tcx> {
 
     /// Determines the [`lume_tir::FunctionKind`] of the given method.
     #[libftrace::traced(level = Debug, fields(method = method.name.to_wide_string(), has_body), ret)]
-    pub(crate) fn determine_method_kind(&self, method: &lume_types::Method, has_body: bool) -> lume_tir::FunctionKind {
+    pub(crate) fn determine_method_kind(&self, method: &lume_types::Method) -> lume_tir::FunctionKind {
         // Checks whether the method is an implementation of
         // `std::ops::Dispose::dispose()`.
         if self.tcx.is_method_dropper(method.id) {
@@ -187,66 +187,16 @@ impl<'tcx> Lower<'tcx> {
         // Intrinsic methods are only defined so they can be type-checked against.
         // They do not need to exist within the binary.
         if method.is_intrinsic() {
-            return lume_tir::FunctionKind::Dynamic;
+            return lume_tir::FunctionKind::Intrinsic;
         }
 
-        // Trait method definitions without any default implementation have no reason to
-        // be in the binary, since they have no body to codegen from.
-        if self.is_dynamic_dispatch(method) {
+        // Trait method definitions without default implementations will be dynamically
+        // dispatched using the passed type metadata.
+        if self.tcx.is_callable_dynamic(method.id) {
             return lume_tir::FunctionKind::Dynamic;
-        }
-
-        // Static trait method definitions cannot be called, if they do not have a
-        // default body to be invoked.
-        if self.tcx.is_static_method(method.id) && method.is_trait_definition() && !has_body {
-            return lume_tir::FunctionKind::Unreachable;
         }
 
         lume_tir::FunctionKind::Static
-    }
-
-    /// Determines whether the given method should be lowered into TIR
-    /// or if it should stay as a declaration without body.
-    pub(crate) fn should_lower_method(&self, method: &lume_types::Method) -> bool {
-        let has_body = self.tcx.hir_body_of_node(method.id).is_some();
-
-        // Intrinsic methods are only defined so they can be type-checked against.
-        // They do not need to exist within the binary.
-        if method.is_intrinsic() {
-            return false;
-        }
-
-        // Trait method definitions without any default implementation have no reason to
-        // be in the binary, since they have no body to codegen from.
-        if self.is_dynamic_dispatch(method) && !has_body {
-            return false;
-        }
-
-        // Certain kinds of functions should never be lowered, such as static trait
-        // methods with default implementations.
-        if let Some(declaration) = self.ir.functions.get(&method.id)
-            && !declaration.kind.should_be_lowered()
-            && !has_body
-        {
-            return false;
-        }
-
-        true
-    }
-
-    /// Determines whether the given method is meant to be invoked dynamically
-    /// via dynamic dispatch.
-    #[inline]
-    #[must_use]
-    #[libftrace::traced(level = Debug, fields(method = method.name.to_wide_string()), ret)]
-    pub(crate) fn is_dynamic_dispatch(&self, method: &lume_types::Method) -> bool {
-        libftrace::trace!(
-            "kind: {:?}, instanced: {}",
-            method.kind,
-            self.tcx.is_instanced_method(method.id)
-        );
-
-        method.kind == lume_types::MethodKind::TraitDefinition && self.tcx.is_instanced_method(method.id)
     }
 }
 
