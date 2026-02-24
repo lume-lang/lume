@@ -43,6 +43,12 @@ pub struct Config {
     /// Abstract loader for loading source files.
     pub loader: Box<dyn FileLoader>,
 
+    /// Whether to also export private HIR nodes. Only used when checking
+    /// packages.
+    ///
+    /// By default, only public HIR nodes are exported.
+    pub export_private_nodes: bool,
+
     /// Defines an optional list of overrides for source files.
     ///
     /// Currently, only the source files of the root package are attempted
@@ -57,6 +63,7 @@ impl Default for Config {
             options: Options::default(),
             dry_run: false,
             loader: Box::new(lume_session::FileSystemLoader),
+            export_private_nodes: false,
             source_overrides: None,
         }
     }
