@@ -57,7 +57,7 @@ pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
     let mut cmd = Command::new(&test_case.binary_path);
     cmd.stdin(Stdio::null());
     cmd.stdout(Stdio::piped());
-    cmd.stderr(Stdio::inherit());
+    cmd.stderr(Stdio::piped());
 
     let process = cmd.spawn().map_err(|err| {
         Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("could not invoke test binary: {err}")))
