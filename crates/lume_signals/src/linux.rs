@@ -94,6 +94,8 @@ unsafe extern "C" fn signal_handler(signum: libc::c_int, info: *const siginfo_t,
     }
 
     eprintln!();
+
+    unsafe { libc::_exit(128 + signum) };
 }
 
 fn sigerrno(info: siginfo_t) -> &'static str {
