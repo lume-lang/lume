@@ -2,6 +2,9 @@ use std::path::PathBuf;
 
 use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 
+/// Environment variable name for the path to the standard library.
+pub const STD_PATH_ENV: &str = "LUME_STD_PATH";
+
 /// Attempts to determine the absolute path to the compiler asset with the
 /// given file name, depending on the current execution environment.
 ///
@@ -152,6 +155,10 @@ pub fn toolchain_current_path() -> Result<Option<PathBuf>> {
 /// Returns [`Err`] if the path could not be determined within the current
 /// environment.
 pub fn toolchain_std_path() -> Result<Option<PathBuf>> {
+    if let Some(path) = std::env::var_os(STD_PATH_ENV) {
+        return Ok(Some(PathBuf::from(path)));
+    }
+
     // If we're currently running from the source tree, return the path of the
     // standard library within the tree.
     if is_dev() {
