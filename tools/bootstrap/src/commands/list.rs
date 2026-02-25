@@ -5,7 +5,7 @@ use crate::toolchain;
 #[derive(clap::Parser)]
 #[command(
     name = "list",
-    override_usage = "lbs list [OPTIONS]",
+    override_usage = "lume-bootstrap list [OPTIONS]",
     about = "Lists installed toolchains"
 )]
 pub struct ListCommand {

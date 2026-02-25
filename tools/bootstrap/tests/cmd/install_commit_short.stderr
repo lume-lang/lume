@@ -1,5 +1,5 @@
 error: short Git commit hashes are not supported
 
-Usage: lbs install [OPTIONS] [TOOLCHAIN]
+Usage: lume-bootstrap install [OPTIONS] [TOOLCHAIN]
 
 For more information, try '--help'.

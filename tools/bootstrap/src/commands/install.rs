@@ -9,7 +9,7 @@ use crate::{Version, fs};
 #[derive(clap::Parser)]
 #[command(
     name = "install",
-    override_usage = "lbs install [OPTIONS] [TOOLCHAIN]",
+    override_usage = "lume-bootstrap install [OPTIONS] [TOOLCHAIN]",
     about = "Install or update the given toolchain"
 )]
 pub struct InstallCommand {

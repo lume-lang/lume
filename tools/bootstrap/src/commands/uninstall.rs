@@ -8,7 +8,7 @@ use crate::toolchain::{self, active_toolchain};
 #[derive(clap::Parser)]
 #[command(
     name = "uninstall",
-    override_usage = "lbs uninstall [OPTIONS] [TOOLCHAIN]",
+    override_usage = "lume-bootstrap uninstall [OPTIONS] [TOOLCHAIN]",
     about = "Uninstall the given toolchain"
 )]
 pub struct UninstallCommand {

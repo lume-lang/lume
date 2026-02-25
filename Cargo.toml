@@ -15,8 +15,8 @@ path = "src/lume.rs"
 test = false
 
 [[bin]]
-name = "lbs"
-path = "src/lbs.rs"
+name = "lume-bootstrap"
+path = "src/lume-bootstrap.rs"
 test = false
 
 [[bench]]

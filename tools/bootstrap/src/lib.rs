@@ -23,7 +23,7 @@ mod commands {
 
 #[derive(Parser)]
 #[clap(
-    name = "lbs",
+    name = "lume-bootstrap",
     version = env!("CARGO_PKG_VERSION"),
     about = "Lume's toolchain manager"
 )]

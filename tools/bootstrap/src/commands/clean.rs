@@ -6,7 +6,7 @@ use crate::{fs, toolchain};
 #[derive(clap::Parser)]
 #[command(
     name = "clean",
-    override_usage = "lbs clean [OPTIONS] [TOOLCHAIN...]",
+    override_usage = "lume-bootstrap clean [OPTIONS] [TOOLCHAIN...]",
     about = "Removes temporary data from toolchain(s)"
 )]
 pub struct CleanCommand {

@@ -1,5 +1,5 @@
 error: invalid Git commit hash
 
-Usage: lbs install [OPTIONS] [TOOLCHAIN]
+Usage: lume-bootstrap install [OPTIONS] [TOOLCHAIN]
 
 For more information, try '--help'.

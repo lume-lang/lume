@@ -4,7 +4,7 @@ use lume_errors::{Result, SimpleDiagnostic};
 #[derive(clap::Parser)]
 #[command(
     name = "use",
-    override_usage = "lbs use [OPTIONS] [TOOLCHAIN]",
+    override_usage = "lume-bootstrap use [OPTIONS] [TOOLCHAIN]",
     about = "Sets the active toolchain"
 )]
 pub struct UseCommand {
@@ -23,7 +23,7 @@ impl UseCommand {
         if !toolchain_base.exists() {
             return Err(
                 SimpleDiagnostic::new(format!("toolchain '{}' is not installed", self.version))
-                    .with_help("use `lbs install [TOOLCHAIN]` to install it")
+                    .with_help("use `lume-bootstrap install [TOOLCHAIN]` to install it")
                     .into(),
             );
         }
