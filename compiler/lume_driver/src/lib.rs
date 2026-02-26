@@ -5,6 +5,7 @@ use std::sync::Arc;
 use arc::locate_package;
 use indexmap::IndexMap;
 use lume_errors::{DiagCtxHandle, Result};
+use lume_hir_lower::lower_to_hir;
 use lume_infer::TyInferCtx;
 use lume_session::{DependencyMap, FileLoader, GlobalCtx, Options, Package, Session};
 use lume_span::{FileName, PackageId, SourceFile};
@@ -136,9 +137,19 @@ impl Compiler {
     /// Parses all the source files within the current [`Package`] into HIR.
     #[libftrace::traced(level = Debug)]
     fn parse(&mut self) -> Result<lume_hir::map::Map> {
-        self.gcx
-            .dcx
-            .with(|dcx| lume_hir_lower::lower_to_hir(&self.package, dcx))
+        let hir = self.gcx.dcx.with(|dcx| lower_to_hir(&self.package, dcx))?;
+
+        #[allow(clippy::disallowed_macros, reason = "only used in debugging")]
+        if self.gcx.session.options.dump_hir {
+            let mut package_hir = hir.clone();
+            package_hir
+                .nodes
+                .retain(|id, _node| id.package == self.gcx.session.dep_graph.root);
+
+            println!("{package_hir:#?}");
+        }
+
+        Ok(hir)
     }
 
     /// Type checks all the given source files.

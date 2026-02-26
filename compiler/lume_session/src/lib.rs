@@ -16,6 +16,7 @@ use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Options {
     /// Defines whether the type context should be printed to `stdio`, after
     /// it's been inferred and type checked.
@@ -45,6 +46,9 @@ pub struct Options {
     /// package directory. If it is absolute, it will be used as is.
     pub output_directory: Option<PathBuf>,
 
+    /// Defines whether the generated HIR should be printed to `stdio`.
+    pub dump_hir: bool,
+
     /// Defines whether the generated MIR should be printed to `stdio`.
     pub dump_mir: Option<Vec<String>>,
 
@@ -66,6 +70,7 @@ impl Default for Options {
             enable_incremental: true,
             runtime_path: None,
             output_directory: None,
+            dump_hir: false,
             dump_mir: None,
             dump_mir_func: Vec::new(),
             dump_codegen_ir: false,
