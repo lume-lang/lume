@@ -8,7 +8,7 @@ use crate::engine::Engine;
 use crate::symbols::lookup::SymbolKind;
 
 pub(crate) fn hover_content_of(engine: &Engine, location: Location) -> Result<String> {
-    let Some(sym) = engine.locate_node(location) else {
+    let Some(sym) = engine.locate_symbol(location) else {
         log::warn!("could not find matching node for {location}");
         return Ok(String::new());
     };

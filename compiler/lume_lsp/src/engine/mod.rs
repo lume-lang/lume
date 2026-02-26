@@ -14,12 +14,12 @@ use lume_errors::{Result, SimpleDiagnostic};
 use lume_span::{Internable, Location, PackageId, SourceFile};
 
 use crate::engine::reporter::Reporter;
-use crate::listener::FileLocation;
-use crate::symbols::lookup::{SymbolEntry, SymbolLookup};
+use crate::listener::{Completion, FileLocation};
+use crate::symbols::lookup::{NodeEntry, SymbolEntry, SymbolLookup};
 
 pub(crate) struct Engine {
     /// Defines the root directory of the project.
-    root: PathBuf,
+    pub(crate) root: PathBuf,
 
     sender: Sender<lsp_server::Message>,
 
@@ -146,9 +146,14 @@ impl Engine {
         .intern())
     }
 
+    /// Locates the node within the given location.
+    pub(crate) fn locate_node(&self, location: Location) -> Option<&NodeEntry> {
+        self.symbols.node_at(location)
+    }
+
     /// Locates the symbol within the given location.
-    pub(crate) fn locate_node(&self, location: Location) -> Option<&SymbolEntry> {
-        self.symbols.lookup_position(location)
+    pub(crate) fn locate_symbol(&self, location: Location) -> Option<&SymbolEntry> {
+        self.symbols.symbol_at(location)
     }
 
     /// Updates the symbol lookup table with the given package graph.
@@ -196,6 +201,13 @@ impl Engine {
 }
 
 impl Engine {
+    pub(crate) fn completions(&self, completion: Completion) -> Result<Vec<lsp_types::CompletionItem>> {
+        let location = self.location_from_lsp(&completion.location)?;
+        let completions = crate::symbols::completions::completions_at(self, completion, location);
+
+        Ok(completions.unwrap_or_default())
+    }
+
     pub(crate) fn hover(&self, location: FileLocation) -> Result<lsp_types::Hover> {
         let location = self.location_from_lsp(&location)?;
         let hover_markdown = crate::symbols::hover::hover_content_of(self, location)?;

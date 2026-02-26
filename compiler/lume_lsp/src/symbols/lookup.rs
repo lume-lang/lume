@@ -5,6 +5,24 @@ use lume_infer::query::CallReference;
 use lume_span::{Location, NodeId};
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub(crate) struct NodeEntry {
+    pub id: NodeId,
+    pub location: Location,
+}
+
+impl PartialOrd for NodeEntry {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for NodeEntry {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.location.cmp(&other.location)
+    }
+}
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SymbolEntry {
     pub location: Location,
     pub kind: SymbolKind,
@@ -18,17 +36,7 @@ impl PartialOrd for SymbolEntry {
 
 impl Ord for SymbolEntry {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match self.location.file.package.cmp(&other.location.file.package) {
-            std::cmp::Ordering::Less => return std::cmp::Ordering::Less,
-            std::cmp::Ordering::Greater => return std::cmp::Ordering::Greater,
-            std::cmp::Ordering::Equal => {}
-        }
-
-        match self.location.file.id.1.cmp(&other.location.file.id.1) {
-            std::cmp::Ordering::Less => std::cmp::Ordering::Less,
-            std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
-            std::cmp::Ordering::Equal => self.location.index.start.cmp(&other.location.index.start),
-        }
+        self.location.cmp(&other.location)
     }
 }
 
@@ -70,6 +78,7 @@ pub(crate) enum SymbolKind {
 
 #[derive(Default)]
 pub(crate) struct SymbolLookup {
+    nodes: IndexSet<NodeEntry>,
     symbols: IndexSet<SymbolEntry>,
 }
 
@@ -79,15 +88,31 @@ impl SymbolLookup {
         traverse(hir, &mut visitor).expect("HIR traversal");
 
         Self {
+            nodes: visitor.nodes,
             symbols: visitor.symbols,
         }
     }
 
     pub fn extend(&mut self, other: SymbolLookup) {
+        self.nodes.extend(other.nodes);
         self.symbols.extend(other.symbols);
     }
 
-    pub fn lookup_position(&self, location: Location) -> Option<&SymbolEntry> {
+    pub fn node_at(&self, location: Location) -> Option<&NodeEntry> {
+        let idx = location.index.start;
+
+        let nodes_within_range = self.nodes.iter().filter(|node| {
+            node.location.file.id == location.file.id && node.location.start() <= idx && node.location.end() >= idx
+        });
+
+        if let Some(sym) = nodes_within_range.min_by_key(|sym| sym.location.index.len()) {
+            return Some(sym);
+        }
+
+        None
+    }
+
+    pub fn symbol_at(&self, location: Location) -> Option<&SymbolEntry> {
         let idx = location.index.start;
 
         let symbols_within_range = self.symbols.iter().filter(|sym| {
@@ -104,6 +129,7 @@ impl SymbolLookup {
 
 #[derive(Default)]
 struct LocationVisitor {
+    nodes: IndexSet<NodeEntry>,
     symbols: IndexSet<SymbolEntry>,
 }
 
@@ -209,6 +235,11 @@ impl Visitor for LocationVisitor {
     }
 
     fn visit_expr(&mut self, expr: &lume_hir::Expression) -> Result<()> {
+        self.nodes.insert_sorted(NodeEntry {
+            id: expr.id,
+            location: expr.location,
+        });
+
         match &expr.kind {
             lume_hir::ExpressionKind::Construct(expr) => {
                 self.symbols.insert(SymbolEntry {

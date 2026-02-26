@@ -11,6 +11,7 @@ pub enum Message {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Request {
+    Completion(Completion),
     Hover(FileLocation),
     GoToDefinition(FileLocation),
     Format { uri: Uri, config: lume_fmt::Config },
@@ -22,6 +23,23 @@ impl Request {
         use lsp_types::request::Request;
 
         match message.method.as_str() {
+            lsp_types::request::Completion::METHOD => {
+                let params = cast_request::<lsp_types::request::Completion>(message);
+                let uri = params.text_document_position.text_document.uri;
+                let mut position = params.text_document_position.position;
+
+                let trigger_character = params.context.and_then(|ctx| ctx.trigger_character);
+
+                if let Some(c) = trigger_character.as_ref() {
+                    position.character = position.character.saturating_sub(u32::try_from(c.len()).unwrap());
+                }
+
+                Self::Completion(Completion {
+                    location: FileLocation { uri, position },
+                    trigger_character,
+                })
+            }
+
             lsp_types::request::HoverRequest::METHOD => {
                 let params = cast_request::<lsp_types::request::HoverRequest>(message);
                 let uri = params.text_document_position_params.text_document.uri;
@@ -113,6 +131,15 @@ impl Notification {
             _ => Self::Unknown,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Completion {
+    /// Defines the location of the completion
+    pub location: FileLocation,
+
+    /// Defines the character which triggered the completion, if any.
+    pub trigger_character: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

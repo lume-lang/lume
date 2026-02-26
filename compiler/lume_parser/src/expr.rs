@@ -662,10 +662,10 @@ impl Parser<'_> {
             }
             .into()),
             PathSegment::Callable { location, .. } => {
-                let arguments = self.parse_call_arguments()?;
+                let (arguments, arguments_loc) = self.consume_with_loc(|p| p.parse_call_arguments())?;
 
                 Ok(Expression::Call(Box::new(Call {
-                    location: (location.start()..location.end()).into(),
+                    location: (location.start()..arguments_loc.end()).into(),
                     callee: None,
                     name: path,
                     arguments,
