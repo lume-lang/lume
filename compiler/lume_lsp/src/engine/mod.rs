@@ -207,9 +207,14 @@ impl Engine {
 impl Engine {
     pub(crate) fn completions(&self, completion: Completion) -> Result<Vec<lsp_types::CompletionItem>> {
         let location = self.location_from_lsp(&completion.location)?;
-        let completions = crate::symbols::completions::completions_at(self, completion, location);
+        let ctx = crate::symbols::completions::CompletionContext {
+            location,
+            kind: completion.kind,
+            trigger_character: completion.trigger_character,
+            file_location: completion.location,
+        };
 
-        Ok(completions.unwrap_or_default())
+        Ok(crate::symbols::completions::completions_at(self, ctx).unwrap_or_default())
     }
 
     pub(crate) fn hover(&self, location: FileLocation) -> Result<lsp_types::Hover> {

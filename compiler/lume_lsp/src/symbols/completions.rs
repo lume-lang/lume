@@ -5,37 +5,58 @@ use lume_span::{Location, NodeId};
 use lume_types::TypeRef;
 
 use crate::engine::Engine;
-use crate::listener::Completion;
+use crate::listener::{CompletionKind, FileLocation};
 
-pub(crate) fn completions_at(
-    engine: &Engine,
-    completion: Completion,
-    location: Location,
-) -> Option<Vec<lsp_types::CompletionItem>> {
-    let Some(node_entry) = engine.locate_node(location) else {
-        log::warn!("could not find matching node for {location}");
+pub struct CompletionContext {
+    /// Defines the kind of completion, based on the trigger character.
+    pub kind: CompletionKind,
+
+    /// Defines the character which triggered the completion, if any.
+    pub trigger_character: Option<char>,
+
+    /// Defines the location of the completion
+    pub file_location: FileLocation,
+
+    /// Defines the location of the completion
+    pub location: Location,
+}
+
+impl CompletionContext {
+    pub fn offset_location(&self) -> Location {
+        if self.trigger_character.is_none() {
+            return self.location;
+        }
+
+        let mut location = self.location.clone_inner();
+        location.index.start = location.index.start.saturating_sub(1);
+        location.index.end = location.index.end.saturating_sub(1);
+
+        lume_span::Internable::intern(&location)
+    }
+}
+
+pub(crate) fn completions_at(engine: &Engine, ctx: CompletionContext) -> Option<Vec<lsp_types::CompletionItem>> {
+    let offset_location = ctx.offset_location();
+
+    let Some(node_entry) = engine.locate_node(offset_location) else {
+        log::warn!("could not find matching node for {offset_location}");
         return None;
     };
 
     let package = engine.package(node_entry.location.file.package)?;
     let mut completions = Vec::new();
 
-    match completion.trigger_character.as_deref() {
-        Some(".") => {
+    match ctx.kind {
+        CompletionKind::Instance => {
             let node_type = package.tcx.type_of(node_entry.id).ok()?;
 
             completions.extend(field_completions_of(package, node_type.instance_of));
-            completions.extend(method_completions_of(package, &node_type, &completion));
+            completions.extend(method_completions_of(package, &ctx, &node_type));
         }
-        Some("(") => {
-            let node_type = package.tcx.type_of(node_entry.id).ok()?;
-
-            completions.extend(method_completions_of(package, &node_type, &completion));
-        }
-        Some(":") => {
+        CompletionKind::Static => {
             log::info!("found node => {:?} ({})", node_entry.id, node_entry.location);
         }
-        _ => {}
+        CompletionKind::Scope => {}
     }
 
     Some(completions)
@@ -76,15 +97,11 @@ fn field_completions_of(package: &CheckedPackage, node: NodeId) -> impl Iterator
 
 fn method_completions_of(
     package: &CheckedPackage,
+    ctx: &CompletionContext,
     ty: &TypeRef,
-    completion: &Completion,
 ) -> impl Iterator<Item = lsp_types::CompletionItem> {
     let methods_on_type = package.tcx.methods_defined_on(ty);
-
-    let mut position = completion.location.position;
-    if let Some(trigger) = completion.trigger_character.as_ref() {
-        position.character += u32::try_from(trigger.len()).unwrap_or(0);
-    }
+    let position = ctx.file_location.position;
 
     methods_on_type.into_iter().filter_map(move |method| {
         let method_name = method.name.name();
@@ -127,7 +144,7 @@ fn method_completions_of(
             .iter()
             .filter_map(|param| {
                 // Skip the `self` parameter if completion is triggered on an instance
-                if param.is_self() && completion.trigger_character.as_deref() == Some(".") {
+                if param.is_self() && ctx.kind == CompletionKind::Instance {
                     return None;
                 }
 
