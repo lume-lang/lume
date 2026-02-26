@@ -86,6 +86,11 @@ pub struct DevelopmentBuildOptions {
     #[cfg_attr(not(debug_assertions), arg(hide = true))]
     pub print_type_ctx: bool,
 
+    /// Prints the generated HIR.
+    #[arg(long)]
+    #[cfg_attr(not(debug_assertions), arg(hide = true))]
+    pub dump_hir: bool,
+
     /// Prints the generated MIR
     ///
     /// Optionally, can supply the name of a pass, where the MIR will be printed
@@ -140,6 +145,7 @@ impl BuildOptions {
             entrypoint: self.entrypoint.clone().unwrap_or_else(|| String::from("main")),
             runtime_path: self.codegen.runtime_path.clone(),
             output_directory: self.codegen.output.clone(),
+            dump_hir: self.dev.dump_hir,
             dump_mir: self.dev.dump_mir.clone(),
             dump_mir_func: self.dev.dump_mir_func.clone(),
             dump_codegen_ir: self.dev.dump_codegen_ir,
