@@ -49,8 +49,19 @@ pub fn start_server(options: Options) -> std::result::Result<(), Box<dyn Error +
 
     log::info!("starting up!");
 
-    let params_json = conn.initialize(serde_json::json!(capabilities))?;
-    let params = serde_json::from_value(params_json)?;
+    let (init_request_id, params) = conn.initialize_start()?;
+    conn.initialize_finish(
+        init_request_id,
+        serde_json::json!({
+            "capabilities": capabilities,
+            "serverInfo": {
+                "name": std::env!("CARGO_PKG_NAME"),
+                "version": std::env!("CARGO_PKG_VERSION")
+            }
+        }),
+    )?;
+
+    let params = serde_json::from_value(params)?;
 
     std::panic::set_hook(Box::new(|panic_info| {
         if let Some(payload) = panic_info.payload().downcast_ref::<&str>() {
