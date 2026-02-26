@@ -5,15 +5,15 @@ use std::path::{Path, PathBuf};
 use crossbeam::channel::{Receiver, Sender};
 use lsp_server::RequestId;
 use lsp_types::{InitializeParams, Uri};
-use lume_errors::{IntoDiagnostic, Result};
+use lume_errors::{IntoDiagnostic, MapDiagnostic, Result};
 
 use crate::engine::Engine;
 use crate::listener::*;
 
 pub(crate) struct Server {
-    params: InitializeParams,
-    sender: Sender<lsp_server::Message>,
-    engines: HashMap<PathBuf, Engine>,
+    pub(crate) params: InitializeParams,
+    pub(crate) sender: Sender<lsp_server::Message>,
+    pub(crate) engines: HashMap<PathBuf, Engine>,
 }
 
 impl Server {
@@ -36,6 +36,8 @@ impl Server {
 
             log::info!("listening for events from {client}");
         }
+
+        let _ = self.update_status();
 
         loop {
             match crate::listener::receive(&mut receiver) {
@@ -61,12 +63,15 @@ impl Server {
 
     fn handle_message(&mut self, message: Message) -> Result<()> {
         match message {
-            Message::Request(id, request) => self.handle_request(id, request),
+            Message::Request(id, request) => self.handle_request(id, request)?,
             Message::Notification(notification) => {
                 self.handle_notification(notification);
-                Ok(())
             }
         }
+
+        self.update_status()?;
+
+        Ok(())
     }
 
     fn handle_request(&mut self, id: lsp_server::RequestId, request: Request) -> Result<()> {
@@ -110,6 +115,24 @@ impl Server {
                 entry.insert(engine)
             }
         })
+    }
+
+    /// Sends the given notication to the client.
+    pub(crate) fn notification<N>(&self, value: N::Params) -> Result<()>
+    where
+        N: lsp_types::notification::Notification,
+        N::Params: serde::ser::Serialize,
+    {
+        let notification = lsp_server::Notification {
+            method: N::METHOD.to_owned(),
+            params: serde_json::to_value(value).map_cause("failed to serialize notification data")?,
+        };
+
+        self.sender
+            .send(lsp_server::Message::Notification(notification))
+            .map_cause("failed to send notification")?;
+
+        Ok(())
     }
 
     /// Responds to the given request ID with the given JSON-encoded value.
@@ -195,6 +218,12 @@ impl Server {
     fn format(&mut self, uri: Uri, config: lume_fmt::Config) -> Result<serde_json::Value> {
         let path = crate::uri_to_path(&uri);
         self.respond_with_engine(path, |engine| engine.format(uri, config))
+    }
+}
+
+impl Server {
+    pub(crate) fn experimental<T: serde::de::DeserializeOwned>(&self, key: &'static str) -> Option<T> {
+        serde_json::from_value(self.params.capabilities.experimental.as_ref()?.get(key)?.clone()).ok()
     }
 }
 

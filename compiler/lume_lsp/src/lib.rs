@@ -12,6 +12,7 @@ pub(crate) mod engine;
 pub(crate) mod listener;
 pub(crate) mod pos;
 pub(crate) mod server;
+pub(crate) mod status;
 
 mod symbols {
     pub(crate) mod completions;

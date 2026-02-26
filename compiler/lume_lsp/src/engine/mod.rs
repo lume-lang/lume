@@ -109,6 +109,10 @@ impl Engine {
         self.packages.get(&id)
     }
 
+    pub(crate) fn has_arcfile(&self) -> bool {
+        self.root.join("Arcfile").exists()
+    }
+
     /// Gets the package source file which exists to the given path.
     pub(crate) fn source_of_uri<'a>(&'a self, file_path: &Path) -> Option<&'a Arc<SourceFile>> {
         for checked in self.packages.values() {
