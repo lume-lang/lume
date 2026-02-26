@@ -71,6 +71,7 @@ impl Server {
 
     fn handle_request(&mut self, id: lsp_server::RequestId, request: Request) -> Result<()> {
         let response = match request {
+            Request::Completion(location) => self.completions(location)?,
             Request::Hover(location) => self.hover(location)?,
             Request::GoToDefinition(location) => self.goto_definition(location)?,
             Request::Format { uri, config } => self.format(uri, config)?,
@@ -176,6 +177,11 @@ impl Server {
 }
 
 impl Server {
+    fn completions(&mut self, completion: Completion) -> Result<serde_json::Value> {
+        let path = crate::uri_to_path(&completion.location.uri);
+        self.respond_with_engine(path, |engine| engine.completions(completion))
+    }
+
     fn hover(&mut self, location: FileLocation) -> Result<serde_json::Value> {
         let path = crate::uri_to_path(&location.uri);
         self.respond_with_engine(path, |engine| engine.hover(location))

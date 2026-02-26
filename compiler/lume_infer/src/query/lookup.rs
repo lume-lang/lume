@@ -173,6 +173,7 @@ impl TyInferCtx {
             },
             lume_hir::Node::Method(method) => method.doc_comment.as_ref(),
             lume_hir::Node::TraitMethodDef(method) => method.doc_comment.as_ref(),
+            lume_hir::Node::Field(field) => field.doc_comment.as_ref(),
             _ => None,
         }
     }

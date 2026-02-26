@@ -13,6 +13,9 @@ use lume_types::{FunctionSig, NamedTypeRef, TyCtx, TypeDatabaseContext, TypeRef}
 mod define;
 pub mod errors;
 pub mod query;
+pub mod stringify;
+
+pub use stringify::*;
 
 #[cfg(test)]
 mod tests;

@@ -14,6 +14,7 @@ pub(crate) mod pos;
 pub(crate) mod server;
 
 mod symbols {
+    pub(crate) mod completions;
     pub(crate) mod definition;
     pub(crate) mod format;
     pub(crate) mod hover;
@@ -84,7 +85,11 @@ pub fn start_server(options: Options) -> std::result::Result<(), Box<dyn Error +
 pub fn capabilities() -> ServerCapabilities {
     ServerCapabilities {
         completion_provider: Some(CompletionOptions {
-            resolve_provider: Some(false),
+            resolve_provider: Some(true),
+            trigger_characters: Some(vec![String::from(":"), String::from("."), String::from("(")]),
+            completion_item: Some(CompletionOptionsCompletionItem {
+                label_details_support: Some(true),
+            }),
             ..Default::default()
         }),
         hover_provider: Some(HoverProviderCapability::Simple(true)),
