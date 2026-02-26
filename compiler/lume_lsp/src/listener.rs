@@ -26,16 +26,22 @@ impl Request {
             lsp_types::request::Completion::METHOD => {
                 let params = cast_request::<lsp_types::request::Completion>(message);
                 let uri = params.text_document_position.text_document.uri;
-                let mut position = params.text_document_position.position;
+                let position = params.text_document_position.position;
 
-                let trigger_character = params.context.and_then(|ctx| ctx.trigger_character);
+                let trigger_character = params
+                    .context
+                    .and_then(|ctx| ctx.trigger_character)
+                    .and_then(|str| str.chars().next());
 
-                if let Some(c) = trigger_character.as_ref() {
-                    position.character = position.character.saturating_sub(u32::try_from(c.len()).unwrap());
-                }
+                let kind = match trigger_character {
+                    Some('.') => CompletionKind::Instance,
+                    Some(':') => CompletionKind::Static,
+                    _ => CompletionKind::Scope,
+                };
 
                 Self::Completion(Completion {
                     location: FileLocation { uri, position },
+                    kind,
                     trigger_character,
                 })
             }
@@ -138,8 +144,23 @@ pub struct Completion {
     /// Defines the location of the completion
     pub location: FileLocation,
 
+    /// Defines the kind of completion, based on the trigger character.
+    pub kind: CompletionKind,
+
     /// Defines the character which triggered the completion, if any.
-    pub trigger_character: Option<String>,
+    pub trigger_character: Option<char>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CompletionKind {
+    /// Expand completions on the instance of a type
+    Instance,
+
+    /// Expand completions on a static type.
+    Static,
+
+    /// Expand completions from the surrounding scope and context.
+    Scope,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
