@@ -8,6 +8,7 @@ use regex::Regex;
 use crate::toolchain::TargetVersion;
 
 pub(crate) mod cmd;
+pub(crate) mod fetch;
 pub(crate) mod fs;
 pub(crate) mod git;
 pub(crate) mod home;
