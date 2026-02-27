@@ -69,7 +69,7 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                         ),
                     ],
                     location: Location(
-                        13..17,
+                        13..23,
                     ),
                 },
             ),

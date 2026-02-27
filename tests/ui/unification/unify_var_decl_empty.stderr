@@ -2,7 +2,7 @@
    ╭─[unify_var_decl_empty.lm:2:27]
  1 │ fn foo() {
  2 │     let arr = std::Array::new();
-   ∶                           ^^^ could not infer type argument T
+   ∶                           ^^^^^ could not infer type argument T
  3 │ }
    ╰──
    help: try specifying the type arguments explicitly

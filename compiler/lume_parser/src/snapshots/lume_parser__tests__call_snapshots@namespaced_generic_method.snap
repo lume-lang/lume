@@ -100,7 +100,7 @@ expression: "parse_expr(\"let _ = std::Buffer::call<T>(a, b);\")"
                         ),
                     ],
                     location: Location(
-                        21..28,
+                        21..34,
                     ),
                 },
             ),

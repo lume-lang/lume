@@ -445,7 +445,7 @@ impl TyCheckCtx {
         if self.is_dynamic_dispatch(expr)? && !signature.is_instanced() {
             self.dcx().emit(
                 DispatchCannotBeInferred {
-                    source: expr.location(),
+                    source: expr.name().location,
                 }
                 .into(),
             );

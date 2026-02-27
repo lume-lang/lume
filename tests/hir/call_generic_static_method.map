@@ -114,7 +114,7 @@ Map {
                                     location: call_generic_static_method.lm:38:39,
                                 },
                             ],
-                            location: call_generic_static_method.lm:30:34,
+                            location: call_generic_static_method.lm:30:40,
                         },
                         location: call_generic_static_method.lm:12:41,
                     },
