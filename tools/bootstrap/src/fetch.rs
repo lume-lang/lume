@@ -3,11 +3,9 @@ use std::path::{Path, PathBuf};
 
 use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 
+use crate::git::{LUME_GIT_ORG, LUME_GIT_REPO};
+use crate::toolchain::TargetVersion;
 use crate::{cmd, fs, toolchain};
-
-/// Defines the URL of the Lume Git repository, which is used to download
-/// artifacts from.
-pub const LUME_GIT_REPOSITORY: &str = "https://github.com/lume-lang/lume";
 
 fn binbuild_archive_name<V: Display>(version: &V) -> String {
     format!("lume-v{version}_{}-{}", std::env::consts::OS, std::env::consts::ARCH)
@@ -17,21 +15,55 @@ fn binbuild_archive_url<V: Display>(version: &V) -> String {
     let archive_name = binbuild_archive_name(version);
     let archive_file_name = format!("{archive_name}.tar.gz");
 
-    format!("{LUME_GIT_REPOSITORY}/releases/download/v{version}/{archive_file_name}")
+    format!("https://github.com/{LUME_GIT_ORG}/{LUME_GIT_REPO}/releases/download/v{version}/{archive_file_name}")
 }
 
-/// Attempts to determine whether the given version has any binary builds
-/// available.
-pub fn is_binbuild_available<V: Display>(version: &V) -> Result<bool> {
-    let archive_url = binbuild_archive_url(version);
+/// Attempts to determine the matching binary build version of the given target
+/// version.
+///
+/// If the functions returns [`Ok(None)`], no binary builds are associated with
+/// the given version.
+pub fn binbuild_version_of(version: &TargetVersion) -> Result<Option<semver::Version>> {
+    let tag = match &version {
+        TargetVersion::Tag(tag) => tag.clone(),
+        TargetVersion::Branch(branch) if branch == "main" => crate::fetch::get_latest_release()?,
+        _ => return Ok(None),
+    };
+
+    let archive_url = binbuild_archive_url(&tag);
 
     match ureq::head(&archive_url).call() {
-        Ok(_) => Ok(true),
-        Err(ureq::Error::StatusCode(404)) => Ok(false),
+        Ok(_) => Ok(Some(tag)),
+        Err(ureq::Error::StatusCode(404)) => Ok(None),
         Err(err) => Err(SimpleDiagnostic::new("failed to fetch Lume release")
             .add_cause(err.into_io())
             .into()),
     }
+}
+
+/// Attempts to get the latest release of the Lume compiler, as a semver
+/// version.
+pub fn get_latest_release() -> Result<semver::Version> {
+    #[derive(serde::Deserialize)]
+    struct GithubRelease {
+        tag_name: String,
+    }
+
+    let request_uri = format!("https://api.github.com/repos/{LUME_GIT_ORG}/{LUME_GIT_REPO}/releases/latest");
+
+    let mut response_body = ureq::get(&request_uri)
+        .header("Accept", "application/vnd.github+json")
+        .call()
+        .map_cause("failed to get latest Lume version")?
+        .into_body();
+
+    let release = response_body
+        .read_json::<GithubRelease>()
+        .map_cause("failed to deserialize release response")?;
+
+    let tag_version = release.tag_name.strip_prefix('v').unwrap_or(&release.tag_name);
+
+    Ok(semver::Version::parse(tag_version).unwrap())
 }
 
 /// Attempts to clone the Lume compiler with the specified version.

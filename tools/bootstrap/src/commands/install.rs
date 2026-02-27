@@ -56,10 +56,8 @@ impl InstallCommand {
         let toolchain_base = crate::toolchain::artifact_directory_for(&version)?;
         fs::create_dir(&toolchain_base)?;
 
-        if let TargetVersion::Tag(tagged_version) = &version
-            && crate::fetch::is_binbuild_available(&version)?
-        {
-            fetch_binbuild(tagged_version)?;
+        if let Some(binbuild_tag) = crate::fetch::binbuild_version_of(&version)? {
+            fetch_binbuild(&binbuild_tag)?;
         } else if self.allow_source_build {
             compile_source_tree(&version, self.profile)?;
         } else {
