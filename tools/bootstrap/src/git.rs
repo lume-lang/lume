@@ -7,8 +7,9 @@ use semver::{Version, VersionReq};
 
 use crate::{cmd, fs, toolchain};
 
-/// Defines the URL of the Lume Git repository, which is used to clone the
-/// compiler.
+pub const LUME_GIT_ORG: &str = "lume-lang";
+pub const LUME_GIT_REPO: &str = "lume";
+
 pub const LUME_GIT_REPOSITORY: &str = "https://github.com/lume-lang/lume.git";
 
 /// Attempts to clone the Lume compiler with the specified version.

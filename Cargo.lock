@@ -227,6 +227,7 @@ dependencies = [
  "owo-colors",
  "regex",
  "semver",
+ "serde",
  "trycmd",
  "ureq",
 ]
