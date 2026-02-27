@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
-use lume_errors::{Result, SimpleDiagnostic};
+use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 
 use crate::{cmd, fs, toolchain};
 
@@ -25,24 +25,17 @@ fn binbuild_archive_url<V: Display>(version: &V) -> String {
 pub fn is_binbuild_available<V: Display>(version: &V) -> Result<bool> {
     let archive_url = binbuild_archive_url(version);
 
-    let Some(fetcher) = fetcher() else {
-        return Err(SimpleDiagnostic::new("failed to fetch Lume: neither wget nor curl is installed").into());
-    };
-
-    let exists = match fetcher {
-        Fetcher::Curl => cmd::execute("curl", ["--fail", "--head", &archive_url]).is_ok(),
-        Fetcher::Wget => cmd::execute("wget", ["--method=HEAD", &archive_url]).is_ok(),
-    };
-
-    Ok(exists)
+    match ureq::head(&archive_url).call() {
+        Ok(_) => Ok(true),
+        Err(ureq::Error::StatusCode(404)) => Ok(false),
+        Err(err) => Err(SimpleDiagnostic::new("failed to fetch Lume release")
+            .add_cause(err.into_io())
+            .into()),
+    }
 }
 
 /// Attempts to clone the Lume compiler with the specified version.
 pub fn fetch(version: &semver::Version) -> Result<PathBuf> {
-    let Some(fetcher) = fetcher() else {
-        return Err(SimpleDiagnostic::new("failed to download Lume: neither wget nor curl is installed").into());
-    };
-
     if !crate::is_binary_installed("tar") {
         return Err(SimpleDiagnostic::new("failed to download Lume: tar is not installed").into());
     }
@@ -63,14 +56,21 @@ pub fn fetch(version: &semver::Version) -> Result<PathBuf> {
         return Ok(extraction_dir);
     }
 
-    match fetcher {
-        Fetcher::Curl => {
-            cmd::execute("curl", ["-L", "-o", archive_path.to_str().unwrap(), &archive_url])?;
-        }
-        Fetcher::Wget => {
-            cmd::execute("wget", ["-O", archive_path.to_str().unwrap(), &archive_url])?;
-        }
-    }
+    let mut file_writer = std::fs::File::options()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(&archive_path)
+        .map_cause(format!("could not open destination file: {}", archive_path.display()))?;
+
+    let mut reader = ureq::get(&archive_url)
+        .call()
+        .map_cause(format!("failed to fetch archive `{archive_file_name}`"))?
+        .into_body()
+        .into_reader();
+
+    std::io::copy(&mut reader, &mut file_writer)
+        .map_cause(format!("failed to write archive {}", archive_path.display()))?;
 
     // Extract the archive to the same directory
     cmd::execute_cwd(
@@ -86,22 +86,6 @@ pub fn fetch(version: &semver::Version) -> Result<PathBuf> {
     )?;
 
     Ok(extraction_dir)
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Fetcher {
-    Curl,
-    Wget,
-}
-
-fn fetcher() -> Option<Fetcher> {
-    if crate::is_binary_installed("curl") {
-        Some(Fetcher::Curl)
-    } else if crate::is_binary_installed("wget") {
-        Some(Fetcher::Wget)
-    } else {
-        None
-    }
 }
 
 #[cfg(target_env = "msvc")]

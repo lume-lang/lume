@@ -16,6 +16,7 @@ clap = { workspace = true }
 error_snippet = { workspace = true }
 owo-colors = { workspace = true }
 regex = { workspace = true }
+ureq = { version = "3.2.0", features = ["json"] }
 semver = { workspace = true }
 
 [dev-dependencies]
