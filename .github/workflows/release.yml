@@ -9,37 +9,42 @@ permissions:
   contents: write
 
 jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: taiki-e/create-gh-release-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
   upload-assets:
-    needs: create-release
     runs-on: ${{ matrix.runner }}
 
     strategy:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            triple: x86_64-linux
+            triple: linux-x86_64
             runner: ubuntu-latest
 
           - target: aarch64-apple-darwin
-            triple: aarch64-macos
+            triple: macos-aarch64
             runner: macos-latest
+
+    env:
+      ARCHIVE_FILE: lume-${{ github.ref_name }}_${{ matrix.triple }}.tar.gz
+      BOOTSTRAP_BIN: lume-bootstrap-${{ github.ref_name }}_${{ matrix.triple }}
 
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
 
-      - name: Compile workspace and upload binaries
-        uses: taiki-e/upload-rust-binary-action@v1
+      - name: Build runtime
+        run: cargo build --verbose --release --package lume_runtime
+
+      - name: Build workspace
+        run: cargo build --verbose --release --bin lume --bin lume-bootstrap
+
+      - name: Create release artifacts
+        run: |
+          tar --create --file=${{ env.ARCHIVE_FILE }} ./std/ ./LICENSE.md
+          tar --append --file=${{ env.ARCHIVE_FILE }} --directory=./target/release/ ./liblume_runtime.a ./lume
+          cp -v ./target/release/lume-bootstrap ${{ env.BOOTSTRAP_BIN }}
+
+      - uses: softprops/action-gh-release@v2.4.2
         with:
-          bin: lume
-          token: ${{ secrets.GITHUB_TOKEN }}
-          archive: lume_$tag_${{ matrix.triple }}
-          target: ${{ matrix.target }}
+          files: |
+            ${{ env.ARCHIVE_FILE }}
+            ${{ env.BOOTSTRAP_BIN }}
