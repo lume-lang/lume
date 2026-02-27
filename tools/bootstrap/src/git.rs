@@ -79,9 +79,9 @@ fn git_version() -> Result<Version> {
 /// 2.49.1.
 fn git_clone_revision(version: &toolchain::TargetVersion, dest: &Path) -> Result<()> {
     let git_clone_args = match version {
-        toolchain::TargetVersion::Branch(branch) => format!("refs/heads/{branch}"),
-        toolchain::TargetVersion::Tag(tag) => format!("refs/tags/v{tag}"),
-        toolchain::TargetVersion::Commit(commit) => commit.to_owned(),
+        toolchain::TargetVersion::Branch(branch) => format!("--revision=refs/heads/{branch}"),
+        toolchain::TargetVersion::Tag(tag) => format!("--revision=refs/tags/v{tag}"),
+        toolchain::TargetVersion::Commit(commit) => format!("--revision={commit}"),
     };
 
     let mut args = vec!["clone", "--depth=1", git_clone_args.as_str(), LUME_GIT_REPOSITORY];
