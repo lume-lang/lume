@@ -67,7 +67,7 @@ impl InstallCommand {
                 "no binary version available for {version}; source-build disabled"
             ))
             .into());
-        };
+        }
 
         if self.use_as_default {
             match crate::run_dry(|| crate::toolchain::link_toolchain(&toolchain_base, self.skip_shellrc)) {
