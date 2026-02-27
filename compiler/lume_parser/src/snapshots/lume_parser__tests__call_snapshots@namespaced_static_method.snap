@@ -85,7 +85,7 @@ expression: "parse_expr(\"let _ = std::io::Buffer::call(a, b);\")"
                         ),
                     ],
                     location: Location(
-                        25..29,
+                        25..35,
                     ),
                 },
             ),

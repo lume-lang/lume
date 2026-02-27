@@ -63,7 +63,7 @@ expression: "parse_expr(\"self::invoke<T>();\")"
                 },
                 arguments: [],
                 location: Location(
-                    6..15,
+                    6..17,
                 ),
             },
         ),

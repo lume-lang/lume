@@ -40,7 +40,7 @@ expression: "parse_expr(\"self::invoke();\")"
                 },
                 arguments: [],
                 location: Location(
-                    6..12,
+                    6..14,
                 ),
             },
         ),
