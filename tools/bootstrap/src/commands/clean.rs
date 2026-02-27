@@ -1,5 +1,5 @@
 use lume_cli_tools::task;
-use lume_errors::{Result, SimpleDiagnostic};
+use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 
 use crate::{fs, toolchain};
 
@@ -40,7 +40,11 @@ impl CleanCommand {
 
             task! {
                 format!("deleting toolchain {}", toolchain) => {
-                    crate::run_dry(|| fs::remove_dir(&toolchain_root))
+                    crate::run_dry(|| if toolchain_root.is_dir() {
+                        fs::remove_dir(&toolchain_root)
+                    } else {
+                        std::fs::remove_file(&toolchain_root).map_diagnostic()
+                    })
                 },
                 Ok(()) => format!("deleted toolchain {toolchain}"),
                 Err(err) => {

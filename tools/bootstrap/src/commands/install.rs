@@ -54,7 +54,6 @@ impl InstallCommand {
         };
 
         let toolchain_base = crate::toolchain::artifact_directory_for(&version)?;
-
         fs::create_dir(&toolchain_base)?;
 
         if let TargetVersion::Tag(tagged_version) = &version
