@@ -407,7 +407,10 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             None => empty(),
         };
 
+        let attributes = self.attributes(&func.attributes);
+
         let signature = doc_comment
+            .append(attributes)
             .append(visibility(func.visibility.as_ref()))
             .append(self.signature(&func.signature));
 
@@ -520,7 +523,8 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             None => empty(),
         };
 
-        let signature = doc_comment.append(self.signature(&method.signature));
+        let attributes = self.attributes(&method.attributes);
+        let signature = doc_comment.append(attributes).append(self.signature(&method.signature));
 
         let body = match &method.block {
             Some(block) => str(" ").append(self.block(block)),
