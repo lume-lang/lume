@@ -689,6 +689,7 @@ node_location!(TraitDefinition);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
+    pub attributes: Vec<Attribute>,
     pub signature: Signature,
     pub block: Option<Block>,
     pub location: Location,

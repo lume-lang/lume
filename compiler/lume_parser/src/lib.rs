@@ -41,7 +41,7 @@ impl ItemKind {
     pub(crate) fn supports_attributes(self) -> bool {
         matches!(
             self,
-            ItemKind::Struct | ItemKind::Trait | ItemKind::Function | ItemKind::Method
+            ItemKind::Struct | ItemKind::Trait | ItemKind::Function | ItemKind::Method | ItemKind::TraitMethod
         )
     }
 }
