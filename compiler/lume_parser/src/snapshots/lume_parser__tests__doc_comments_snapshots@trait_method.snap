@@ -16,6 +16,7 @@ expression: "parse(\"trait Foo {\n            /// This is a doc comment\n       
             type_parameters: [],
             methods: [
                 TraitMethodDefinition {
+                    attributes: [],
                     signature: Signature {
                         external: false,
                         name: Identifier {
