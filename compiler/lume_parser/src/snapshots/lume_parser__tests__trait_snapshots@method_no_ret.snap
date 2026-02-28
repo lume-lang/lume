@@ -16,6 +16,7 @@ expression: "parse(\"trait Add { fn add(other: Int32) { } }\")"
             type_parameters: [],
             methods: [
                 TraitMethodDefinition {
+                    attributes: [],
                     signature: Signature {
                         external: false,
                         name: Identifier {
