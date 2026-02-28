@@ -438,6 +438,7 @@ impl Parser<'_> {
         self.raise_if_attributes(ItemKind::TraitMethod)?;
 
         let documentation = self.doc_token.take();
+        let attributes = self.attributes.take().unwrap_or_default();
 
         let signature = self.parse_signature()?;
         let start = signature.location.start();
@@ -452,6 +453,7 @@ impl Parser<'_> {
         let location = Location(start..end);
 
         Ok(TraitMethodDefinition {
+            attributes,
             signature,
             block,
             location,
