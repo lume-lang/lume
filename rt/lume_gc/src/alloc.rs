@@ -58,12 +58,15 @@ impl BumpAllocator {
     /// Allocates a new memory block with the given size and returns the
     /// pointer.
     pub(crate) fn alloc(&mut self, size: usize) -> Option<*mut u8> {
-        if self.current_size() + size >= self.total_size() {
+        // Ensure all allocated objects are aligned to 8-bytes (or 4-bytes on 32-bit).
+        let aligned_size = (size & !(POINTER_ALIGNMENT - 1)) + POINTER_ALIGNMENT;
+
+        if self.current_size() + aligned_size >= self.total_size() {
             return None;
         }
 
         let ptr = self.current.cast_mut();
-        self.current = unsafe { self.current.byte_add(size) };
+        self.current = unsafe { self.current.byte_add(aligned_size) };
 
         Some(ptr)
     }
