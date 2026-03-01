@@ -23,6 +23,9 @@
       "run",
       "./samples/playground"
     ],
-    "cwd": "$ZED_WORKTREE_ROOT"
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "env": {
+      "LUME_DEV_FORCE": "1"
+    }
   }
 ]
