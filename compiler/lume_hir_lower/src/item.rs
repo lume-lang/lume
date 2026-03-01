@@ -82,13 +82,13 @@ impl LoweringContext<'_> {
         let id = self.next_node_id();
         self.handle_attributes(&expr.attributes)?;
 
-        let name = self.expand_callable_name(expr.signature.name.clone())?;
-        self.ensure_item_undefined(id, DefinedItem::Function(name.clone()))?;
-
         lume_hir::with_frame!(self.current_type_params, || {
             let visibility = visibility(expr.visibility.as_ref());
-            let signature = self.signature(expr.signature)?;
+            let signature = self.signature(expr.signature.clone())?;
             let location = self.location(expr.location);
+
+            let name = self.expand_callable_name(expr.signature.name)?;
+            self.ensure_item_undefined(id, DefinedItem::Function(name.clone()))?;
 
             let block = expr
                 .block
@@ -307,13 +307,16 @@ impl LoweringContext<'_> {
         let id = self.next_node_id();
         self.handle_attributes(&expr.attributes)?;
 
-        let method_name = self.path_segment(lume_ast::PathSegment::callable(expr.signature.name.clone()))?;
-        self.ensure_item_undefined(id, DefinedItem::Method(type_name.clone(), method_name.clone()))?;
-
         lume_hir::with_frame!(self.current_type_params, || {
+            // Must be defined first, so any type arguments in the method name can be
+            // resolved correctly.
+            let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
+
+            let method_name = self.path_segment(lume_ast::PathSegment::callable(expr.signature.name.clone()))?;
+            self.ensure_item_undefined(id, DefinedItem::Method(type_name.clone(), method_name.clone()))?;
+
             let visibility = visibility(expr.visibility.as_ref());
             let name = lume_hir::Path::with_root(type_name, method_name);
-            let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
             let parameters = self.parameters(expr.signature.parameters, true)?;
             let return_type = self.hir_type_opt(expr.signature.return_type.map(|f| *f))?;
             let location = self.location(expr.location);
@@ -342,12 +345,15 @@ impl LoweringContext<'_> {
         let id = self.next_node_id();
         self.handle_attributes(&expr.attributes)?;
 
-        let name = self.expand_generic_name(expr.name.clone(), expr.type_parameters.clone())?;
-        self.ensure_item_undefined(id, DefinedItem::Type(name.clone()))?;
-
         lume_hir::with_frame!(self.current_type_params, || {
+            // Must be defined first, so any type arguments in the trait name can be
+            // resolved correctly.
+            let type_parameters = self.type_parameters(expr.type_parameters.clone())?;
+
+            let name = self.expand_generic_name(expr.name.clone(), expr.type_parameters)?;
+            self.ensure_item_undefined(id, DefinedItem::Type(name.clone()))?;
+
             let visibility = visibility(expr.visibility.as_ref());
-            let type_parameters = self.type_parameters(expr.type_parameters)?;
             let location = self.location(expr.location);
 
             let mut methods = Vec::with_capacity(expr.methods.len());
@@ -424,12 +430,12 @@ impl LoweringContext<'_> {
         let id = self.next_node_id();
 
         lume_hir::with_frame!(self.current_type_params, || {
-            let name = self.expand_generic_name(expr.name, expr.type_parameters.clone())?;
-            self.ensure_item_undefined(id, DefinedItem::Type(name.clone()))?;
-
-            let type_parameters = self.type_parameters(expr.type_parameters)?;
+            let type_parameters = self.type_parameters(expr.type_parameters.clone())?;
             let visibility = visibility(expr.visibility.as_ref());
             let location = self.location(expr.location);
+
+            let name = self.expand_generic_name(expr.name, expr.type_parameters)?;
+            self.ensure_item_undefined(id, DefinedItem::Type(name.clone()))?;
 
             let mut cases = Vec::with_capacity(expr.cases.len());
             for (idx, case) in expr.cases.into_iter().enumerate() {

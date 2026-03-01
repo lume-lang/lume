@@ -339,7 +339,7 @@ pub struct TypeRef {
     pub instance_of: NodeId,
     pub bound_types: Vec<TypeRef>,
 
-    /// Optional reference to the parent HIR type.
+    /// Optional reference to the corresponding HIR type.
     pub hir: Option<TypeId>,
 
     #[serde(skip)]
