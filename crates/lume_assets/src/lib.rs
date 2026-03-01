@@ -42,6 +42,15 @@ pub fn asset_file_path(asset_name: &str) -> Result<PathBuf> {
 /// Attempts to determine whether the current process has been invoked
 /// during development, such as being invoked using `cargo`.
 pub fn is_dev() -> bool {
+    // If the environment forces us to assume we're running inside the tree,
+    // then we can skip all other checks and just assume we're running in the tree.
+    //
+    // This is mostly used for better debugging, so we don't have to debug the
+    // binary through `cargo`.
+    if std::env::var_os("LUME_DEV_FORCE").is_some_and(|val| val.is_truthy()) {
+        return true;
+    }
+
     // If `CARGO` is set, we know we are being run as part of a `cargo run` command
     // which only happens inside of the source tree. Otherwise, we're likely
     // outside the tree and we need to look for the runner in the system
@@ -250,4 +259,59 @@ pub fn determine_lume_home() -> Option<PathBuf> {
     }
 
     None
+}
+
+/// Extension trait for checking whether a value is "truthy" or "falsy".
+///
+/// Generally, values should be considered "truthy" if:
+/// - the type is [`Option`], but is [`Some`],
+/// - the type is a string type and has a value of `"1"`, `"true"`, `"TRUE"`,
+///   etc.,
+/// - the type is a numeric type and has a non-zero value,
+pub trait Booleanish {
+    fn is_truthy(&self) -> bool;
+
+    fn is_falsy(&self) -> bool {
+        !self.is_truthy()
+    }
+}
+
+impl Booleanish for bool {
+    fn is_truthy(&self) -> bool {
+        *self
+    }
+
+    fn is_falsy(&self) -> bool {
+        !*self
+    }
+}
+
+impl<T> Booleanish for Option<T> {
+    fn is_truthy(&self) -> bool {
+        self.is_some()
+    }
+
+    fn is_falsy(&self) -> bool {
+        self.is_none()
+    }
+}
+
+impl Booleanish for str {
+    fn is_truthy(&self) -> bool {
+        !self.is_falsy()
+    }
+
+    fn is_falsy(&self) -> bool {
+        self == "0" || self == "false" || self == "FALSE"
+    }
+}
+
+impl Booleanish for std::ffi::OsStr {
+    fn is_truthy(&self) -> bool {
+        !self.is_falsy()
+    }
+
+    fn is_falsy(&self) -> bool {
+        self == "0" || self == "false" || self == "FALSE"
+    }
 }
