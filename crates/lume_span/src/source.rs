@@ -272,7 +272,11 @@ impl From<Location> for error_snippet::SpanRange {
 
 impl std::hash::Hash for Location {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.file.name.hash(state);
+        match &self.file.name {
+            FileName::Real(path) | FileName::StandardLibrary(path) => path.hash(state),
+            FileName::Internal => self.file.content.hash(state),
+        }
+
         self.index.hash(state);
     }
 }
