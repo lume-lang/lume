@@ -37,7 +37,7 @@ Map {
                                 Namespace {
                                     name: Identifier {
                                         name: "std",
-                                        location: struct_field.lm:0:0,
+                                        location: <internal>:0:0,
                                     },
                                 },
                             ],

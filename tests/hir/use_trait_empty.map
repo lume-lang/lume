@@ -43,7 +43,7 @@ Map {
                         Namespace {
                             name: Identifier {
                                 name: "std",
-                                location: use_trait_empty.lm:0:0,
+                                location: <internal>:0:0,
                             },
                         },
                     ],

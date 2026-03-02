@@ -36,7 +36,7 @@ Map {
                                 Namespace {
                                     name: Identifier {
                                         name: "std",
-                                        location: duplicate_param_valid.lm:0:0,
+                                        location: <internal>:0:0,
                                     },
                                 },
                             ],
@@ -77,7 +77,7 @@ Map {
                                 Namespace {
                                     name: Identifier {
                                         name: "std",
-                                        location: duplicate_param_valid.lm:0:0,
+                                        location: <internal>:0:0,
                                     },
                                 },
                             ],

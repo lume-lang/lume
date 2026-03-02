@@ -22,7 +22,7 @@ Map {
                         Namespace {
                             name: Identifier {
                                 name: "std",
-                                location: implicit_import_bool.lm:0:0,
+                                location: <internal>:0:0,
                             },
                         },
                     ],

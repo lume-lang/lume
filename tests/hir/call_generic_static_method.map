@@ -49,7 +49,7 @@ Map {
                                     Namespace {
                                         name: Identifier {
                                             name: "std",
-                                            location: call_generic_static_method.lm:0:0,
+                                            location: <internal>:0:0,
                                         },
                                     },
                                     Type {

@@ -35,10 +35,10 @@ Map {
                             Type {
                                 name: Identifier {
                                     name: "Test",
-                                    location: generic_method_empty_generics.lm:0:0,
+                                    location: generic_method_empty_generics.lm:5:9,
                                 },
                                 bound_types: [],
-                                location: generic_method_empty_generics.lm:0:0,
+                                location: generic_method_empty_generics.lm:5:9,
                             },
                         ],
                         name: Callable {
@@ -49,7 +49,7 @@ Map {
                             bound_types: [],
                             location: generic_method_empty_generics.lm:15:19,
                         },
-                        location: generic_method_empty_generics.lm:0:0,
+                        location: generic_method_empty_generics.lm:5:9,
                     },
                     parameters: [],
                     type_parameters: [],

@@ -94,7 +94,7 @@ Map {
                                                 Namespace {
                                                     name: Identifier {
                                                         name: "std",
-                                                        location: function_definition_parameters.lm:0:0,
+                                                        location: <internal>:0:0,
                                                     },
                                                 },
                                             ],
