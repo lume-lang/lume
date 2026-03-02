@@ -4,7 +4,7 @@ use lume_lexer::{TokenKind, TokenType};
 
 use crate::Parser;
 
-impl Parser<'_> {
+impl<'ast> Parser<'_, 'ast> {
     /// Parses zero-or-more abstract statements at the current cursor position.
     ///
     /// # Errors
@@ -12,7 +12,7 @@ impl Parser<'_> {
     /// Returns `Err` if the parser hits an unexpected token.
     #[allow(dead_code, reason = "used in tests and fuzzing")]
     #[libftrace::traced(level = Trace, err)]
-    pub fn parse_statements(&mut self) -> Result<Vec<Statement>> {
+    pub fn parse_statements(&mut self) -> Result<Vec<Statement<'ast>>> {
         let mut statements = Vec::new();
 
         while !self.eof() {
@@ -24,7 +24,7 @@ impl Parser<'_> {
 
     /// Parses some abstract statement at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    pub(super) fn parse_statement(&mut self) -> Result<Statement> {
+    pub(super) fn parse_statement(&mut self) -> Result<Statement<'ast>> {
         match self.token().kind {
             TokenKind::Let => self.parse_variable_declaration(),
             TokenKind::Break => self.parse_break(),
@@ -92,7 +92,7 @@ impl Parser<'_> {
 
     /// Parses a variable declaration statement at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_variable_declaration(&mut self) -> Result<Statement> {
+    fn parse_variable_declaration(&mut self) -> Result<Statement<'ast>> {
         // Whatever the token is, consume it.
         let start = self.consume_any().start();
 
@@ -116,7 +116,7 @@ impl Parser<'_> {
 
     /// Parses an infinite loop statement at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_infinite_loop(&mut self) -> Result<Statement> {
+    fn parse_infinite_loop(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::Loop)?.start();
         let block = self.parse_block()?;
 
@@ -130,7 +130,7 @@ impl Parser<'_> {
 
     /// Parses an iterator loop statement at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_iterator_loop(&mut self) -> Result<Statement> {
+    fn parse_iterator_loop(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::For)?.start();
 
         let pattern = self.parse_identifier()?;
@@ -152,7 +152,7 @@ impl Parser<'_> {
 
     /// Parses a predicate loop statement at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_predicate_loop(&mut self) -> Result<Statement> {
+    fn parse_predicate_loop(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::While)?.start();
 
         let condition = self.parse_expression()?;
@@ -169,7 +169,7 @@ impl Parser<'_> {
 
     /// Parses an expression statement at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_expression_stmt(&mut self) -> Result<Statement> {
+    fn parse_expression_stmt(&mut self) -> Result<Statement<'ast>> {
         let expression = self.parse_expression()?;
 
         if self.peek(TokenType::RightCurly) {
@@ -185,7 +185,7 @@ impl Parser<'_> {
 
     /// Parses a `break` statement at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_break(&mut self) -> Result<Statement> {
+    fn parse_break(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::Break)?.start();
         let end = self.expect_semi()?.end();
 
@@ -196,7 +196,7 @@ impl Parser<'_> {
 
     /// Parses a `continue` statement at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_continue(&mut self) -> Result<Statement> {
+    fn parse_continue(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::Continue)?.start();
         let end = self.expect_semi()?.end();
 
@@ -207,7 +207,7 @@ impl Parser<'_> {
 
     /// Parses a return statement at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_return(&mut self) -> Result<Statement> {
+    fn parse_return(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::Return)?.start();
 
         let value = self.parse_opt_expression()?;

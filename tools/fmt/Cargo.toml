@@ -11,6 +11,7 @@ doctest = false
 
 [dependencies]
 lume_ast = { path = "../../compiler/lume_ast" }
+lume_data_structures = { path = "../../crates/lume_data_structures" }
 lume_errors = { path = "../../crates/lume_errors" }
 lume_lexer = { path = "../../compiler/lume_lexer" }
 lume_span = { path = "../../crates/lume_span" }

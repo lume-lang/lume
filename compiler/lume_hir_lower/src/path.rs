@@ -7,13 +7,13 @@ impl LoweringContext<'_> {
     /// `std::io::File`.
     #[libftrace::traced(level = Debug)]
     pub(crate) fn expand_import_path(&mut self, path: lume_ast::ImportPath) -> Result<lume_hir::Path> {
-        let location = self.location(path.location);
+        let location = self.location(path.location.clone());
 
         let Some((name, root)) = path.path.split_last() else {
             return Err(crate::errors::InvalidNamespacePath {
                 source: self.current_file().clone(),
                 range: location.index.clone(),
-                path: Box::new(path.path),
+                path: path.to_string(),
             }
             .into());
         };
@@ -42,19 +42,26 @@ impl LoweringContext<'_> {
 
     /// Expands the given AST type name to a full HIR path by prepending the
     /// current namespace.
-    pub(crate) fn expand_type_name<N: Into<lume_ast::Identifier>>(&mut self, name: N) -> Result<lume_hir::Path> {
-        self.expand_to_path(lume_ast::PathSegment::ty(name))
+    pub(crate) fn expand_type_name<'ast, N: Into<lume_ast::Identifier<'ast>>>(
+        &mut self,
+        name: N,
+    ) -> Result<lume_hir::Path> {
+        self.expand_to_path(lume_ast::PathSegment::ty(name.into()))
     }
 
     /// Expands the given AST callable name to a full HIR path by prepending the
     /// current namespace.
-    pub(crate) fn expand_callable_name<N: Into<lume_ast::Identifier>>(&mut self, name: N) -> Result<lume_hir::Path> {
-        self.expand_to_path(lume_ast::PathSegment::callable(name))
+    pub(crate) fn expand_callable_name<'ast, N: Into<lume_ast::Identifier<'ast>>>(
+        &mut self,
+        name: N,
+    ) -> Result<lume_hir::Path> {
+        self.expand_to_path(lume_ast::PathSegment::callable(name.into()))
     }
 
     pub(crate) fn expand_generic_name<
-        N: Into<lume_ast::Identifier>,
-        P: IntoIterator<Item = lume_ast::TypeParameter>,
+        'ast,
+        N: Into<lume_ast::Identifier<'ast>>,
+        P: IntoIterator<Item = lume_ast::TypeParameter<'ast>>,
     >(
         &mut self,
         name: N,

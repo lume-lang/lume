@@ -5,10 +5,10 @@ use lume_lexer::TokenType;
 use crate::Parser;
 use crate::errors::*;
 
-impl Parser<'_> {
+impl<'ast> Parser<'_, 'ast> {
     /// Parses some abstract type at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    pub(super) fn parse_type(&mut self) -> Result<Type> {
+    pub(super) fn parse_type(&mut self) -> Result<Type<'ast>> {
         let token = self.token();
 
         match token.kind.as_type() {
@@ -25,7 +25,7 @@ impl Parser<'_> {
 
     /// Parses either a scalar- or generic-type at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_named_type(&mut self) -> Result<Type> {
+    fn parse_named_type(&mut self) -> Result<Type<'ast>> {
         let name = self.parse_path()?;
 
         if name.is_self_type() {
@@ -39,7 +39,7 @@ impl Parser<'_> {
 
     /// Parses an array type at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_array_type(&mut self) -> Result<Type> {
+    fn parse_array_type(&mut self) -> Result<Type<'ast>> {
         let start = self.consume(TokenType::LeftBracket)?.start();
 
         let element_type = Box::new(self.parse_type()?);
@@ -56,7 +56,7 @@ impl Parser<'_> {
 
     /// Parses some abstract type at the current cursor position.
     #[libftrace::traced(level = Trace, err)]
-    pub(super) fn parse_opt_type(&mut self) -> Result<Option<Type>> {
+    pub(super) fn parse_opt_type(&mut self) -> Result<Option<Type<'ast>>> {
         if self.check(TokenType::Colon) {
             Ok(Some(self.parse_type()?))
         } else {

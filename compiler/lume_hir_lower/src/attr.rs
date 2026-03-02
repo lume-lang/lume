@@ -27,7 +27,7 @@ impl LoweringContext<'_> {
                         .into());
                     };
 
-                    self.map.lang_items.add_name(lang_name.value.as_str(), current_node)?;
+                    self.map.lang_items.add_name(lang_name.value, current_node)?;
                 }
                 _ => {
                     return Err(errors::UnknownAttribute {

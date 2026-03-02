@@ -13,6 +13,7 @@ use std::sync::Arc;
 
 use iter_tools::Itertools;
 use lume_ast::*;
+use lume_data_structures::UntypedArena;
 use lume_errors::{DiagCtxHandle, MapDiagnostic};
 use lume_parser::Parser;
 use lume_span::SourceFile;
@@ -83,19 +84,21 @@ impl Default for Indentation {
 }
 
 pub fn format_src(content: &str, config: &Config, dcx: DiagCtxHandle) -> lume_errors::Result<String> {
-    let source = parse_source(content, dcx)?;
+    let arena = UntypedArena::new();
+
+    let source = parse_source(content, dcx, &arena)?;
     let formatted = Formatter::new(config).source(&source).print(config).map_diagnostic()?;
 
     Ok(formatted)
 }
 
 #[derive(Debug, Clone)]
-struct Source<'src> {
+struct Source<'src, 'ast> {
     /// Defines the content of the original source file.
     pub file: Arc<SourceFile>,
 
     /// Defines all the top-level nodes within the original source file.
-    pub items: Vec<Item>,
+    pub syntax_tree: lume_ast::SyntaxTree<'ast>,
 
     /// Defines a list of all comments from the original source file, which
     /// were discarded during parsing.
@@ -106,7 +109,11 @@ struct Source<'src> {
     pub comments: Vec<(Range<usize>, &'src str)>,
 }
 
-fn parse_source(content: &str, dcx: DiagCtxHandle) -> lume_errors::Result<Source<'_>> {
+fn parse_source<'src, 'ast>(
+    content: &'src str,
+    dcx: DiagCtxHandle,
+    arena: &'ast UntypedArena,
+) -> lume_errors::Result<Source<'src, 'ast>> {
     let source_file = Arc::new(SourceFile::internal(content));
 
     let mut tokens = lume_lexer::Lexer::lex_ref(content)?;
@@ -122,14 +129,14 @@ fn parse_source(content: &str, dcx: DiagCtxHandle) -> lume_errors::Result<Source
         })
         .collect::<Vec<_>>();
 
-    let mut parser = Parser::new(source_file.clone(), tokens, dcx.handle());
-    let items = parser.parse()?;
+    let mut parser = Parser::new(source_file.clone(), tokens, dcx.handle(), arena);
+    let syntax_tree = parser.parse()?;
 
     dcx.ensure_untainted()?;
 
     Ok(Source {
         file: source_file,
-        items,
+        syntax_tree,
         comments,
     })
 }
@@ -176,10 +183,10 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         self.config.indentation.width().cast_signed()
     }
 
-    fn source<'a>(mut self, source: &'a Source<'src>) -> Document<'a> {
+    fn source<'a>(mut self, source: &'a Source<'src, '_>) -> Document<'a> {
         let Source {
             file: source_file,
-            items,
+            syntax_tree,
             comments,
         } = source;
 
@@ -189,7 +196,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             .map(|(span, content)| (span.clone(), *content))
             .collect();
 
-        self.with_spacing(items.iter(), |fmt, item| fmt.top_level_expression(item))
+        self.with_spacing(syntax_tree.items.iter(), |fmt, item| fmt.top_level_expression(item))
     }
 
     /// Determines whether any current comments exist at or before the given
@@ -1161,7 +1168,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
     }
 }
 
-fn namespace(namespace: &Namespace) -> Document<'_> {
+fn namespace<'ast>(namespace: &'ast Namespace<'_>) -> Document<'ast> {
     let segments = namespace.path.path.iter().map(|seg| str(seg.as_str())).collect_vec();
     let path = join(segments, "::");
 

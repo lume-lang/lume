@@ -1,5 +1,5 @@
 [package]
-name = "lume_ast"
+name = "lume_data_structures"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,10 +9,7 @@ test = false
 doctest = false
 
 [dependencies]
-lume_data_structures = { path = "../../crates/lume_data_structures" }
-
-[dev-dependencies]
-insta = { version = "1.42.2", features = ["yaml"] }
+bumpalo = { version = "3.20" }
 
 [lints]
 workspace = true

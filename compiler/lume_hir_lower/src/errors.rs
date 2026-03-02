@@ -13,7 +13,7 @@ pub struct InvalidNamespacePath {
     #[label("namespace path is not valid: {path:?}")]
     pub range: Range<usize>,
 
-    pub path: Box<dyn std::fmt::Debug + Send + Sync>,
+    pub path: String,
 }
 
 #[derive(Diagnostic, Debug)]

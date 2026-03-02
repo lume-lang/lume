@@ -5,9 +5,9 @@ use lume_lexer::{TokenKind, TokenType};
 use crate::Parser;
 use crate::errors::*;
 
-impl Parser<'_> {
+impl<'ast> Parser<'_, 'ast> {
     #[libftrace::traced(level = Trace, err)]
-    pub(super) fn parse_pattern(&mut self) -> Result<Pattern> {
+    pub(super) fn parse_pattern(&mut self) -> Result<Pattern<'ast>> {
         match self.token().kind {
             TokenKind::Identifier(_) => self.parse_named_pattern(),
             TokenKind::DotDot => self.parse_wildcard_pattern(),
@@ -24,14 +24,14 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_literal_pattern(&mut self) -> Result<Pattern> {
+    fn parse_literal_pattern(&mut self) -> Result<Pattern<'ast>> {
         let literal_expr = self.parse_literal_inner()?;
 
         Ok(Pattern::Literal(literal_expr))
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_named_pattern(&mut self) -> Result<Pattern> {
+    fn parse_named_pattern(&mut self) -> Result<Pattern<'ast>> {
         let path = self.parse_path()?;
 
         if path.root.is_empty() && path.name.name().is_lower() {
@@ -55,7 +55,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_wildcard_pattern(&mut self) -> Result<Pattern> {
+    fn parse_wildcard_pattern(&mut self) -> Result<Pattern<'ast>> {
         let location = self.consume(TokenType::DotDot)?.index;
 
         Ok(Pattern::Wildcard(WildcardPattern {

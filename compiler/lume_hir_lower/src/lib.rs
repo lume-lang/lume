@@ -11,7 +11,7 @@ pub(crate) mod ty;
 
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 pub use lume_ast;
 pub use lume_ast::Node as _;
@@ -22,40 +22,44 @@ use lume_hir::{Map, Path, PathSegment};
 use lume_session::Package;
 use lume_span::{Internable, Location, NodeId, SourceFile, SourceFileId};
 
-const DEFAULT_STD_IMPORTS: &[&str] = &[
-    "Boolean",
-    "String",
-    "Int8",
-    "UInt8",
-    "Int16",
-    "UInt16",
-    "Int32",
-    "UInt32",
-    "Int64",
-    "UInt64",
-    "IntPtr",
-    "UIntPtr",
-    "Float",
-    "Double",
-    "Array",
-    "Pointer",
-    "Range",
-    "RangeInclusive",
-];
+static DEFAULT_STD_IMPORTS: LazyLock<Vec<(&str, Path)>> = LazyLock::new(|| {
+    vec![
+        ("Boolean", lume_hir::hir_std_type_path!(Boolean)),
+        ("String", lume_hir::hir_std_type_path!(String)),
+        ("Int8", lume_hir::hir_std_type_path!(Int8)),
+        ("UInt8", lume_hir::hir_std_type_path!(UInt8)),
+        ("Int16", lume_hir::hir_std_type_path!(Int16)),
+        ("UInt16", lume_hir::hir_std_type_path!(UInt16)),
+        ("Int32", lume_hir::hir_std_type_path!(Int32)),
+        ("UInt32", lume_hir::hir_std_type_path!(UInt32)),
+        ("Int64", lume_hir::hir_std_type_path!(Int64)),
+        ("UInt64", lume_hir::hir_std_type_path!(UInt64)),
+        ("IntPtr", lume_hir::hir_std_type_path!(IntPtr)),
+        ("UIntPtr", lume_hir::hir_std_type_path!(UIntPtr)),
+        ("Float", lume_hir::hir_std_type_path!(Float)),
+        ("Double", lume_hir::hir_std_type_path!(Double)),
+        ("Array", lume_hir::hir_std_type_path!(Array)),
+        ("Pointer", lume_hir::hir_std_type_path!(Pointer)),
+        ("Range", lume_hir::hir_std_type_path!(Range)),
+        ("RangeInclusive", lume_hir::hir_std_type_path!(RangeInclusive)),
+    ]
+});
 
 pub fn lower_to_hir(package: &Package, dcx: DiagCtxHandle) -> Result<Map> {
     let mut ctx = LoweringContext::new(package, dcx);
 
     for (_file_name, source_file) in ctx.package.files.clone() {
-        let items = ctx.dcx.with(|handle| {
+        let arena = lume_data_structures::UntypedArena::new();
+
+        let syntax_tree = ctx.dcx.with(|handle| {
             let mut lexer = lume_lexer::Lexer::new(source_file.clone());
             let tokens = lexer.lex()?;
 
-            let mut parser = lume_parser::Parser::new(source_file.clone(), tokens, handle);
+            let mut parser = lume_parser::Parser::new(source_file.clone(), tokens, handle, &arena);
             parser.parse()
         })?;
 
-        if let Err(err) = ctx.lower_items(source_file.id, items) {
+        if let Err(err) = ctx.lower_items(source_file.id, syntax_tree.items) {
             ctx.dcx.emit_and_push(err);
         }
     }
@@ -148,7 +152,7 @@ impl LoweringContext<'_> {
         let location = self.location(expr.location.clone());
 
         lume_hir::Identifier {
-            name: expr.name,
+            name: expr.name.to_string(),
             location,
         }
     }
@@ -296,15 +300,17 @@ impl LoweringContext<'_> {
         Ok(None)
     }
 
-    pub(crate) fn lower_items<I>(&mut self, source_file_id: SourceFileId, items: I) -> Result<()>
+    pub(crate) fn lower_items<'ast, I>(&mut self, source_file_id: SourceFileId, items: I) -> Result<()>
     where
-        I: IntoIterator<Item = lume_ast::Item>,
+        I: IntoIterator<Item = lume_ast::Item<'ast>>,
     {
         self.current_file_id = source_file_id;
         self.namespace = None;
 
         self.imports.clear();
-        self.import(lume_ast::Import::std(DEFAULT_STD_IMPORTS))?;
+        for (imported_name, import_path) in DEFAULT_STD_IMPORTS.iter() {
+            self.imports.insert(imported_name.to_string(), import_path.clone());
+        }
 
         for item in items {
             self.lower_item(item)?;

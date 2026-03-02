@@ -5,7 +5,7 @@ use lume_lexer::{TokenKind, TokenType};
 use crate::errors::*;
 use crate::{ItemKind, Parser};
 
-impl Parser<'_> {
+impl<'ast> Parser<'_, 'ast> {
     #[libftrace::traced(level = Debug, err)]
     fn parse_item_prefix(&mut self) -> Result<()> {
         self.read_doc_comment();
@@ -15,7 +15,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Debug, err)]
-    pub(super) fn parse_item(&mut self) -> Result<Item> {
+    pub(super) fn parse_item(&mut self) -> Result<Item<'ast>> {
         self.parse_item_prefix()?;
 
         let visibility = self.parse_visibility()?;
@@ -90,7 +90,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_import(&mut self) -> Result<Item> {
+    fn parse_import(&mut self) -> Result<Item<'ast>> {
         let start = self.consume(TokenType::Import)?.start();
         let path = self.parse_import_path()?;
 
@@ -118,7 +118,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_namespace(&mut self) -> Result<Item> {
+    fn parse_namespace(&mut self) -> Result<Item<'ast>> {
         let (path, location) = self.consume_with_loc(|p| {
             p.consume(TokenType::Namespace)?;
 
@@ -129,7 +129,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_signature(&mut self) -> Result<Signature> {
+    fn parse_signature(&mut self) -> Result<Signature<'ast>> {
         let start = self.expect_fn()?.start();
 
         let external = self.check_external();
@@ -188,7 +188,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_parameters(&mut self) -> Result<Vec<Parameter>> {
+    fn parse_parameters(&mut self) -> Result<Vec<Parameter<'ast>>> {
         // If no opening parenthesis, no parameters are defined.
         if !self.peek(TokenType::LeftParen) {
             return Ok(Vec::new());
@@ -198,13 +198,13 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_parameter(&mut self) -> Result<Parameter> {
+    fn parse_parameter(&mut self) -> Result<Parameter<'ast>> {
         if let Some(token) = self.consume_if(TokenType::SelfRef) {
             let location = token.index;
 
             return Ok(Parameter {
                 name: Identifier {
-                    name: "self".into(),
+                    name: "self",
                     location: location.clone().into(),
                 },
                 vararg: false,
@@ -235,16 +235,16 @@ impl Parser<'_> {
 
     /// Parses the return type of the current function definition.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_return_type(&mut self) -> Result<Option<Box<Type>>> {
+    fn parse_return_type(&mut self) -> Result<Option<Type<'ast>>> {
         if self.consume_if(TokenType::Arrow).is_none() {
             return Ok(None);
         }
 
-        Ok(Some(Box::new(self.parse_type()?)))
+        Ok(Some(self.parse_type()?))
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_function(&mut self, visibility: Option<Visibility>) -> Result<Item> {
+    fn parse_function(&mut self, visibility: Option<Visibility>) -> Result<Item<'ast>> {
         let documentation = self.doc_token.take();
         let attributes = self.attributes.take().unwrap_or_default();
 
@@ -271,7 +271,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_struct_definition(&mut self, visibility: Option<Visibility>) -> Result<Item> {
+    fn parse_struct_definition(&mut self, visibility: Option<Visibility>) -> Result<Item<'ast>> {
         let documentation = self.doc_token.take();
         let attributes = self.attributes.take().unwrap_or_default();
 
@@ -306,7 +306,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_struct_field(&mut self) -> Result<Field> {
+    fn parse_struct_field(&mut self) -> Result<Field<'ast>> {
         self.parse_item_prefix()?;
         self.raise_if_attributes(ItemKind::Field)?;
 
@@ -351,7 +351,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_implementation(&mut self) -> Result<Item> {
+    fn parse_implementation(&mut self) -> Result<Item<'ast>> {
         let start = self.expect_impl()?.start();
 
         let type_parameters = self.parse_type_parameters()?;
@@ -369,7 +369,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_method_definition(&mut self) -> Result<MethodDefinition> {
+    fn parse_method_definition(&mut self) -> Result<MethodDefinition<'ast>> {
         self.parse_item_prefix()?;
         self.raise_if_attributes(ItemKind::Method)?;
 
@@ -398,7 +398,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_trait_definition(&mut self, visibility: Option<Visibility>) -> Result<Item> {
+    fn parse_trait_definition(&mut self, visibility: Option<Visibility>) -> Result<Item<'ast>> {
         let documentation = self.doc_token.take();
         let attributes = self.attributes.take().unwrap_or_default();
 
@@ -433,7 +433,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_trait_method(&mut self) -> Result<TraitMethodDefinition> {
+    fn parse_trait_method(&mut self) -> Result<TraitMethodDefinition<'ast>> {
         self.parse_item_prefix()?;
         self.raise_if_attributes(ItemKind::TraitMethod)?;
 
@@ -462,7 +462,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Debug, err)]
-    fn parse_trait_implementation(&mut self) -> Result<Item> {
+    fn parse_trait_implementation(&mut self) -> Result<Item<'ast>> {
         let start = self.consume(TokenType::Use)?.start();
         let type_parameters = self.parse_type_parameters()?;
 
@@ -485,7 +485,7 @@ impl Parser<'_> {
     }
 
     #[libftrace::traced(level = Trace, err)]
-    fn parse_trait_method_implementation(&mut self) -> Result<TraitMethodImplementation> {
+    fn parse_trait_method_implementation(&mut self) -> Result<TraitMethodImplementation<'ast>> {
         let signature = self.parse_signature()?;
         let start = signature.location.start();
 
@@ -509,7 +509,7 @@ impl Parser<'_> {
     /// }
     /// ```
     #[libftrace::traced(level = Debug, err)]
-    fn parse_enum_definition(&mut self, visibility: Option<Visibility>) -> Result<Item> {
+    fn parse_enum_definition(&mut self, visibility: Option<Visibility>) -> Result<Item<'ast>> {
         self.raise_if_attributes(ItemKind::Enum)?;
 
         let documentation = self.doc_token.take();
@@ -536,7 +536,7 @@ impl Parser<'_> {
 
     /// Parses a single enum type case, such as `V4` or `V4(String)`.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_enum_case(&mut self) -> Result<EnumDefinitionCase> {
+    fn parse_enum_case(&mut self) -> Result<EnumDefinitionCase<'ast>> {
         self.parse_item_prefix()?;
         self.raise_if_attributes(ItemKind::Variant)?;
 
@@ -545,9 +545,7 @@ impl Parser<'_> {
         let name = self.parse_identifier()?;
 
         let parameters = if self.peek(TokenType::LeftParen) {
-            self.consume_comma_seq(TokenType::LeftParen, TokenType::RightParen, |p| {
-                Ok(Box::new(p.parse_type()?))
-            })?
+            self.consume_comma_seq(TokenType::LeftParen, TokenType::RightParen, |p| p.parse_type())?
         } else {
             Vec::new()
         };
