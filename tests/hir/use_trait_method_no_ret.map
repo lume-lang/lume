@@ -43,7 +43,7 @@ Map {
                         Namespace {
                             name: Identifier {
                                 name: "std",
-                                location: use_trait_method_no_ret.lm:0:0,
+                                location: <internal>:0:0,
                             },
                         },
                     ],
@@ -88,7 +88,7 @@ Map {
                                         Namespace {
                                             name: Identifier {
                                                 name: "std",
-                                                location: use_trait_method_no_ret.lm:0:0,
+                                                location: <internal>:0:0,
                                             },
                                         },
                                     ],

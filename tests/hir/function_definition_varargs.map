@@ -36,7 +36,7 @@ Map {
                                 Namespace {
                                     name: Identifier {
                                         name: "std",
-                                        location: function_definition_varargs.lm:0:0,
+                                        location: <internal>:0:0,
                                     },
                                 },
                             ],

@@ -77,7 +77,7 @@ Map {
                                                                         Namespace {
                                                                             name: Identifier {
                                                                                 name: "std",
-                                                                                location: switch_variant.lm:0:0,
+                                                                                location: <internal>:0:0,
                                                                             },
                                                                         },
                                                                     ],
@@ -169,7 +169,7 @@ Map {
                                                                         Namespace {
                                                                             name: Identifier {
                                                                                 name: "std",
-                                                                                location: switch_variant.lm:0:0,
+                                                                                location: <internal>:0:0,
                                                                             },
                                                                         },
                                                                     ],
