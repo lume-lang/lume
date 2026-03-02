@@ -123,7 +123,7 @@ checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
 
 [[package]]
 name = "arc"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -217,7 +217,7 @@ dependencies = [
 
 [[package]]
 name = "bootstrap"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "clap",
  "error_snippet",
@@ -244,7 +244,7 @@ dependencies = [
 
 [[package]]
 name = "build_stage"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "arc",
  "lume_codegen",
@@ -266,9 +266,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.19.0"
+version = "3.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46c5e41b57b8bba42a04676d81cb89e9ee8e859a1a66f80a5a72e1cb76b34d43"
+checksum = "5d20789868f4b01b2f2caec9f5c4e0213b41e3e5702a50157d699ae31ced2fcb"
 dependencies = [
  "allocator-api2",
 ]
@@ -1545,7 +1545,7 @@ dependencies = [
 
 [[package]]
 name = "lume"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "bootstrap",
  "criterion",
@@ -1563,6 +1563,7 @@ dependencies = [
  "afl",
  "build_stage",
  "libfuzzer-sys",
+ "lume_data_structures",
  "lume_errors",
  "lume_lexer",
  "lume_parser",
@@ -1594,7 +1595,7 @@ dependencies = [
 
 [[package]]
 name = "lume_assets"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "dirs",
  "lume_errors",
@@ -1602,14 +1603,15 @@ dependencies = [
 
 [[package]]
 name = "lume_ast"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "insta",
+ "lume_data_structures",
 ]
 
 [[package]]
 name = "lume_bench"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "build_stage",
  "lume_driver",
@@ -1619,7 +1621,7 @@ dependencies = [
 
 [[package]]
 name = "lume_cli"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "arc",
  "clap",
@@ -1638,14 +1640,14 @@ dependencies = [
 
 [[package]]
 name = "lume_cli_tools"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "owo-colors",
 ]
 
 [[package]]
 name = "lume_codegen"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "cranelift",
  "cranelift-codegen",
@@ -1667,8 +1669,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_data_structures"
+version = "0.1.3"
+dependencies = [
+ "bumpalo",
+]
+
+[[package]]
 name = "lume_demangle"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "lume_errors",
  "lume_mangle",
@@ -1676,7 +1685,7 @@ dependencies = [
 
 [[package]]
 name = "lume_driver"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "arc",
  "ciborium",
@@ -1704,7 +1713,7 @@ dependencies = [
 
 [[package]]
 name = "lume_errors"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -1712,7 +1721,7 @@ dependencies = [
 
 [[package]]
 name = "lume_errors_test"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "insta",
@@ -1722,11 +1731,12 @@ dependencies = [
 
 [[package]]
 name = "lume_fmt"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "im",
  "iter_tools",
  "lume_ast",
+ "lume_data_structures",
  "lume_errors",
  "lume_lexer",
  "lume_parser",
@@ -1736,7 +1746,7 @@ dependencies = [
 
 [[package]]
 name = "lume_gc"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "indexmap",
  "libftrace",
@@ -1750,7 +1760,7 @@ dependencies = [
 
 [[package]]
 name = "lume_hir"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "indexmap",
@@ -1765,7 +1775,7 @@ dependencies = [
 
 [[package]]
 name = "lume_hir_lower"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "arc",
  "error_snippet",
@@ -1773,6 +1783,7 @@ dependencies = [
  "insta",
  "libftrace",
  "lume_ast",
+ "lume_data_structures",
  "lume_errors",
  "lume_errors_test",
  "lume_hir",
@@ -1784,7 +1795,7 @@ dependencies = [
 
 [[package]]
 name = "lume_infer"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "arc",
  "error_snippet",
@@ -1806,7 +1817,7 @@ dependencies = [
 
 [[package]]
 name = "lume_lexer"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -1816,7 +1827,7 @@ dependencies = [
 
 [[package]]
 name = "lume_linker"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "libftrace",
@@ -1827,7 +1838,7 @@ dependencies = [
 
 [[package]]
 name = "lume_lsp"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "crossbeam",
  "env_logger",
@@ -1850,7 +1861,7 @@ dependencies = [
 
 [[package]]
 name = "lume_macros"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1859,7 +1870,7 @@ dependencies = [
 
 [[package]]
 name = "lume_mangle"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "build_stage",
  "lume_errors",
@@ -1871,7 +1882,7 @@ dependencies = [
 
 [[package]]
 name = "lume_metadata"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "lume_hir",
  "lume_session",
@@ -1881,7 +1892,7 @@ dependencies = [
 
 [[package]]
 name = "lume_mir"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "indexmap",
  "libftrace",
@@ -1894,7 +1905,7 @@ dependencies = [
 
 [[package]]
 name = "lume_mir_lower"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "indexmap",
  "libftrace",
@@ -1912,7 +1923,7 @@ dependencies = [
 
 [[package]]
 name = "lume_mir_opt"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "libftrace",
  "lume_mir",
@@ -1924,7 +1935,7 @@ dependencies = [
 
 [[package]]
 name = "lume_mir_queries"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "indexmap",
  "libftrace",
@@ -1937,7 +1948,7 @@ dependencies = [
 
 [[package]]
 name = "lume_options"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "ciborium",
  "serde",
@@ -1945,13 +1956,14 @@ dependencies = [
 
 [[package]]
 name = "lume_parser"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
  "insta",
  "libftrace",
  "lume_ast",
+ "lume_data_structures",
  "lume_errors",
  "lume_lexer",
  "lume_span",
@@ -1959,7 +1971,7 @@ dependencies = [
 
 [[package]]
 name = "lume_rt_macros"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -1969,14 +1981,14 @@ dependencies = [
 
 [[package]]
 name = "lume_rt_metadata"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "lume_tagged",
 ]
 
 [[package]]
 name = "lume_runtime"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "backtrace",
  "lume_gc",
@@ -1989,7 +2001,7 @@ dependencies = [
 
 [[package]]
 name = "lume_session"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -2006,7 +2018,7 @@ dependencies = [
 
 [[package]]
 name = "lume_signals"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "libc",
  "owo-colors",
@@ -2014,7 +2026,7 @@ dependencies = [
 
 [[package]]
 name = "lume_span"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -2025,11 +2037,11 @@ dependencies = [
 
 [[package]]
 name = "lume_tagged"
-version = "0.1.1"
+version = "0.1.3"
 
 [[package]]
 name = "lume_tir"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "indexmap",
  "lume_errors",
@@ -2040,7 +2052,7 @@ dependencies = [
 
 [[package]]
 name = "lume_tir_lower"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -2058,7 +2070,7 @@ dependencies = [
 
 [[package]]
 name = "lume_type_metadata"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "indexmap",
  "lume_errors",
@@ -2071,7 +2083,7 @@ dependencies = [
 
 [[package]]
 name = "lume_typech"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "arc",
  "error_snippet",
@@ -2093,7 +2105,7 @@ dependencies = [
 
 [[package]]
 name = "lume_types"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -2108,7 +2120,7 @@ dependencies = [
 
 [[package]]
 name = "lume_unification"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -2125,7 +2137,7 @@ dependencies = [
 
 [[package]]
 name = "manifold"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "build_stage",
  "clap",
@@ -2145,7 +2157,7 @@ dependencies = [
 
 [[package]]
 name = "manifold_macros"
-version = "0.1.1"
+version = "0.1.3"
 dependencies = [
  "manifold",
  "proc-macro2",

@@ -11,7 +11,7 @@ impl LoweringContext<'_> {
 
             let mut constraints = Vec::with_capacity(ast_param.constraints.len());
             for constraint in ast_param.constraints {
-                constraints.push(self.hir_type(*constraint)?);
+                constraints.push(self.hir_type(constraint)?);
             }
 
             self.current_type_params

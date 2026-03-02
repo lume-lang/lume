@@ -10,6 +10,7 @@ doctest = false
 [dependencies]
 arc = { path = "../arc" }
 lume_ast = { path = "../lume_ast" }
+lume_data_structures = { path = "../../crates/lume_data_structures" }
 lume_errors = { path = "../../crates/lume_errors" }
 lume_hir = { path = "../lume_hir" }
 lume_lexer = { path = "../lume_lexer" }

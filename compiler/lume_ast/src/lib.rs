@@ -1,10 +1,16 @@
 use std::hash::Hash;
 
+#[derive(Debug, Clone)]
+pub struct SyntaxTree<'ast> {
+    pub items: Vec<Item<'ast>>,
+    pub arena: &'ast lume_data_structures::UntypedArena,
+}
+
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Location(pub std::ops::Range<usize>);
 
 macro_rules! node_location {
-    ($name:ident) => {
+    ($name:ty) => {
         impl Node for $name {
             #[inline]
             fn location(&self) -> &Location {
@@ -51,31 +57,31 @@ pub trait Node {
 }
 
 #[derive(Debug, Clone, Eq)]
-pub struct Identifier {
-    pub name: String,
+pub struct Identifier<'ast> {
+    pub name: &'ast str,
     pub location: Location,
 }
 
-node_location!(Identifier);
+node_location!(Identifier<'_>);
 
-impl Identifier {
+impl<'ast> Identifier<'ast> {
     #[must_use]
-    pub fn new(name: &str) -> Self {
+    pub fn new(tree: &'ast SyntaxTree, name: &str) -> Self {
         Identifier {
-            name: name.to_string(),
+            name: tree.arena.alloc_str(name),
             location: Location(0..0),
         }
     }
 
     #[must_use]
     #[inline]
-    pub fn as_var(self) -> Expression {
+    pub fn as_var(self) -> Expression<'ast> {
         Expression::Variable(Box::new(Variable { name: self }))
     }
 
     #[inline]
     pub fn as_str(&self) -> &str {
-        &self.name
+        self.name
     }
 
     #[inline]
@@ -89,51 +95,33 @@ impl Identifier {
     }
 }
 
-impl From<String> for Identifier {
-    fn from(value: String) -> Self {
-        Self {
-            name: value,
-            location: Location(0..0),
-        }
-    }
-}
-
-impl From<&str> for Identifier {
-    fn from(value: &str) -> Self {
-        Self {
-            name: value.to_owned(),
-            location: Location(0..0),
-        }
-    }
-}
-
-impl std::fmt::Display for Identifier {
+impl std::fmt::Display for Identifier<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.name)
+        f.write_str(self.name)
     }
 }
 
-impl std::hash::Hash for Identifier {
+impl std::hash::Hash for Identifier<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
     }
 }
 
-impl PartialEq for Identifier {
+impl PartialEq for Identifier<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
     }
 }
 
 #[derive(Debug, Clone, Eq)]
-pub struct ImportPath {
-    pub path: Vec<Identifier>,
+pub struct ImportPath<'ast> {
+    pub path: Vec<Identifier<'ast>>,
     pub location: Location,
 }
 
-node_location!(ImportPath);
+node_location!(ImportPath<'_>);
 
-impl ImportPath {
+impl<'ast> ImportPath<'ast> {
     #[must_use]
     pub fn empty() -> Self {
         ImportPath {
@@ -143,8 +131,8 @@ impl ImportPath {
     }
 
     #[must_use]
-    pub fn new(name: &[&str]) -> Self {
-        let path = name.iter().map(|&s| Identifier::new(s)).collect();
+    pub fn new(tree: &'ast SyntaxTree, name: &[&str]) -> Self {
+        let path = name.iter().map(|&s| Identifier::new(tree, s)).collect();
 
         ImportPath {
             path,
@@ -159,40 +147,35 @@ impl ImportPath {
     }
 }
 
-impl std::fmt::Display for ImportPath {
+impl std::fmt::Display for ImportPath<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let joined = self
-            .path
-            .iter()
-            .map(|i| i.name.as_str())
-            .collect::<Vec<&str>>()
-            .join("::");
+        let joined = self.path.iter().map(|i| i.name).collect::<Vec<&str>>().join("::");
 
         f.write_str(&joined)
     }
 }
 
-impl std::hash::Hash for ImportPath {
+impl std::hash::Hash for ImportPath<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.to_string().hash(state);
     }
 }
 
-impl PartialEq for ImportPath {
+impl PartialEq for ImportPath<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.path == other.path
     }
 }
 
 #[derive(Debug, Clone, Eq)]
-pub struct NamespacePath {
-    pub path: Vec<Identifier>,
+pub struct NamespacePath<'ast> {
+    pub path: Vec<Identifier<'ast>>,
     pub location: Location,
 }
 
-node_location!(NamespacePath);
+node_location!(NamespacePath<'_>);
 
-impl NamespacePath {
+impl<'ast> NamespacePath<'ast> {
     #[must_use]
     pub fn empty() -> Self {
         NamespacePath {
@@ -202,8 +185,8 @@ impl NamespacePath {
     }
 
     #[must_use]
-    pub fn new(name: &[&str]) -> Self {
-        let path = name.iter().map(|&s| Identifier::new(s)).collect();
+    pub fn new(tree: &'ast SyntaxTree, name: &[&'ast str]) -> Self {
+        let path = name.iter().map(|&s| Identifier::new(tree, s)).collect();
 
         NamespacePath {
             path,
@@ -218,40 +201,35 @@ impl NamespacePath {
     }
 }
 
-impl std::fmt::Display for NamespacePath {
+impl std::fmt::Display for NamespacePath<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let joined = self
-            .path
-            .iter()
-            .map(|i| i.name.as_str())
-            .collect::<Vec<&str>>()
-            .join("::");
+        let joined = self.path.iter().map(|i| i.name).collect::<Vec<&str>>().join("::");
 
         f.write_str(&joined)
     }
 }
 
-impl std::hash::Hash for NamespacePath {
+impl std::hash::Hash for NamespacePath<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.to_string().hash(state);
     }
 }
 
-impl PartialEq for NamespacePath {
+impl PartialEq for NamespacePath<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.path == other.path
     }
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub enum PathSegment {
+pub enum PathSegment<'ast> {
     /// Denotes a segment which refers to a namespace.
     ///
     /// ```lm
     /// std::io::File
     /// ^^^  ^^ both namespace segments
     /// ```
-    Namespace { name: Identifier },
+    Namespace { name: Identifier<'ast> },
 
     /// Denotes a segment which refers to a type, optionally with type
     /// arguments.
@@ -261,8 +239,8 @@ pub enum PathSegment {
     ///          ^^^^ type segment
     /// ```
     Type {
-        name: Identifier,
-        bound_types: Vec<Type>,
+        name: Identifier<'ast>,
+        bound_types: Vec<Type<'ast>>,
         location: Location,
     },
 
@@ -277,8 +255,8 @@ pub enum PathSegment {
     ///          ^^^^^^^^^ callable segment
     /// ```
     Callable {
-        name: Identifier,
-        bound_types: Vec<Type>,
+        name: Identifier<'ast>,
+        bound_types: Vec<Type<'ast>>,
         location: Location,
     },
 
@@ -292,41 +270,38 @@ pub enum PathSegment {
     /// Option::Some(false)
     ///         ^^^^^^^^^^^ variant segment
     /// ```
-    Variant { name: Identifier, location: Location },
+    Variant { name: Identifier<'ast>, location: Location },
 }
 
-impl PathSegment {
+impl<'ast> PathSegment<'ast> {
     /// Creates a new namespace segment, with the given name.
-    pub fn namespace(identifier: impl Into<Identifier>) -> Self {
-        Self::Namespace {
-            name: identifier.into(),
-        }
+    #[inline]
+    pub fn namespace(name: Identifier<'ast>) -> Self {
+        Self::Namespace { name }
     }
 
     /// Creates a new type segment, with the given name.
-    pub fn ty(identifier: impl Into<Identifier>) -> Self {
-        let identifier = identifier.into();
-
+    #[inline]
+    pub fn ty(name: Identifier<'ast>) -> Self {
         Self::Type {
-            location: identifier.location.clone(),
-            name: identifier,
+            location: name.location.clone(),
+            name,
             bound_types: Vec::new(),
         }
     }
 
     /// Creates a new callable segment, with the given name.
-    pub fn callable(identifier: impl Into<Identifier>) -> Self {
-        let identifier = identifier.into();
-
+    #[inline]
+    pub fn callable(name: Identifier<'ast>) -> Self {
         Self::Callable {
-            location: identifier.location.clone(),
-            name: identifier,
+            location: name.location.clone(),
+            name,
             bound_types: Vec::new(),
         }
     }
 
     /// Gets the name of the path segment.
-    pub fn name(&self) -> &Identifier {
+    pub fn name(&self) -> &Identifier<'ast> {
         match self {
             Self::Namespace { name }
             | Self::Type { name, .. }
@@ -336,7 +311,7 @@ impl PathSegment {
     }
 
     /// Gets the bound types of the path segment.
-    pub fn bound_types(&self) -> &[Type] {
+    pub fn bound_types(&self) -> &[Type<'ast>] {
         match self {
             Self::Namespace { .. } | Self::Variant { .. } => &[],
             Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => bound_types.as_slice(),
@@ -344,7 +319,7 @@ impl PathSegment {
     }
 
     /// Takes the bound types from the path segment.
-    pub fn take_bound_types(&mut self) -> Vec<Type> {
+    pub fn take_bound_types(&mut self) -> Vec<Type<'ast>> {
         match self {
             Self::Namespace { .. } | Self::Variant { .. } => Vec::new(),
             Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => std::mem::take(bound_types),
@@ -360,7 +335,7 @@ impl PathSegment {
     }
 }
 
-impl std::fmt::Display for PathSegment {
+impl std::fmt::Display for PathSegment<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Namespace { name } => f.write_str(name.as_str()),
@@ -386,7 +361,7 @@ impl std::fmt::Display for PathSegment {
     }
 }
 
-impl Node for PathSegment {
+impl Node for PathSegment<'_> {
     #[inline]
     fn location(&self) -> &Location {
         match self {
@@ -397,17 +372,17 @@ impl Node for PathSegment {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Path {
-    pub root: Vec<PathSegment>,
-    pub name: PathSegment,
+pub struct Path<'ast> {
+    pub root: Vec<PathSegment<'ast>>,
+    pub name: PathSegment<'ast>,
     pub location: Location,
 }
 
-node_location!(Path);
+node_location!(Path<'_>);
 
-impl Path {
+impl<'ast> Path<'ast> {
     #[must_use]
-    pub fn rooted(name: PathSegment) -> Self {
+    pub fn rooted(name: PathSegment<'ast>) -> Self {
         let location = name.location().clone();
 
         Path {
@@ -418,10 +393,7 @@ impl Path {
     }
 
     #[must_use]
-    pub fn with_root(namespace: Vec<impl Into<PathSegment>>, name: impl Into<PathSegment>) -> Self {
-        let name: PathSegment = name.into();
-        let root: Vec<PathSegment> = namespace.into_iter().map(Into::<PathSegment>::into).collect();
-
+    pub fn with_root(root: Vec<PathSegment<'ast>>, name: PathSegment<'ast>) -> Self {
         let start = root.first().map_or(name.location().start(), |s| s.location().start());
         let end = name.location().end();
 
@@ -432,18 +404,14 @@ impl Path {
         }
     }
 
-    pub fn merge(&mut self, other: Path) {
+    pub fn merge(&mut self, other: Path<'ast>) {
         self.root.extend(other.root);
         self.root.insert(0, other.name);
         self.location = (other.location.start()..self.location.end()).into();
     }
 
-    pub fn bound_types(&self) -> &[Type] {
+    pub fn bound_types(&self) -> &[Type<'ast>] {
         self.name.bound_types()
-    }
-
-    pub fn take_bound_types(&mut self) -> Vec<Type> {
-        self.name.take_bound_types()
     }
 
     pub fn is_self_type(&self) -> bool {
@@ -455,7 +423,7 @@ impl Path {
     }
 }
 
-impl std::fmt::Display for Path {
+impl std::fmt::Display for Path<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for segment in &self.root {
             f.write_fmt(format_args!("{segment}::"))?;
@@ -466,14 +434,14 @@ impl std::fmt::Display for Path {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Block {
-    pub statements: Vec<Statement>,
+pub struct Block<'ast> {
+    pub statements: Vec<Statement<'ast>>,
     pub location: Location,
 }
 
-node_location!(Block);
+node_location!(Block<'_>);
 
-impl Block {
+impl Block<'_> {
     pub fn from_location(location: impl Into<Location>) -> Self {
         Self {
             statements: Vec::new(),
@@ -483,34 +451,34 @@ impl Block {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Attribute {
-    pub name: Identifier,
-    pub arguments: Vec<AttributeArgument>,
+pub struct Attribute<'ast> {
+    pub name: Identifier<'ast>,
+    pub arguments: Vec<AttributeArgument<'ast>>,
     pub location: Location,
 }
 
-node_location!(Attribute);
+node_location!(Attribute<'_>);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AttributeArgument {
-    pub key: Identifier,
-    pub value: Literal,
+pub struct AttributeArgument<'ast> {
+    pub key: Identifier<'ast>,
+    pub value: Literal<'ast>,
     pub location: Location,
 }
 
-node_location!(AttributeArgument);
+node_location!(AttributeArgument<'_>);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Parameter {
-    pub name: Identifier,
-    pub param_type: Type,
+pub struct Parameter<'ast> {
+    pub name: Identifier<'ast>,
+    pub param_type: Type<'ast>,
     pub vararg: bool,
     pub location: Location,
 }
 
-node_location!(Parameter);
+node_location!(Parameter<'_>);
 
-impl Parameter {
+impl Parameter<'_> {
     /// Checks whether the current parameter is `self`.
     #[inline]
     #[must_use]
@@ -536,18 +504,18 @@ impl Node for Visibility {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Item {
-    Import(Box<Import>),
-    Namespace(Box<Namespace>),
-    FunctionDefinition(Box<FunctionDefinition>),
-    StructDefinition(Box<StructDefinition>),
-    TraitDefinition(Box<TraitDefinition>),
-    EnumDefinition(Box<EnumDefinition>),
-    Implementation(Box<Implementation>),
-    TraitImplementation(Box<TraitImplementation>),
+pub enum Item<'ast> {
+    Import(Box<Import<'ast>>),
+    Namespace(Box<Namespace<'ast>>),
+    FunctionDefinition(Box<FunctionDefinition<'ast>>),
+    StructDefinition(Box<StructDefinition<'ast>>),
+    TraitDefinition(Box<TraitDefinition<'ast>>),
+    EnumDefinition(Box<EnumDefinition<'ast>>),
+    Implementation(Box<Implementation<'ast>>),
+    TraitImplementation(Box<TraitImplementation<'ast>>),
 }
 
-impl Node for Item {
+impl Node for Item<'_> {
     #[inline]
     fn location(&self) -> &Location {
         match self {
@@ -564,19 +532,19 @@ impl Node for Item {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Import {
-    pub path: ImportPath,
-    pub names: Vec<Identifier>,
+pub struct Import<'ast> {
+    pub path: ImportPath<'ast>,
+    pub names: Vec<Identifier<'ast>>,
     pub location: Location,
 }
 
-node_location!(Import);
+node_location!(Import<'_>);
 
-impl Import {
+impl<'ast> Import<'ast> {
     #[must_use]
-    pub fn from_names(path: &[&'static str], names: &[&'static str]) -> Self {
-        let path = ImportPath::new(path);
-        let names = names.iter().map(|p| Identifier::new(p)).collect();
+    pub fn from_names(tree: &'ast SyntaxTree, path: &[&'ast str], names: &[&'ast str]) -> Self {
+        let path = ImportPath::new(tree, path);
+        let names = names.iter().map(|p| Identifier::new(tree, p)).collect();
 
         Self {
             path,
@@ -586,12 +554,12 @@ impl Import {
     }
 
     #[must_use]
-    pub fn std(names: &[&'static str]) -> Self {
-        Self::from_names(&["std"], names)
+    pub fn std(tree: &'ast SyntaxTree, names: &[&'ast str]) -> Self {
+        Self::from_names(tree, &["std"], names)
     }
 
     #[must_use]
-    pub fn flatten(self) -> Vec<ImportPath> {
+    pub fn flatten(self) -> Vec<ImportPath<'ast>> {
         self.names
             .iter()
             .map(|n| {
@@ -608,174 +576,174 @@ impl Import {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Namespace {
-    pub path: ImportPath,
+pub struct Namespace<'ast> {
+    pub path: ImportPath<'ast>,
     pub location: Location,
 }
 
-node_location!(Namespace);
+node_location!(Namespace<'_>);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Signature {
+pub struct Signature<'ast> {
     pub external: bool,
-    pub name: Identifier,
-    pub type_parameters: Vec<TypeParameter>,
-    pub parameters: Vec<Parameter>,
-    pub return_type: Option<Box<Type>>,
+    pub name: Identifier<'ast>,
+    pub type_parameters: Vec<TypeParameter<'ast>>,
+    pub parameters: Vec<Parameter<'ast>>,
+    pub return_type: Option<Type<'ast>>,
     pub location: Location,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FunctionDefinition {
-    pub attributes: Vec<Attribute>,
+pub struct FunctionDefinition<'ast> {
+    pub attributes: Vec<Attribute<'ast>>,
     pub visibility: Option<Visibility>,
-    pub signature: Signature,
-    pub block: Option<Block>,
+    pub signature: Signature<'ast>,
+    pub block: Option<Block<'ast>>,
     pub location: Location,
     pub documentation: Option<String>,
 }
 
-node_location!(FunctionDefinition);
+node_location!(FunctionDefinition<'_>);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct StructDefinition {
-    pub attributes: Vec<Attribute>,
+pub struct StructDefinition<'ast> {
+    pub attributes: Vec<Attribute<'ast>>,
     pub visibility: Option<Visibility>,
-    pub name: Identifier,
-    pub fields: Vec<Field>,
-    pub type_parameters: Vec<TypeParameter>,
+    pub name: Identifier<'ast>,
+    pub fields: Vec<Field<'ast>>,
+    pub type_parameters: Vec<TypeParameter<'ast>>,
     pub location: Location,
     pub documentation: Option<String>,
 }
 
-node_location!(StructDefinition);
+node_location!(StructDefinition<'_>);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Field {
+pub struct Field<'ast> {
     pub visibility: Option<Visibility>,
-    pub name: Identifier,
-    pub field_type: Type,
-    pub default_value: Option<Expression>,
+    pub name: Identifier<'ast>,
+    pub field_type: Type<'ast>,
+    pub default_value: Option<Expression<'ast>>,
     pub location: Location,
     pub documentation: Option<String>,
 }
 
-node_location!(Field);
+node_location!(Field<'_>);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct MethodDefinition {
-    pub attributes: Vec<Attribute>,
+pub struct MethodDefinition<'ast> {
+    pub attributes: Vec<Attribute<'ast>>,
     pub visibility: Option<Visibility>,
-    pub signature: Signature,
-    pub block: Option<Block>,
+    pub signature: Signature<'ast>,
+    pub block: Option<Block<'ast>>,
     pub location: Location,
     pub documentation: Option<String>,
 }
 
-node_location!(MethodDefinition);
+node_location!(MethodDefinition<'_>);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct TraitDefinition {
-    pub attributes: Vec<Attribute>,
+pub struct TraitDefinition<'ast> {
+    pub attributes: Vec<Attribute<'ast>>,
     pub visibility: Option<Visibility>,
-    pub name: Identifier,
-    pub type_parameters: Vec<TypeParameter>,
-    pub methods: Vec<TraitMethodDefinition>,
+    pub name: Identifier<'ast>,
+    pub type_parameters: Vec<TypeParameter<'ast>>,
+    pub methods: Vec<TraitMethodDefinition<'ast>>,
     pub location: Location,
     pub documentation: Option<String>,
 }
 
-node_location!(TraitDefinition);
+node_location!(TraitDefinition<'_>);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct TraitMethodDefinition {
-    pub attributes: Vec<Attribute>,
-    pub signature: Signature,
-    pub block: Option<Block>,
+pub struct TraitMethodDefinition<'ast> {
+    pub attributes: Vec<Attribute<'ast>>,
+    pub signature: Signature<'ast>,
+    pub block: Option<Block<'ast>>,
     pub location: Location,
     pub documentation: Option<String>,
 }
 
-node_location!(TraitMethodDefinition);
+node_location!(TraitMethodDefinition<'_>);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct EnumDefinition {
+pub struct EnumDefinition<'ast> {
     pub visibility: Option<Visibility>,
-    pub name: Identifier,
-    pub type_parameters: Vec<TypeParameter>,
-    pub cases: Vec<EnumDefinitionCase>,
+    pub name: Identifier<'ast>,
+    pub type_parameters: Vec<TypeParameter<'ast>>,
+    pub cases: Vec<EnumDefinitionCase<'ast>>,
     pub location: Location,
     pub documentation: Option<String>,
 }
 
-node_location!(EnumDefinition);
+node_location!(EnumDefinition<'_>);
 
-impl std::fmt::Display for EnumDefinition {
+impl std::fmt::Display for EnumDefinition<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.name.to_string())
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct EnumDefinitionCase {
-    pub name: Identifier,
-    pub parameters: Vec<Box<Type>>,
+pub struct EnumDefinitionCase<'ast> {
+    pub name: Identifier<'ast>,
+    pub parameters: Vec<Type<'ast>>,
     pub location: Location,
     pub documentation: Option<String>,
 }
 
-node_location!(EnumDefinitionCase);
+node_location!(EnumDefinitionCase<'_>);
 
-impl std::fmt::Display for EnumDefinitionCase {
+impl std::fmt::Display for EnumDefinitionCase<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.name.to_string())
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Implementation {
-    pub name: Box<Type>,
-    pub methods: Vec<MethodDefinition>,
-    pub type_parameters: Vec<TypeParameter>,
+pub struct Implementation<'ast> {
+    pub name: Box<Type<'ast>>,
+    pub methods: Vec<MethodDefinition<'ast>>,
+    pub type_parameters: Vec<TypeParameter<'ast>>,
     pub location: Location,
 }
 
-node_location!(Implementation);
+node_location!(Implementation<'_>);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct TraitImplementation {
-    pub name: Box<Type>,
-    pub target: Box<Type>,
-    pub methods: Vec<TraitMethodImplementation>,
-    pub type_parameters: Vec<TypeParameter>,
+pub struct TraitImplementation<'ast> {
+    pub name: Box<Type<'ast>>,
+    pub target: Box<Type<'ast>>,
+    pub methods: Vec<TraitMethodImplementation<'ast>>,
+    pub type_parameters: Vec<TypeParameter<'ast>>,
     pub location: Location,
 }
 
-node_location!(TraitImplementation);
+node_location!(TraitImplementation<'_>);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct TraitMethodImplementation {
-    pub signature: Signature,
-    pub block: Option<Block>,
+pub struct TraitMethodImplementation<'ast> {
+    pub signature: Signature<'ast>,
+    pub block: Option<Block<'ast>>,
     pub location: Location,
 }
 
-node_location!(TraitMethodImplementation);
+node_location!(TraitMethodImplementation<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub enum Statement {
-    VariableDeclaration(Box<VariableDeclaration>),
+pub enum Statement<'ast> {
+    VariableDeclaration(Box<VariableDeclaration<'ast>>),
     Break(Box<Break>),
     Continue(Box<Continue>),
-    Final(Box<Final>),
-    Return(Box<Return>),
-    InfiniteLoop(Box<InfiniteLoop>),
-    IteratorLoop(Box<IteratorLoop>),
-    PredicateLoop(Box<PredicateLoop>),
-    Expression(Box<Expression>),
+    Final(Box<Final<'ast>>),
+    Return(Box<Return<'ast>>),
+    InfiniteLoop(Box<InfiniteLoop<'ast>>),
+    IteratorLoop(Box<IteratorLoop<'ast>>),
+    PredicateLoop(Box<PredicateLoop<'ast>>),
+    Expression(Box<Expression<'ast>>),
 }
 
-impl Node for Statement {
+impl Node for Statement<'_> {
     #[inline]
     fn location(&self) -> &Location {
         match self {
@@ -793,14 +761,14 @@ impl Node for Statement {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct VariableDeclaration {
-    pub name: Identifier,
-    pub variable_type: Option<Type>,
-    pub value: Expression,
+pub struct VariableDeclaration<'ast> {
+    pub name: Identifier<'ast>,
+    pub variable_type: Option<Type<'ast>>,
+    pub value: Expression<'ast>,
     pub location: Location,
 }
 
-node_location!(VariableDeclaration);
+node_location!(VariableDeclaration<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Break {
@@ -817,88 +785,88 @@ pub struct Continue {
 node_location!(Continue);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Final {
-    pub value: Expression,
+pub struct Final<'ast> {
+    pub value: Expression<'ast>,
 }
 
-impl Node for Final {
+impl Node for Final<'_> {
     fn location(&self) -> &Location {
         self.value.location()
     }
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Return {
-    pub value: Option<Expression>,
+pub struct Return<'ast> {
+    pub value: Option<Expression<'ast>>,
     pub location: Location,
 }
 
-node_location!(Return);
+node_location!(Return<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct IfCondition {
-    pub cases: Vec<Condition>,
+pub struct IfCondition<'ast> {
+    pub cases: Vec<Condition<'ast>>,
     pub location: Location,
 }
 
-node_location!(IfCondition);
+node_location!(IfCondition<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Condition {
-    pub condition: Option<Expression>,
-    pub block: Block,
+pub struct Condition<'ast> {
+    pub condition: Option<Expression<'ast>>,
+    pub block: Block<'ast>,
     pub location: Location,
 }
 
-node_location!(Condition);
+node_location!(Condition<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct InfiniteLoop {
-    pub block: Block,
+pub struct InfiniteLoop<'ast> {
+    pub block: Block<'ast>,
     pub location: Location,
 }
 
-node_location!(InfiniteLoop);
+node_location!(InfiniteLoop<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct IteratorLoop {
-    pub pattern: Identifier,
-    pub collection: Expression,
-    pub block: Block,
+pub struct IteratorLoop<'ast> {
+    pub pattern: Identifier<'ast>,
+    pub collection: Expression<'ast>,
+    pub block: Block<'ast>,
     pub location: Location,
 }
 
-node_location!(IteratorLoop);
+node_location!(IteratorLoop<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct PredicateLoop {
-    pub condition: Expression,
-    pub block: Block,
+pub struct PredicateLoop<'ast> {
+    pub condition: Expression<'ast>,
+    pub block: Block<'ast>,
     pub location: Location,
 }
 
-node_location!(PredicateLoop);
+node_location!(PredicateLoop<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub enum Expression {
-    Array(Box<Array>),
-    Assignment(Box<Assignment>),
-    Call(Box<Call>),
-    Cast(Box<Cast>),
-    Construct(Box<Construct>),
-    If(Box<IfCondition>),
-    IntrinsicCall(Box<IntrinsicCall>),
-    Is(Box<Is>),
-    Literal(Box<Literal>),
-    Member(Box<Member>),
-    Range(Box<Range>),
-    Scope(Box<Scope>),
-    Switch(Box<Switch>),
-    Variable(Box<Variable>),
-    Variant(Box<Variant>),
+pub enum Expression<'ast> {
+    Array(Box<Array<'ast>>),
+    Assignment(Box<Assignment<'ast>>),
+    Call(Box<Call<'ast>>),
+    Cast(Box<Cast<'ast>>),
+    Construct(Box<Construct<'ast>>),
+    If(Box<IfCondition<'ast>>),
+    IntrinsicCall(Box<IntrinsicCall<'ast>>),
+    Is(Box<Is<'ast>>),
+    Literal(Box<Literal<'ast>>),
+    Member(Box<Member<'ast>>),
+    Range(Box<Range<'ast>>),
+    Scope(Box<Scope<'ast>>),
+    Switch(Box<Switch<'ast>>),
+    Variable(Box<Variable<'ast>>),
+    Variant(Box<Variant<'ast>>),
 }
 
-impl Node for Expression {
+impl Node for Expression<'_> {
     #[inline]
     fn location(&self) -> &Location {
         match self {
@@ -922,113 +890,166 @@ impl Node for Expression {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Array {
-    pub values: Vec<Expression>,
+pub struct Array<'ast> {
+    pub values: Vec<Expression<'ast>>,
     pub location: Location,
 }
 
-node_location!(Array);
+node_location!(Array<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Assignment {
-    pub target: Expression,
-    pub value: Expression,
+pub struct Assignment<'ast> {
+    pub target: Expression<'ast>,
+    pub value: Expression<'ast>,
     pub location: Location,
 }
 
-node_location!(Assignment);
+node_location!(Assignment<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Call {
-    pub callee: Option<Expression>,
-    pub name: Path,
-    pub arguments: Vec<Expression>,
+pub struct Call<'ast> {
+    pub callee: Option<Expression<'ast>>,
+    pub name: Path<'ast>,
+    pub arguments: Vec<Expression<'ast>>,
     pub location: Location,
 }
 
-node_location!(Call);
+node_location!(Call<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct IntrinsicCall {
-    pub kind: IntrinsicKind,
+pub struct IntrinsicCall<'ast> {
+    pub kind: IntrinsicKind<'ast>,
     pub location: Location,
 }
 
-node_location!(IntrinsicCall);
+node_location!(IntrinsicCall<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub enum IntrinsicKind {
+pub enum IntrinsicKind<'ast> {
     // Arithmetic intrinsics
-    Add { lhs: Box<Expression>, rhs: Box<Expression> },
-    Sub { lhs: Box<Expression>, rhs: Box<Expression> },
-    Mul { lhs: Box<Expression>, rhs: Box<Expression> },
-    Div { lhs: Box<Expression>, rhs: Box<Expression> },
-    And { lhs: Box<Expression>, rhs: Box<Expression> },
-    Or { lhs: Box<Expression>, rhs: Box<Expression> },
-    Negate { target: Box<Expression> },
-    Increment { target: Box<Expression> },
-    Decrement { target: Box<Expression> },
+    Add {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    Sub {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    Mul {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    Div {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    And {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    Or {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    Negate {
+        target: Box<Expression<'ast>>,
+    },
+    Increment {
+        target: Box<Expression<'ast>>,
+    },
+    Decrement {
+        target: Box<Expression<'ast>>,
+    },
 
     // Logical intrinsics
-    BinaryAnd { lhs: Box<Expression>, rhs: Box<Expression> },
-    BinaryOr { lhs: Box<Expression>, rhs: Box<Expression> },
-    BinaryXor { lhs: Box<Expression>, rhs: Box<Expression> },
-    Not { target: Box<Expression> },
+    BinaryAnd {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    BinaryOr {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    BinaryXor {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    Not {
+        target: Box<Expression<'ast>>,
+    },
 
     // Comparison intrinsics
-    Equal { lhs: Box<Expression>, rhs: Box<Expression> },
-    NotEqual { lhs: Box<Expression>, rhs: Box<Expression> },
-    Less { lhs: Box<Expression>, rhs: Box<Expression> },
-    LessEqual { lhs: Box<Expression>, rhs: Box<Expression> },
-    Greater { lhs: Box<Expression>, rhs: Box<Expression> },
-    GreaterEqual { lhs: Box<Expression>, rhs: Box<Expression> },
+    Equal {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    NotEqual {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    Less {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    LessEqual {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    Greater {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
+    GreaterEqual {
+        lhs: Box<Expression<'ast>>,
+        rhs: Box<Expression<'ast>>,
+    },
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Cast {
-    pub source: Expression,
-    pub target_type: Type,
+pub struct Cast<'ast> {
+    pub source: Expression<'ast>,
+    pub target_type: Type<'ast>,
     pub location: Location,
 }
 
-node_location!(Cast);
+node_location!(Cast<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Construct {
-    pub path: Path,
-    pub fields: Vec<ConstructorField>,
+pub struct Construct<'ast> {
+    pub path: Path<'ast>,
+    pub fields: Vec<ConstructorField<'ast>>,
     pub location: Location,
 }
 
-node_location!(Construct);
+node_location!(Construct<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct ConstructorField {
-    pub name: Identifier,
-    pub value: Option<Expression>,
+pub struct ConstructorField<'ast> {
+    pub name: Identifier<'ast>,
+    pub value: Option<Expression<'ast>>,
     pub location: Location,
 }
 
-node_location!(ConstructorField);
+node_location!(ConstructorField<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Is {
-    pub target: Expression,
-    pub pattern: Pattern,
+pub struct Is<'ast> {
+    pub target: Expression<'ast>,
+    pub pattern: Pattern<'ast>,
     pub location: Location,
 }
 
-node_location!(Is);
+node_location!(Is<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub enum Literal {
+pub enum Literal<'ast> {
     Int(Box<IntLiteral>),
     Float(Box<FloatLiteral>),
-    String(Box<StringLiteral>),
+    String(Box<StringLiteral<'ast>>),
     Boolean(Box<BooleanLiteral>),
 }
 
-impl Node for Literal {
+impl Node for Literal<'_> {
     #[inline]
     fn location(&self) -> &Location {
         match self {
@@ -1087,12 +1108,12 @@ pub enum FloatKind {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct StringLiteral {
-    pub value: String,
+pub struct StringLiteral<'ast> {
+    pub value: &'ast str,
     pub location: Location,
 }
 
-node_location!(StringLiteral);
+node_location!(StringLiteral<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct BooleanLiteral {
@@ -1103,79 +1124,79 @@ pub struct BooleanLiteral {
 node_location!(BooleanLiteral);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Member {
-    pub callee: Expression,
-    pub name: Identifier,
+pub struct Member<'ast> {
+    pub callee: Expression<'ast>,
+    pub name: Identifier<'ast>,
     pub location: Location,
 }
 
-node_location!(Member);
+node_location!(Member<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Range {
-    pub lower: Expression,
-    pub upper: Expression,
+pub struct Range<'ast> {
+    pub lower: Expression<'ast>,
+    pub upper: Expression<'ast>,
     pub inclusive: bool,
     pub location: Location,
 }
 
-node_location!(Range);
+node_location!(Range<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Scope {
-    pub body: Vec<Statement>,
+pub struct Scope<'ast> {
+    pub body: Vec<Statement<'ast>>,
     pub location: Location,
 }
 
-node_location!(Scope);
+node_location!(Scope<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Switch {
-    pub operand: Expression,
-    pub cases: Vec<SwitchCase>,
+pub struct Switch<'ast> {
+    pub operand: Expression<'ast>,
+    pub cases: Vec<SwitchCase<'ast>>,
     pub location: Location,
 }
 
-node_location!(Switch);
+node_location!(Switch<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct SwitchCase {
-    pub pattern: Pattern,
-    pub branch: Expression,
+pub struct SwitchCase<'ast> {
+    pub pattern: Pattern<'ast>,
+    pub branch: Expression<'ast>,
     pub location: Location,
 }
 
-node_location!(SwitchCase);
+node_location!(SwitchCase<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Variable {
-    pub name: Identifier,
+pub struct Variable<'ast> {
+    pub name: Identifier<'ast>,
 }
 
-impl Node for Variable {
+impl Node for Variable<'_> {
     fn location(&self) -> &Location {
         &self.name.location
     }
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Variant {
-    pub name: Path,
-    pub arguments: Vec<Expression>,
+pub struct Variant<'ast> {
+    pub name: Path<'ast>,
+    pub arguments: Vec<Expression<'ast>>,
     pub location: Location,
 }
 
-node_location!(Variant);
+node_location!(Variant<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub enum Pattern {
-    Literal(Literal),
-    Identifier(Identifier),
-    Variant(VariantPattern),
+pub enum Pattern<'ast> {
+    Literal(Literal<'ast>),
+    Identifier(Identifier<'ast>),
+    Variant(VariantPattern<'ast>),
     Wildcard(WildcardPattern),
 }
 
-impl Node for Pattern {
+impl Node for Pattern<'_> {
     #[inline]
     fn location(&self) -> &Location {
         match self {
@@ -1188,13 +1209,13 @@ impl Node for Pattern {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct VariantPattern {
-    pub name: Path,
-    pub fields: Vec<Pattern>,
+pub struct VariantPattern<'ast> {
+    pub name: Path<'ast>,
+    pub fields: Vec<Pattern<'ast>>,
     pub location: Location,
 }
 
-node_location!(VariantPattern);
+node_location!(VariantPattern<'_>);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct WildcardPattern {
@@ -1204,25 +1225,25 @@ pub struct WildcardPattern {
 node_location!(WildcardPattern);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct TypeParameter {
-    pub name: Identifier,
-    pub constraints: Vec<Box<Type>>,
+pub struct TypeParameter<'ast> {
+    pub name: Identifier<'ast>,
+    pub constraints: Vec<Type<'ast>>,
 }
 
-impl Node for TypeParameter {
+impl Node for TypeParameter<'_> {
     fn location(&self) -> &Location {
         &self.name.location
     }
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub enum Type {
-    Named(NamedType),
-    Array(ArrayType),
+pub enum Type<'ast> {
+    Named(NamedType<'ast>),
+    Array(ArrayType<'ast>),
     SelfType(SelfType),
 }
 
-impl Node for Type {
+impl Node for Type<'_> {
     #[inline]
     fn location(&self) -> &Location {
         match self {
@@ -1233,7 +1254,7 @@ impl Node for Type {
     }
 }
 
-impl Type {
+impl Type<'_> {
     /// Checks whether the current type is a `self` type.
     #[inline]
     #[must_use]
@@ -1242,7 +1263,7 @@ impl Type {
     }
 }
 
-impl std::fmt::Display for Type {
+impl std::fmt::Display for Type<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Type::Named(t) => std::fmt::Display::fmt(t, f),
@@ -1253,17 +1274,17 @@ impl std::fmt::Display for Type {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct NamedType {
-    pub name: Path,
+pub struct NamedType<'ast> {
+    pub name: Path<'ast>,
 }
 
-impl Node for NamedType {
+impl Node for NamedType<'_> {
     fn location(&self) -> &Location {
         &self.name.location
     }
 }
 
-impl std::fmt::Display for NamedType {
+impl std::fmt::Display for NamedType<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{}", self.name))?;
 
@@ -1282,14 +1303,14 @@ impl std::fmt::Display for NamedType {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct ArrayType {
-    pub element_type: Box<Type>,
+pub struct ArrayType<'ast> {
+    pub element_type: Box<Type<'ast>>,
     pub location: Location,
 }
 
-node_location!(ArrayType);
+node_location!(ArrayType<'_>);
 
-impl std::fmt::Display for ArrayType {
+impl std::fmt::Display for ArrayType<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("[{}]", self.element_type))
     }

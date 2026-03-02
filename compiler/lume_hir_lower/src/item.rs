@@ -65,7 +65,7 @@ impl LoweringContext<'_> {
         let name = self.expand_callable_name(sig.name)?;
         let type_parameters = self.type_parameters(sig.type_parameters)?;
         let parameters = self.parameters(sig.parameters, false)?;
-        let return_type = self.hir_type_opt(sig.return_type.map(|f| *f))?;
+        let return_type = self.hir_type_opt(sig.return_type)?;
         let location = self.location(sig.location);
 
         Ok(lume_hir::FnSignature {
@@ -263,7 +263,10 @@ impl LoweringContext<'_> {
 
         lume_hir::with_frame!(self.current_type_params, || {
             let impl_name = expr.name.to_string();
-            let type_name = self.expand_type_name(impl_name)?;
+            let type_name = self.expand_type_name(lume_ast::Identifier {
+                name: &impl_name,
+                location: expr.name.location().to_owned(),
+            })?;
 
             let type_parameters = self.type_parameters(expr.type_parameters)?;
             let target = self.hir_type(*expr.name)?;
@@ -318,7 +321,7 @@ impl LoweringContext<'_> {
             let visibility = visibility(expr.visibility.as_ref());
             let name = lume_hir::Path::with_root(type_name, method_name);
             let parameters = self.parameters(expr.signature.parameters, true)?;
-            let return_type = self.hir_type_opt(expr.signature.return_type.map(|f| *f))?;
+            let return_type = self.hir_type_opt(expr.signature.return_type)?;
             let location = self.location(expr.location);
 
             let block = expr.block.map(|block| self.isolated_block(block, &parameters));
@@ -405,7 +408,7 @@ impl LoweringContext<'_> {
             let name = lume_hir::Path::with_root(type_name, lume_hir::PathSegment::callable(ident));
             let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
             let parameters = self.parameters(expr.signature.parameters, true)?;
-            let return_type = self.hir_type_opt(expr.signature.return_type.map(|f| *f))?;
+            let return_type = self.hir_type_opt(expr.signature.return_type)?;
             let location = self.location(expr.location);
             let block = expr.block.map(|b| self.isolated_block(b, &parameters));
 
@@ -476,7 +479,7 @@ impl LoweringContext<'_> {
 
         let mut parameters = Vec::with_capacity(expr.parameters.len());
         for param in expr.parameters {
-            parameters.push(self.hir_type(*param)?);
+            parameters.push(self.hir_type(param)?);
         }
 
         let symbol = lume_hir::EnumDefinitionCase {
@@ -543,7 +546,7 @@ impl LoweringContext<'_> {
             let name = self.identifier(expr.signature.name);
             let parameters = self.parameters(expr.signature.parameters, true)?;
             let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
-            let return_type = self.hir_type_opt(expr.signature.return_type.map(|f| *f))?;
+            let return_type = self.hir_type_opt(expr.signature.return_type)?;
             let location = self.location(expr.location);
 
             let block = expr.block.map(|block| self.isolated_block(block, &parameters));

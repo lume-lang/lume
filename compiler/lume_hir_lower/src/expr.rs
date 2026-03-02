@@ -589,11 +589,11 @@ impl LoweringContext<'_> {
         let id = self.next_node_id();
         let location = self.location(expr.location().clone());
 
-        let Some(var_source) = self.current_locals.retrieve(&expr.name.name) else {
+        let Some(var_source) = self.current_locals.retrieve(expr.name.name) else {
             return Err(UndeclaredVariable {
                 source: self.current_file().clone(),
                 range: location.index.clone(),
-                name: expr.name.name,
+                name: expr.name.name.to_string(),
             }
             .into());
         };

@@ -1,15 +1,16 @@
 use error_snippet::Error;
+use lume_data_structures::UntypedArena;
 
 use super::*;
 
 #[track_caller]
-fn parse(input: &str) -> Vec<Item> {
+fn parse<'ast>(input: &str, arena: &'ast UntypedArena) -> SyntaxTree<'ast> {
     let source = Arc::new(SourceFile::internal(input));
 
     let mut lexer = lume_lexer::Lexer::new(source.clone());
     let tokens = lexer.lex().unwrap();
 
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim());
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim(), arena);
     parser.disable_recovery();
 
     parser.parse().unwrap()
@@ -17,36 +18,38 @@ fn parse(input: &str) -> Vec<Item> {
 
 #[track_caller]
 fn parse_err(input: &str) -> Error {
+    let arena = UntypedArena::new();
     let source = Arc::new(SourceFile::internal(input));
 
     let mut lexer = lume_lexer::Lexer::new(source.clone());
     let tokens = lexer.lex().unwrap();
 
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim());
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim(), &arena);
     parser.disable_recovery();
 
     parser.parse().unwrap_err()
 }
 
 #[track_caller]
-fn parse_expr(input: &str) -> Vec<Statement> {
+fn parse_expr<'ast>(input: &str, arena: &'ast UntypedArena) -> Vec<Statement<'ast>> {
     let source = Arc::new(SourceFile::internal(input));
 
     let mut lexer = lume_lexer::Lexer::new(source.clone());
     let tokens = lexer.lex().unwrap();
 
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim());
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim(), arena);
     parser.parse_statements().unwrap()
 }
 
 #[track_caller]
 fn parse_expr_err(input: &str) -> Error {
+    let arena = UntypedArena::new();
     let source = Arc::new(SourceFile::internal(input));
 
     let mut lexer = lume_lexer::Lexer::new(source.clone());
     let tokens = lexer.lex().unwrap();
 
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim());
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim(), &arena);
     parser.parse_statements().unwrap_err()
 }
 
@@ -55,9 +58,10 @@ macro_rules! assert_module_eq {
         $input: expr,
         $expression: expr
     ) => {
-        let parsed = parse($input);
+        let arena = UntypedArena::new();
+        let parsed = parse($input, &arena);
 
-        assert_eq!(parsed, $expression)
+        assert_eq!(parsed.items, $expression)
     };
 }
 
@@ -85,9 +89,12 @@ macro_rules! assert_snap_eq {
         $input: expr,
         $($expr:expr),+
     ) => {
-        set_snapshot_suffix!( $($expr),+ );
+        let arena = UntypedArena::new();
 
-        insta::assert_debug_snapshot!(parse($input));
+        set_snapshot_suffix!( $($expr),+ );
+        insta::assert_debug_snapshot!(parse($input, &arena).items);
+
+        drop(arena);
     };
 }
 
@@ -107,9 +114,12 @@ macro_rules! assert_expr_snap_eq {
         $input: expr,
         $($expr:expr),+
     ) => {
-        set_snapshot_suffix!( $($expr),+ );
+        let arena = UntypedArena::new();
 
-        insta::assert_debug_snapshot!(parse_expr($input));
+        set_snapshot_suffix!( $($expr),+ );
+        insta::assert_debug_snapshot!(parse_expr($input, &arena));
+
+        drop(arena);
     };
 }
 

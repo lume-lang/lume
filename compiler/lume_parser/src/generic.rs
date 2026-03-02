@@ -4,10 +4,10 @@ use lume_lexer::TokenType;
 
 use crate::Parser;
 
-impl Parser<'_> {
+impl<'ast> Parser<'_, 'ast> {
     /// Parses zero-or-more type parameters.
     #[libftrace::traced(level = Trace, err)]
-    pub(super) fn parse_type_parameters(&mut self) -> Result<Vec<TypeParameter>> {
+    pub(super) fn parse_type_parameters(&mut self) -> Result<Vec<TypeParameter<'ast>>> {
         if !self.peek(TokenType::Less) {
             return Ok(Vec::new());
         }
@@ -17,10 +17,10 @@ impl Parser<'_> {
             let mut constraints = Vec::new();
 
             if p.check(TokenType::Colon) {
-                constraints.push(Box::new(p.parse_type()?));
+                constraints.push(p.parse_type()?);
 
                 while p.check(TokenType::Add) {
-                    constraints.push(Box::new(p.parse_type()?));
+                    constraints.push(p.parse_type()?);
                 }
             }
 
@@ -30,7 +30,7 @@ impl Parser<'_> {
 
     /// Parses zero-or-more type arguments, boxed as [`Box<Type>`].
     #[libftrace::traced(level = Trace, err)]
-    pub(super) fn parse_type_arguments(&mut self) -> Result<Vec<Type>> {
+    pub(super) fn parse_type_arguments(&mut self) -> Result<Vec<Type<'ast>>> {
         if !self.peek(TokenType::Less) {
             return Ok(Vec::new());
         }

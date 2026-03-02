@@ -65,12 +65,15 @@ impl std::fmt::Display for ItemKind {
     }
 }
 
-pub struct Parser<'src> {
+pub struct Parser<'src, 'ast> {
     /// Defines the source code which is being parsed.
     source: Arc<SourceFile>,
 
     /// Handle to the diagnostics context which will handle parsing errors.
     dcx: DiagCtxHandle,
+
+    /// Arena for storing the produced AST
+    arena: &'ast lume_data_structures::UntypedArena,
 
     /// Defines the index of the current token being processed, given in a
     /// zero-based index.
@@ -87,22 +90,28 @@ pub struct Parser<'src> {
     doc_token: Option<String>,
 
     /// Defines the attributes for the current item, if any.
-    attributes: Option<Vec<Attribute>>,
+    attributes: Option<Vec<Attribute<'ast>>>,
 
     /// Defines whether the parser should attempt to recover from errors.
     attempt_recovery: bool,
 }
 
-impl<'src> Parser<'src> {
+impl<'src, 'ast> Parser<'src, 'ast> {
     /// Creates a new [`Parser`] instance with the given source file as
     /// it's input to parse.
-    pub fn new(source: Arc<SourceFile>, mut tokens: Vec<Token<'src>>, dcx: DiagCtxHandle) -> Self {
+    pub fn new(
+        source: Arc<SourceFile>,
+        mut tokens: Vec<Token<'src>>,
+        dcx: DiagCtxHandle,
+        arena: &'ast lume_data_structures::UntypedArena,
+    ) -> Self {
         // Filter away any comment tokens, if present.
         tokens.retain(|t| t.as_type() != TokenType::Comment);
 
         Parser {
             source,
             dcx,
+            arena,
             index: 0,
             position: 0,
             tokens,
@@ -150,20 +159,23 @@ impl<'src> Parser<'src> {
     /// Returns `Err` if some part of the input is unexpected or if the
     /// parser unexpectedly reaches end-of-file.
     #[libftrace::traced(level = Info, fields(file = self.source.name), err)]
-    pub fn parse(&mut self) -> Result<Vec<Item>> {
-        let mut expressions = Vec::new();
+    pub fn parse(&mut self) -> Result<SyntaxTree<'ast>> {
+        let mut items = Vec::new();
 
         loop {
             if self.eof() {
                 break;
             }
 
-            expressions.push(self.parse_item()?);
+            items.push(self.parse_item()?);
         }
 
         self.dcx.ensure_untainted()?;
 
-        Ok(expressions)
+        Ok(SyntaxTree {
+            arena: self.arena,
+            items,
+        })
     }
 
     /// Determines whether the parser has reached the end-of-file.
@@ -363,7 +375,10 @@ impl<'src> Parser<'src> {
     /// Invokes the given closure `f`, while preserving the start- and end-index
     /// of the consumed span. The span is returned as a `Location`, along with
     /// the result of the closure.
-    fn consume_with_loc<T>(&mut self, mut f: impl FnMut(&mut Parser<'src>) -> Result<T>) -> Result<(T, Location)> {
+    fn consume_with_loc<T>(
+        &mut self,
+        mut f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
+    ) -> Result<(T, Location)> {
         // Get the start-index of the current token, whatever it is.
         let start = self.token().start();
 
@@ -383,7 +398,7 @@ impl<'src> Parser<'src> {
     fn consume_seq_to_end<T>(
         &mut self,
         close: TokenType,
-        mut f: impl FnMut(&mut Parser<'src>) -> Result<T>,
+        mut f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
     ) -> Result<Vec<T>> {
         let mut v = Vec::new();
 
@@ -402,7 +417,7 @@ impl<'src> Parser<'src> {
     fn consume_delim<T>(
         &mut self,
         delim: TokenType,
-        mut f: impl FnMut(&mut Parser<'src>) -> Result<T>,
+        mut f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
     ) -> Result<Vec<T>> {
         let mut v = Vec::new();
 
@@ -429,7 +444,7 @@ impl<'src> Parser<'src> {
         &mut self,
         close: TokenType,
         delim: TokenType,
-        mut f: impl FnMut(&mut Parser<'src>) -> Result<T>,
+        mut f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
     ) -> Result<Vec<T>> {
         let mut v = Vec::new();
 
@@ -470,7 +485,7 @@ impl<'src> Parser<'src> {
         open: TokenType,
         close: TokenType,
         delim: TokenType,
-        f: impl FnMut(&mut Parser<'src>) -> Result<T>,
+        f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
     ) -> Result<Vec<T>> {
         self.consume(open)?;
         self.consume_delim_seq_to_end(close, delim, f)
@@ -488,7 +503,7 @@ impl<'src> Parser<'src> {
         &mut self,
         open: TokenType,
         close: TokenType,
-        f: impl FnMut(&mut Parser<'src>) -> Result<T>,
+        f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
     ) -> Result<Vec<T>> {
         self.consume_enclosed_delim_seq(open, close, TokenType::Comma, f)
     }
@@ -501,7 +516,7 @@ impl<'src> Parser<'src> {
     /// arrays, parameters, etc. Upon returning, both the `open` and `close`
     /// tokens will have been consumed.
     #[libftrace::traced(level = Trace, err)]
-    fn consume_paren_seq<T>(&mut self, f: impl FnMut(&mut Parser<'src>) -> Result<T>) -> Result<Vec<T>> {
+    fn consume_paren_seq<T>(&mut self, f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>) -> Result<Vec<T>> {
         self.consume_comma_seq(TokenType::LeftParen, TokenType::RightParen, f)
     }
 
@@ -512,7 +527,7 @@ impl<'src> Parser<'src> {
     /// Upon returning, both the `open` and `close` tokens will have been
     /// consumed.
     #[libftrace::traced(level = Trace, err)]
-    fn consume_curly_seq<T>(&mut self, f: impl FnMut(&mut Parser<'src>) -> Result<T>) -> Result<Vec<T>> {
+    fn consume_curly_seq<T>(&mut self, f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>) -> Result<Vec<T>> {
         self.consume(TokenType::LeftCurly)?;
         self.consume_seq_to_end(TokenType::RightCurly, f)
     }
@@ -526,7 +541,7 @@ impl<'src> Parser<'src> {
     fn consume_any_seq<T>(
         &mut self,
         open: TokenType,
-        mut f: impl FnMut(&mut Parser<'src>) -> Result<T>,
+        mut f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
     ) -> Result<Vec<T>> {
         let mut v = Vec::new();
 
@@ -593,7 +608,7 @@ impl<'src> Parser<'src> {
 
     /// Parses the next token as an identifier.
     #[libftrace::traced(level = Trace)]
-    fn parse_identifier(&mut self) -> Result<Identifier> {
+    fn parse_identifier(&mut self) -> Result<Identifier<'ast>> {
         let identifier = match self.consume_any() {
             // Actual identifiers are obviously allowed, so they pass through.
             ident if ident.kind.as_type() == TokenType::Identifier => ident,
@@ -615,7 +630,7 @@ impl<'src> Parser<'src> {
         let slice = self.source.content.get(location.start..location.end).unwrap();
 
         Ok(Identifier {
-            name: slice.to_string(),
+            name: self.arena.alloc_str(slice),
             location: location.into(),
         })
     }
@@ -623,12 +638,20 @@ impl<'src> Parser<'src> {
     /// Parses the next token as an identifier, optionally with an suffixed
     /// question mark.
     #[libftrace::traced(level = Trace)]
-    fn parse_callable_name(&mut self) -> Result<Identifier> {
-        let mut identifier = self.parse_identifier()?;
+    fn parse_callable_name(&mut self) -> Result<Identifier<'ast>> {
+        let identifier = self.parse_identifier()?;
 
         if self.check(TokenType::Question) {
-            identifier.name.push('?');
-            identifier.location.0.end += 1;
+            let mut ident = identifier.name.to_string();
+            let mut location = identifier.location;
+
+            ident.push('?');
+            location.0.end += 1;
+
+            return Ok(Identifier {
+                name: self.arena.alloc_str(&ident),
+                location,
+            });
         }
 
         Ok(identifier)
@@ -637,7 +660,7 @@ impl<'src> Parser<'src> {
     /// Parses the next token as an identifier. If the parsing fails, return
     /// `Err(err)`.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_ident_or_err(&mut self, err: Error) -> Result<Identifier> {
+    fn parse_ident_or_err(&mut self, err: Error) -> Result<Identifier<'ast>> {
         match self.parse_identifier() {
             Ok(name) => Ok(name),
             Err(_) => Err(err),
@@ -649,7 +672,7 @@ impl<'src> Parser<'src> {
     ///
     /// If the parsing fails, return `Err(err)`.
     #[libftrace::traced(level = Trace, err)]
-    fn parse_callable_name_or_err(&mut self, err: Error) -> Result<Identifier> {
+    fn parse_callable_name_or_err(&mut self, err: Error) -> Result<Identifier<'ast>> {
         match self.parse_callable_name() {
             Ok(name) => Ok(name),
             Err(_) => Err(err),
@@ -663,23 +686,21 @@ impl<'src> Parser<'src> {
     /// short as a single link, such as `std`, but they can also be longer,
     /// such as `std::fmt::error`.
     #[libftrace::traced(level = Trace)]
-    fn parse_import_path(&mut self) -> Result<ImportPath> {
+    fn parse_import_path(&mut self) -> Result<ImportPath<'ast>> {
         let segments = self.consume_delim(TokenType::PathSeparator, Parser::parse_identifier)?;
 
         let start = segments.first().unwrap().location.0.start;
         let end = segments.last().unwrap().location.0.end;
 
-        let path = ImportPath {
+        Ok(ImportPath {
             path: segments,
             location: (start..end).into(),
-        };
-
-        Ok(path)
+        })
     }
 
     /// Returns a block for functions or methods.
     #[libftrace::traced(level = Trace)]
-    fn parse_block(&mut self) -> Result<Block> {
+    fn parse_block(&mut self) -> Result<Block<'ast>> {
         let (statements, location) = self.consume_with_loc(|p| {
             let mut stmts = Vec::new();
 
@@ -712,7 +733,7 @@ impl<'src> Parser<'src> {
     /// Returns an empty block for external functions and an actual block for
     /// non-external functions.
     #[libftrace::traced(level = Trace)]
-    fn parse_opt_external_block(&mut self, external: bool) -> Result<Option<Block>> {
+    fn parse_opt_external_block(&mut self, external: bool) -> Result<Option<Block<'ast>>> {
         if external {
             if self.peek(TokenType::LeftCurly) {
                 return Err(ExternalFunctionBody {

@@ -42,7 +42,7 @@ impl LoweringContext<'_> {
     #[libftrace::traced(level = Debug)]
     fn lit_string(&mut self, expr: lume_ast::StringLiteral) -> lume_hir::Literal {
         let id = self.next_node_id();
-        let value = expr.value.clone();
+        let value = expr.value.to_owned();
         let location = self.location(expr.location);
 
         lume_hir::Literal {
