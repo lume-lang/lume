@@ -226,18 +226,18 @@ pub fn receive(receiver: &mut Receiver<lsp_server::Message>) -> Handling {
                 return Handling::Shutdown(request.id);
             }
 
-            log::info!("received request: {}", request.method);
+            tracing::info!("received request: {}", request.method);
 
             Handling::from_request(request)
         }
         Some(lsp_server::Message::Notification(notification)) => {
-            log::info!("received notification: {}", notification.method);
+            tracing::info!("received notification: {}", notification.method);
 
             Handling::from_notification(notification)
         }
 
         Some(lsp_server::Message::Response(resp)) => {
-            log::error!("got unexpected response: {resp:?}");
+            tracing::error!("got unexpected response: {resp:?}");
             Handling::Empty
         }
 

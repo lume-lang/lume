@@ -37,7 +37,7 @@ impl Diagnostics {
 
         self.dcx.with_iter(|diagnostics| {
             for diagnostic in diagnostics {
-                log::info!("publishing diagnostic: {}", diagnostic.message());
+                tracing::info!("publishing diagnostic: {}", diagnostic.message());
 
                 if diagnostic.labels().is_some() || diagnostic.source_code().is_some() {
                     self.publish_diagnostic(sender, diagnostic.as_ref());

@@ -6,7 +6,7 @@ use crate::symbols::lookup::SymbolKind;
 
 pub(crate) fn definition_of(engine: &Engine, location: Location) -> Option<Location> {
     let Some(sym) = engine.locate_symbol(location) else {
-        log::warn!("could not find matching node for {location}");
+        tracing::warn!("could not find matching node for {location}");
         return None;
     };
 

@@ -25,7 +25,7 @@ pub fn start_server() -> std::result::Result<(), Box<dyn Error + Sync + Send>> {
     let (conn, io) = Connection::stdio();
     let capabilities = capabilities();
 
-    log::info!("starting up!");
+    tracing::info!("starting up!");
 
     let (init_request_id, params) = conn.initialize_start()?;
     conn.initialize_finish(
@@ -43,15 +43,15 @@ pub fn start_server() -> std::result::Result<(), Box<dyn Error + Sync + Send>> {
 
     std::panic::set_hook(Box::new(|panic_info| {
         if let Some(payload) = panic_info.payload().downcast_ref::<&str>() {
-            log::error!("LSP server panicked: {payload}");
+            tracing::error!("LSP server panicked: {payload}");
         } else if let Some(payload) = panic_info.payload().downcast_ref::<String>() {
-            log::error!("LSP server panicked: {payload}");
+            tracing::error!("LSP server panicked: {payload}");
         } else {
-            log::error!("LSP server panicked: <no payload>");
+            tracing::error!("LSP server panicked: <no payload>");
         }
 
         if let Some(location) = panic_info.location() {
-            log::error!(
+            tracing::error!(
                 "panic occurred in file '{}' at line {}",
                 location.file(),
                 location.line(),
@@ -63,10 +63,10 @@ pub fn start_server() -> std::result::Result<(), Box<dyn Error + Sync + Send>> {
     server.listen(conn.receiver);
 
     if let Err(err) = io.join() {
-        log::error!("failed to join lsp threads: {err:?}");
+        tracing::error!("failed to join lsp threads: {err:?}");
     }
 
-    log::info!("shutting down server...");
+    tracing::info!("shutting down server...");
 
     Ok(())
 }
