@@ -1,10 +1,7 @@
 use std::error::Error;
-use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
 
-use env_logger::Target;
 use lsp_server::Connection;
 use lsp_types::*;
 
@@ -24,27 +21,7 @@ mod symbols {
 
 pub(crate) use pos::*;
 
-/// Options for the LSP server.
-pub struct Options {
-    /// Writes log output to the given file.
-    pub log_file: Option<String>,
-
-    /// Defines how verbose the server should be.
-    pub verbosity: Verbosity,
-}
-
-/// Verbosity level for the LSP server.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Verbosity {
-    Warning,
-    Info,
-    Debug,
-    Trace,
-}
-
-pub fn start_server(options: Options) -> std::result::Result<(), Box<dyn Error + Sync + Send>> {
-    initialize_logging(&options)?;
-
+pub fn start_server() -> std::result::Result<(), Box<dyn Error + Sync + Send>> {
     let (conn, io) = Connection::stdio();
     let capabilities = capabilities();
 
@@ -118,51 +95,6 @@ pub fn capabilities() -> ServerCapabilities {
         document_formatting_provider: Some(OneOf::Left(true)),
         ..Default::default()
     }
-}
-
-fn initialize_logging(options: &Options) -> std::io::Result<()> {
-    struct FileTarget {
-        file: Arc<Mutex<File>>,
-    }
-
-    impl std::io::Write for FileTarget {
-        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-            match self.file.lock().unwrap().write(buf) {
-                Ok(written) => Ok(written),
-                Err(_err) => Ok(0),
-            }
-        }
-
-        fn flush(&mut self) -> std::io::Result<()> {
-            let mut file_handler = self.file.lock().unwrap();
-            file_handler.flush()
-        }
-    }
-
-    let level_filter = match options.verbosity {
-        Verbosity::Warning => log::LevelFilter::Warn,
-        Verbosity::Info => log::LevelFilter::Info,
-        Verbosity::Debug => log::LevelFilter::Debug,
-        Verbosity::Trace => log::LevelFilter::Trace,
-    };
-
-    let mut builder = env_logger::Builder::from_default_env();
-    builder.filter_level(log::LevelFilter::Warn);
-    builder.filter_module("lume_lsp", level_filter);
-
-    if let Some(log_file) = &options.log_file {
-        let file = std::fs::OpenOptions::new().create(true).append(true).open(log_file)?;
-
-        let target = FileTarget {
-            file: Arc::new(Mutex::new(file)),
-        };
-
-        builder.target(Target::Pipe(Box::new(target)));
-    }
-
-    builder.init();
-
-    Ok(())
 }
 
 #[inline]
