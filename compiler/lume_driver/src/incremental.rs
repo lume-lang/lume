@@ -8,18 +8,18 @@ use lume_session::{GlobalCtx, Package};
 ///
 /// This takes the state of the current package metadata into account, as well
 /// as if anything has changed within it' source code.
-#[libftrace::traced(level = Debug, fields(name = package.name), ret)]
+#[tracing::instrument(level = "DEBUG", skip_all, fields(package = %package.name), ret)]
 pub fn needs_compilation(gcx: &Arc<GlobalCtx>, package: &Package) -> bool {
     // If incremental compilation is disabled, we should alwas re-compile.
     if !gcx.session.options.enable_incremental {
-        libftrace::debug!("re-compilation required: incremental compilation disabled");
+        tracing::debug!("re-compilation required: incremental compilation disabled");
         return true;
     }
 
     // If no metadata file could be found, the package has likely not been built
     // yet - in which case it obviously needs to be built.
     let Ok(Some(metadata)) = read_metadata_object(gcx, package) else {
-        libftrace::debug!("re-compilation required: could not read metadata object");
+        tracing::debug!("re-compilation required: could not read metadata object");
         return true;
     };
 
@@ -27,14 +27,14 @@ pub fn needs_compilation(gcx: &Arc<GlobalCtx>, package: &Package) -> bool {
 
     #[allow(clippy::needless_bool, reason = "lint only raised when tracing is disabled")]
     if metadata.header.hash == current_hash {
-        libftrace::debug!("hash matched, compilation not required");
+        tracing::debug!("hash matched, compilation not required");
 
         false
     } else {
-        libftrace::debug!(
-            "hash mismatch between packages",
-            current = current_hash,
-            build = metadata.header.hash
+        tracing::debug!(
+            message = "hash mismatch between packages",
+            current = %current_hash,
+            build = %metadata.header.hash
         );
 
         true

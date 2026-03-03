@@ -7,7 +7,7 @@ use lume_types::TypeRef;
 use crate::LowerFunction;
 
 impl LowerFunction<'_> {
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn expression(&mut self, expr: lume_span::NodeId) -> Result<lume_tir::Expression> {
         let expr = self.lower.tcx.hir_expect_expr(expr);
 
@@ -49,7 +49,7 @@ impl LowerFunction<'_> {
         })))
     }
 
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn cast_expression(&mut self, expr: &lume_hir::Cast) -> Result<lume_tir::ExpressionKind> {
         let source = self.expression(expr.source)?;
 
@@ -88,7 +88,7 @@ impl LowerFunction<'_> {
         })))
     }
 
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn construct_expression(&mut self, expr: &lume_hir::Construct) -> Result<lume_tir::ExpressionKind> {
         let constructed_type = self.lower.tcx.find_type_ref_from(&expr.path, expr.id)?.unwrap();
 
@@ -132,7 +132,7 @@ impl LowerFunction<'_> {
         })))
     }
 
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn call_expression(&mut self, expr: lume_hir::CallExpression) -> Result<lume_tir::ExpressionKind> {
         let callable = self.lower.tcx.lookup_callable(expr)?;
         let instantiated_signature = self.lower.tcx.instantiated_signature_of(callable, expr)?;
@@ -140,7 +140,7 @@ impl LowerFunction<'_> {
         let uninst_ret_ty = self.lower.tcx.return_type_of(callable.id()).unwrap();
         let uninst_ret_ty = self.lower.tcx.mk_type_ref_from_expr(uninst_ret_ty, callable.id())?;
 
-        libftrace::debug!(
+        tracing::debug!(
             "resolved callable `{:+}` from call expression `{}`",
             callable.name(),
             expr.name()
@@ -226,7 +226,7 @@ impl LowerFunction<'_> {
         }))
     }
 
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn intrinsic_expression(&mut self, expr: &lume_hir::IntrinsicCall) -> Result<lume_tir::ExpressionKind> {
         let arguments = expr
             .kind
@@ -319,7 +319,7 @@ impl LowerFunction<'_> {
         }
     }
 
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn is_expression(&mut self, expr: &lume_hir::Is) -> Result<lume_tir::ExpressionKind> {
         let target = self.expression(expr.target)?;
         let pattern = self.pattern(&expr.pattern)?;
@@ -383,7 +383,7 @@ impl LowerFunction<'_> {
         }
     }
 
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn member_expression(&mut self, expr: &lume_hir::Member) -> Result<lume_tir::ExpressionKind> {
         let callee = self.expression(expr.callee)?;
         let name = expr.name.name.intern();
@@ -405,7 +405,7 @@ impl LowerFunction<'_> {
         })))
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn scope_expression(&mut self, expr: &lume_hir::Scope) -> Result<lume_tir::ExpressionKind> {
         let mut body = Vec::with_capacity(expr.body.len());
         for stmt in &expr.body {
@@ -422,7 +422,7 @@ impl LowerFunction<'_> {
         })))
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn switch_expression(&mut self, expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
         if self.lower.tcx.is_switch_constant(expr) {
             self.switch_expression_constant(expr)
@@ -431,7 +431,7 @@ impl LowerFunction<'_> {
         }
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn switch_expression_constant(&mut self, expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
         let operand = self.expression(expr.operand)?;
         let mut fallback: Option<lume_tir::Expression> = None;
@@ -484,7 +484,7 @@ impl LowerFunction<'_> {
         })))
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn switch_expression_dynamic(&mut self, expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
         let operand = self.expression(expr.operand)?;
         let mut cases = Vec::with_capacity(expr.cases.len());
@@ -555,7 +555,7 @@ impl LowerFunction<'_> {
         }))
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn variable_expression(&self, expr: &lume_hir::Variable) -> lume_tir::ExpressionKind {
         let reference = match &expr.reference {
             lume_hir::VariableSource::Parameter(param) => VariableId(param.index),
@@ -579,7 +579,7 @@ impl LowerFunction<'_> {
         }))
     }
 
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn variant_expression(&mut self, expr: &lume_hir::Variant) -> Result<lume_tir::ExpressionKind> {
         let name = self.path_hir(&expr.name, expr.id)?;
         let enum_type = expr.name.clone().parent().unwrap();

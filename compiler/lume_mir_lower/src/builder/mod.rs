@@ -119,7 +119,7 @@ impl Builder<'_, '_> {
     pub(crate) fn declare_var(&mut self, block: BasicBlockId, variable: lume_tir::VariableId, register: RegisterId) {
         let variable = lume_mir::VariableId(variable.0);
 
-        libftrace::debug!("[{}] declaring {variable} in {block}.{register}", self.func.name);
+        tracing::debug!("[{}] declaring {variable} in {block}.{register}", self.func.name);
 
         self.func.variables.define(block, register, variable);
     }
@@ -129,7 +129,7 @@ impl Builder<'_, '_> {
         let block = self.func.current_block().id;
         let var = lume_mir::VariableId(var.0);
 
-        libftrace::debug!("[{}] referencing {var} in {block}", self.func.name);
+        tracing::debug!("[{}] referencing {var} in {block}", self.func.name);
 
         self.func.variables.reference(block, var)
     }

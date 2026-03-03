@@ -11,7 +11,7 @@ impl<'ast> Parser<'_, 'ast> {
     ///
     /// Returns `Err` if the parser hits an unexpected token.
     #[allow(dead_code, reason = "used in tests and fuzzing")]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn parse_statements(&mut self) -> Result<Vec<Statement<'ast>>> {
         let mut statements = Vec::new();
 
@@ -23,7 +23,7 @@ impl<'ast> Parser<'_, 'ast> {
     }
 
     /// Parses some abstract statement at the current cursor position.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(super) fn parse_statement(&mut self) -> Result<Statement<'ast>> {
         match self.token().kind {
             TokenKind::Let => self.parse_variable_declaration(),
@@ -52,7 +52,7 @@ impl<'ast> Parser<'_, 'ast> {
     /// # Returns
     ///
     /// Returns whether the parser sufficiently recovered from the error.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub(super) fn recover_statement(&mut self) -> bool {
         let mut brace_depth = 0;
         let mut bracket_depth = 0;
@@ -91,7 +91,7 @@ impl<'ast> Parser<'_, 'ast> {
     }
 
     /// Parses a variable declaration statement at the current cursor position.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_variable_declaration(&mut self) -> Result<Statement<'ast>> {
         // Whatever the token is, consume it.
         let start = self.consume_any().start();
@@ -115,7 +115,7 @@ impl<'ast> Parser<'_, 'ast> {
     }
 
     /// Parses an infinite loop statement at the current cursor position.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_infinite_loop(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::Loop)?.start();
         let block = self.parse_block()?;
@@ -129,7 +129,7 @@ impl<'ast> Parser<'_, 'ast> {
     }
 
     /// Parses an iterator loop statement at the current cursor position.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_iterator_loop(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::For)?.start();
 
@@ -151,7 +151,7 @@ impl<'ast> Parser<'_, 'ast> {
     }
 
     /// Parses a predicate loop statement at the current cursor position.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_predicate_loop(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::While)?.start();
 
@@ -168,7 +168,7 @@ impl<'ast> Parser<'_, 'ast> {
     }
 
     /// Parses an expression statement at the current cursor position.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_expression_stmt(&mut self) -> Result<Statement<'ast>> {
         let expression = self.parse_expression()?;
 
@@ -184,7 +184,7 @@ impl<'ast> Parser<'_, 'ast> {
     }
 
     /// Parses a `break` statement at the current cursor position.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_break(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::Break)?.start();
         let end = self.expect_semi()?.end();
@@ -195,7 +195,7 @@ impl<'ast> Parser<'_, 'ast> {
     }
 
     /// Parses a `continue` statement at the current cursor position.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_continue(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::Continue)?.start();
         let end = self.expect_semi()?.end();
@@ -206,7 +206,7 @@ impl<'ast> Parser<'_, 'ast> {
     }
 
     /// Parses a return statement at the current cursor position.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_return(&mut self) -> Result<Statement<'ast>> {
         let start = self.consume(TokenType::Return)?.start();
 

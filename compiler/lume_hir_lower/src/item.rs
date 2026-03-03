@@ -11,7 +11,7 @@ fn visibility(expr: Option<&lume_ast::Visibility>) -> lume_hir::Visibility {
 }
 
 impl LoweringContext<'_> {
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn item(&mut self, expr: lume_ast::Item) -> Result<()> {
         let hir_ast = match expr {
             lume_ast::Item::Import(i) => {
@@ -41,7 +41,7 @@ impl LoweringContext<'_> {
         Ok(())
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn import(&mut self, expr: lume_ast::Import) -> Result<()> {
         for imported_name in expr.names {
             let namespace = self.expand_import_path(expr.path.clone())?;
@@ -60,7 +60,7 @@ impl LoweringContext<'_> {
         Ok(())
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn signature(&mut self, sig: lume_ast::Signature) -> Result<lume_hir::FnSignature> {
         let name = self.expand_callable_name(sig.name)?;
         let type_parameters = self.type_parameters(sig.type_parameters)?;
@@ -77,7 +77,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn function_definition(&mut self, expr: lume_ast::FunctionDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
         self.handle_attributes(&expr.attributes)?;
@@ -105,7 +105,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn parameters(&mut self, params: Vec<lume_ast::Parameter>, allow_self: bool) -> Result<Vec<lume_hir::Parameter>> {
         let param_len = params.len();
         let mut parameters = Vec::with_capacity(param_len);
@@ -182,7 +182,7 @@ impl LoweringContext<'_> {
         Ok(parameters)
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn struct_definition(&mut self, expr: lume_ast::StructDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
         self.handle_attributes(&expr.attributes)?;
@@ -226,7 +226,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn struct_field_definition(&mut self, index: usize, expr: lume_ast::Field) -> Result<lume_hir::Field> {
         let id = self.next_node_id();
 
@@ -257,7 +257,7 @@ impl LoweringContext<'_> {
         Ok(field)
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn implementation(&mut self, expr: lume_ast::Implementation) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
 
@@ -301,7 +301,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn implementation_method(
         &mut self,
         type_name: lume_hir::Path,
@@ -343,7 +343,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn trait_definition(&mut self, expr: lume_ast::TraitDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
         self.handle_attributes(&expr.attributes)?;
@@ -394,7 +394,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn trait_definition_method(
         &mut self,
         type_name: lume_hir::Path,
@@ -428,7 +428,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn enum_definition(&mut self, expr: lume_ast::EnumDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
 
@@ -468,7 +468,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn enum_definition_case(
         &mut self,
         idx: usize,
@@ -493,7 +493,7 @@ impl LoweringContext<'_> {
         Ok(symbol)
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn trait_implementation(&mut self, expr: lume_ast::TraitImplementation) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
 
@@ -535,7 +535,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn trait_implementation_method(
         &mut self,
         expr: lume_ast::TraitMethodImplementation,

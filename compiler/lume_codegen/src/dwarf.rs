@@ -91,7 +91,7 @@ impl<'ctx> RootDebugContext<'ctx> {
             let line_strings = &mut self.dwarf.line_strings;
 
             let Some(file_name) = file.name.to_pathbuf().file_name() else {
-                libftrace::warning!("skipping source file {}; no file name", file.name);
+                tracing::warn!("skipping source file {}; no file name", file.name);
                 continue;
             };
 

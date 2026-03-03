@@ -18,7 +18,7 @@ static ARRAY_NEW_PATH: LazyLock<lume_hir::Path> = LazyLock::new(|| {
 static ARRAY_PUSH_PATH: LazyLock<lume_hir::PathSegment> = LazyLock::new(|| lume_hir::PathSegment::callable("push"));
 
 impl LoweringContext<'_> {
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(super) fn expressions(&mut self, expressions: Vec<lume_ast::Expression>) -> Vec<lume_span::NodeId> {
         expressions
             .into_iter()
@@ -32,7 +32,7 @@ impl LoweringContext<'_> {
             .collect::<Vec<_>>()
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(super) fn expression(&mut self, statement: lume_ast::Expression) -> Result<lume_span::NodeId> {
         let expr = match statement {
             lume_ast::Expression::Array(e) => self.expr_array(*e)?,
@@ -58,7 +58,7 @@ impl LoweringContext<'_> {
         Ok(id)
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(super) fn opt_expression(
         &mut self,
         statement: Option<lume_ast::Expression>,
@@ -69,7 +69,7 @@ impl LoweringContext<'_> {
         }
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_array(&mut self, expr: lume_ast::Array) -> Result<lume_hir::Expression> {
         let location = self.location(expr.location);
 
@@ -131,7 +131,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_assignment(&mut self, expr: lume_ast::Assignment) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let location = self.location(expr.location);
@@ -150,7 +150,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_call(&mut self, expr: lume_ast::Call) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let name = self.resolve_symbol_name(&expr.name)?;
@@ -179,7 +179,7 @@ impl LoweringContext<'_> {
         Ok(lume_hir::Expression { id, location, kind })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_cast(&mut self, expr: lume_ast::Cast) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let source = self.expression(expr.source)?;
@@ -198,7 +198,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_construct(&mut self, expr: lume_ast::Construct) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let path = self.resolve_symbol_name(&expr.path)?;
@@ -222,7 +222,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_constructor_field(&mut self, expr: lume_ast::ConstructorField) -> Result<lume_hir::ConstructorField> {
         let value = expr.value.unwrap_or_else(|| expr.name.clone().as_var());
 
@@ -238,7 +238,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_if(&mut self, expr: lume_ast::IfCondition) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let location = self.location(expr.location);
@@ -256,7 +256,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_condition(&mut self, expr: lume_ast::Condition) -> Result<lume_hir::Condition> {
         let location = self.location(expr.location);
 
@@ -275,7 +275,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_intrinsic_call(&mut self, expr: lume_ast::IntrinsicCall) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let location = self.location(expr.location);
@@ -446,7 +446,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_is(&mut self, expr: lume_ast::Is) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let target = self.expression(expr.target)?;
@@ -465,7 +465,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_literal(&mut self, expr: lume_ast::Literal) -> lume_hir::Expression {
         let literal = self.literal(expr);
 
@@ -476,7 +476,7 @@ impl LoweringContext<'_> {
         }
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_member(&mut self, expr: lume_ast::Member) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let location = self.location(expr.location);
@@ -495,7 +495,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_range(&mut self, expr: lume_ast::Range) -> Result<lume_hir::Expression> {
         let range_new_name = if expr.inclusive {
             lume_hir::Path::with_root(
@@ -526,7 +526,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_scope(&mut self, expr: lume_ast::Scope) -> lume_hir::Expression {
         self.current_locals.push_frame();
 
@@ -543,7 +543,7 @@ impl LoweringContext<'_> {
         }
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_switch(&mut self, expr: lume_ast::Switch) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let operand = self.expression(expr.operand)?;
@@ -567,7 +567,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_switch_case(&mut self, expr: lume_ast::SwitchCase) -> Result<lume_hir::SwitchCase> {
         self.current_locals.push_frame();
 
@@ -584,7 +584,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_variable(&mut self, expr: lume_ast::Variable) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let location = self.location(expr.location().clone());
@@ -610,7 +610,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_variant(&mut self, expr: lume_ast::Variant) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
         let name = self.resolve_symbol_name(&expr.name)?;

@@ -43,7 +43,7 @@ static LOCAL_CACHE_DIR: std::sync::LazyLock<PathBuf> = std::sync::LazyLock::new(
 
 /// Returns the current local cache directory for saving caches and/or clones
 /// of remote dependency packages.
-#[libftrace::traced(level = Trace, ret)]
+#[tracing::instrument(level = "TRACE", skip_all, ret)]
 pub fn local_cache_dir() -> PathBuf {
     LOCAL_CACHE_DIR.to_path_buf()
 }
@@ -53,14 +53,14 @@ pub fn local_cache_dir() -> PathBuf {
 ///
 /// To see which directory is the current local cache directory, see
 /// [`local_cache_dir`].
-#[libftrace::traced(level = Debug, err)]
+#[tracing::instrument(level = "DEBUG", skip_all, err)]
 pub fn clean_local_cache_dir(dry_run: bool) -> Result<()> {
     let lcd = local_cache_dir();
-    libftrace::debug!("attempting to clear local cache directory ({})", lcd.display());
+    tracing::debug!("attempting to clear local cache directory ({})", lcd.display());
 
     // If the directory doesn't exist, we have nothing to do.
     if !lcd.is_dir() {
-        libftrace::debug!("cache directory does not exist, skipping...");
+        tracing::debug!("cache directory does not exist, skipping...");
         return Ok(());
     }
 
@@ -72,7 +72,7 @@ pub fn clean_local_cache_dir(dry_run: bool) -> Result<()> {
             Err(err) => return Err(err.into()),
         };
 
-        libftrace::trace!("attempting to remove `{}`...", cached_pkg_path.display());
+        tracing::trace!("attempting to remove `{}`...", cached_pkg_path.display());
 
         if dry_run {
             continue;

@@ -172,7 +172,7 @@ fn std_type_id(name: &Path) -> Option<NodeId> {
 }
 
 impl TyInferCtx {
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn define_items(&mut self) -> Result<()> {
         let type_items = self
             .hir
@@ -241,7 +241,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn define_methods(&mut self) -> Result<()> {
         let trait_items = self
             .hir
@@ -342,7 +342,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn define_implementation_methods(&mut self, id: NodeId) -> Result<()> {
         let lume_hir::Node::Impl(implementation) = self.hir.expect_node(id)? else {
             unreachable!()
@@ -392,7 +392,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn define_type_parameters(&mut self) -> Result<()> {
         let typed_items = self
             .hir
@@ -424,7 +424,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn define_struct_definition_type_parameters(&mut self, id: NodeId) -> Result<()> {
         let lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(struct_def)) = self.hir.expect_node(id)? else {
             unreachable!()
@@ -443,7 +443,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn define_enum_definition_type_parameters(&mut self, id: NodeId) -> Result<()> {
         let lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(enum_def)) = self.hir.expect_node(id)? else {
             unreachable!()
@@ -462,7 +462,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn define_trait_definition_type_parameters(&mut self, id: NodeId) -> Result<()> {
         let lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(trait_def)) = self.hir.expect_node(id)? else {
             unreachable!()
@@ -493,7 +493,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn define_trait_implementation_type_parameters(&mut self, id: NodeId) -> Result<()> {
         let lume_hir::Node::TraitImpl(trait_impl) = self.hir.expect_node(id)? else {
             unreachable!()
@@ -524,7 +524,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn define_implementation_type_parameters(&mut self, id: NodeId) -> Result<()> {
         let lume_hir::Node::Impl(implementation) = self.hir.expect_node(id)? else {
             unreachable!()
@@ -555,7 +555,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn define_function_type_parameters(&mut self, id: NodeId) -> Result<()> {
         let lume_hir::Node::Function(function) = self.hir.expect_node(id)? else {
             unreachable!()
@@ -576,7 +576,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn define_scopes(&mut self) -> Result<()> {
         let mut tree = BTreeMap::new();
 
@@ -918,7 +918,7 @@ enum TypeArgumentInference {
 }
 
 impl TyInferCtx {
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn infer_type_arguments(&mut self) -> Result<()> {
         let mut replacements = HashMap::new();
 

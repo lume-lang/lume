@@ -35,8 +35,9 @@ pub fn write_object_files(gcx: &Arc<GlobalCtx>, objects: Vec<ObjectSource>) -> R
             match source {
                 ObjectSource::Compiled { name, data } => {
                     let output_file_path = gcx.obj_bc_path_of(&name);
-                    let mut output_file = std::fs::File::create(&output_file_path).map_diagnostic()?;
+                    tracing::debug!(package.name = name, output.path = %output_file_path.display());
 
+                    let mut output_file = std::fs::File::create(&output_file_path).map_diagnostic()?;
                     output_file.write_all(&data).map_diagnostic()?;
 
                     Ok(ObjectLocation {
@@ -65,6 +66,7 @@ impl Linker {
     }
 }
 
+#[tracing::instrument(level = "TRACE", skip_all, fields(program), ret)]
 fn is_command_available(program: &str) -> bool {
     Command::new(program)
         .arg("--help")
@@ -103,6 +105,16 @@ fn detect_linker() -> Result<Linker> {
 ///
 /// Returns `Err` if the linker binary could not be found, the linker fails to
 /// invoke or fails to generate a valid output binary.
+#[tracing::instrument(
+    level = "INFO",
+    skip_all,
+    fields(
+        output = %output.display(),
+        options.linker = ?opts.linker,
+        options.runtime_path = ?opts.runtime_path,
+    ),
+    err
+)]
 #[allow(clippy::missing_panics_doc)]
 pub fn link_objects(objects: Vec<ObjectLocation>, output: &PathBuf, opts: &Options) -> Result<()> {
     let linker = match opts.linker {
@@ -151,7 +163,7 @@ pub fn link_objects(objects: Vec<ObjectLocation>, output: &PathBuf, opts: &Optio
     cmd.arg("-o");
     cmd.arg(output);
 
-    libftrace::info!("linker command: {cmd:?}");
+    tracing::info!("linker command: {cmd:?}");
 
     let process = cmd.spawn().map_err(|err| {
         Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("could not invoke linker: {err}")))

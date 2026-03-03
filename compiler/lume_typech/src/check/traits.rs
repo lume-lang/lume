@@ -6,7 +6,7 @@ use crate::TyCheckCtx;
 impl TyCheckCtx {
     /// Type checker pass to check whether implementations
     /// if any given trait is valid against the trait definition.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn typech_traits(&mut self) {
         for (_, item) in &self.hir().nodes {
             if let Err(err) = self.typech_item(item) {

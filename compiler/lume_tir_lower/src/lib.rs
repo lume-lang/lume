@@ -45,7 +45,7 @@ impl<'tcx> Lower<'tcx> {
     ///
     /// Returns `Err` if a definition within the context is invalid or if the
     /// type context returned an error.
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub fn lower(mut self) -> Result<TypedIR> {
         self.define_callables()?;
         self.lower_callables()?;
@@ -74,14 +74,14 @@ impl<'tcx> Lower<'tcx> {
         lower.lower()
     }
 
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn define_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
             if method.is_intrinsic() {
                 continue;
             }
 
-            libftrace::debug!("defining method {:+}", method.name);
+            tracing::debug!("defining method {:+}", method.name);
 
             let signature = self.tcx.signature_of(Callable::Method(method))?;
             let location = self.tcx.hir_span_of_node(method.id);
@@ -100,7 +100,7 @@ impl<'tcx> Lower<'tcx> {
         }
 
         for func in self.tcx.tdb().functions() {
-            libftrace::debug!("defining function {:+}", func.name);
+            tracing::debug!("defining function {:+}", func.name);
 
             let signature = self.tcx.signature_of(Callable::Function(func))?;
             let location = self.tcx.hir_span_of_node(func.id);
@@ -127,14 +127,14 @@ impl<'tcx> Lower<'tcx> {
         Ok(())
     }
 
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn lower_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
             if !self.tcx.hir_is_local_node(method.id) || method.kind == lume_types::MethodKind::Intrinsic {
                 continue;
             }
 
-            libftrace::debug!("lowering method {:+}", method.name);
+            tracing::debug!("lowering method {:+}", method.name);
 
             self.lower_block(method.id)?;
         }
@@ -144,7 +144,7 @@ impl<'tcx> Lower<'tcx> {
                 continue;
             }
 
-            libftrace::debug!("lowering function {:+}", func.name);
+            tracing::debug!("lowering function {:+}", func.name);
 
             self.lower_block(func.id)?;
         }
@@ -152,7 +152,7 @@ impl<'tcx> Lower<'tcx> {
         Ok(())
     }
 
-    #[libftrace::traced(level = Debug, fields(id), err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(%id), err)]
     fn lower_block(&mut self, id: NodeId) -> Result<()> {
         // We need to conserve the variable mappings between function-declaration and
         // -definition, since we likely declared some variables in the function
@@ -176,7 +176,7 @@ impl<'tcx> Lower<'tcx> {
     }
 
     /// Determines the [`lume_tir::FunctionKind`] of the given method.
-    #[libftrace::traced(level = Debug, fields(method = method.name.to_wide_string(), has_body), ret)]
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(method = method.name.to_wide_string()), ret)]
     pub(crate) fn determine_method_kind(&self, method: &lume_types::Method) -> lume_tir::FunctionKind {
         // Checks whether the method is an implementation of
         // `std::ops::Dispose::dispose()`.

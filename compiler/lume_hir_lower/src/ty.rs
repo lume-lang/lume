@@ -3,7 +3,7 @@ use lume_hir::SELF_TYPE_NAME;
 use crate::*;
 
 impl LoweringContext<'_> {
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn hir_type(&mut self, ty: lume_ast::Type) -> Result<lume_hir::Type> {
         match ty {
             lume_ast::Type::Named(t) => self.named_type(t),
@@ -12,7 +12,7 @@ impl LoweringContext<'_> {
         }
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn hir_type_opt(&mut self, ty: Option<lume_ast::Type>) -> Result<lume_hir::Type> {
         match ty {
             Some(e) => Ok(self.hir_type(e)?),
@@ -20,7 +20,7 @@ impl LoweringContext<'_> {
         }
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn named_type(&mut self, expr: lume_ast::NamedType) -> Result<lume_hir::Type> {
         // If there is currently a visible type parameter with the same name, attempt to
         // use it's ID...
@@ -46,7 +46,7 @@ impl LoweringContext<'_> {
         Ok(hir_type)
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn array_type(&mut self, ty: lume_ast::ArrayType) -> Result<lume_hir::Type> {
         let id = self.next_node_id();
 
@@ -65,7 +65,7 @@ impl LoweringContext<'_> {
         Ok(hir_type)
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn self_type(&mut self, expr: lume_ast::SelfType) -> Result<lume_hir::Type> {
         let id = self.next_node_id();
         let location = self.location(expr.location);

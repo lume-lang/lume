@@ -260,7 +260,7 @@ fn column_of_patterns<'pat>(patterns: &[&'pat lume_hir::Pattern], column: usize)
         };
 
         let Some(subpattern) = pattern.fields.get(column) else {
-            libftrace::warning!("variant subpattern `{:+}` did not have column {column}", pattern.name);
+            tracing::warn!("variant subpattern `{:+}` did not have column {column}", pattern.name);
             continue;
         };
 

@@ -141,7 +141,7 @@ impl LoweringContext<'_> {
 
     /// Gets the next [`NodeId`] in the sequence.
     #[inline]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn next_node_id(&mut self) -> NodeId {
         self.current_node = self.current_node.next();
         self.current_node
@@ -178,7 +178,7 @@ impl LoweringContext<'_> {
     ///
     /// If the item is not defined, it is added into the list of defined items.
     /// If the item is defined, raises an error to reflect it.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn ensure_item_undefined(&mut self, id: NodeId, item: DefinedItem) -> Result<()> {
         if let Some((existing, _)) = self.defined.get_key_value(&item) {
             return Err(crate::errors::DuplicateDefinition {

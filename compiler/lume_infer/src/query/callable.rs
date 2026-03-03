@@ -69,7 +69,7 @@ pub enum BlanketLookup {
 
 impl TyInferCtx {
     /// Gets the [`Callable`] with the given ID.
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn callable_of(&self, id: CallReference) -> Result<Callable<'_>> {
         match id {
             CallReference::Method(id) => {
@@ -92,7 +92,7 @@ impl TyInferCtx {
     }
 
     /// Gets the [`CallReference`] with the given ID, if any.
-    #[libftrace::traced(level = Trace, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn callref_with_id(&self, id: NodeId) -> Option<CallReference> {
         match self.hir_node(id)? {
             lume_hir::Node::Function(_) => Some(CallReference::Function(id)),
@@ -104,13 +104,13 @@ impl TyInferCtx {
     }
 
     /// Gets the [`Callable`] with the given ID, if any.
-    #[libftrace::traced(level = Trace, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn callable_with_id(&self, id: NodeId) -> Option<Callable<'_>> {
         self.callable_of(self.callref_with_id(id)?).ok()
     }
 
     /// Gets the [`Callable`] with the given name, if any.
-    #[libftrace::traced(level = Trace, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn callable_with_name(&self, name: &Path) -> Option<Callable<'_>> {
         if let Some(method) = self.tdb().find_method(name) {
             Some(Callable::Method(method))
@@ -139,7 +139,7 @@ impl TyInferCtx {
     ///
     /// Methods returned by this method are not checked for validity within the
     /// current context, such as visibility, arguments or type arguments.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn lookup_trait_methods_on(
         &self,
         ty: &'_ TypeRef,
@@ -190,7 +190,7 @@ impl TyInferCtx {
     ///
     /// Methods returned by this method are not checked for validity within the
     /// current context, such as visibility, arguments or type arguments.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn lookup_methods_on<'a>(
         &'a self,
         ty: &lume_types::TypeRef,
@@ -214,7 +214,7 @@ impl TyInferCtx {
     /// The method returned by this method is not checked for validity within
     /// the current context, such as visibility, arguments or type
     /// arguments.
-    #[libftrace::traced(level = Trace, fields(ty, name = name.as_str()))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(ty = %self.new_named_type(ty, true).unwrap(), %name))]
     pub fn lookup_method_on<'a>(&'a self, ty: &lume_types::TypeRef, name: &Identifier) -> Option<&'a Method> {
         // First check whether any method is defined directly on the type
         let methods = self.lookup_methods_on(ty, name, BlanketLookup::Exclude);
@@ -236,7 +236,7 @@ impl TyInferCtx {
     /// file as `local_loc`. If none is found, it looks for a method which
     /// exists within the same package as `local_loc`. If that also fails,
     /// it returns the index of the first method in the slice.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn find_local_method(&self, local_loc: Location, methods: &[&Method]) -> Option<usize> {
         // Methods defined within the same file as the given location.
         if let Some(idx) = methods
@@ -270,7 +270,7 @@ impl TyInferCtx {
     /// The method returned by this method is not checked for validity within
     /// the current context, such as visibility, arguments or type
     /// arguments.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn lookup_intrinsic_method(&self, expr: &lume_hir::IntrinsicCall) -> Result<Option<&Method>> {
         let (_, method_name) = self.lang_item_of_intrinsic(&expr.kind);
 
@@ -288,7 +288,7 @@ impl TyInferCtx {
     ///
     /// Methods returned by this method are not checked for validity within the
     /// current context, such as visibility, arguments or type arguments.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn lookup_method_suggestions(&self, ty: &lume_types::TypeRef, name: &Identifier) -> Vec<&'_ Method> {
         self.methods_defined_on(ty)
             .into_iter()
@@ -304,7 +304,7 @@ impl TyInferCtx {
 
     /// Folds all the functions which could be suggested from the given call
     /// expression into a single, emittable error message.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn fold_function_suggestions(&self, expr: &lume_hir::StaticCall) -> Result<super::diagnostics::MissingFunction> {
         let suggestion: Option<Result<error_snippet::Error>> =
             self.lookup_function_suggestions(&expr.name).first().map(|suggestion| {
@@ -333,7 +333,7 @@ impl TyInferCtx {
 
     /// Folds all the methods which could be suggested from the given call
     /// expression into a single, emittable error message.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn fold_method_suggestions(&self, expr: lume_hir::CallExpression) -> Result<super::diagnostics::MissingMethod> {
         // We don't add method suggestions to intrinsic calls.
         if let lume_hir::CallExpression::Intrinsic(expr) = &expr {
@@ -395,7 +395,7 @@ impl TyInferCtx {
     /// Functions returned by this method are not checked for validity within
     /// the current context, such as visibility, arguments or type
     /// arguments.
-    #[libftrace::traced(level = Trace, fields(name))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%name))]
     pub fn lookup_function_suggestions(&self, name: &Path) -> Vec<&'_ Function> {
         self.tdb()
             .functions()
@@ -421,7 +421,7 @@ impl TyInferCtx {
     /// Functions returned by this method are not checked for validity within
     /// the current context, such as visibility, arguments or type
     /// arguments.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn probe_functions(&self, name: &Path) -> Vec<&'_ Function> {
         self.tdb().functions().filter(|func| &func.name == name).collect()
     }
@@ -432,7 +432,7 @@ impl TyInferCtx {
     /// Callables returned by this method are not checked for validity within
     /// the current context, such as visibility, arguments or type
     /// arguments.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
         match expr {
             expr @ lume_hir::CallExpression::Instanced(call) => {
@@ -502,7 +502,7 @@ impl TyInferCtx {
     /// same file as `local_loc`. If none is found, it looks for a function
     /// which exists within the same package as `local_loc`. If that also
     /// fails, it returns the index of the first function in the slice.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn find_local_function(&self, local_loc: Location, funcs: &[&Function]) -> Option<usize> {
         // Functions defined within the same file as the given location.
         if let Some(idx) = funcs
@@ -542,7 +542,7 @@ impl TyInferCtx {
     /// For a generic callable lookup, see [`TyInferCtx::probe_callable`].
     /// For a static callable lookup, see
     /// [`TyInferCtx::probe_callable_static`].
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
         self.probe_callable(lume_hir::CallExpression::Instanced(call))
     }
@@ -558,7 +558,7 @@ impl TyInferCtx {
     /// For a generic callable lookup, see [`TyInferCtx::probe_callable`].
     /// For a static callable lookup, see
     /// [`TyInferCtx::probe_callable_static`].
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable_intrinsic(&self, call: &lume_hir::IntrinsicCall) -> Result<Callable<'_>> {
         self.probe_callable(lume_hir::CallExpression::Intrinsic(call))
     }
@@ -574,7 +574,7 @@ impl TyInferCtx {
     /// For a generic callable lookup, see [`TyInferCtx::probe_callable`].
     /// For an instance callable lookup, see
     /// [`TyInferCtx::probe_callable_instance`].
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
         self.probe_callable(lume_hir::CallExpression::Static(call))
     }
@@ -596,7 +596,7 @@ impl TyInferCtx {
     ///
     /// The resulting variable `a` will have the type of `Boolean`, since it was
     /// resolved from the type arguments on the callable expression.
-    #[libftrace::traced(level = Trace, fields(callable = callable.name()), err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(callable = %callable.name()), err, ret)]
     pub fn instantiated_signature_of(
         &self,
         callable: Callable,
@@ -610,7 +610,7 @@ impl TyInferCtx {
     /// Instantiates a call expression against the given function signature,
     /// resolving any type arguments within and returning the instantiated
     /// signature.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn instantiate_call_expression<'a>(
         &self,
         signature: lume_types::FunctionSig<'a>,
@@ -623,7 +623,7 @@ impl TyInferCtx {
 
     /// Attempt to instantiate the given callable purely from the arguments
     /// passed to the callable.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn instantiate_signature_from_args<'a>(
         &self,
         callable: Callable<'a>,
@@ -636,7 +636,7 @@ impl TyInferCtx {
 
     /// Attempt to instantiate the given signature purely from the arguments
     /// passed to the callable.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn instantiate_function_from_args<'a>(
         &self,
         signature: lume_types::FunctionSig<'a>,
@@ -707,7 +707,7 @@ impl TyInferCtx {
 
     /// Instantiates a function signature against the given type arguments,
     /// resolving the parameters and return type within the signature.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn instantiate_function(
         &self,
         sig: lume_types::FunctionSig<'_>,
@@ -718,7 +718,7 @@ impl TyInferCtx {
 
     /// Instantiates a function signature against the given type arguments,
     /// resolving the parameters and return type within the signature.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn instantiate_signature_isolate(
         &self,
         sig: lume_types::FunctionSig<'_>,
@@ -751,7 +751,7 @@ impl TyInferCtx {
     }
 
     /// Instantiates a a single type reference against the given type arguments.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn instantiate_type_from<'a>(
         &self,
         ty: &'a lume_types::TypeRef,
@@ -774,7 +774,7 @@ impl TyInferCtx {
 
     /// Instantiates a a single flat type reference against the given type
     /// arguments.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn instantiate_flat_type_from<'a>(
         &self,
         ty: &'a lume_types::TypeRef,
@@ -800,7 +800,7 @@ impl TyInferCtx {
     ///
     /// Type arguments are fetched from the expression itself, as well as type
     /// arguments defined on the callee of the exprssion, if any.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn type_args_in_call(&self, expr: lume_hir::CallExpression) -> Result<Vec<TypeRef>> {
         let type_parameters_id = self.available_type_params_at(expr.id());
         let type_parameters = self.as_type_params(&type_parameters_id)?;
@@ -831,7 +831,7 @@ impl TyInferCtx {
 
     /// Attempts the infer the instantiated type of `type_param_id` from the
     /// given set of parameter type and matching argument type.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn instantiate_argument_type(
         &self,
         type_param_id: NodeId,
@@ -856,7 +856,7 @@ impl TyInferCtx {
     }
 
     /// Gets the signature of the given [`Callable`].
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn signature_of(&self, callable: Callable) -> Result<FunctionSigOwned> {
         match callable {
             Callable::Method(method) => match self.hir_expect_node(method.id) {
@@ -900,7 +900,7 @@ impl TyInferCtx {
     /// The expanded signature of a [`Callable`] will include all the type
     /// parameters defined on parent definitions, such as on implementation
     /// blocks.
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn expanded_signature_of(&self, callable: Callable) -> Result<FunctionSigOwned> {
         match callable {
             Callable::Method(method) => {
@@ -952,7 +952,7 @@ impl TyInferCtx {
     /// The expanded signature of a [`Callable`] will include all the type
     /// parameters defined on parent definitions, such as on implementation
     /// blocks.
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn signature_of_call_ref(&self, id: CallReference) -> Result<FunctionSigOwned> {
         let callable = self.callable_of(id)?;
 
@@ -985,7 +985,7 @@ impl TyInferCtx {
 
     /// Determines whether the method with the given ID is an instance method.
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn is_instanced_method(&self, id: NodeId) -> bool {
         let Some(node) = self.hir.node(id) else { return false };
 
@@ -999,14 +999,14 @@ impl TyInferCtx {
 
     /// Determines whether the method with the given ID is a static method.
     #[inline]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn is_static_method(&self, id: NodeId) -> bool {
         !self.is_instanced_method(id)
     }
 
     /// Determines whether the given function is an entrypoint.
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn is_entrypoint(&self, id: NodeId) -> bool {
         let Some(node) = self.hir.node(id) else { return false };
 
@@ -1020,7 +1020,7 @@ impl TyInferCtx {
     /// Returns the [`NodeId`] of the `Dispose::dispose()` method from
     /// the standard library.
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn drop_method_def(&self) -> NodeId {
         let drop_type_ref = self.lang_item_type(lume_hir::LangItem::Dispose).unwrap();
         let drop_method_name = Identifier::from("dispose");
@@ -1035,7 +1035,7 @@ impl TyInferCtx {
 
     /// Determines whether the given method is a dropper.
     #[cached_query]
-    #[libftrace::traced(level = Trace, fields(method), ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%method), ret)]
     pub fn is_method_dropper(&self, method: NodeId) -> bool {
         let dropper_method_id = self.drop_method_def();
 
@@ -1051,7 +1051,7 @@ impl TyInferCtx {
 
     /// Determines whether the given callable is a static method call on a type
     /// parameter.
-    #[libftrace::traced(level = Trace, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn is_generic_static(&self, callable: lume_hir::CallExpression<'_>) -> bool {
         let lume_hir::CallExpression::Static(static_call) = callable else {
             return false;

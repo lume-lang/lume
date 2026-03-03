@@ -31,7 +31,7 @@ impl TyInferCtx {
 
     /// Returns the [`lume_hir::TraitDefinition`] definition, which matches the
     /// [`lume_hir::TraitImplementation`] with the given ID.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn trait_def_of(&self, id: NodeId) -> Result<&lume_hir::TraitDefinition> {
         let Node::TraitImpl(trait_impl) = self.hir_expect_node(id) else {
             return Err(crate::query::diagnostics::NodeNotFound { id }.into());
@@ -44,7 +44,7 @@ impl TyInferCtx {
 
     /// Determines whether the given [`TypeRef`], `ty`, implements the given
     /// trait, `trait_id`.
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn trait_impl_by(&self, trait_id: &TypeRef, ty: &TypeRef) -> Result<bool> {
         #[cfg(debug_assertions)]
         self.hir_expect_trait(trait_id.instance_of);
@@ -90,7 +90,7 @@ impl TyInferCtx {
     }
 
     /// Gets the trait implementation of `trait_type` on the type `source`.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn get_trait_impl_of(&self, trait_type: &TypeRef, source: &TypeRef) -> Option<&lume_hir::TraitImplementation> {
         if let Some(trait_impl_id) = self.tdb().traits.trait_impl_id(trait_type, source) {
             let lume_hir::Node::TraitImpl(trait_impl) = self.hir_node(trait_impl_id)? else {
@@ -105,7 +105,7 @@ impl TyInferCtx {
 
     /// Gets the trait implementation of `Cast<T>` on the type `source`, where
     /// `T` is the type `dest`.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn cast_impl_of(&self, source: &TypeRef, dest: &TypeRef) -> Option<&lume_hir::TraitImplementation> {
         let mut cast_trait = self.lang_item_type(lume_hir::LangItem::Cast)?;
         cast_trait.bound_types.push(dest.clone());
@@ -115,7 +115,7 @@ impl TyInferCtx {
 
     /// Gets the trait definition which is being implemented by the given
     /// [`lume_hir::TraitImplementation`].
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn trait_definition_of_impl(
         &self,
         trait_impl: &lume_hir::TraitImplementation,
@@ -131,7 +131,7 @@ impl TyInferCtx {
 
     /// Gets the parent trait definition which defines the method being
     /// implemented by `method_impl`.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn trait_definition_of_method_impl(
         &self,
         method_impl: &lume_hir::TraitMethodImplementation,
@@ -147,7 +147,7 @@ impl TyInferCtx {
 
     /// Gets the matching trait method definition which defines the method being
     /// implemented by `method_impl`.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn trait_method_definition_of_method_impl(
         &self,
         trait_method_impl: &lume_hir::TraitMethodImplementation,
@@ -167,7 +167,7 @@ impl TyInferCtx {
 
     /// Gets the target type of the given method, given the type within the
     /// parent `impl` block.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn impl_type_of_method(&self, method_id: NodeId) -> Result<TypeRef> {
         for parent in self.hir_parent_iter(method_id) {
             if let lume_hir::Node::Impl(impl_block) = parent {

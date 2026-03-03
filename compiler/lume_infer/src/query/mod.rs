@@ -103,7 +103,7 @@ impl TyInferCtx {
     /// this method makes, in the case of some expressions, such as
     /// assignments.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of(&self, def: NodeId) -> Result<TypeRef> {
         self.type_of_expr(self.hir_expect_expr(def))
     }
@@ -117,7 +117,7 @@ impl TyInferCtx {
     /// this method makes, in the case of some expressions, such as
     /// assignments.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
         let ty = match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => {
@@ -300,14 +300,14 @@ impl TyInferCtx {
 
     /// Returns the return type of the given [`lume_hir::Scope`].
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_scope(&self, scope: &lume_hir::Scope) -> Result<TypeRef> {
         self.type_of_body(&scope.body, scope.location)
     }
 
     /// Returns the return type of the given body of nodes.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_body(&self, body: &[NodeId], loc: Location) -> Result<TypeRef> {
         if let Some(stmt) = body.last() {
             let stmt = self.hir_expect_stmt(*stmt);
@@ -336,7 +336,7 @@ impl TyInferCtx {
     /// this method makes, in the case of some expressions, such as
     /// assignments.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
         match &stmt.kind {
             lume_hir::StatementKind::Final(fin) => self.type_of(fin.value),
@@ -350,7 +350,7 @@ impl TyInferCtx {
     /// Returns the *type* of the value which is returned within the given
     /// [`lume_hir::If`] statement.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_if_conditional(&self, cond: &lume_hir::If) -> Result<TypeRef> {
         let primary_case = cond.cases.first().unwrap();
 
@@ -359,21 +359,21 @@ impl TyInferCtx {
 
     /// Returns the *type* of the given [`lume_hir::Condition`].
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_condition(&self, cond: &lume_hir::Condition) -> Result<TypeRef> {
         self.type_of_block(&cond.block)
     }
 
     /// Returns the returned type of the given [`lume_hir::Condition`].
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_condition_scope(&self, cond: &lume_hir::Condition) -> Result<TypeRef> {
         self.type_of_body(&cond.block.statements, cond.block.location)
     }
 
     /// Returns the *type* of the given [`lume_hir::VariableDeclaration`].
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_vardecl(&self, stmt: &lume_hir::VariableDeclaration) -> Result<TypeRef> {
         if let Some(declared_type) = &stmt.declared_type {
             self.mk_type_ref_from(declared_type, stmt.id)
@@ -384,7 +384,7 @@ impl TyInferCtx {
 
     /// Returns the *type* of the given [`lume_hir::Return`].
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_return(&self, stmt: &lume_hir::Return) -> Result<TypeRef> {
         if let Some(expr) = stmt.value {
             self.type_of(expr)
@@ -404,7 +404,7 @@ impl TyInferCtx {
     /// this method makes, in the case of some expressions, such as
     /// assignments.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_block(&self, block: &lume_hir::Block) -> Result<TypeRef> {
         let Some(last_statement) = block.statements.last() else {
             return Ok(TypeRef::void().with_location(block.location));
@@ -416,7 +416,7 @@ impl TyInferCtx {
 
     /// Returns the return type of the given [`lume_hir::CallExpression`].
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, fields(name = expr.name()), err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(expr = %expr.name()), err, ret)]
     pub fn type_of_call(&self, expr: lume_hir::CallExpression) -> Result<TypeRef> {
         let callable = self.probe_callable(expr)?;
         let signature = self.instantiated_signature_of(callable, expr)?;
@@ -433,7 +433,7 @@ impl TyInferCtx {
     /// this method makes, in the case of some expressions, such as
     /// assignments.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_pattern(&self, pat: &lume_hir::Pattern) -> Result<TypeRef> {
         let ty = match &pat.kind {
             lume_hir::PatternKind::Literal(lit) => self.type_of_lit(&lit.literal)?,
@@ -493,7 +493,7 @@ impl TyInferCtx {
     /// Returns the uninstantiated *type* of the field within the enum
     /// definition with the given name.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_variant_field_uninstantiated(&self, variant_name: &Path, field: usize) -> Result<TypeRef> {
         let enum_def = self.enum_def_with_name(&variant_name.clone().parent().unwrap())?;
         let enum_case_def = self.enum_case_with_name(variant_name)?;
@@ -513,7 +513,7 @@ impl TyInferCtx {
     /// Returns the *type* of the field within the enum definition with the
     /// given name.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn type_of_variant_field(&self, variant_name: &Path, field: usize) -> Result<TypeRef> {
         let enum_def = self.enum_def_with_name(&variant_name.clone().parent().unwrap())?;
         let enum_case_def = self.enum_case_with_name(variant_name)?;
@@ -537,7 +537,7 @@ impl TyInferCtx {
     }
 
     /// Returns the fully-qualified [`Path`] of the given [`TypeRef`].
-    #[libftrace::traced(level = Trace, err, ret(Display))]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret(Display))]
     pub fn type_ref_name(&self, type_ref: &TypeRef) -> Result<&Path> {
         Ok(&self.tdb().expect_type(type_ref.instance_of)?.name)
     }
@@ -548,7 +548,7 @@ impl TyInferCtx {
     ///
     /// Returns [`Err`] if the no type could be find with the given ID, or if
     /// a type was found, but not an enum type definition.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn enum_definition(&self, id: NodeId) -> Result<&lume_hir::EnumDefinition> {
         let Some(type_def) = self.tdb().type_(id) else {
             return Err(crate::query::diagnostics::NodeNotFound { id }.into());
@@ -571,7 +571,7 @@ impl TyInferCtx {
     ///
     /// Returns [`Err`] if the no type could be find with the given name, or if
     /// a type was found, but not an enum type definition.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn enum_def_with_name(&self, name: &Path) -> Result<&lume_hir::EnumDefinition> {
         let Some(type_def) = self.tdb().find_type(name) else {
             return Err(crate::query::diagnostics::TypeNameNotFound {
@@ -598,7 +598,7 @@ impl TyInferCtx {
     ///
     /// Returns [`Err`] if the no type could be find with the given ID, or if
     /// a type was found, but not an enum type definition.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn enum_cases_of(&self, ty: NodeId) -> Result<&[lume_hir::EnumDefinitionCase]> {
         Ok(&self.enum_definition(ty)?.cases)
     }
@@ -609,7 +609,7 @@ impl TyInferCtx {
     ///
     /// Returns [`Err`] if the no type could be find with the given name, or if
     /// a type was found, but not an enum type definition.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn cases_of_enum_definition(&self, name: &Path) -> Result<&[lume_hir::EnumDefinitionCase]> {
         Ok(&self.enum_def_with_name(name)?.cases)
     }
@@ -622,7 +622,7 @@ impl TyInferCtx {
     /// - the given path doesn't have any parent path segments,
     /// - the no type could be find with the given name
     /// - or a type was found, but not an enum type definition
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn enum_case_with_name(&self, variant: &Path) -> Result<&lume_hir::EnumDefinitionCase> {
         let Some(parent_ty_path) = variant.clone().parent() else {
             return Err(crate::query::diagnostics::PathWithoutParent { path: variant.clone() }.into());
@@ -649,7 +649,7 @@ impl TyInferCtx {
     ///
     /// Returns [`Err`] if the no expression could be find with the given ID, or
     /// if the expression type wasn't a reference to an enum definition.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn cases_of_enum_expr(&self, id: NodeId) -> Result<&[lume_hir::EnumDefinitionCase]> {
         self.enum_cases_of(self.type_of(id)?.instance_of)
     }
@@ -661,7 +661,7 @@ impl TyInferCtx {
     ///
     /// This method will panic if the given expression is not a `Variant`
     /// expression.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn case_of_enum_expr(&self, id: NodeId) -> Result<&lume_hir::EnumDefinitionCase> {
         let expr = self.hir_expect_expr(id);
 
@@ -680,7 +680,7 @@ impl TyInferCtx {
     /// Returns [`Err`] if the no type could be find with the given ID, or if
     /// a type was found, but not an enum type definition.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn discriminant_of_variant(&self, type_id: NodeId, name: &str) -> Result<usize> {
         for case in self.enum_cases_of(type_id)? {
             if case.name.name().as_str() == name {
@@ -700,7 +700,7 @@ impl TyInferCtx {
     ///
     /// Otherwise, returns [`None`].
     #[cached_query]
-    #[libftrace::traced(level = Trace, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn constructer_field_of(
         &self,
         expr: &lume_hir::Construct,
@@ -718,7 +718,7 @@ impl TyInferCtx {
     ///
     /// If the field doesn't have any default value, returns [`None`].
     #[cached_query]
-    #[libftrace::traced(level = Trace, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn constructer_default_field_of(
         &self,
         expr: &lume_hir::Construct,
@@ -749,7 +749,7 @@ impl TyInferCtx {
     /// a + 1 = 3;
     /// ```
     #[cached_query]
-    #[libftrace::traced(level = Trace, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn can_assign_value(&self, id: NodeId) -> bool {
         match &self.hir_expect_expr(id).kind {
             lume_hir::ExpressionKind::Assignment(_)
@@ -779,7 +779,7 @@ impl TyInferCtx {
     /// resulting value is never assigned to anything, so no value is
     /// expected.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn is_value_expected(&self, id: NodeId) -> Result<bool> {
         let Some(parent_id) = self.hir_parent_of(id) else {
             return Ok(false);
@@ -832,7 +832,7 @@ impl TyInferCtx {
     /// invoked to attempt to infer the type from other expressions and
     /// statements which reference the target expression.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn expected_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         if let Some(expected_type) = self.try_expected_type_of(id)? {
             Ok(Some(expected_type))
@@ -858,7 +858,7 @@ impl TyInferCtx {
     ///
     /// would be impossible to solve, since no explicit type is declared.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn try_expected_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         let Some(parent_id) = self.hir_parent_of(id) else {
             return Ok(None);
@@ -964,7 +964,7 @@ impl TyInferCtx {
     }
 
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn expected_type_of_construct(&self, expr: NodeId, construct: &lume_hir::Construct) -> Result<Option<TypeRef>> {
         let Some(constructed_type) = self.find_type_ref_from(&construct.path, construct.id)? else {
             return Ok(None);
@@ -996,7 +996,7 @@ impl TyInferCtx {
     }
 
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn expected_type_of_call(&self, expr: NodeId, call: CallExpression<'_>) -> Result<Option<TypeRef>> {
         let callable = self.probe_callable(call)?;
 
@@ -1057,7 +1057,7 @@ impl TyInferCtx {
     /// other statements and expressions which refer to the target
     /// expression.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn guess_type_of_ctx(&self, id: NodeId) -> Result<Option<TypeRef>> {
         for expr_node_ref in self.indirect_expression_refs(id)? {
             let Some(expr_node) = self.hir_node(expr_node_ref) else {
@@ -1084,7 +1084,7 @@ impl TyInferCtx {
         Ok(None)
     }
 
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn indirect_expression_refs(&self, id: NodeId) -> Result<Vec<NodeId>> {
         let Some(parent) = self.hir_parent_node_of(id) else {
             return Ok(Vec::new());
@@ -1112,7 +1112,7 @@ impl TyInferCtx {
     /// pattern which refer to constant literals. Fallback patterns are also
     /// allowed in constant contexts.
     #[cached_query]
-    #[libftrace::traced(level = Trace, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn is_switch_constant(&self, expr: &lume_hir::Switch) -> bool {
         for case in &expr.cases {
             match &case.pattern.kind {
@@ -1141,7 +1141,7 @@ impl TyInferCtx {
     /// such as `1_u32` or `1.0_f64`. This method determines whether the literal
     /// kind is missing, therefore requiring it to be inferred.
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     fn should_infer_literal_kind(&self, id: NodeId) -> bool {
         let Some(expr) = self.hir_expr(id) else {
             return false;
@@ -1177,7 +1177,7 @@ impl TyInferCtx {
     /// If the given ID does not refer to a struct definition, returns an empty
     /// slice. If no such field was found on the `struct` definition, returns
     /// [`None`].
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn field_on(&self, id: NodeId, name: &str) -> Result<Option<&lume_hir::Field>> {
         Ok(self.fields_on(id)?.iter().find(|field| field.name.as_str() == name))
     }
@@ -1186,7 +1186,7 @@ impl TyInferCtx {
     ///
     /// If the type of node cannot have a visibility modifier, returns [`None`].
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn visibility_of(&self, id: NodeId) -> Option<Visibility> {
         match self.hir_node(id)? {
             Node::Function(n) => Some(n.visibility),

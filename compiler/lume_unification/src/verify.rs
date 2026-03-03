@@ -22,7 +22,7 @@ pub(crate) struct TypeArgumentCountMismatch {
 /// such as return types, variable declaration types, trait implementation
 /// targets, etc. - have a fully-qualified type, with all required type
 /// arguments present.
-#[libftrace::traced(level = Debug)]
+#[tracing::instrument(level = "DEBUG", skip_all)]
 pub(crate) fn verify_type_names(tcx: &TyInferCtx) {
     for (id, item) in &tcx.hir().nodes {
         if !tcx.hir_is_local_node(*id) {

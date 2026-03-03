@@ -9,7 +9,7 @@ use crate::check::errors::*;
 impl TyCheckCtx {
     /// Type checker pass to check whether expressions yield
     /// their expected type, depending on the surrounding context.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn typech_expressions(&mut self) {
         for (id, item) in &self.hir().nodes {
             if !self.hir_is_local_node(*id) {
@@ -22,7 +22,7 @@ impl TyCheckCtx {
         }
     }
 
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn typech_expr_item(&self, symbol: &lume_hir::Node) -> Result<()> {
         match symbol {
             lume_hir::Node::Type(ty) => match ty {
@@ -37,7 +37,7 @@ impl TyCheckCtx {
         }
     }
 
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn define_struct_type(&self, struct_def: &lume_hir::StructDefinition) -> Result<()> {
         for field in &struct_def.fields {
             if let Some(default_value) = &field.default_value {
@@ -53,7 +53,7 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn define_trait_type(&self, trait_def: &lume_hir::TraitDefinition) -> Result<()> {
         for method in &trait_def.methods {
             if let Some(block) = &method.block {
@@ -71,7 +71,7 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn define_trait_implementation(&self, trait_impl: &lume_hir::TraitImplementation) -> Result<()> {
         for method in &trait_impl.methods {
             if let Some(block) = &method.block {
@@ -89,7 +89,7 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn define_impl_type(&self, impl_def: &lume_hir::Implementation) -> Result<()> {
         for method in &impl_def.methods {
             if let Some(block) = &method.block {
@@ -107,7 +107,7 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn define_function_scope(&self, func: &lume_hir::FunctionDefinition) -> Result<()> {
         if let Some(block) = &func.block {
             self.define_block_scope(block)?;
@@ -129,7 +129,7 @@ impl TyCheckCtx {
     }
 
     /// Type checks the given HIR statement.
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn statement(&self, stmt: NodeId) -> Result<()> {
         let stmt = self.hir_expect_stmt(stmt);
 
@@ -563,7 +563,7 @@ impl TyCheckCtx {
 
     /// Asserts that the logical expression is performed on boolean values,
     /// since only boolean values can be tested in logical expressions.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn is_expression(&self, expr: &lume_hir::Is) -> Result<()> {
         let target_ty = self.type_of(expr.target)?;
         let pattern_ty = self.type_of_pattern(&expr.pattern)?;
@@ -577,7 +577,7 @@ impl TyCheckCtx {
 
     /// Asserts that the intrinsic operation is implemented for the given
     /// callee, and possibly arguments.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn intrinsic_call_expression(&self, expr: &lume_hir::IntrinsicCall) -> Result<()> {
         let (trait_name, _) = self.lang_item_of_intrinsic(&expr.kind);
 
@@ -597,7 +597,7 @@ impl TyCheckCtx {
 
     /// Asserts that the expression has visible access to the field which it is
     /// referring to.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn member_expression(&self, expr: &lume_hir::Member) -> Result<()> {
         let callee_ty = self.type_of(expr.callee)?;
         let callee_def = self.hir_expect_struct(callee_ty.instance_of);
@@ -646,7 +646,7 @@ impl TyCheckCtx {
     /// Asserts that the patterns in the switch expression are valid for the
     /// operand, as well as checking that all branch expressions are
     /// compatible.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn switch_expression(&self, expr: &lume_hir::Switch) -> Result<()> {
         let Some(first_case) = expr.cases.first() else {
             return Ok(());
@@ -692,7 +692,7 @@ impl TyCheckCtx {
 
     /// Asserts that the variant exists on the enum type, as well as asserting
     /// the types of passed parameters, if any.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn variant_expression(&self, expr: &lume_hir::Variant) -> Result<()> {
         let enum_def = self.enum_def_with_name(&expr.name.clone().parent().unwrap())?;
         let enum_case_def = self.enum_case_with_name(&expr.name)?;
@@ -731,7 +731,7 @@ impl TyCheckCtx {
 
     /// Asserts that the fields defined within the pattern is valid for the
     /// corresponding type.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn pattern(&self, pattern: &lume_hir::Pattern) -> Result<()> {
         let lume_hir::PatternKind::Variant(pattern) = &pattern.kind else {
             return Ok(());
@@ -742,7 +742,7 @@ impl TyCheckCtx {
 
     /// Asserts that the fields defined within the given variant pattern is
     /// valid for the corresponding variant.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn variant_pattern(&self, pattern: &lume_hir::VariantPattern) -> Result<()> {
         let enum_case_def = self.enum_case_with_name(&pattern.name)?;
 

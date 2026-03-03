@@ -1087,7 +1087,7 @@ impl Registers {
     }
 
     /// Allocates a new register with the given type and block.
-    #[libftrace::traced(level = Trace, fields(ty, block), ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%ty, %block), ret)]
     pub fn allocate(&mut self, ty: Type, block: BasicBlockId) -> RegisterId {
         let id = self.next_id();
         self.regs.push(Register {
@@ -1100,7 +1100,7 @@ impl Registers {
     }
 
     /// Allocates a new parameter register with the given type.
-    #[libftrace::traced(level = Trace, fields(ty), ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%ty), ret)]
     pub fn allocate_param(&mut self, ty: Type) -> RegisterId {
         let id = self.next_id();
         self.regs.push(Register { id, ty, block: None });

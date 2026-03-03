@@ -5,7 +5,7 @@ impl LoweringContext<'_> {
     ///
     /// For example, the import path `std::io (File)` would become
     /// `std::io::File`.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn expand_import_path(&mut self, path: lume_ast::ImportPath) -> Result<lume_hir::Path> {
         let location = self.location(path.location.clone());
 

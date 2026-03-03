@@ -135,7 +135,7 @@ pub struct Compiler {
 
 impl Compiler {
     /// Parses all the source files within the current [`Package`] into HIR.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn parse(&mut self) -> Result<lume_hir::map::Map> {
         let hir = self.gcx.dcx.with(|dcx| lower_to_hir(&self.package, dcx))?;
 
@@ -153,23 +153,23 @@ impl Compiler {
     }
 
     /// Type checks all the given source files.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<(TyCheckCtx, TypedIR)> {
         let tcx = TyCtx::new(self.gcx.clone());
 
         // Defines the types of all nodes within the HIR maps.
         let mut ticx = TyInferCtx::new(tcx, hir);
         ticx.infer()?;
-        libftrace::info!("finished type inference");
+        tracing::info!("finished type inference");
 
         // Unifies all the types within the type inference context.
         lume_unification::unify(&mut ticx)?;
-        libftrace::info!("finished type unification");
+        tracing::info!("finished type unification");
 
         // Then, make sure they're all valid.
         let mut tccx = TyCheckCtx::new(ticx);
         tccx.typecheck()?;
-        libftrace::info!("finished type checking");
+        tracing::info!("finished type checking");
 
         #[allow(clippy::disallowed_macros, reason = "only used in debugging")]
         if self.gcx.session.options.print_type_context {
@@ -183,7 +183,7 @@ impl Compiler {
 
     /// Generates MIR for all the modules within the given state object.
     #[cfg(feature = "codegen")]
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn codegen(self, tcx: &TyCheckCtx, tir: TypedIR) -> lume_mir::ModuleMap {
         let opts = self.gcx.session.options.clone();
 

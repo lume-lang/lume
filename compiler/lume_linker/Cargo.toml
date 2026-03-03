@@ -14,7 +14,7 @@ lume_errors = { path = "../../crates/lume_errors" }
 lume_session = { path = "../lume_session" }
 
 error_snippet = { workspace = true }
-libftrace = { workspace = true }
+tracing = { workspace = true }
 
 [lints]
 workspace = true

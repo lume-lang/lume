@@ -39,12 +39,12 @@ impl UnificationPass<'_> {
     ///
     /// So, even if no constraints could be generated, we would still notice
     /// and empty constraint list and throw an error.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn ensure_entry_for(&self, type_variable: TypeVariableId) {
         self.type_vars.try_write().unwrap().entry(type_variable).or_default();
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub(crate) fn eq(&self, type_variable: TypeVariableId, lhs: TypeRef, rhs: TypeRef) {
         if lhs == rhs {
             return;
@@ -59,7 +59,7 @@ impl UnificationPass<'_> {
             .push(Constraint::Equal { lhs, rhs });
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub(crate) fn sub(&self, type_variable: TypeVariableId, of: TypeRef, param: NodeId) {
         let mut type_vars = self.type_vars.try_write().unwrap();
 
@@ -70,7 +70,7 @@ impl UnificationPass<'_> {
             .push(Constraint::Subtype { of, param });
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub(crate) fn subst(&self, type_variable: TypeVariableId, with: TypeRef) {
         let mut type_vars = self.type_vars.try_write().unwrap();
         let existing = type_vars.entry(type_variable).or_default().substitute.replace(with);
@@ -89,7 +89,7 @@ pub(crate) enum Constraint {
 }
 
 impl UnificationPass<'_> {
-    #[libftrace::traced(level = Info, err)]
+    #[tracing::instrument(level = "INFO", skip_all, err)]
     fn create_constraints(&mut self) -> Result<()> {
         for node in self.tcx.hir().nodes().values() {
             match node {
@@ -129,7 +129,7 @@ impl UnificationPass<'_> {
 }
 
 impl UnificationPass<'_> {
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn create_type_constraints(&self, expr: NodeId, path: &lume_hir::Path) -> Result<()> {
         match &path.name {
             lume_hir::PathSegment::Type { .. } => {
@@ -186,7 +186,7 @@ impl UnificationPass<'_> {
 }
 
 impl UnificationPass<'_> {
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn create_constraints_of(&self, expr: NodeId, path: &lume_hir::Path, type_variable: TypeVariableId) -> Result<()> {
         self.ensure_entry_for(type_variable);
 
@@ -331,7 +331,7 @@ impl UnificationPass<'_> {
 }
 
 impl UnificationPass<'_> {
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn create_type_substitutions(&mut self) -> Result<()> {
         let mut removals = HashSet::new();
         let mut substitution_map = IndexMap::<TypeVariableId, TypeRef>::new();
@@ -416,7 +416,7 @@ impl UnificationPass<'_> {
     }
 }
 
-#[libftrace::traced(level = Trace, err)]
+#[tracing::instrument(level = "TRACE", skip_all, err)]
 fn normalize_equality_constraints(
     tcx: &TyInferCtx,
     type_variable: TypeVariableId,
@@ -467,7 +467,7 @@ fn normalize_equality_constraints(
     }
 }
 
-#[libftrace::traced(level = Trace, err)]
+#[tracing::instrument(level = "TRACE", skip_all, err)]
 pub(crate) fn normalize_constraint_types(
     tcx: &TyInferCtx,
     target: TypeId,
@@ -520,7 +520,7 @@ pub(crate) fn is_type_contained_within(target: TypeId, ty: &TypeRef) -> bool {
 }
 
 impl UnificationPass<'_> {
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn apply_substitutions(&mut self) -> Result<()> {
         let tcx_constraints = self.type_vars.try_read().unwrap();
 
@@ -628,7 +628,7 @@ impl UnificationPass<'_> {
 /// If any errors are raised during unification, this method will either:
 /// - return early with the error wrapped in a `Result::Err`,
 /// - or raise the inside error inside the diagnostics context in `tcx`.
-#[libftrace::traced(level = Info, err)]
+#[tracing::instrument(level = "INFO", skip_all, err)]
 pub fn unify(tcx: &mut TyInferCtx) -> Result<()> {
     verify::verify_type_names(tcx);
 
@@ -651,7 +651,7 @@ pub fn unify(tcx: &mut TyInferCtx) -> Result<()> {
 }
 
 /// Invalidate the type cache.
-#[libftrace::traced(level = Debug)]
+#[tracing::instrument(level = "DEBUG", skip_all)]
 fn invalidate_type_cache(tcx: &mut TyInferCtx) {
     let ctx: &lume_session::GlobalCtx = &*tcx;
     lume_architect::DatabaseContext::db(ctx).clear_all();

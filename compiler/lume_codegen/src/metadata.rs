@@ -124,7 +124,7 @@ impl MetadataEntries {
 
 impl CraneliftBackend {
     /// Declares and defines metadata tables inside the module.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn declare_type_metadata(&mut self) {
         let tables = self.declare_tables();
 
@@ -144,7 +144,7 @@ impl CraneliftBackend {
 
 impl CraneliftBackend {
     /// Declares all metadata table definitions in the module.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn declare_tables(&self) -> TableDefinitions {
         let types = self
             .module_mut()
@@ -185,7 +185,7 @@ impl CraneliftBackend {
         }
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn write_table_contents(&self, defs: Definitions) {
         self.define_metadata(
             defs.tables.types,
@@ -218,7 +218,7 @@ impl CraneliftBackend {
         );
     }
 
-    #[libftrace::traced(level = Trace, fields(data_id, name))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%data_id, %name))]
     fn define_metadata(&self, data_id: DataId, name: String, desc: &DataDescription) {
         self.module_mut().define_data(data_id, desc).unwrap();
         self.static_data.write().unwrap().insert(name, data_id);
@@ -232,7 +232,7 @@ impl CraneliftBackend {
 ///
 /// This function also defines the offset of each metadata entry and saves it
 /// inside the [`Definitions::offsets`] field.
-#[libftrace::traced(level = Debug)]
+#[tracing::instrument(level = "DEBUG", skip_all)]
 fn declare_builder_stubs(ctx: &CraneliftBackend, defs: &mut Definitions) {
     let metadata_store = &ctx.context.metadata;
 
@@ -257,7 +257,7 @@ fn declare_builder_stubs(ctx: &CraneliftBackend, defs: &mut Definitions) {
     }
 }
 
-#[libftrace::traced(level = Trace, fields(name = metadata.full_name))]
+#[tracing::instrument(level = "TRACE", skip_all, fields(name = %metadata.full_name))]
 fn declare_type_metadata_stub(ctx: &CraneliftBackend, metadata: &TypeMetadata, defs: &mut Definitions) {
     let builder = &mut defs.builders.types;
     let base_offset = builder.offset();
@@ -310,7 +310,7 @@ fn declare_type_metadata_stub(ctx: &CraneliftBackend, metadata: &TypeMetadata, d
     defs.offsets.types.insert(metadata.id, base_offset);
 }
 
-#[libftrace::traced(level = Trace, fields(name = metadata.name))]
+#[tracing::instrument(level = "TRACE", skip_all, fields(name = %metadata.name))]
 fn declare_field_metadata_stub(id: NodeId, metadata: &FieldMetadata, defs: &mut Definitions) {
     let builder = &mut defs.builders.fields;
     let base_offset = builder.offset();
@@ -328,7 +328,7 @@ fn declare_field_metadata_stub(id: NodeId, metadata: &FieldMetadata, defs: &mut 
     defs.offsets.fields.insert(id, base_offset);
 }
 
-#[libftrace::traced(level = Trace, fields(name = metadata.full_name))]
+#[tracing::instrument(level = "TRACE", skip_all, fields(name = %metadata.full_name))]
 fn declare_method_metadata_stub(ctx: &CraneliftBackend, metadata: &MethodMetadata, defs: &mut Definitions) {
     let builder = &mut defs.builders.methods;
     let base_offset = builder.offset();
@@ -365,7 +365,7 @@ fn declare_method_metadata_stub(ctx: &CraneliftBackend, metadata: &MethodMetadat
     defs.offsets.methods.insert(metadata.func_id, base_offset);
 }
 
-#[libftrace::traced(level = Trace, fields(name = metadata.name))]
+#[tracing::instrument(level = "TRACE", skip_all, fields(name = %metadata.name))]
 fn declare_parameter_metadata_stub(metadata: &ParameterMetadata, defs: &mut Definitions) {
     let builder = &mut defs.builders.parameters;
     let base_offset = builder.offset();
@@ -386,7 +386,7 @@ fn declare_parameter_metadata_stub(metadata: &ParameterMetadata, defs: &mut Defi
     defs.offsets.parameters.insert(metadata.id, base_offset);
 }
 
-#[libftrace::traced(level = Trace, fields(name = metadata.name))]
+#[tracing::instrument(level = "TRACE", skip_all, fields(name = %metadata.name))]
 fn declare_type_parameter_metadata_stub(metadata: &TypeParameterMetadata, defs: &mut Definitions) {
     let builder = &mut defs.builders.type_parameters;
     let base_offset = builder.offset();
@@ -409,7 +409,7 @@ impl CraneliftBackend {
     /// Declares aliases for all type metadata entries, which contain a pointer
     /// to the type's metadata entry. This is mostly used in the runtime, to
     /// make it easier to access type metadata from the Rust-based runtime.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn declare_type_aliases(&self, defs: &mut Definitions) {
         let type_table_data_id = defs.tables.types;
 
@@ -421,7 +421,7 @@ impl CraneliftBackend {
         for (&id, &symbol_offset) in &defs.offsets.types {
             let metadata = self.context.metadata.types.get(&id).unwrap();
 
-            libftrace::debug!("declaring type alias: {} at +{symbol_offset:0x}", metadata.mangled_name);
+            tracing::debug!("declaring type alias: {} at +{symbol_offset:0x}", metadata.mangled_name);
 
             if metadata.is_local {
                 // If the type is defined within the package, declare it and allow other
@@ -455,7 +455,7 @@ impl CraneliftBackend {
 impl CraneliftBackend {
     /// Populates the stubs which were created in the [`declare_builder_stubs`]
     /// function.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn populate_builder_stubs(&self, defs: &mut Definitions) {
         for (id, offset) in defs.offsets.types.clone() {
             self.populate_type_metadata_stub(id, offset, defs);
@@ -478,7 +478,7 @@ impl CraneliftBackend {
         }
     }
 
-    #[libftrace::traced(level = Trace, fields(id, offset))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(?id, offset))]
     fn populate_type_metadata_stub(&self, id: TypeMetadataId, offset: usize, defs: &mut Definitions) {
         let builder = &mut defs.builders.types;
         let metadata = self.context.metadata.types.get(&id).unwrap();
@@ -520,7 +520,7 @@ impl CraneliftBackend {
         }
     }
 
-    #[libftrace::traced(level = Trace, fields(id, offset))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(?id, offset))]
     fn populate_field_metadata_stub(&self, id: NodeId, offset: usize, defs: &mut Definitions) {
         let builder = &mut defs.builders.fields;
         let metadata = self.context.metadata.fields.get(&id).unwrap();
@@ -538,7 +538,7 @@ impl CraneliftBackend {
         );
     }
 
-    #[libftrace::traced(level = Trace, fields(id, offset))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(?id, offset))]
     fn populate_method_metadata_stub(&self, id: NodeId, offset: usize, defs: &mut Definitions) {
         let builder = &mut defs.builders.methods;
         let metadata = self.context.metadata.methods.get(&id).unwrap();
@@ -578,7 +578,7 @@ impl CraneliftBackend {
         );
     }
 
-    #[libftrace::traced(level = Trace, fields(id, offset))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(?id, offset))]
     fn populate_parameter_metadata_stub(&self, id: NodeId, offset: usize, defs: &mut Definitions) {
         let builder = &mut defs.builders.parameters;
         let metadata = self.context.metadata.parameters.get(&id).unwrap();
@@ -596,7 +596,7 @@ impl CraneliftBackend {
         );
     }
 
-    #[libftrace::traced(level = Trace, fields(id, offset))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(?id, offset))]
     fn populate_type_parameter_metadata_stub(&self, id: NodeId, offset: usize, defs: &mut Definitions) {
         let builder = &mut defs.builders.type_parameters;
         let metadata = self.context.metadata.type_parameters.get(&id).unwrap();

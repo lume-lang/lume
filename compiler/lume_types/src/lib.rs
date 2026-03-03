@@ -757,7 +757,7 @@ impl TypeDatabaseContext {
     /// # Errors
     ///
     /// Returns `Err` if the type wasn't found.
-    #[libftrace::traced(level = Trace, fields(id), err)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%id), err)]
     pub fn expect_type(&self, id: NodeId) -> Result<&Type> {
         match self.type_(id) {
             Some(ty) => Ok(ty),
@@ -809,14 +809,14 @@ impl TypeDatabaseContext {
 
     /// Allocates a new [`Function`] with the given name and kind.
     #[inline]
-    #[libftrace::traced(level = Trace, fields(id, name = format!("{name:+}")))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%id, name = name.to_wide_string()))]
     pub fn func_alloc(&mut self, id: NodeId, name: Path) {
         self.functions.insert(id, Function { id, name });
     }
 
     /// Allocates a new [`Type`] with the given name and kind.
     #[inline]
-    #[libftrace::traced(level = Trace, fields(id, name = format!("{name:+}")))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%id, name = name.to_wide_string()))]
     pub fn type_alloc(&mut self, id: NodeId, name: &Path, kind: TypeKind) {
         let existing = self.types.insert(id, Type {
             id,
@@ -834,7 +834,7 @@ impl TypeDatabaseContext {
 
     /// Allocates a new [`Method`] on the given owner [`NodeId`].
     #[inline]
-    #[libftrace::traced(level = Trace, fields(id, name = format!("{name:+}")))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%id, name = name.to_wide_string()))]
     pub fn method_alloc(&mut self, id: NodeId, owner: TypeRef, name: Path, kind: MethodKind) {
         self.methods.insert(id, Method {
             id,

@@ -16,7 +16,7 @@ impl TyCheckCtx {
     /// Returns `Err` when either a language error occured, such as missing
     /// variables, missing methods, etc, or when expected items cannot be
     /// found within the context.
-    #[libftrace::traced(level = Info, err)]
+    #[tracing::instrument(level = "INFO", skip_all, err)]
     pub fn typecheck(&mut self) -> Result<()> {
         self.typech_expressions();
         self.typech_traits();
@@ -35,7 +35,7 @@ impl TyCheckCtx {
     /// # Errors
     ///
     /// Returns `Err` when expected items cannot be found within the context.
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub(crate) fn check_signature_compatibility(&self, from: FunctionSig<'_>, to: FunctionSig<'_>) -> Result<bool> {
         // If the two given signatures are exactly the same, both underlying instance
         // and type arguments, we can be sure they're compatible.
@@ -48,7 +48,7 @@ impl TyCheckCtx {
             && self.check_return_type_compatibility(from, to)?)
     }
 
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     fn check_type_parameter_compatibility(&self, from: FunctionSig<'_>, to: FunctionSig<'_>) -> Result<bool> {
         if from.type_params.len() != to.type_params.len() {
             return Ok(false);
@@ -75,7 +75,7 @@ impl TyCheckCtx {
         Ok(true)
     }
 
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     fn check_parameter_compatibility(&self, from: FunctionSig<'_>, to: FunctionSig<'_>) -> Result<bool> {
         if from.params.len() != to.params.len() {
             return Ok(false);
@@ -101,7 +101,7 @@ impl TyCheckCtx {
         Ok(true)
     }
 
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     fn check_return_type_compatibility(&self, from: FunctionSig<'_>, to: FunctionSig<'_>) -> Result<bool> {
         // If both return types refer to `Self` or are otherwise equivalent to `Self`,
         // return true.

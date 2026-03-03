@@ -17,7 +17,6 @@ lume_span = { path = "../../crates/lume_span" }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 indexmap = { workspace = true }
-libftrace = { workspace = true }
 pubgrub = { version = "=0.3.0" }
 semver = { version = "^1", features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
