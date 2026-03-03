@@ -3,8 +3,9 @@ pub(crate) mod error;
 pub(crate) mod opts;
 
 use std::env;
+use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use lume_errors::DiagCtx;
 
 #[derive(Debug, Parser)]
@@ -52,21 +53,31 @@ pub(crate) struct LumeDevelopmentCommands {
     #[arg(long, global = true, help_heading = "Development")]
     #[cfg_attr(not(debug_assertions), arg(hide = true))]
     pub track_diagnostics: bool,
+
+    /// Log file for traces
+    #[arg(long, global = true, help_heading = "Development")]
+    #[cfg_attr(not(debug_assertions), arg(hide = true))]
+    pub log_file: Option<PathBuf>,
+
+    /// Increases verbosity of tracing spans and events
+    #[arg(long, short = 'v', global = true, help_heading = "Development", action = ArgAction::Count)]
+    #[cfg_attr(not(debug_assertions), arg(hide = true))]
+    pub verbose: u8,
 }
 
 pub fn lume_cli_entry() {
-    #[cfg(feature = "tracing")]
-    libftrace::set_filter(
-        libftrace::filter::from_env("LUMEC_LOG")
-            .or_else(|err| {
-                eprintln!("error: could not parse trace filter: {err:?}");
-                libftrace::filter::parse("info")
-            })
-            .unwrap(),
-    );
-
     let matches = LumeCli::parse();
     let dcx = DiagCtx::new();
+
+    let _guard = lume_tracing::init_subscriber(lume_tracing::Options {
+        default_filter: match matches.dev.verbose {
+            0 => None,
+            1 => Some(tracing::level_filters::LevelFilter::INFO),
+            2 => Some(tracing::level_filters::LevelFilter::DEBUG),
+            _ => Some(tracing::level_filters::LevelFilter::TRACE),
+        },
+        log_file: matches.dev.log_file,
+    });
 
     if matches.dev.panic_on_error {
         dcx.panic_on_error();

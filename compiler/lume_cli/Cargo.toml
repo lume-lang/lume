@@ -16,6 +16,7 @@ lume_errors = { path = "../../crates/lume_errors" }
 lume_lsp = { path = "../lume_lsp", optional = true }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
+lume_tracing = { path = "../../crates/lume_tracing" }
 
 clap = { workspace = true }
 error_snippet = { workspace = true }
@@ -23,11 +24,10 @@ error_snippet_derive = { workspace = true }
 glob = { version = "^0" }
 libftrace = { workspace = true }
 toml = { version = "0.9.6" }
+tracing = { workspace = true }
 
 [features]
 default = ["lsp"]
-
-tracing = []
 lsp = ["dep:lume_lsp"]
 
 [lints]
