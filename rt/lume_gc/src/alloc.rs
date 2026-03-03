@@ -120,7 +120,7 @@ impl YoungGeneration {
 
     pub(crate) fn alloc(&mut self, size: usize, metadata: *const TypeMetadata) -> Option<*mut u8> {
         if let Some(ptr) = self.allocator.alloc(size) {
-            libftrace::trace!("[G1] allocated {size} bytes ({ptr:p})");
+            tracing::trace!("[G1] allocated {size} bytes ({ptr:p})");
             self.info.object_count += 1;
 
             let mut has_dropper = false;
@@ -225,7 +225,7 @@ impl OldGeneration {
         #[cfg(debug_assertions)]
         #[allow(unused, reason = "iterator values will be unused when tracing is disabled")]
         for (alloc, size, _) in &self.allocations {
-            libftrace::trace!("[G2] deallocated {size} bytes ({:p})", *alloc);
+            tracing::trace!("[G2] deallocated {size} bytes ({:p})", *alloc);
         }
 
         for (ptr, size, drop_ptr) in self.allocations.drain(..) {
@@ -278,8 +278,9 @@ unsafe impl Sync for GenerationalAllocator {}
 impl GenerationalAllocator {
     /// Creates a new [`GenerationalAllocator`], where the initial size of the
     /// 1st generation is the given value.
+    #[allow(clippy::cast_precision_loss)]
     pub fn new(gen1_size: usize) -> Self {
-        libftrace::trace!(
+        tracing::trace!(
             "[G1] initial memory block of {gen1_size}B (~{:.1} MB)",
             (gen1_size as f64) / 1024.0 / 1024.0
         );
@@ -346,7 +347,7 @@ impl GenerationalAllocator {
             return ptr;
         }
 
-        libftrace::debug!("collection triggered, 1st generation exhausted");
+        tracing::debug!("collection triggered, 1st generation exhausted");
 
         // Promote all living allocations to the 2nd generation, effectively clearing
         // the entire 1st generation for new allocations.
@@ -359,7 +360,7 @@ impl GenerationalAllocator {
 
         // While it is completely expected to allocate successfully, the fallback
         // will use the 2nd generation allocator again in case of allocator changes.
-        libftrace::error!("warning: expected allocation to G1 after promotion, but it failed");
+        tracing::error!("warning: expected allocation to G1 after promotion, but it failed");
 
         self.old.alloc(size, metadata)
     }
@@ -377,7 +378,7 @@ impl GenerationalAllocator {
     /// all the allocations have been handled, the 1st generation is cleared.
     pub fn promote_allocations(&mut self, frame: &FrameStackMap, reason: PromotionReason) {
         let _ = reason;
-        libftrace::debug!("promotion triggered (reason: {reason:?})");
+        tracing::debug!("promotion triggered (reason: {reason:?})");
 
         // Reverse the list of all objects. Object references are added in the order
         // that they're found, but we must promote child objects first, so that
@@ -410,7 +411,7 @@ impl GenerationalAllocator {
             let new_live_ptr = self.old.alloc(obj_size, metadata_ptr);
             unsafe { memcpy(strip_tags(new_live_ptr), alloc_start, obj_size) };
 
-            libftrace::trace!("[G1->G2] promoted {alloc_start:p} (now {new_live_ptr:p})");
+            tracing::trace!("[G1->G2] promoted {alloc_start:p} (now {new_live_ptr:p})");
 
             // Replace the pointer on the stack with newly moved object pointer,
             // so when the function reloads the object register from the stack,

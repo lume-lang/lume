@@ -65,7 +65,7 @@ struct IntrinsicFunctions {
 /// # Errors
 ///
 /// Returns `Err` if the compiler returned an error while compiling the MIR.
-#[libftrace::traced(level = Debug, err)]
+#[tracing::instrument(level = "INFO", skip_all, fields(package = mir.package.name), err)]
 pub fn generate(mir: ModuleMap) -> Result<Vec<u8>> {
     let object = CraneliftBackend::new(mir)?.generate()?;
 
@@ -123,7 +123,7 @@ impl CraneliftBackend {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn generate(&mut self) -> lume_errors::Result<ObjectProduct> {
         let functions = std::mem::take(&mut self.context.functions);
 
@@ -217,7 +217,7 @@ impl CraneliftBackend {
         self.module.as_ref().unwrap().try_write().unwrap()
     }
 
-    #[libftrace::traced(level = Info, fields(func = func.name))]
+    #[tracing::instrument(level = "INFO", skip_all, fields(func = %func.name))]
     fn declare_function(&mut self, func: &lume_mir::Function) -> Result<(cranelift_module::FuncId, Signature)> {
         let sig = self.create_signature_of(&func.signature);
 
@@ -237,7 +237,7 @@ impl CraneliftBackend {
         Ok((func_id, sig))
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn create_signature_of(&self, signature: &lume_mir::Signature) -> Signature {
         let mut sig = self.module().make_signature();
 
@@ -256,7 +256,7 @@ impl CraneliftBackend {
         sig
     }
 
-    #[libftrace::traced(level = Info, fields(func = func.name))]
+    #[tracing::instrument(level = "INFO", skip_all, fields(func = %func.name))]
     fn define_function(
         &self,
         func: &lume_mir::Function,
@@ -305,7 +305,7 @@ impl CraneliftBackend {
         }
 
         if let Err(err) = self.module_mut().define_function(declared_func.id, ctx) {
-            libftrace::error!("error caused by function:\n{}", ctx.func);
+            tracing::error!("error caused by function:\n{}", ctx.func);
 
             // Displaying verifier errors directly gives a really useless error, so to
             // actually know the issue, we're using the debug output of the error in the
@@ -463,6 +463,7 @@ impl CraneliftBackend {
     ///     noffset     u64
     ///     offsets     [u64; noffset]
     /// ```
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn declare_stack_maps(
         &self,
         product: &mut ObjectProduct,
@@ -561,7 +562,7 @@ impl CraneliftBackend {
     }
 }
 
-#[libftrace::traced(level = Trace, fields(name, params, ret))]
+#[tracing::instrument(level = "TRACE", fields(%name, ?params, ?ret), skip_all, err)]
 fn import_function<TModule: Module>(
     module: &mut TModule,
     name: &'static str,
@@ -595,6 +596,7 @@ pub(crate) fn address_for_func(func_id: FuncId) -> Address {
     }
 }
 
+#[tracing::instrument(level = "DEBUG", skip_all, err)]
 fn declare_runtime_options(product: &mut ObjectProduct, options: &lume_options::RuntimeOptions) -> Result<()> {
     let encoded = lume_options::to_vec(options).map_cause("failed to encode runtime options")?;
     let encoded_len = encoded.len() as u64;
@@ -678,7 +680,7 @@ impl<'ctx> LowerFunction<'ctx> {
         self.backend.module_mut().declare_func_in_func(id, self.builder.func)
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub(crate) fn seal_block(&mut self, id: lume_mir::BasicBlockId) {
         let cg_block = *self.blocks.get(&id).unwrap();
 
@@ -692,7 +694,7 @@ impl<'ctx> LowerFunction<'ctx> {
     /// the last invocation occured and whether any memory actually needs to be
     /// collected.
     #[inline]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub(crate) fn insert_gc_trigger(&mut self) {
         if self.func.signature.is_dropper {
             return;
@@ -702,12 +704,12 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.ins().call(cl_gc_step, &[]);
     }
 
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub(crate) fn declare_var(&mut self, register: RegisterId, ty: lume_mir::Type) -> Variable {
         let cg_ty = self.backend.cl_type_of(&ty);
         let var = self.builder.declare_var(cg_ty);
 
-        libftrace::debug!("declare_var {register}[{ty}] = {var}({cg_ty})");
+        tracing::debug!("declare_var {register}[{ty}] = {var}({cg_ty})");
 
         self.variables.insert(register, var);
         self.variable_types.insert(register, ty);
@@ -738,18 +740,18 @@ impl<'ctx> LowerFunction<'ctx> {
         let val = self.use_var(register);
         let loaded = self.builder.ins().load(ty, MemFlags::new(), val, 0);
 
-        libftrace::debug!("loading {loaded} from {register}({val}), type {ty}");
+        tracing::debug!("loading {loaded} from {register}({val}), type {ty}");
 
         #[allow(clippy::let_and_return, reason = "not raised when tracing is enabled")]
         loaded
     }
 
-    #[libftrace::traced(level = Trace, fields(name = self.func.name, register, offset, ty))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = %self.func.name, %register, offset, ?ty))]
     #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     pub(crate) fn load_field(&mut self, register: RegisterId, offset: usize, ty: Type) -> Value {
         let ptr = self.use_var(register);
 
-        libftrace::debug!("load_field", ptr = ptr, ty = ty, register = register);
+        tracing::debug!(%ptr, %ty, %register, "load_field");
 
         self.builder.ins().load(ty, MemFlags::new(), ptr, offset as i32)
     }

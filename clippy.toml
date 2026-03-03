@@ -1,5 +1,5 @@
 too-many-lines-threshold = 160
 disallowed-macros = [
-    { path = "std::println", reason = "Use `libftrace::info!` instead", replacement = "libftrace::info!" },
-    { path = "std::eprintln", reason = "Use `libftrace::error!` instead", replacement = "libftrace::error!" },
+    { path = "std::println", reason = "Use `tracing::info!` instead", replacement = "tracing::info!" },
+    { path = "std::eprintln", reason = "Use `tracing::error!` instead", replacement = "tracing::error!" },
 ]

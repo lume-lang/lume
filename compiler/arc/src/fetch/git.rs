@@ -126,8 +126,8 @@ fn clone_repository(dependency: &ManifestDependencySource) -> Result<PathBuf> {
     cmd.stdout(Stdio::null());
     cmd.stderr(Stdio::piped());
 
-    libftrace::debug!("cloning repository {repository_url}");
-    libftrace::trace!("{cmd:?}");
+    tracing::debug!("cloning repository {repository_url}");
+    tracing::trace!("{cmd:?}");
 
     let process = cmd.spawn().map_err(|err| {
         Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("failed to clone repository: {err}")))

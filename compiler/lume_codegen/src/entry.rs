@@ -18,14 +18,14 @@ impl CraneliftBackend {
     /// returned, the same parts need to be torn down and cleared up. These
     /// lifetime routines are invoked from the "real" entrypoint, which
     /// itself ends up calling the `main` function.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn create_entry_fn(
         &mut self,
         ctx: &mut Context,
         builder_ctx: &mut FunctionBuilderContext,
     ) -> Result<()> {
         let Some(entrypoint_func) = self.context.entrypoint() else {
-            libftrace::warning!("skipping entrypoint generation: no entry found");
+            tracing::warn!("skipping entrypoint generation: no entry found");
             return Ok(());
         };
 
@@ -81,7 +81,7 @@ impl CraneliftBackend {
         builder.finalize();
 
         if let Err(err) = self.module_mut().define_function(main_func_id, ctx) {
-            libftrace::error!("error caused by function:\n{}", ctx.func);
+            tracing::error!("error caused by function:\n{}", ctx.func);
 
             // Displaying verifier errors directly gives a really useless error, so to
             // actually know the issue, we're using the debug output of the error in the

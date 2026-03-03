@@ -15,7 +15,7 @@ impl TyCheckCtx {
     ///
     /// If the [`Method`] is not valid for the given expression, returns
     /// [`CallableCheckResult::Failure`] with one-or-more reasons.
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub(crate) fn check_method(&self, method: &Method, expr: lume_hir::CallExpression) -> Result<bool> {
         self.check_signature(Callable::Method(method), expr)
     }
@@ -25,14 +25,14 @@ impl TyCheckCtx {
     ///
     /// If the [`Function`] is not valid for the given expression, returns
     /// [`CallableCheckResult::Failure`] with one-or-more reasons.
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub(crate) fn check_function<'a>(&self, function: &'a Function, expr: &'a lume_hir::StaticCall) -> Result<bool> {
         self.check_signature(Callable::Function(function), lume_hir::CallExpression::Static(expr))
     }
 
     /// Checks whether the given invocation signature matches the signature of
     /// the corresponding callable.
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     fn check_signature<'a>(&self, callable: Callable<'a>, expr: lume_hir::CallExpression<'a>) -> Result<bool> {
         let narrow_signature = self.signature_of(callable)?;
         let is_instance_method = narrow_signature.is_instanced();
@@ -80,7 +80,7 @@ impl TyCheckCtx {
 
     /// Checks whether the given type arguments matches the signature of the
     /// given type parameters.
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     fn check_type_params<'a>(
         &self,
         expr: lume_hir::CallExpression<'a>,
@@ -133,7 +133,7 @@ impl TyCheckCtx {
 
     /// Checks whether the given arguments matches the signature of the given
     /// parameters.
-    #[libftrace::traced(level = Trace, fields(name = expr.name()), err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(expr = %expr.name()) err, ret)]
     fn check_params<'a>(
         &self,
         expr: lume_hir::CallExpression<'a>,
@@ -254,7 +254,7 @@ impl TyCheckCtx {
     /// current context, including visibility, arguments and type arguments.
     /// To look up methods which only match the callee type and method name,
     /// see [`lume_infer::TyInferCtx::lookup_methods_on`].
-    #[libftrace::traced(level = Trace, fields(name = expr.name(), args = expr.arguments()), err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(expr = %expr.name(), args = ?expr.arguments()), err, ret)]
     pub fn lookup_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
         match expr {
             lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_) => {
@@ -286,7 +286,7 @@ impl TyCheckCtx {
     /// current context, including visibility, arguments and type arguments.
     /// To look up methods which only match the callee type and method name,
     /// see [`lume_infer::TyInferCtx::lookup_methods_on`].
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn lookup_methods(&self, expr: lume_hir::CallExpression) -> Result<&'_ Method> {
         let Callable::Method(probed_method) = self.probe_callable(expr)? else {
             panic!("bug!: expected expression to yield a method, found function: {expr:#?}");
@@ -304,7 +304,7 @@ impl TyCheckCtx {
     /// current context, including visibility, arguments and type arguments.
     /// To look up functions which only match function name, see
     /// [`lume_infer::TyInferCtx::probe_functions`].
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn lookup_functions(&self, expr: &lume_hir::StaticCall) -> Result<&'_ Function> {
         let Callable::Function(probed_func) = self.probe_callable(lume_hir::CallExpression::Static(expr))? else {
             panic!("bug!: expected expression to yield a function, found method: {expr:#?}");
@@ -326,7 +326,7 @@ impl TyCheckCtx {
     /// For a generic callable lookup, see [`Self::lookup_callable`].
     /// For a static callable lookup, see
     /// [`Self::lookup_callable_static`].
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn lookup_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
         self.lookup_callable(lume_hir::CallExpression::Instanced(call))
     }
@@ -342,13 +342,13 @@ impl TyCheckCtx {
     /// For a generic callable lookup, see [`Self::lookup_callable`].
     /// For an instance callable lookup, see
     /// [`Self::lookup_callable_instance`].
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn lookup_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
         self.lookup_callable(lume_hir::CallExpression::Static(call))
     }
 
     /// Determines whether the given call expression is a dynamic dispatch.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn is_dynamic_dispatch(&self, expr: lume_hir::CallExpression) -> Result<bool> {
         let callable = self.lookup_callable(expr)?;
 
@@ -370,7 +370,7 @@ impl TyCheckCtx {
     ///
     /// If not all branches return a value, or if different branches return
     /// different types, the method returns [`Err`].
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub(crate) fn ensure_block_ty_match(&self, block: &lume_hir::Block, expected: &TypeRef) -> Result<()> {
         self.ensure_type_compatibility(&self.type_of_block_ret(block)?, expected)
     }
@@ -382,7 +382,7 @@ impl TyCheckCtx {
     ///
     /// If not all branches return a value, or if different branches return
     /// different types, the method returns [`Err`].
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub(crate) fn type_of_block_ret(&self, block: &lume_hir::Block) -> Result<TypeRef> {
         // If there's any `break`, `continue` or `return` statement directly within the
         // block, we need to return the value of those.
@@ -433,7 +433,7 @@ impl TyCheckCtx {
     /// within it's declared module. This also applies to any recursive calls
     /// this method makes, in the case of some expressions, such as
     /// assignments.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn matching_type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
         match &stmt.kind {
             lume_hir::StatementKind::Expression(expr) => {
@@ -462,7 +462,7 @@ impl TyCheckCtx {
     /// within it's declared module. This also applies to any recursive calls
     /// this method makes, in the case of some expressions, such as
     /// assignments.
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn matching_type_of_cond(&self, id: NodeId, cases: &[lume_hir::Condition]) -> Result<TypeRef> {
         let first_case = cases.first().expect("expected at least 1 case");
         let last_case = cases.last().expect("expected at least 1 case");
@@ -527,7 +527,7 @@ impl TyCheckCtx {
     /// If no node with the given ID is found or if the node cannot hold
     /// a visibility modifier, returns `false`.
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn is_visible_outside_package(&self, id: NodeId) -> bool {
         self.visibility_of(id) == Some(Visibility::Public)
     }
@@ -535,7 +535,7 @@ impl TyCheckCtx {
     /// Determines whether the node `a` can "see" node `b`, with regard to
     /// the visibility rules of `b`.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn is_visible_to(&self, a: NodeId, b: NodeId) -> Result<bool> {
         // Since trait methods cannot have visibilities, we have them separately here.
         if let Some(Node::TraitMethodImpl(method_impl)) = self.hir_node(b) {
@@ -615,7 +615,7 @@ impl TyCheckCtx {
     /// This method also checks whether the type arguments within the type
     /// are visible to `from`.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn is_type_visible_to(&self, ty: &TypeRef, from: NodeId) -> Result<bool> {
         // All standard types are always implicitly visible from any node.
         if !matches!(
@@ -640,7 +640,7 @@ impl TyCheckCtx {
 
     /// Determines whether the nodes `a` and `b` share the same source file.
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn is_same_source(&self, a: NodeId, b: NodeId) -> bool {
         self.hir_span_of_node(a).file.id == self.hir_span_of_node(b).file.id
     }
@@ -648,7 +648,7 @@ impl TyCheckCtx {
     /// Determines whether the given node should be exported to the package
     /// metadata when building.
     #[cached_query(result)]
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn should_export(&self, id: NodeId) -> Result<bool> {
         let Some(node) = self.hir_node(id) else {
             return Ok(false);

@@ -81,7 +81,7 @@ impl TyInferCtx {
 
     /// Determines whether the given [`TypeRef`] is a kind of
     /// [`TypeKind::Struct`].
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn is_struct(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().expect_type(ty.instance_of).map(|ty| &ty.kind) {
             Ok(TypeKind::Struct) => Ok(true),
@@ -91,7 +91,7 @@ impl TyInferCtx {
 
     /// Determines whether the given [`TypeRef`] is a kind of
     /// [`TypeKind::Trait`].
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn is_trait(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().expect_type(ty.instance_of).map(|ty| &ty.kind) {
             Ok(TypeKind::Trait) => Ok(true),
@@ -100,7 +100,7 @@ impl TyInferCtx {
     }
 
     /// Determines whether the given [`TypeRef`] refers to a type parameter.
-    #[libftrace::traced(level = Trace, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn is_type_parameter(&self, ty: &TypeRef) -> bool {
         matches!(
             self.tdb().type_(ty.instance_of).map(|t| t.kind),
@@ -112,7 +112,7 @@ impl TyInferCtx {
     /// to it's definition.
     ///
     /// Otherwise, returns [`None`].
-    #[libftrace::traced(level = Trace, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn as_type_parameter(&self, ty: &TypeRef) -> Result<Option<&lume_hir::TypeParameter>> {
         match self.hir_expect_type(ty.instance_of) {
             lume_hir::TypeDefinition::TypeParameter(type_param) => Ok(Some(type_param.as_ref())),
@@ -121,7 +121,7 @@ impl TyInferCtx {
     }
 
     /// Determines whether the given [`TypeRef`] has any generic components.
-    #[libftrace::traced(level = Trace, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn is_type_generic(&self, ty: &TypeRef) -> bool {
         if self.is_type_parameter(ty) {
             return true;
@@ -137,7 +137,7 @@ impl TyInferCtx {
     }
 
     /// Determines whether the given [`TypeRef`] is a type reference of `Self`.
-    #[libftrace::traced(level = Trace, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn is_self_type(&self, ty: &TypeRef) -> bool {
         let type_id = ty.hir.unwrap_or(TypeId::from(ty.instance_of));
 
@@ -146,7 +146,7 @@ impl TyInferCtx {
 
     /// Determines whether the given [`TypeRef`] is a type reference of `Self`,
     /// or refers to the same type inside the current callable.
-    #[libftrace::traced(level = Trace, ret, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn is_self_type_within(&self, ty: &TypeRef, callable_id: NodeId) -> Result<bool> {
         if let Some(impl_parent_type) = self.parent_type_of(callable_id)?
             && &impl_parent_type == ty
@@ -159,14 +159,14 @@ impl TyInferCtx {
 
     /// Gets the current `Never` type as a [`TypeRef`].
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn never_type(&self) -> Option<TypeRef> {
         self.lang_item_type(lume_hir::LangItem::Never)
     }
 
     /// Determines whether the given [`TypeRef`] is the `Never` type.
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn is_type_never(&self, ty: &TypeRef) -> bool {
         let never_type = self.never_type().expect("expected `Never` lang item");
 
@@ -175,14 +175,14 @@ impl TyInferCtx {
 
     /// Determines whether the given [`TypeRef`] can have any value.
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn does_type_have_value(&self, ty: &TypeRef) -> bool {
         !ty.is_void() && !self.is_type_never(ty)
     }
 
     /// Gets the `lang_item` with the given name from the HIR map.
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn lang_item(&self, item: lume_hir::LangItem) -> Option<NodeId> {
         self.hir.lang_items.get(item)
     }
@@ -190,7 +190,7 @@ impl TyInferCtx {
     /// Gets the `lang_item` with the given name from the HIR map, turned into a
     /// [`TypeRef`].
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn lang_item_type(&self, item: lume_hir::LangItem) -> Option<TypeRef> {
         let id = self.lang_item(item)?;
 
@@ -199,7 +199,7 @@ impl TyInferCtx {
 
     /// Gets the name of the `![lang_item]` attribute and corresponding method,
     /// matching the given intrinsic.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn lang_item_of_intrinsic(&self, intrinsic: &lume_hir::IntrinsicKind) -> (LangItem, &'static str) {
         match intrinsic {
             lume_hir::IntrinsicKind::Add { .. } => (LangItem::Add, "add"),
@@ -224,7 +224,7 @@ impl TyInferCtx {
 
     /// Gets the human-readable name of the operation, which is performed by the
     /// given operation.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn operation_name_of_intrinsic(&self, intrinsic: &lume_hir::IntrinsicKind) -> &'static str {
         match intrinsic {
             lume_hir::IntrinsicKind::Add { .. } => "addition",
@@ -248,7 +248,7 @@ impl TyInferCtx {
     }
 
     /// Gets the name of the type which defines the given intrinsic.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn type_name_of_intrinsic(&self, intrinsic: &lume_hir::IntrinsicKind) -> Option<&lume_hir::Path> {
         let (lang_item, _) = self.lang_item_of_intrinsic(intrinsic);
         let item_def = self.lang_item(lang_item)?;

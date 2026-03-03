@@ -14,7 +14,7 @@ lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 lume_typech = { path = "../lume_typech" }
 
-libftrace = { workspace = true }
+tracing = { workspace = true }
 
 [lints]
 workspace = true

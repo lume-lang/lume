@@ -3,7 +3,7 @@ use cranelift::prelude::*;
 use crate::LowerFunction;
 
 impl LowerFunction<'_> {
-    #[libftrace::traced(level = Trace, fields(decl))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%decl))]
     pub(crate) fn cg_declaration(&mut self, decl: &lume_mir::Declaration) -> Value {
         match decl.kind.as_ref() {
             lume_mir::DeclarationKind::Operand(op) => self.cg_operand(op),
@@ -117,7 +117,7 @@ impl LowerFunction<'_> {
         }
     }
 
-    #[libftrace::traced(level = Trace, fields(func = self.func.name))]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_operand(&mut self, op: &lume_mir::Operand) -> Value {
         match &op.kind {
             lume_mir::OperandKind::Boolean { value } => {

@@ -28,7 +28,7 @@ impl TyCheckCtx {
     ///
     /// If the given call expression is a static function call, returns
     /// [`None`].
-    #[libftrace::traced(level = Debug, fields(call_expr), ret, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(%call_expr), ret, err)]
     pub fn impl_ty_of_call(&self, call_expr: NodeId) -> Result<Option<TypeRef>> {
         let call_expr = self.hir_call_expr(call_expr).expect("callable with ID to exist");
 
@@ -60,14 +60,14 @@ impl TyCheckCtx {
     /// Dynamic methods are those that are not statically dispatched, but rather
     /// dispatched at runtime based on the type of the receiver.
     #[cached_query]
-    #[libftrace::traced(level = Debug, fields(callable_id), ret)]
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(%callable_id), ret)]
     pub fn is_callable_dynamic(&self, callable_id: NodeId) -> bool {
         let Some(method_definition) = self.tdb().method(callable_id) else {
-            libftrace::warning!("could not find method with id {callable_id}");
+            tracing::warn!("could not find method with id {callable_id}");
             return false;
         };
 
-        libftrace::trace!(
+        tracing::trace!(
             "method kind `{:+}`: {:?}",
             method_definition.name,
             method_definition.kind
@@ -78,7 +78,7 @@ impl TyCheckCtx {
 
     /// Determines the source of the dynamic argument for a call.
     #[cached_query(result)]
-    #[libftrace::traced(level = Debug, fields(call_expr, target), ret, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(%call_expr, %target), err, ret)]
     pub fn dynamic_argument_source_of_call(&self, call_expr: NodeId, target: NodeId) -> Result<DispatchTypeSource> {
         assert!(
             self.is_callable_dynamic(target),

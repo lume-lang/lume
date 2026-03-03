@@ -15,11 +15,13 @@ lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 lume_tagged = { path = "../../rt/lume_tagged" }
 lume_type_metadata = { path = "../lume_type_metadata" }
+
 gimli = { version = "0.32.3" }
 indexmap = { workspace = true }
-libftrace = { workspace = true }
 object = { version = "0.37", features = ["write"] }
 target-lexicon = { version = "=0.13.2" }
+tracing = { workspace = true }
+
 cranelift = "=0.127.1"
 cranelift-codegen = { version = "=0.127.1", features = ["unwind"] }
 cranelift-module = "=0.127.1"

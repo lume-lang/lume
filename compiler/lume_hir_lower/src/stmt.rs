@@ -2,7 +2,7 @@ use crate::*;
 
 impl LoweringContext<'_> {
     /// Lowers the given AST block into a HIR block, within an nested scope.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(super) fn block(&mut self, expr: lume_ast::Block) -> lume_hir::Block {
         lume_hir::with_frame!(self.current_locals, || {
             let id = self.next_node_id();
@@ -22,7 +22,7 @@ impl LoweringContext<'_> {
     /// This functions much like [`block`], but pushes a boundary into the
     /// symbol table, separating local variables within the block from the
     /// parent scope.
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(super) fn isolated_block(&mut self, expr: lume_ast::Block, params: &[lume_hir::Parameter]) -> lume_hir::Block {
         lume_hir::with_boundary!(self.current_locals, || {
             for param in params {
@@ -44,7 +44,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(super) fn statements(&mut self, statements: Vec<lume_ast::Statement>) -> Vec<lume_span::NodeId> {
         statements
             .into_iter()
@@ -58,7 +58,7 @@ impl LoweringContext<'_> {
             .collect::<Vec<_>>()
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn statement(&mut self, expr: lume_ast::Statement) -> Result<lume_span::NodeId> {
         let stmt = match expr {
             lume_ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s)?,
@@ -90,7 +90,7 @@ impl LoweringContext<'_> {
         Ok(id)
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_variable(&mut self, statement: lume_ast::VariableDeclaration) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let name = self.identifier(statement.name);
@@ -122,7 +122,7 @@ impl LoweringContext<'_> {
         Ok(statement)
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_break(&mut self, statement: lume_ast::Break) -> lume_hir::Statement {
         let id = self.next_node_id();
         let location = self.location(statement.location);
@@ -134,7 +134,7 @@ impl LoweringContext<'_> {
         }
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_continue(&mut self, statement: lume_ast::Continue) -> lume_hir::Statement {
         let id = self.next_node_id();
         let location = self.location(statement.location);
@@ -146,7 +146,7 @@ impl LoweringContext<'_> {
         }
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_final(&mut self, statement: lume_ast::Final) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let value = self.expression(statement.value)?;
@@ -159,7 +159,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_return(&mut self, statement: lume_ast::Return) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let value = self.opt_expression(statement.value)?;
@@ -172,7 +172,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_infinite_loop(&mut self, expr: lume_ast::InfiniteLoop) -> lume_hir::Statement {
         let id = self.next_node_id();
         let location = self.location(expr.location);
@@ -185,7 +185,7 @@ impl LoweringContext<'_> {
         }
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_iterator_loop(&mut self, expr: lume_ast::IteratorLoop) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let location = self.location(expr.location);
@@ -204,7 +204,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    #[libftrace::traced(level = Debug)]
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_predicate_loop(&mut self, expr: lume_ast::PredicateLoop) -> lume_hir::Statement {
         let id = self.next_node_id();
         let location = self.location(expr.location);

@@ -5,12 +5,12 @@ use lume_lexer::TokenType;
 use crate::Parser;
 
 impl<'ast> Parser<'_, 'ast> {
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(super) fn parse_attributes(&mut self) -> Result<Vec<Attribute<'ast>>> {
         self.consume_any_seq(TokenType::Exclamation, Parser::parse_attribute)
     }
 
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(super) fn parse_attribute(&mut self) -> Result<Attribute<'ast>> {
         let start = self.consume(TokenType::Exclamation)?.start();
         self.consume(TokenType::LeftBracket)?;
@@ -27,7 +27,7 @@ impl<'ast> Parser<'_, 'ast> {
         })
     }
 
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_attribute_arguments(&mut self) -> Result<Vec<AttributeArgument<'ast>>> {
         self.consume_comma_seq(
             TokenType::LeftParen,
@@ -36,7 +36,7 @@ impl<'ast> Parser<'_, 'ast> {
         )
     }
 
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_attribute_argument(&mut self) -> Result<AttributeArgument<'ast>> {
         let key = self.parse_identifier()?;
 

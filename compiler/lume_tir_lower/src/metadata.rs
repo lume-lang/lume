@@ -24,7 +24,7 @@ impl<'tcx> MetadataBuilder<'tcx> {
         }
     }
 
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(crate) fn build_metadata(mut self) -> Result<StaticMetadata> {
         lume_type_metadata::visitor::traverse(self.tcx, &mut self)?;
 

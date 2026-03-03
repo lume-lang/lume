@@ -27,7 +27,7 @@ impl Driver {
     /// Returns `Err` if:
     /// - an error occured while compiling the package,
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[libftrace::traced(level = Info, fields(root = self.package.path.display()))]
+    #[tracing::instrument(level = "INFO", skip_all, fields(package = %self.package.path.display()), err)]
     pub fn check(mut self) -> Result<CheckedPackageGraph> {
         self.override_root_sources();
 
@@ -49,7 +49,7 @@ impl Driver {
         let mut dependency_hir = lume_hir::map::Map::empty(PackageId::empty());
 
         for dependency in dependencies {
-            libftrace::info!(
+            tracing::info!(
                 "checking {} v{} ({})",
                 dependency.name,
                 dependency.version,
@@ -110,7 +110,7 @@ impl Compiler {
     /// Returns `Err` if:
     /// - an error occured while compiling the project,
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[libftrace::traced(level = Info, fields(package = package.name))]
+    #[tracing::instrument(level = "INFO", skip_all, fields(package = %package.name), err)]
     pub fn check_package(
         package: Package,
         gcx: Arc<GlobalCtx>,
@@ -119,7 +119,7 @@ impl Compiler {
         let mut compiler = Self { package, gcx };
 
         let mut sources = compiler.parse()?;
-        libftrace::debug!("finished parsing");
+        tracing::debug!("finished parsing");
 
         dep_hir.clone().merge_into(&mut sources);
 

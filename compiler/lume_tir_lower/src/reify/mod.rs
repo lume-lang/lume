@@ -175,31 +175,31 @@ impl ReificationPass<'_> {
     /// Complement of [`add_dynamic_instance_parameter`], this methods adds the
     /// corresponding argument to the given function call, matching the function
     /// which it calls.
-    #[libftrace::traced(level = Debug, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn add_dynamic_instance_argument(&mut self, call: &mut Call) -> Result<()> {
         let argument = match self.tcx.dynamic_argument_source_of_call(call.id, call.function)? {
             DispatchTypeSource::CreateFrom(source_type) => {
-                libftrace::info!(
-                    "create dispatch type {}",
-                    self.tcx.new_named_type(&source_type, true).unwrap(),
+                tracing::info!(
                     call = self
                         .tcx
                         .hir_path_of_node(self.tcx.hir_parent_callable(call.id).unwrap().id())
                         .to_wide_string(),
-                    target = self.tcx.hir_path_of_node(call.function).to_wide_string()
+                    target = self.tcx.hir_path_of_node(call.function).to_wide_string(),
+                    "create dispatch type {}",
+                    self.tcx.new_named_type(&source_type, true).unwrap(),
                 );
 
                 self.concrete_metadata_arg(&source_type)
             }
 
             DispatchTypeSource::InheritDyn => {
-                libftrace::info!(
-                    "inherit dispatch type from parent dynamic parameter",
+                tracing::info!(
                     call = self
                         .tcx
                         .hir_path_of_node(self.tcx.hir_parent_callable(call.id).unwrap().id())
                         .to_wide_string(),
-                    target = self.tcx.hir_path_of_node(call.function).to_wide_string()
+                    target = self.tcx.hir_path_of_node(call.function).to_wide_string(),
+                    "inherit dispatch type from parent dynamic parameter",
                 );
 
                 let dyn_param_ref = self.dyn_instance_param.expect("dynamic instance parameter set");
@@ -208,13 +208,13 @@ impl ReificationPass<'_> {
             }
 
             DispatchTypeSource::InheritTypeParam { type_param } => {
-                libftrace::info!(
-                    "inherit dispatch type from parent type parameter",
+                tracing::info!(
                     call = self
                         .tcx
                         .hir_path_of_node(self.tcx.hir_parent_callable(call.id).unwrap().id())
                         .to_wide_string(),
-                    target = self.tcx.hir_path_of_node(call.function).to_wide_string()
+                    target = self.tcx.hir_path_of_node(call.function).to_wide_string(),
+                    "inherit dispatch type from parent type parameter",
                 );
 
                 let dyn_param_idx = *self

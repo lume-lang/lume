@@ -8,7 +8,7 @@ use crate::TyInferCtx;
 
 impl TyInferCtx {
     /// Gets the parent type of the given node.
-    #[libftrace::traced(level = Trace, fields(id), err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%id), err, ret)]
     pub fn parent_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         for parent in self.hir_parent_iter(id) {
             match parent {
@@ -36,7 +36,7 @@ impl TyInferCtx {
     }
 
     /// Gets the parent type of the given field.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn owning_struct_of_field(&self, field_id: NodeId) -> Result<&lume_hir::StructDefinition> {
         for parent in self.hir_parent_iter(field_id) {
             if let lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(struct_def)) = parent {
@@ -53,7 +53,7 @@ impl TyInferCtx {
     /// Attempts to find the closest switch expression from the given
     /// definition.
     #[track_caller]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn switch_expr_at(&self, source: NodeId) -> Option<&lume_hir::Switch> {
         for parent in self.hir_parent_iter(source) {
             let lume_hir::Node::Expression(expr) = parent else {
@@ -70,7 +70,7 @@ impl TyInferCtx {
 
     /// Attempts to find the closest loop from the given definition.
     #[track_caller]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn loop_target_at(&self, source: NodeId) -> Option<&lume_hir::Statement> {
         for parent in self.hir_parent_iter(source) {
             let lume_hir::Node::Statement(stmt) = parent else {
@@ -88,7 +88,7 @@ impl TyInferCtx {
     /// Returns the parameters available for the [`lume_hir::Node`] with the
     /// given ID.
     #[cached_query]
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn available_params_at(&self, def: NodeId) -> Vec<lume_hir::Parameter> {
         let mut acc = Vec::new();
 
@@ -109,7 +109,7 @@ impl TyInferCtx {
 
     /// Returns all the type parameters available for the [`lume_hir::Node`]
     /// with the given ID.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn available_type_params_at(&self, def: NodeId) -> Vec<NodeId> {
         let mut acc = Vec::new();
 
@@ -125,7 +125,7 @@ impl TyInferCtx {
     }
 
     /// Gets the return type of the [`lume_hir::Node`] with the given ID.
-    #[libftrace::traced(level = Trace)]
+    #[tracing::instrument(level = "Trace", skip_all)]
     pub fn return_type_of(&self, id: NodeId) -> Option<&lume_hir::Type> {
         match self.hir_node(id)? {
             Node::Function(func) => Some(&func.signature.return_type),
@@ -143,7 +143,7 @@ impl TyInferCtx {
     /// # Errors
     ///
     /// If no matching ancestor is found, returns [`Err`].
-    #[libftrace::traced(level = Trace, err)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn return_type_within(&self, def: NodeId) -> Result<lume_types::TypeRef> {
         let type_parameters_id = self.available_type_params_at(def);
         let type_parameters = self.as_type_params(&type_parameters_id)?;

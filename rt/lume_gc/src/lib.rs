@@ -381,7 +381,7 @@ impl FrameStackMap {
 
                 let block_ptr = unsafe { untagged_obj_ptr.byte_add(POINTER_SIZE).cast::<*const u8>().read() };
 
-                libftrace::trace!(
+                tracing::trace!(
                     "found heap block, ptr = {untagged_obj_ptr:p}, size = 0x{block_len:X}, elemental = {:?}",
                     {
                         // SAFETY:
@@ -498,8 +498,8 @@ fn find_current_stack_map() -> Option<FrameStackMap> {
 
 /// Initializes the allocator with the given options.
 pub fn initialize(opts: &lume_options::RuntimeOptions) {
-    libftrace::debug!("initializing allocator");
-    libftrace::trace!("allocator options: {opts:#?}");
+    tracing::debug!("initializing allocator");
+    tracing::trace!("allocator options: {opts:#?}");
 
     initialize_gc(opts);
 }
@@ -519,7 +519,7 @@ pub fn initialize(opts: &lume_options::RuntimeOptions) {
 /// set_collection_condition(|_collector_info| false);
 /// ```
 pub fn set_collection_condition(predicate: CollectCondition) -> CollectCondition {
-    libftrace::debug!("setting collection condition");
+    tracing::debug!("setting collection condition");
 
     with_allocator(|alloc| alloc.condition.replace(predicate))
 }
@@ -539,7 +539,7 @@ pub fn trigger_collection() {
             panic!("bug!: could not find stack map for allocation call");
         };
 
-        libftrace::trace!("collection triggered");
+        tracing::trace!("collection triggered");
 
         with_allocator(|alloc| alloc.promote_allocations(&frame, alloc::PromotionReason::ConditionMet));
     }
@@ -559,7 +559,7 @@ pub fn trigger_collection_force() {
         panic!("bug!: could not find stack map for allocation call");
     };
 
-    libftrace::trace!("collection triggered");
+    tracing::trace!("collection triggered");
 
     with_allocator(|alloc| alloc.promote_allocations(&frame, alloc::PromotionReason::Explicit));
 }
@@ -595,7 +595,7 @@ pub unsafe fn allocate_object(size: usize, metadata: *const TypeMetadata) -> *mu
 /// allocator.
 #[unsafe(export_name = "std::mem::GC::finish")]
 pub fn drop_allocations() {
-    libftrace::trace!("dropping all allocations");
+    tracing::trace!("dropping all allocations");
 
     with_allocator(|alloc| alloc.drop_allocations());
 }
@@ -617,7 +617,7 @@ pub fn default_collect_condition(info: &CollectorInfo) -> bool {
     let ratio = (mem_in_use as f64) / (mem_available as f64);
 
     if ratio >= DEFAULT_MEMORY_PRESSURE_LIMIT {
-        libftrace::trace!("collection required, memory pressure at {}%", ratio * 100.0);
+        tracing::trace!("collection required, memory pressure at {}%", ratio * 100.0);
 
         return true;
     }

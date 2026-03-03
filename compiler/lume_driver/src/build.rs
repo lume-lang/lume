@@ -28,7 +28,7 @@ impl Driver {
     /// - an error occured while compiling the package,
     /// - an error occured while writing the output executable
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[libftrace::traced(level = Info, fields(root = self.package.path.display()))]
+    #[tracing::instrument(level = "INFO", skip(self), fields(root = %self.package.path.display()), err)]
     pub fn build(mut self) -> Result<CompiledExecutable> {
         self.override_root_sources();
 
@@ -59,34 +59,47 @@ impl Driver {
                 continue;
             }
 
-            libftrace::info!(
-                "compiling {} v{} ({})",
+            let span = tracing::info_span!(
+                "compile_package",
                 dependency.name,
-                dependency.version,
-                dependency.path.display()
+                %dependency.version,
+                dependency.path = %dependency.path.display()
             );
 
-            let compiled = Compiler::build_package(dependency, gcx.clone(), &dependency_hir)?;
-            let metadata = compiled_pkg_metadata(&compiled);
+            span.in_scope(|| -> Result<()> {
+                let compiled = Compiler::build_package(dependency, gcx.clone(), &dependency_hir)?;
+                let metadata = compiled_pkg_metadata(&compiled);
 
-            let object = lume_codegen::generate(compiled.mir)?;
-            objects.push(lume_linker::ObjectSource::Compiled {
-                name: metadata.header.name.clone(),
-                data: object,
-            });
+                let object = lume_codegen::generate(compiled.mir)?;
+                objects.push(lume_linker::ObjectSource::Compiled {
+                    name: metadata.header.name.clone(),
+                    data: object,
+                });
 
-            if gcx.session.options.enable_incremental && !self.config.dry_run {
-                crate::incremental::write_metadata_object(&gcx, &metadata)?;
-            }
+                if gcx.session.options.enable_incremental && !self.config.dry_run {
+                    crate::incremental::write_metadata_object(&gcx, &metadata)?;
+                }
 
-            metadata.hir.merge_into(&mut dependency_hir);
+                metadata.hir.merge_into(&mut dependency_hir);
+
+                Ok(())
+            })?;
         }
 
         let output_file_path = gcx.binary_output_path(&self.package.name);
 
         if !self.config.dry_run {
-            let object_files = lume_linker::write_object_files(&gcx, objects)?;
-            lume_linker::link_objects(object_files, &output_file_path, &gcx.session.options)?;
+            let span = tracing::info_span!(
+                "link_executable",
+                output.path = %output_file_path.display()
+            );
+
+            span.in_scope(|| -> Result<()> {
+                let object_files = lume_linker::write_object_files(&gcx, objects)?;
+                lume_linker::link_objects(object_files, &output_file_path, &gcx.session.options)?;
+
+                Ok(())
+            })?;
         }
 
         Ok(CompiledExecutable {
@@ -117,7 +130,7 @@ impl Compiler {
     /// Returns `Err` if:
     /// - an error occured while compiling the project,
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[libftrace::traced(level = Info, fields(package = package.name))]
+    #[tracing::instrument(level = "INFO", skip_all, fields(package = %package.name), err)]
     pub fn build_package(
         package: Package,
         gcx: Arc<GlobalCtx>,
@@ -126,7 +139,7 @@ impl Compiler {
         let mut compiler = Self { package, gcx };
 
         let mut sources = compiler.parse()?;
-        libftrace::debug!("finished parsing");
+        tracing::debug!("finished parsing");
 
         dep_hir.clone().merge_into(&mut sources);
 
