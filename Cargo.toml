@@ -19,10 +19,6 @@ name = "lume-bootstrap"
 path = "src/lume-bootstrap.rs"
 test = false
 
-[[bench]]
-name = "gc"
-harness = false
-
 [workspace.package]
 version = "0.1.3"
 rust-version = "1.88.0"
@@ -66,7 +62,7 @@ lume_cli = { path = "compiler/lume_cli" }
 lume_driver = { path = "compiler/lume_driver" }
 
 [dev-dependencies]
-lume_bench = { path = "./tools/bench" }
+lume_benchmark = { path = "./tools/benchmark" }
 lume_errors = { path = "./crates/lume_errors" }
 
 criterion = { version = "0.8.1", features = ["html_reports"] }

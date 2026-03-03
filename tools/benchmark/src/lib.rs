@@ -3,16 +3,25 @@ use std::process::{Command, Stdio};
 
 use lume_errors::{DiagCtx, MapDiagnostic, Result, SimpleDiagnostic};
 
+pub extern crate divan;
+
+pub use lume_benchmark_macros::*;
+pub use proc_macro2;
+pub use quote::{format_ident, quote as source};
+
+pub type Source = proc_macro2::TokenStream;
+
 /// Compiles the source file at the given path and returns the path to the
 /// compiled binary executable.
 pub fn compile(path: &Path) -> Result<PathBuf> {
     let dcx = DiagCtx::new();
+    dcx.panic_on_error();
 
     let file_name = path.file_name().unwrap();
     let file_base = file_name.to_str().unwrap().split('.').next().unwrap();
     let file_content = std::fs::read_to_string(path).map_diagnostic()?;
 
-    lume_driver::test_support::workspace(path.parent().unwrap())
+    let binary_path = lume_driver::test_support::workspace(path.parent().unwrap())
         .with_option(|opts| opts.enable_incremental = false)
         .with_option(|opts| {
             // Giving each test it's own output directory.
@@ -35,7 +44,18 @@ pub fn compile(path: &Path) -> Result<PathBuf> {
             ),
         )
         .with_file(PathBuf::from("src").join(file_name), &file_content)
-        .build(dcx.handle())
+        .build(dcx.handle());
+
+    if let Ok(path) = binary_path {
+        Ok(path)
+    } else {
+        let mut renderer = lume_errors::GraphicalRenderer::new();
+        renderer.use_colors = false;
+        renderer.highlight_source = false;
+
+        let buffer = dcx.render_buffer(&mut renderer).unwrap_or(String::from("<empty>"));
+        Err(SimpleDiagnostic::new(format!("failed to compile benchmark:\n{buffer}")).into())
+    }
 }
 
 /// Runs the benchmark which is located at the given path.
@@ -65,4 +85,34 @@ pub fn run(binary_path: &Path) -> Result<i32> {
         .status
         .code()
         .ok_or_else(|| SimpleDiagnostic::new("benchmark was terminated").into())
+}
+
+#[doc(hidden)]
+pub mod __private {
+    use std::hash::Hasher;
+
+    use super::*;
+
+    pub fn prepare_benchmark<T: AsRef<str>>(tmpdir: T, name: &str, source_code: String) -> PathBuf {
+        let hash = {
+            let mut hasher = std::hash::DefaultHasher::new();
+            hasher.write(source_code.as_bytes());
+
+            hasher.finish()
+        };
+
+        let benchmark_directory = format!("{name}_{hash}");
+
+        let output_directory = Path::new(tmpdir.as_ref())
+            .to_path_buf()
+            .join("benches")
+            .join(benchmark_directory);
+
+        let main_source_path = output_directory.join("main.lm");
+
+        std::fs::create_dir_all(&output_directory).unwrap();
+        std::fs::write(&main_source_path, source_code).unwrap();
+
+        compile(&main_source_path).unwrap()
+    }
 }

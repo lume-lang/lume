@@ -1,5 +1,5 @@
 [package]
-name = "lume_bench"
+name = "lume_benchmark"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,7 +10,12 @@ license.workspace = true
 doctest = false
 
 [dependencies]
+divan = { version = "0.1.21" }
+proc-macro2 = {version = "1" }
+quote = { version = "1.0.44" }
+
 build_stage = { path = "../build_stage" }
+lume_benchmark_macros = { path = "../benchmark_macros" }
 lume_driver = { path = "../../compiler/lume_driver", features = ["test-support"] }
 lume_errors = { path = "../../crates/lume_errors" }
 lume_session = { path = "../../compiler/lume_session" }
