@@ -1,5 +1,6 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
+use lume_errors::{IntoDiagnostic, MapDiagnostic, Result, SimpleDiagnostic};
 use lume_hir::map::Map;
 use lume_session::{Package, PackageHash};
 use lume_typech::TyCheckCtx;
@@ -72,4 +73,84 @@ pub fn partition_public_nodes(tcx: &TyCheckCtx) -> Map {
     tcx.hir().lang_items.clone_into(&mut pub_hir.lang_items);
 
     pub_hir
+}
+
+/// Reads the serialized representation of the metadata from the given package
+/// from disk and returns it.
+///
+/// If the metadata file does not exist, this function returns [`None`], wrapped
+/// in [`Ok`].
+pub fn read_metadata_object<P: AsRef<Path>>(metadata_path: P) -> Result<Option<PackageMetadata>> {
+    let metadata_path = metadata_path.as_ref();
+    if !metadata_path.exists() {
+        return Ok(None);
+    }
+
+    let metadata_bytes = std::fs::read(metadata_path)
+        .map_cause(format!("failed to read package metadata ({})", metadata_path.display()))?;
+
+    let deserialized = ciborium::from_reader::<PackageMetadata, &[u8]>(metadata_bytes.as_ref()).map_cause(format!(
+        "failed to deserialize package metadata ({})",
+        metadata_path.display()
+    ))?;
+
+    Ok(Some(deserialized))
+}
+
+/// Reads only the header of the metadata from the given package from disk and
+/// returns it. This is significantly faster when only the header is needed, as
+/// very little of the file is actually read and deserialized.
+///
+/// If the metadata file does not exist, this function returns [`None`], wrapped
+/// in [`Ok`].
+pub fn read_metadata_header<P: AsRef<Path>>(metadata_path: P) -> Result<Option<PackageHeader>> {
+    let metadata_path = metadata_path.as_ref();
+    if !metadata_path.exists() {
+        return Ok(None);
+    }
+
+    let metadata_bytes = std::fs::read(metadata_path)
+        .map_cause(format!("failed to read package metadata ({})", metadata_path.display()))?;
+
+    let deserialized = ciborium::from_reader::<PackageMetadata, &[u8]>(metadata_bytes.as_ref()).map_cause(format!(
+        "failed to deserialize package metadata ({})",
+        metadata_path.display()
+    ))?;
+
+    Ok(Some(deserialized.header))
+}
+
+/// Writes the serialized representation of `metadata` to disk within the
+/// metadata directory defined by `gcx` (via
+/// [`GlobalCtx::obj_metadata_path()`]).
+pub fn write_metadata_object<P: AsRef<Path>>(metadata_directory: P, metadata: &PackageMetadata) -> Result<()> {
+    // Ensure the parent directory exists first.
+    let metadata_directory = metadata_directory.as_ref();
+
+    std::fs::create_dir_all(metadata_directory).map_err(|err| {
+        Box::new(
+            SimpleDiagnostic::new(format!(
+                "failed to create metadata directory ({})",
+                metadata_directory.display()
+            ))
+            .add_cause(err),
+        ) as lume_errors::Error
+    })?;
+
+    let metadata_filename = metadata_filename_of(&metadata.header.name);
+    let metadata_path = metadata_directory.join(metadata_filename);
+
+    let mut serialized = Vec::<u8>::new();
+    ciborium::into_writer(metadata, &mut serialized).map_err(|err| {
+        let diag = SimpleDiagnostic::new(format!("failed to serialize metadata ({})", metadata.header.name))
+            .add_cause(err.into_diagnostic());
+
+        Box::new(diag) as lume_errors::Error
+    })?;
+
+    std::fs::write(metadata_path, serialized).map_err(|err| {
+        Box::new(SimpleDiagnostic::new("failed to write metadata").add_cause(err)) as lume_errors::Error
+    })?;
+
+    Ok(())
 }

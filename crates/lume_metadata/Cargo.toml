@@ -8,10 +8,12 @@ rust-version.workspace = true
 doctest = false
 
 [dependencies]
+lume_errors = { path = "../lume_errors" }
 lume_hir = { path = "../../compiler/lume_hir" }
 lume_session = { path = "../../compiler/lume_session" }
 lume_typech = { path = "../../compiler/lume_typech" }
 
+ciborium = { version = "=0.2.2" }
 serde = { workspace = true, features = ["derive"] }
 
 [lints]

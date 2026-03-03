@@ -1862,6 +1862,8 @@ dependencies = [
 name = "lume_metadata"
 version = "0.1.3"
 dependencies = [
+ "ciborium",
+ "lume_errors",
  "lume_hir",
  "lume_session",
  "lume_typech",

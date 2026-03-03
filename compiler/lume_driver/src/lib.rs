@@ -14,9 +14,6 @@ use lume_typech::TyCheckCtx;
 use lume_types::TyCtx;
 
 #[cfg(feature = "codegen")]
-pub(crate) mod incremental;
-
-#[cfg(feature = "codegen")]
 pub mod build;
 
 #[cfg(feature = "codegen")]
