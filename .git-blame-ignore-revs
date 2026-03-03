@@ -1,0 +1,7 @@
+# Use `git config blame.ignorerevsfile .git-blame-ignore-revs` to make `git blame` ignore the following commits.
+
+# switch from `tracing` to `libftrace`
+eacfed00892a3d35a02205ec02e55d65fd06c505
+
+# subsequent switch back to `tracing`
+4a519285f200b39515337d4af08f7d453f479a21
