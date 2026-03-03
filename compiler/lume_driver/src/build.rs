@@ -50,7 +50,7 @@ impl Driver {
         let mut dependency_hir = lume_hir::map::Map::empty(PackageId::empty());
 
         for dependency in dependencies {
-            if !crate::incremental::needs_compilation(&gcx, &dependency) {
+            if !needs_compilation(&gcx, &dependency) {
                 objects.push(lume_linker::ObjectSource::Cache {
                     name: dependency.name.clone(),
                     path: gcx.obj_bc_path_of(&dependency.name),
@@ -77,7 +77,7 @@ impl Driver {
                 });
 
                 if gcx.session.options.enable_incremental && !self.config.dry_run {
-                    crate::incremental::write_metadata_object(&gcx, &metadata)?;
+                    lume_metadata::write_metadata_object(gcx.obj_metadata_path(), &metadata)?;
                 }
 
                 metadata.hir.merge_into(&mut dependency_hir);
@@ -147,5 +147,46 @@ impl Compiler {
         let mir = compiler.codegen(&tcx, typed_ir);
 
         Ok(CompiledPackage { tcx, mir })
+    }
+}
+
+/// Determines whether the given package needs to be compiled or re-compiled.
+///
+/// This takes the state of the current package metadata into account, as well
+/// as if anything has changed within it' source code.
+#[tracing::instrument(level = "DEBUG", skip_all, fields(package = %package.name), ret)]
+pub(crate) fn needs_compilation(gcx: &Arc<GlobalCtx>, package: &Package) -> bool {
+    // If incremental compilation is disabled, we should alwas re-compile.
+    if !gcx.session.options.enable_incremental {
+        tracing::debug!("re-compilation required: incremental compilation disabled");
+        return true;
+    }
+
+    let metadata_directory = gcx.obj_metadata_path();
+    let metadata_filename = lume_metadata::metadata_filename_of(&package.name);
+    let metadata_path = metadata_directory.join(metadata_filename);
+
+    // If no metadata file could be found, the package has likely not been built
+    // yet - in which case it obviously needs to be built.
+    let Ok(Some(metadata)) = lume_metadata::read_metadata_header(metadata_path) else {
+        tracing::debug!("re-compilation required: could not read metadata header");
+        return true;
+    };
+
+    let current_hash = package.package_hash();
+
+    #[allow(clippy::needless_bool, reason = "lint only raised when tracing is disabled")]
+    if metadata.hash == current_hash {
+        tracing::debug!("hash matched, compilation not required");
+
+        false
+    } else {
+        tracing::debug!(
+            message = "hash mismatch between packages",
+            current = %current_hash,
+            build = %metadata.hash
+        );
+
+        true
     }
 }
