@@ -1,0 +1,20 @@
+[package]
+name = "lume_tracing"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+lume_errors = { path = "../lume_errors" }
+
+tracing = { workspace = true }
+tracing-appender = { version = "0.2.4" }
+tracing-log = { version = "0.2.0" }
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+tracing-tree = { version = "0.3.1" }
+
+[lints]
+workspace = true

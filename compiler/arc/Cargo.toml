@@ -22,6 +22,7 @@ pubgrub = { version = "=0.3.0" }
 semver = { version = "^1", features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 toml = { version = "0.9.6" }
+tracing = { workspace = true }
 url = "=2.5.4"
 
 [lints]
