@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use lume_errors::{IntoDiagnostic, MapDiagnostic, Result, SimpleDiagnostic};
+use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 use lume_hir::map::Map;
 use lume_session::{Package, PackageHash};
 use lume_typech::TyCheckCtx;
@@ -8,6 +8,9 @@ use serde::{Deserialize, Serialize};
 
 /// Defines the file extension to use for metadata library files.
 pub const METADATA_FILE_EXTENSION: &str = "mlib";
+
+/// Defines the file magic number within metadata library files.
+pub const METADATA_FILE_MAGIC: &str = "MLIB!";
 
 /// Gets the metadata file-name which corresponds to the given package name.
 pub fn metadata_filename_of(package_name: &str) -> PathBuf {
@@ -86,15 +89,21 @@ pub fn read_metadata_object<P: AsRef<Path>>(metadata_path: P) -> Result<Option<P
         return Ok(None);
     }
 
-    let metadata_bytes = std::fs::read(metadata_path)
+    let metadata_file = std::fs::OpenOptions::new()
+        .read(true)
+        .open(metadata_path)
         .map_cause(format!("failed to read package metadata ({})", metadata_path.display()))?;
 
-    let deserialized = ciborium::from_reader::<PackageMetadata, &[u8]>(metadata_bytes.as_ref()).map_cause(format!(
-        "failed to deserialize package metadata ({})",
-        metadata_path.display()
-    ))?;
+    let mut reader = std::io::BufReader::new(metadata_file);
 
-    Ok(Some(deserialized))
+    let metadata = deserialize_metadata(&mut reader).map_err(|err| {
+        let diag = SimpleDiagnostic::new(format!("failed to deserialize metadata ({})", metadata_path.display()))
+            .add_cause(SimpleDiagnostic::new(err.to_string()));
+
+        Box::new(diag) as lume_errors::Error
+    })?;
+
+    Ok(Some(metadata))
 }
 
 /// Reads only the header of the metadata from the given package from disk and
@@ -109,15 +118,19 @@ pub fn read_metadata_header<P: AsRef<Path>>(metadata_path: P) -> Result<Option<P
         return Ok(None);
     }
 
-    let metadata_bytes = std::fs::read(metadata_path)
+    let mut metadata_file = std::fs::OpenOptions::new()
+        .read(true)
+        .open(metadata_path)
         .map_cause(format!("failed to read package metadata ({})", metadata_path.display()))?;
 
-    let deserialized = ciborium::from_reader::<PackageMetadata, &[u8]>(metadata_bytes.as_ref()).map_cause(format!(
-        "failed to deserialize package metadata ({})",
-        metadata_path.display()
-    ))?;
+    let header = deserialize_metadata_header(&mut metadata_file).map_err(|err| {
+        let diag = SimpleDiagnostic::new(format!("failed to deserialize metadata ({})", metadata_path.display()))
+            .add_cause(SimpleDiagnostic::new(err.to_string()));
 
-    Ok(Some(deserialized.header))
+        Box::new(diag) as lume_errors::Error
+    })?;
+
+    Ok(Some(header))
 }
 
 /// Writes the serialized representation of `metadata` to disk within the
@@ -141,9 +154,10 @@ pub fn write_metadata_object<P: AsRef<Path>>(metadata_directory: P, metadata: &P
     let metadata_path = metadata_directory.join(metadata_filename);
 
     let mut serialized = Vec::<u8>::new();
-    ciborium::into_writer(metadata, &mut serialized).map_err(|err| {
+
+    serialize_metadata(&mut serialized, metadata).map_err(|err| {
         let diag = SimpleDiagnostic::new(format!("failed to serialize metadata ({})", metadata.header.name))
-            .add_cause(err.into_diagnostic());
+            .add_cause(SimpleDiagnostic::new(err.to_string()));
 
         Box::new(diag) as lume_errors::Error
     })?;
@@ -153,4 +167,70 @@ pub fn write_metadata_object<P: AsRef<Path>>(metadata_directory: P, metadata: &P
     })?;
 
     Ok(())
+}
+
+fn serialize_metadata<W: std::io::Write>(
+    writer: &mut W,
+    metadata: &PackageMetadata,
+) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let mut header = Vec::<u8>::with_capacity(64);
+    ciborium::into_writer(&metadata.header, &mut header)?;
+
+    let mut hir = Vec::<u8>::new();
+    ciborium::into_writer(&metadata.hir, &mut hir)?;
+
+    writer.write_all(METADATA_FILE_MAGIC.as_bytes())?;
+
+    writer.write_all(&usize::to_ne_bytes(header.len()))?;
+    writer.write_all(&header)?;
+
+    writer.write_all(&usize::to_ne_bytes(hir.len()))?;
+    writer.write_all(&hir)?;
+
+    Ok(())
+}
+
+/// Deserialize only the [`PackageHeader`] object from the given reader.
+fn deserialize_metadata_header<R: std::io::Read>(
+    reader: &mut R,
+) -> std::result::Result<PackageHeader, Box<dyn std::error::Error>> {
+    let mut magic: [u8; _] = [0x00; METADATA_FILE_MAGIC.len()];
+    reader.read_exact(&mut magic)?;
+
+    if magic != METADATA_FILE_MAGIC.as_bytes() {
+        return Err(Box::new(std::io::Error::other("invalid magic")));
+    }
+
+    deserialize_item::<R, PackageHeader>(reader)
+}
+
+/// Deserialize the whole [`PackageMetadata`] object from the given reader.
+fn deserialize_metadata<R: std::io::Read>(
+    reader: &mut R,
+) -> std::result::Result<PackageMetadata, Box<dyn std::error::Error>> {
+    let header = deserialize_metadata_header(reader)?;
+    let hir = deserialize_item::<R, Map>(reader)?;
+
+    Ok(PackageMetadata { header, hir })
+}
+
+/// Deserialize a single "item" from the given reader.
+///
+/// An "item" is just any length-prefixed (as `usize`) serialized blob within
+/// the reader.
+///
+/// This function assumes the file magic has already been read from the reader.
+fn deserialize_item<R: std::io::Read, T: serde::de::DeserializeOwned>(
+    reader: &mut R,
+) -> std::result::Result<T, Box<dyn std::error::Error>> {
+    let mut size_bytes: [u8; _] = [0x00; size_of::<usize>()];
+    reader.read_exact(&mut size_bytes)?;
+
+    let size = usize::from_ne_bytes(size_bytes);
+    let mut buffer = vec![0x00; size];
+    reader.read_exact(&mut buffer)?;
+
+    let section = ciborium::from_reader::<T, &[u8]>(buffer.as_ref())?;
+
+    Ok(section)
 }
