@@ -4,6 +4,9 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
+[lib]
+doctest = false
+
 [dependencies]
 lume_options = { path = "../lume_options" }
 lume_rt_macros = { path = "../lume_rt_macros" }
@@ -15,11 +18,15 @@ mimalloc = { version = "=0.1.48" }
 sysinfo = { version = "=0.37.0" }
 tracing = { workspace = true }
 
-[lib]
-doctest = false
+[dev-dependencies]
+lume_benchmark = { path = "../../tools/benchmark" }
 
 [features]
 paranoid = []
+
+[[bench]]
+name = "g1_alloc"
+harness = false
 
 [lints]
 workspace = true
