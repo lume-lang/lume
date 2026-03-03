@@ -9,12 +9,12 @@ use crate::symbols::lookup::SymbolKind;
 
 pub(crate) fn hover_content_of(engine: &Engine, location: Location) -> Result<String> {
     let Some(sym) = engine.locate_symbol(location) else {
-        log::warn!("could not find matching node for {location}");
+        tracing::warn!("could not find matching node for {location}");
         return Ok(String::new());
     };
 
     let Some(package) = engine.package(sym.location.file.package) else {
-        log::warn!("could not find parent package of location {location}");
+        tracing::warn!("could not find parent package of location {location}");
         return Ok(String::new());
     };
 

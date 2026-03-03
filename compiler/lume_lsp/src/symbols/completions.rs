@@ -39,7 +39,7 @@ pub(crate) fn completions_at(engine: &Engine, ctx: CompletionContext) -> Option<
     let offset_location = ctx.offset_location();
 
     let Some(node_entry) = engine.locate_node(offset_location) else {
-        log::warn!("could not find matching node for {offset_location}");
+        tracing::warn!("could not find matching node for {offset_location}");
         return None;
     };
 
@@ -54,7 +54,7 @@ pub(crate) fn completions_at(engine: &Engine, ctx: CompletionContext) -> Option<
             completions.extend(method_completions_of(package, &ctx, &node_type));
         }
         CompletionKind::Static => {
-            log::info!("found node => {:?} ({})", node_entry.id, node_entry.location);
+            tracing::info!("found node => {:?} ({})", node_entry.id, node_entry.location);
         }
         CompletionKind::Scope => {}
     }

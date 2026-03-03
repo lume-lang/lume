@@ -34,7 +34,7 @@ impl Server {
                 None => client_info.name.clone(),
             };
 
-            log::info!("listening for events from {client}");
+            tracing::info!("listening for events from {client}");
         }
 
         let _ = self.update_status();
@@ -42,7 +42,7 @@ impl Server {
         loop {
             match crate::listener::receive(&mut receiver) {
                 Handling::Shutdown(req_id) => {
-                    log::info!("received shutdown request");
+                    tracing::info!("received shutdown request");
 
                     let resp = lsp_server::Response::new_ok(req_id, ());
                     let _ = self.sender.send(resp.into());
@@ -52,7 +52,7 @@ impl Server {
 
                 Handling::Message(message) => {
                     if let Err(err) = self.handle_message(message) {
-                        log::error!("error handling message: {err}");
+                        tracing::error!("error handling message: {err}");
                     }
                 }
 
@@ -107,7 +107,7 @@ impl Server {
         Some(match self.engines.entry(package_root.clone()) {
             Entry::Occupied(engine) => engine.into_mut(),
             Entry::Vacant(entry) => {
-                log::info!("creating new engine for workspace {}", package_root.display());
+                tracing::info!("creating new engine for workspace {}", package_root.display());
 
                 let mut engine = Engine::new(package_root, self.sender.clone());
                 engine.compile();
@@ -170,7 +170,7 @@ impl Server {
 
             Ok(json)
         } else {
-            log::error!("could not find engine for path {}", path.display());
+            tracing::error!("could not find engine for path {}", path.display());
 
             Ok(serde_json::Value::Null)
         }

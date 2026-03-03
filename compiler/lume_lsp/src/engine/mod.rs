@@ -52,7 +52,7 @@ impl Engine {
     }
 
     pub fn compile(&mut self) {
-        log::info!("compiling workspace at {}", self.root.display());
+        tracing::info!("compiling workspace at {}", self.root.display());
 
         self.reporter.check_started();
 
@@ -176,21 +176,21 @@ impl Engine {
 impl Engine {
     pub(crate) fn open_document(&mut self, uri: Uri, content: String) {
         let path = crate::uri_to_path(&uri);
-        log::info!("added document {} to vfs", path.display());
+        tracing::info!("added document {} to vfs", path.display());
 
         self.io.map(path, content);
     }
 
     pub(crate) fn close_document(&mut self, uri: Uri) {
         let path = crate::uri_to_path(&uri);
-        log::info!("removed document {} from vfs", path.display());
+        tracing::info!("removed document {} from vfs", path.display());
 
         self.io.unmap(&path);
     }
 
     pub(crate) fn save_document(&mut self, uri: Uri) {
         let path = crate::uri_to_path(&uri);
-        log::debug!("updated document {} (via save)", path.display());
+        tracing::debug!("updated document {} (via save)", path.display());
 
         self.io.unmap(&path);
         self.compile();
@@ -198,7 +198,7 @@ impl Engine {
 
     pub(crate) fn update_document(&mut self, uri: Uri, content: String) {
         let path = crate::uri_to_path(&uri);
-        log::debug!("updated document {} (via change)", path.display());
+        tracing::debug!("updated document {} (via change)", path.display());
 
         self.io.map(path, content);
     }
@@ -236,7 +236,7 @@ impl Engine {
             return Err(lume_errors::SimpleDiagnostic::new(format!("could not find definition for {location}")).into());
         };
 
-        log::debug!("found definition at {definition_location}");
+        tracing::debug!("found definition at {definition_location}");
 
         let definition_pathbuf = definition_location.file.name.to_pathbuf().clone();
         let absolute_path = self.resolve_path(definition_pathbuf);
@@ -255,7 +255,7 @@ impl Engine {
         };
 
         let text_edits = crate::symbols::format::formatted_file(content, config).unwrap_or_else(|err| {
-            log::error!("could not format file: {err}");
+            tracing::error!("could not format file: {err}");
             Vec::new()
         });
 
