@@ -16,7 +16,7 @@ pub struct Options {
 
 /// Guard for flushing buffered logs to the output.
 #[expect(unused, reason = "drop guard")]
-pub struct Guard(tracing_appender::non_blocking::WorkerGuard);
+pub struct Guard(Option<tracing_appender::non_blocking::WorkerGuard>);
 
 /// Initializes the tracing subscriber, allowing for function tracing during
 /// development.
@@ -25,6 +25,13 @@ pub struct Guard(tracing_appender::non_blocking::WorkerGuard);
 /// defaulting back to `off` (no traces) if unset or invalid.
 #[must_use = "returns guard for flushing log output"]
 pub fn init_subscriber(options: Options) -> Result<Guard> {
+    if options.log_file.is_none()
+        && options.default_filter.is_none_or(|filter| filter == LevelFilter::OFF)
+        && std::env::var_os("LUMEC_LOG").is_none_or(|val| val == "off")
+    {
+        return Ok(Guard(None));
+    }
+
     let use_colors = options.log_file.is_none();
 
     let output = if let Some(log_file_path) = options.log_file {
@@ -65,7 +72,7 @@ pub fn init_subscriber(options: Options) -> Result<Guard> {
 
     tracing_log::LogTracer::init().expect("failed log tracer setup");
 
-    Ok(Guard(guard))
+    Ok(Guard(Some(guard)))
 }
 
 struct FileTarget {
