@@ -5,7 +5,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use lume_errors::{DiagCtxHandle, Result, SimpleDiagnostic};
-use lume_session::{DependencyMap, FileLoader};
+use lume_session::{DependencyMap, FileLoader, Package, Tree};
 use lume_span::PackageId;
 use pubgrub::{Dependencies, PackageResolutionStatistics, VersionSet as _};
 use semver::Version;
@@ -80,12 +80,18 @@ pub(crate) fn build_dependency_tree(root: &Path, loader: &dyn FileLoader, dcx: D
         root: root_id,
         packages: HashMap::new(),
         resolved: HashMap::new(),
+        tree: Tree::default(),
     };
 
     for (dependency, version) in &solution {
         let local_path = dependency.source.fetch()?;
         let manifest = PackageParser::locate(&local_path, loader)?;
-        let package = manifest.into();
+        let package: Package = manifest.into();
+
+        map.tree.add_dependencies(
+            package.id,
+            package.dependencies.graph.iter().map(|(dep, _version)| *dep),
+        );
 
         map.packages.insert(dependency.id, package);
         map.resolved.insert(dependency.id, version.clone());
