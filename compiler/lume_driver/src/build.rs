@@ -1,3 +1,4 @@
+use indexmap::IndexSet;
 use lume_metadata::PackageMetadata;
 
 use crate::*;
@@ -49,14 +50,34 @@ impl Driver {
         let mut objects = Vec::new();
         let mut dependency_hir = lume_hir::map::Map::empty(PackageId::empty());
 
+        let mut dirty_packages: IndexSet<PackageId> = IndexSet::with_capacity(dependencies.len());
+
         for dependency in dependencies {
-            if !needs_compilation(&gcx, &dependency) {
+            let has_hash_changed = needs_compilation(&gcx, &dependency);
+            let bc_path = gcx.obj_bc_path_of(&dependency.name);
+
+            // We can skip recompilation of a package if *all* the following circumstances
+            // are true:
+            // - none of it's dependencies have been marked as "dirty",
+            // - the package hash within the package's `.mlib` file is the same as now,
+            // - and the target object file already exists
+            if !dirty_packages.contains(&dependency.id) && !has_hash_changed && bc_path.exists() {
                 objects.push(lume_linker::ObjectSource::Cache {
                     name: dependency.name.clone(),
-                    path: gcx.obj_bc_path_of(&dependency.name),
+                    path: bc_path,
                 });
 
                 continue;
+            }
+
+            // If the package hash is different from the cached hash, mark all the depending
+            // packages as dirty.
+            //
+            // The check is meant to prevent the re-compilation in the case where the hash
+            // is the same, but re-compilation of a dependency was required since the object
+            // file was missing.
+            if has_hash_changed {
+                dirty_packages.extend(gcx.session.dep_graph.dependents_of(dependency.id));
             }
 
             let span = tracing::info_span!(

@@ -21,6 +21,9 @@ pub struct DependencyMap {
     /// Defines the resolved version of each package, which is
     /// meant to be used in the compilation process.
     pub resolved: HashMap<PackageId, Version>,
+
+    /// Defines the dependencies and dependents of all packages in the map.
+    pub tree: Tree,
 }
 
 impl DependencyMap {
@@ -56,6 +59,18 @@ impl DependencyMap {
             packages: &self.packages,
         }
     }
+
+    /// Returns an [`Iterator`] which iterates the dependencies of the the given
+    /// package.
+    pub fn dependencies_of(&self, package: PackageId) -> impl Iterator<Item = PackageId> {
+        self.tree.dependencies.get(&package).unwrap_or(&EMPTY).iter().copied()
+    }
+
+    /// Returns an [`Iterator`] which iterates the dependents of the the given
+    /// package.
+    pub fn dependents_of(&self, package: PackageId) -> impl Iterator<Item = PackageId> {
+        self.tree.dependents.get(&package).unwrap_or(&EMPTY).iter().copied()
+    }
 }
 
 pub struct DependencyIter<'a> {
@@ -75,5 +90,31 @@ impl<'a> Iterator for DependencyIter<'a> {
         }
 
         Some(pkg)
+    }
+}
+
+static EMPTY: Vec<PackageId> = Vec::<PackageId>::new();
+
+/// Represents a tree of all packages within a dependency map, indexed with all
+/// their dependencies and dependents.
+#[derive(Default, Debug, Clone)]
+pub struct Tree {
+    dependencies: HashMap<PackageId, Vec<PackageId>>,
+    dependents: HashMap<PackageId, Vec<PackageId>>,
+}
+
+impl Tree {
+    /// Adds the given package to the tree and places all the given  dependency
+    /// indices under it.
+    pub fn add_dependencies<I>(&mut self, id: PackageId, dependencies: I)
+    where
+        I: IntoIterator<Item = PackageId>,
+    {
+        let tree_entry = self.dependencies.entry(id).or_default();
+
+        for dependency in dependencies {
+            tree_entry.push(dependency);
+            self.dependents.entry(id).or_default().push(id);
+        }
     }
 }
