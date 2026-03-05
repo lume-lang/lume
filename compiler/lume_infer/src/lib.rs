@@ -113,7 +113,6 @@ impl TyInferCtx {
         self.define_methods()?;
         self.define_type_parameters()?;
         self.define_scopes()?;
-        self.infer_type_arguments()?;
 
         tracing::debug!("finished inference");
         self.dcx().ensure_untainted()?;
@@ -469,6 +468,7 @@ impl TyInferCtx {
     }
 
     /// Raises an error indicating that the given types do not match.
+    #[track_caller]
     pub fn raise_mismatched_types(&self, expected: &TypeRef, found: &TypeRef) {
         self.dcx().emit(self.mismatched_types(expected, found));
     }
