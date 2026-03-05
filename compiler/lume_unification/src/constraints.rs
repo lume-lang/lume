@@ -5,6 +5,72 @@ use lume_types::TypeRef;
 
 use crate::{TypeVariableId, UnificationPass, is_type_contained_within, verify};
 
+/// Denotes all available types which can be inferred and unified.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum InferedNode {
+    Cast(lume_hir::Cast),
+    Construct(lume_hir::Construct),
+    VariableDeclaration(lume_hir::VariableDeclaration),
+    StaticCall(lume_hir::StaticCall),
+    Variant(lume_hir::Variant),
+    Pattern(lume_hir::Pattern),
+}
+
+impl TryFrom<&lume_hir::Node> for InferedNode {
+    type Error = ();
+
+    fn try_from(value: &lume_hir::Node) -> std::result::Result<Self, Self::Error> {
+        match value {
+            lume_hir::Node::Statement(stmt) => match &stmt.kind {
+                lume_hir::StatementKind::Variable(stmt) => Ok(InferedNode::VariableDeclaration(stmt.clone())),
+                _ => Err(()),
+            },
+            lume_hir::Node::Expression(expr) => match &expr.kind {
+                lume_hir::ExpressionKind::Cast(expr) => Ok(InferedNode::Cast(expr.clone())),
+                lume_hir::ExpressionKind::Construct(expr) => Ok(InferedNode::Construct(expr.clone())),
+                lume_hir::ExpressionKind::StaticCall(call) => Ok(InferedNode::StaticCall(call.clone())),
+                lume_hir::ExpressionKind::Variant(variant) => Ok(InferedNode::Variant(variant.clone())),
+                _ => Err(()),
+            },
+            lume_hir::Node::Pattern(pattern) => Ok(InferedNode::Pattern(pattern.clone())),
+            _ => Err(()),
+        }
+    }
+}
+
+impl From<InferedNode> for lume_hir::Node {
+    fn from(value: InferedNode) -> lume_hir::Node {
+        match value {
+            InferedNode::Cast(expr) => lume_hir::Node::Expression(lume_hir::Expression {
+                id: expr.id,
+                location: expr.location,
+                kind: lume_hir::ExpressionKind::Cast(expr),
+            }),
+            InferedNode::Construct(expr) => lume_hir::Node::Expression(lume_hir::Expression {
+                id: expr.id,
+                location: expr.location,
+                kind: lume_hir::ExpressionKind::Construct(expr),
+            }),
+            InferedNode::VariableDeclaration(stmt) => lume_hir::Node::Statement(lume_hir::Statement {
+                id: stmt.id,
+                location: stmt.location,
+                kind: lume_hir::StatementKind::Variable(stmt),
+            }),
+            InferedNode::StaticCall(call) => lume_hir::Node::Expression(lume_hir::Expression {
+                id: call.id,
+                location: call.location,
+                kind: lume_hir::ExpressionKind::StaticCall(call),
+            }),
+            InferedNode::Variant(expr) => lume_hir::Node::Expression(lume_hir::Expression {
+                id: expr.id,
+                location: expr.location,
+                kind: lume_hir::ExpressionKind::Variant(expr),
+            }),
+            InferedNode::Pattern(pat) => lume_hir::Node::Pattern(pat),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Constraint {
     Equal { lhs: TypeRef, rhs: TypeRef },
@@ -15,42 +81,37 @@ impl UnificationPass<'_> {
     #[tracing::instrument(level = "INFO", skip_all, err)]
     pub(crate) fn create_constraints(&mut self) -> Result<()> {
         for id in self.tcx.hir().nodes.keys().copied().collect::<Vec<_>>() {
-            let mut node = match self.tcx.hir().expect_node(id)? {
-                node @ (lume_hir::Node::Pattern(_) | lume_hir::Node::Statement(_) | lume_hir::Node::Expression(_)) => {
-                    node.clone()
-                }
-                _ => continue,
+            let mut node = if let Some(node) = self.tcx.hir_node(id)
+                && let Ok(inferred) = InferedNode::try_from(node)
+            {
+                inferred
+            } else {
+                continue;
             };
 
             match &mut node {
-                lume_hir::Node::Pattern(pattern) => {
+                InferedNode::Pattern(pattern) => {
                     if let lume_hir::PatternKind::Variant(variant) = &pattern.kind {
                         self.create_type_constraints(pattern.id, &variant.name)?;
                     }
                 }
-                lume_hir::Node::Statement(stmt) => {
-                    if let lume_hir::StatementKind::Variable(decl) = &stmt.kind
-                        && let Some(declared_type) = &decl.declared_type
-                    {
+                InferedNode::VariableDeclaration(decl) => {
+                    if let Some(declared_type) = &decl.declared_type {
                         verify::verify_type_name(self.tcx, &declared_type.name, declared_type.location);
                     }
                 }
-                lume_hir::Node::Expression(expr) => match &expr.kind {
-                    lume_hir::ExpressionKind::Cast(cast) => {
-                        self.create_type_constraints(expr.id, &cast.target.name)?;
-                    }
-                    lume_hir::ExpressionKind::Construct(construct) => {
-                        self.create_type_constraints(expr.id, &construct.path)?;
-                    }
-                    lume_hir::ExpressionKind::StaticCall(call) => {
-                        self.create_type_constraints(expr.id, &call.name)?;
-                    }
-                    lume_hir::ExpressionKind::Variant(variant) => {
-                        self.create_type_constraints(expr.id, &variant.name)?;
-                    }
-                    _ => {}
-                },
-                _ => {}
+                InferedNode::Cast(expr) => {
+                    self.create_type_constraints(expr.id, &expr.target.name)?;
+                }
+                InferedNode::Construct(expr) => {
+                    self.create_type_constraints(expr.id, &expr.path)?;
+                }
+                InferedNode::StaticCall(expr) => {
+                    self.create_type_constraints(expr.id, &expr.name)?;
+                }
+                InferedNode::Variant(expr) => {
+                    self.create_type_constraints(expr.id, &expr.name)?;
+                }
             }
         }
 
