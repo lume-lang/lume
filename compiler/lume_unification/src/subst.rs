@@ -23,11 +23,12 @@ impl UnificationPass<'_> {
                 .collect::<Vec<_>>();
 
             if eq_constraints.is_empty() {
-                let type_param = self.tcx.hir_expect_type_parameter(type_variable_id.1.as_node_id());
+                let type_var_hir = self.tcx.hir().expect_type_variable(type_variable_id.0.as_node_id())?;
+                let type_param = self.tcx.hir_expect_type_parameter(type_var_hir.binding.as_node_id());
 
                 self.tcx.dcx().emit(
                     TypeArgumentInferenceFailed {
-                        source: self.tcx.hir_span_of_node(type_variable_id.0),
+                        source: self.tcx.hir_span_of_node(type_variable_id.0.as_node_id()),
                         type_param_name: type_param.name.to_string(),
                     }
                     .into(),
@@ -58,7 +59,7 @@ impl UnificationPass<'_> {
 
                             self.tcx.dcx().emit(
                                 TypeParameterConstraintUnsatisfied {
-                                    source: self.tcx.hir_span_of_node(type_variable_id.0),
+                                    source: self.tcx.hir_span_of_node(type_variable_id.0.as_node_id()),
                                     constraint_loc: type_param_constraint.location,
                                     param_name: type_param.name.to_string(),
                                     type_name: self.tcx.new_named_type(&expected_type, true)?,
@@ -101,11 +102,12 @@ impl UnificationPass<'_> {
 
         for (&type_variable_id, TypeVariable { substitute, .. }) in tcx_constraints.iter() {
             let Some(substitute) = substitute else {
-                let type_param = self.tcx.hir_expect_type_parameter(type_variable_id.1.as_node_id());
+                let type_var_hir = self.tcx.hir().expect_type_variable(type_variable_id.0.as_node_id())?;
+                let type_param = self.tcx.hir_expect_type_parameter(type_var_hir.binding.as_node_id());
 
                 self.tcx.dcx().emit(
                     TypeArgumentInferenceFailed {
-                        source: self.tcx.hir_span_of_node(type_variable_id.0),
+                        source: self.tcx.hir_span_of_node(type_variable_id.0.as_node_id()),
                         type_param_name: type_param.name.to_string(),
                     }
                     .into(),
@@ -114,7 +116,7 @@ impl UnificationPass<'_> {
                 continue;
             };
 
-            let Some(expr) = self.tcx.hir().expression(type_variable_id.0) else {
+            let Some(expr) = self.tcx.hir().expression(type_variable_id.0.as_node_id()) else {
                 panic!("bug!: expected ID in type variable to reference Expression");
             };
 
@@ -159,7 +161,7 @@ impl UnificationPass<'_> {
                     lume_hir::PathSegment::Type { bound_types, .. }
                     | lume_hir::PathSegment::Callable { bound_types, .. } => {
                         for (num_type, bound_type) in bound_types.iter().enumerate() {
-                            if bound_type.id != type_variable_id.1 {
+                            if bound_type.id != type_variable_id.0 {
                                 continue;
                             }
 
@@ -171,7 +173,7 @@ impl UnificationPass<'_> {
                 }
             }
 
-            let Some(expr) = self.tcx.hir_mut().expression_mut(type_variable_id.0) else {
+            let Some(expr) = self.tcx.hir_mut().expression_mut(type_variable_id.0.as_node_id()) else {
                 panic!("bug!: expected ID in type variable to reference Expression");
             };
 

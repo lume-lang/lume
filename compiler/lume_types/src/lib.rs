@@ -176,6 +176,9 @@ pub enum TypeKind {
 
     /// The type is a reference to a type parameter in the current scope.
     TypeParameter,
+
+    /// Unresolved type variable in the current scope
+    TypeVariable,
 }
 
 impl TypeKind {
@@ -185,9 +188,12 @@ impl TypeKind {
             TypeKind::Void | TypeKind::Bool | TypeKind::Int(_) | TypeKind::UInt(_) | TypeKind::Float(_) => {
                 TypeTransport::Copy
             }
-            TypeKind::Struct | TypeKind::Trait | TypeKind::Enum | TypeKind::String | TypeKind::TypeParameter => {
-                TypeTransport::Reference
-            }
+            TypeKind::Struct
+            | TypeKind::Trait
+            | TypeKind::Enum
+            | TypeKind::String
+            | TypeKind::TypeParameter
+            | TypeKind::TypeVariable => TypeTransport::Reference,
         }
     }
 

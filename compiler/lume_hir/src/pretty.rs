@@ -92,6 +92,7 @@ impl PrettyPrint for Node {
             Self::Pattern(node) => node.pretty_fmt(map, f),
             Self::Statement(node) => node.pretty_fmt(map, f),
             Self::Expression(node) => node.pretty_fmt(map, f),
+            Self::TypeVariable(node) => node.pretty_fmt(map, f),
         }
     }
 }
@@ -803,6 +804,14 @@ impl PrettyPrint for Type {
     fn pretty_fmt(&self, _map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Type")
             .field("name", &self.name)
+            .field("location", &self.location)
+            .finish()
+    }
+}
+
+impl PrettyPrint for TypeVariable {
+    fn pretty_fmt(&self, _map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TypeVariable")
             .field("location", &self.location)
             .finish()
     }
