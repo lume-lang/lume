@@ -133,7 +133,15 @@ impl TyInferCtx {
     /// up the given type parameters.
     #[tracing::instrument(level = "DEBUG", skip_all, fields(ty = %ty.name, location = %ty.location, type_params), err)]
     pub fn mk_type_ref_generic(&self, ty: &lume_hir::Type, type_params: &[&TypeParameter]) -> Result<TypeRef> {
-        let Some(found_type) = self.find_type_ref_ctx(&ty.name, type_params) else {
+        let found_type = if self
+            .tdb()
+            .type_(ty.id.as_node_id())
+            .is_some_and(|ty| ty.kind == lume_types::TypeKind::TypeVariable)
+        {
+            ty.id.as_node_id()
+        } else if let Some(found_type) = self.find_type_ref_ctx(&ty.name, type_params) {
+            found_type
+        } else {
             return Err(self.missing_type_err(&ty.name, ty.location));
         };
 

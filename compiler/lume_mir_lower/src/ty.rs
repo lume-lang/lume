@@ -50,5 +50,6 @@ pub(crate) fn lower_type(mcx: &MirQueryCtx, type_ref: &TypeRef) -> lume_mir::Typ
         }
         lume_types::TypeKind::Trait => lume_mir::Type::pointer(lume_mir::Type::void()),
         lume_types::TypeKind::TypeParameter => lume_mir::Type::type_param(),
+        lume_types::TypeKind::TypeVariable => unreachable!(),
     }
 }

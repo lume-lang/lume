@@ -2,6 +2,7 @@ mod constraints;
 mod subst;
 mod verify;
 
+use std::fmt::Display;
 use std::sync::RwLock;
 
 use indexmap::IndexMap;
@@ -29,7 +30,13 @@ impl<'tcx> UnificationPass<'tcx> {
 }
 
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct TypeVariableId(NodeId, TypeId);
+pub(crate) struct TypeVariableId(TypeId);
+
+impl Display for TypeVariableId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "T?{:X}", self.0.as_node_id().as_usize())
+    }
+}
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TypeVariable {
@@ -94,6 +101,7 @@ fn normalize_equality_constraints(
     debug_assert!(!constraints.is_empty(), "equality constraint list must not be empty");
     debug_assert!(constraints.iter().all(|c| matches!(c, Constraint::Equal { .. })));
 
+    let type_var_hir = tcx.hir().expect_type_variable(type_variable.0.as_node_id())?;
     let mut normalized_types: Option<(TypeRef, TypeRef)> = None;
 
     for constraint in constraints {
@@ -101,7 +109,7 @@ fn normalize_equality_constraints(
             unreachable!();
         };
 
-        let (normalized_lhs, normalized_rhs) = normalize_constraint_types(tcx, type_variable.1, &lhs, &rhs)?;
+        let (normalized_lhs, normalized_rhs) = normalize_constraint_types(tcx, type_var_hir.binding, &lhs, &rhs)?;
 
         match normalized_types.as_ref() {
             None => {
@@ -124,7 +132,7 @@ fn normalize_equality_constraints(
         }
     }
 
-    let type_variable_target = type_variable.1.as_node_id();
+    let type_variable_target = type_var_hir.binding.as_node_id();
     let (normalized_lhs, normalized_rhs) = normalized_types.expect("expected constraints to be normalized and exist");
 
     // Return the normalized type which does *not* contain the type variable itself,

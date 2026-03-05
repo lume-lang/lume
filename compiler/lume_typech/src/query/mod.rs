@@ -599,7 +599,12 @@ impl TyCheckCtx {
 
                 Node::TraitMethodDef(_) | Node::TraitMethodImpl(_) => unreachable!("handled in start of method"),
 
-                Node::TraitImpl(_) | Node::Impl(_) | Node::Pattern(_) | Node::Statement(_) | Node::Expression(_) => {
+                Node::TraitImpl(_)
+                | Node::Impl(_)
+                | Node::Pattern(_)
+                | Node::Statement(_)
+                | Node::Expression(_)
+                | Node::TypeVariable(_) => {
                     return Err(diagnostics::CannotHoldVisibility {
                         source: self.hir_span_of_node(b),
                     }
@@ -702,7 +707,7 @@ impl TyCheckCtx {
             }
 
             // Non-item nodes shouldn't be exported since they have no effect on type-checking in other packages.
-            Node::Pattern(_) | Node::Statement(_) | Node::Expression(_) => Ok(false),
+            Node::Pattern(_) | Node::Statement(_) | Node::Expression(_) | Node::TypeVariable(_) => Ok(false),
         }
     }
 }

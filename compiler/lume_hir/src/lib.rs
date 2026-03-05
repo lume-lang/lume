@@ -37,6 +37,9 @@ pub enum Node {
 
     #[serde(skip)]
     Expression(Expression),
+
+    #[serde(skip)]
+    TypeVariable(TypeVariable),
 }
 
 impl Node {
@@ -53,6 +56,7 @@ impl Node {
             Self::Pattern(def) => def.id,
             Self::Statement(def) => def.id,
             Self::Expression(def) => def.id,
+            Self::TypeVariable(def) => def.id,
         }
     }
 
@@ -69,6 +73,7 @@ impl Node {
             Self::Pattern(n) => n.location,
             Self::Statement(n) => n.location,
             Self::Expression(n) => n.location,
+            Self::TypeVariable(n) => n.location,
         }
     }
 
@@ -85,7 +90,28 @@ impl Node {
             | Self::TraitMethodImpl(_)
             | Self::Pattern(_)
             | Self::Statement(_)
-            | Self::Expression(_) => false,
+            | Self::Expression(_)
+            | Self::TypeVariable(_) => false,
+        }
+    }
+
+    pub fn as_node_type(&self) -> NodeType {
+        match self {
+            Self::Function(_) => NodeType::Function,
+            Self::Type(TypeDefinition::Struct(_)) => NodeType::StructDef,
+            Self::Type(TypeDefinition::Trait(_)) => NodeType::TraitDef,
+            Self::Type(TypeDefinition::Enum(_)) => NodeType::EnumDef,
+            Self::Type(TypeDefinition::TypeParameter(_)) => NodeType::TypeParam,
+            Self::TraitImpl(_) => NodeType::TraitImpl,
+            Self::Impl(_) => NodeType::Impl,
+            Self::Field(_) => NodeType::Field,
+            Self::Method(_) => NodeType::Method,
+            Self::TraitMethodDef(_) => NodeType::TraitMethodDef,
+            Self::TraitMethodImpl(_) => NodeType::TraitMethodImpl,
+            Self::Pattern(_) => NodeType::Pattern,
+            Self::Statement(_) => NodeType::Statement,
+            Self::Expression(_) => NodeType::Expression,
+            Self::TypeVariable(_) => NodeType::TypeVariable,
         }
     }
 }
@@ -96,6 +122,7 @@ pub enum NodeType {
     StructDef,
     EnumDef,
     TraitDef,
+    TypeParam,
     TraitImpl,
     Impl,
     Field,
@@ -105,6 +132,7 @@ pub enum NodeType {
     Pattern,
     Statement,
     Expression,
+    TypeVariable,
 }
 
 /// Trait for HIR nodes which have some location attached.
@@ -1903,4 +1931,14 @@ impl std::hash::Hash for Type {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
     }
+}
+
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
+pub struct TypeVariable {
+    pub id: NodeId,
+    pub location: Location,
+
+    /// Defines the ID of the type parameter which the type variable
+    /// is bound to.
+    pub binding: TypeId,
 }

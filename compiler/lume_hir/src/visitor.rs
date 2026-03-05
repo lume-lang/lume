@@ -174,6 +174,7 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
         | Node::TraitMethodImpl(_)
         | Node::Pattern(_)
         | Node::Statement(_)
+        | Node::TypeVariable(_)
         | Node::Expression(_) => {}
     }
 

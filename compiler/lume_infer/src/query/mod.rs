@@ -1202,7 +1202,8 @@ impl TyInferCtx {
             | Node::Impl(_)
             | Node::Pattern(_)
             | Node::Statement(_)
-            | Node::Expression(_) => None,
+            | Node::Expression(_)
+            | Node::TypeVariable(_) => None,
             Node::Field(n) => Some(n.visibility),
             Node::Method(n) => Some(n.visibility),
         }

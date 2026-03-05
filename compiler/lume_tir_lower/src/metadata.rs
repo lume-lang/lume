@@ -53,6 +53,7 @@ impl<'tcx> MetadataBuilder<'tcx> {
             lume_types::TypeKind::Enum => TypeKind::Enum,
             lume_types::TypeKind::Trait => TypeKind::Trait,
             lume_types::TypeKind::TypeParameter => TypeKind::TypeParameter,
+            lume_types::TypeKind::TypeVariable => unreachable!(),
         }
     }
 
@@ -145,6 +146,10 @@ impl<'tcx> MetadataBuilder<'tcx> {
 
 impl lume_type_metadata::visitor::Visitor for MetadataBuilder<'_> {
     fn visit_type(&mut self, type_ref: &lume_types::TypeRef) -> Result<()> {
+        if self.tcx.tdb().type_(type_ref.instance_of).map(|ty| ty.kind) == Some(lume_types::TypeKind::TypeVariable) {
+            return Ok(());
+        }
+
         let id = TypeMetadataId::from(type_ref);
 
         let type_id = type_ref.instance_of;
