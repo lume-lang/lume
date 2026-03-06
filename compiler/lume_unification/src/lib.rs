@@ -179,7 +179,7 @@ pub(crate) fn normalize_constraint_types(
     // ```
     if lhs.instance_of == rhs.instance_of {
         for (bound_lhs, bound_rhs) in lhs.bound_types.iter().zip(rhs.bound_types.iter()) {
-            if !is_type_contained_within(target, bound_lhs) && !is_type_contained_within(target, bound_rhs) {
+            if !bound_lhs.contains(target) && !bound_rhs.contains(target) {
                 continue;
             }
 
@@ -188,20 +188,6 @@ pub(crate) fn normalize_constraint_types(
     }
 
     Err(tcx.mismatched_types(lhs, rhs))
-}
-
-pub(crate) fn is_type_contained_within(target: TypeId, ty: &TypeRef) -> bool {
-    if target == ty.instance_of {
-        return true;
-    }
-
-    for bound_type in &ty.bound_types {
-        if is_type_contained_within(target, bound_type) {
-            return true;
-        }
-    }
-
-    false
 }
 
 /// Performs unification on the given type inference context.
@@ -218,6 +204,7 @@ pub fn unify(tcx: &mut TyInferCtx) -> Result<()> {
     let mut ucx = UnificationPass::new(tcx);
 
     ucx.introduce_type_variables()?;
+    ucx.create_constraints()?;
     ucx.create_type_substitutions()?;
     ucx.apply_substitutions()?;
 

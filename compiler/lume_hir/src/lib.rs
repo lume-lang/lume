@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use lume_macros::Location;
 use lume_span::*;
 use serde::{Deserialize, Serialize};
@@ -648,12 +650,30 @@ pub enum Pathing<'p> {
     Segment(&'p PathSegment),
 }
 
+impl Display for Pathing<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Full(p) => Display::fmt(p, f),
+            Self::Segment(p) => Display::fmt(p, f),
+        }
+    }
+}
+
 /// Represents a mutable pathing of a function or method, which can be either
 /// the full path or a single segment.
 #[derive(Hash, Debug, PartialEq, Eq)]
 pub enum PathingMut<'p> {
     Full(&'p mut Path),
     Segment(&'p mut PathSegment),
+}
+
+impl Display for PathingMut<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Full(p) => Display::fmt(p, f),
+            Self::Segment(p) => Display::fmt(p, f),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]

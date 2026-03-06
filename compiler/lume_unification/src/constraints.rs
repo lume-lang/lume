@@ -1,8 +1,10 @@
 use lume_errors::Result;
+use lume_hir::TypeId;
 use lume_span::NodeId;
 use lume_types::TypeRef;
 
-use crate::{TypeVariableId, UnificationPass, is_type_contained_within};
+use crate::introduce::InferedNodeRef;
+use crate::{TypeVariableId, UnificationPass};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Constraint {
@@ -11,9 +13,30 @@ pub(crate) enum Constraint {
 }
 
 impl UnificationPass<'_> {
+    #[tracing::instrument(level = "INFO", skip_all, err)]
+    pub(crate) fn create_constraints(&self) -> Result<()> {
+        let affected_nodes: Vec<_> = self.affected_nodes.try_write().unwrap().drain(..).collect();
+
+        for (id, type_variable) in affected_nodes {
+            if let Err(err) = self.create_constraints_for(id, type_variable) {
+                self.tcx.dcx().emit(err);
+            }
+        }
+
+        Ok(())
+    }
+
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn create_constraints_of(&self, expr: NodeId, path: &lume_hir::Path, type_variable: TypeVariableId) -> Result<()> {
+    fn create_constraints_for(&self, node_id: NodeId, type_variable: TypeVariableId) -> Result<()> {
         self.ensure_entry_for(type_variable);
+
+        let node = if let Some(node) = self.tcx.hir_node(node_id)
+            && let Ok(inferred) = InferedNodeRef::try_from(node)
+        {
+            inferred
+        } else {
+            return Ok(());
+        };
 
         let type_parameter_id = self
             .tcx
@@ -21,140 +44,197 @@ impl UnificationPass<'_> {
             .expect_type_variable(type_variable.0.as_node_id())?
             .binding;
 
-        match &path.name {
-            lume_hir::PathSegment::Type { .. } => {
-                let Some(type_def) = self.tcx.tdb().find_type(path) else {
-                    return Ok(());
-                };
-
-                for bound_type in type_def.name.all_bound_types() {
-                    if bound_type.id != type_parameter_id {
-                        continue;
-                    }
-
-                    let type_param_id = bound_type.id.as_node_id();
-                    let type_param = self.tcx.hir_expect_type_parameter(type_param_id);
-
-                    for type_param_constraint in &type_param.constraints {
-                        let constraint_type = self.tcx.mk_type_ref_from(type_param_constraint, type_param.id)?;
-
-                        self.sub(type_variable, constraint_type, type_param.id);
-                    }
+        match node {
+            InferedNodeRef::Pattern(pattern) => {
+                if let lume_hir::PatternKind::Variant(variant) = &pattern.kind {
+                    self.create_constraints_for_variant(pattern.id, &variant.name, type_parameter_id, type_variable)?;
                 }
             }
-            lume_hir::PathSegment::Callable { .. } => {
-                let Some(callable) = self.tcx.callable_with_name(path) else {
-                    return Ok(());
-                };
-
-                let Some(call_expr) = self.tcx.hir_call_expr(expr) else {
-                    return Ok(());
-                };
-
-                let args = call_expr.arguments();
-                let params = self.tcx.signature_of(callable)?.params;
-
-                for (param, arg) in params.into_iter().zip(args) {
-                    if !is_type_contained_within(type_parameter_id, &param.ty) {
-                        continue;
-                    }
-
-                    self.eq(type_variable, self.tcx.type_of(arg)?, param.ty.clone());
-                }
-
-                for bound_type in callable.name().all_bound_types() {
-                    if bound_type.id != type_parameter_id {
-                        continue;
-                    }
-
-                    let type_param_id = bound_type.id.as_node_id();
-                    let type_param = self.tcx.hir_expect_type_parameter(type_param_id);
-
-                    for type_param_constraint in &type_param.constraints {
-                        let constraint_type = self.tcx.mk_type_ref_from(type_param_constraint, type_param.id)?;
-
-                        self.sub(type_variable, constraint_type, type_param.id);
-                    }
-                }
+            InferedNodeRef::VariableDeclaration(_decl) => {}
+            InferedNodeRef::Cast(expr) => {
+                self.create_constraints_for_type(&expr.target.name, type_parameter_id, type_variable)?;
             }
-            lume_hir::PathSegment::Variant { .. } => {
-                let parent_path = path
-                    .clone()
-                    .parent()
-                    .expect("expected Variant path segment to have Type parent");
-
-                let enum_def = self.tcx.enum_def_with_name(&parent_path)?;
-                let enum_case_def = self.tcx.enum_case_with_name(path)?;
-
-                let arguments = match &self.tcx.hir_expect_node(expr) {
-                    lume_hir::Node::Expression(expr) => {
-                        if let lume_hir::ExpressionKind::Variant(variant) = &expr.kind {
-                            let argument_ids = &variant.arguments;
-
-                            argument_ids
-                                .iter()
-                                .map(|id| self.tcx.type_of(*id))
-                                .collect::<Result<Vec<_>>>()?
-                        } else {
-                            return Ok(());
-                        }
-                    }
-                    lume_hir::Node::Pattern(pattern) => {
-                        if let lume_hir::PatternKind::Variant(pattern) = &pattern.kind {
-                            let field_ids = &pattern.fields;
-
-                            field_ids
-                                .iter()
-                                .map(|subpattern| self.tcx.type_of_pattern(subpattern))
-                                .collect::<Result<Vec<_>>>()?
-                        } else {
-                            return Ok(());
-                        }
-                    }
-                    _ => return Ok(()),
-                };
-
-                let params = &enum_case_def.parameters;
-
-                for (param, arg) in params.iter().zip(arguments) {
-                    let param_ty = self.tcx.mk_type_ref_from(param, enum_def.id)?;
-
-                    if !is_type_contained_within(type_parameter_id, &param_ty) {
-                        continue;
-                    }
-
-                    self.eq(type_variable, arg, param_ty);
-                }
-
-                for bound_type in enum_def.name().all_bound_types() {
-                    if bound_type.id != type_parameter_id {
-                        continue;
-                    }
-
-                    let type_param_id = bound_type.id.as_node_id();
-                    let type_param = self.tcx.hir_expect_type_parameter(type_param_id);
-
-                    for type_param_constraint in &type_param.constraints {
-                        let constraint_type = self.tcx.mk_type_ref_from(type_param_constraint, type_param.id)?;
-
-                        self.sub(type_variable, constraint_type, type_param.id);
-                    }
-                }
+            InferedNodeRef::Construct(expr) => {
+                self.create_constraints_for_type(&expr.path, type_parameter_id, type_variable)?;
             }
-            lume_hir::PathSegment::Namespace { .. } => {}
+            InferedNodeRef::InstanceCall(expr) => {
+                self.create_constraints_for_callable(
+                    lume_hir::CallExpression::Instanced(expr),
+                    type_parameter_id,
+                    type_variable,
+                )?;
+            }
+            InferedNodeRef::StaticCall(expr) => {
+                self.create_constraints_for_callable(
+                    lume_hir::CallExpression::Static(expr),
+                    type_parameter_id,
+                    type_variable,
+                )?;
+            }
+            InferedNodeRef::Variant(expr) => {
+                self.create_constraints_for_variant(expr.id, &expr.name, type_parameter_id, type_variable)?;
+            }
         }
 
-        if let Some(lume_hir::Node::Pattern(pattern)) = self.tcx.hir_node(expr)
-            && let Some(expected_type) = self.tcx.expected_type_of(expr)?
-        {
-            self.eq(type_variable, self.tcx.type_of_pattern(pattern)?, expected_type);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn create_constraints_for_type(
+        &self,
+        path: &lume_hir::Path,
+        type_parameter_id: TypeId,
+        type_variable: TypeVariableId,
+    ) -> Result<()> {
+        let Some(type_def) = self.tcx.tdb().find_type(path) else {
+            return Ok(());
+        };
+
+        for bound_type in type_def.name.all_bound_types() {
+            if bound_type.id != type_parameter_id {
+                continue;
+            }
+
+            let type_param_id = bound_type.id.as_node_id();
+            let type_param = self.tcx.hir_expect_type_parameter(type_param_id);
+
+            for type_param_constraint in &type_param.constraints {
+                let constraint_type = self.tcx.mk_type_ref_from(type_param_constraint, type_param.id)?;
+
+                self.sub(type_variable, constraint_type, type_param.id);
+            }
         }
 
-        if self.tcx.hir_expr(expr).is_some()
-            && !path.is_variant()
-            && let Some(expected_type) = self.tcx.expected_type_of(expr)?
-        {
-            self.eq(type_variable, self.tcx.type_of(expr)?, expected_type);
+        Ok(())
+    }
+
+    #[tracing::instrument(
+        level = "TRACE",
+        skip_all,
+        fields(
+            name = %call.name(),
+            location = %self.tcx.hir_span_of_node(call.id()),
+        ),
+        err
+    )]
+    fn create_constraints_for_callable(
+        &self,
+        call: lume_hir::CallExpression,
+        type_parameter_id: TypeId,
+        type_variable: TypeVariableId,
+    ) -> Result<()> {
+        let callable = self.tcx.probe_callable(call)?;
+        let signature = self.tcx.signature_of(callable)?;
+
+        let type_parameters = self.tcx.available_type_params_at(callable.id());
+        let type_arguments = call.all_type_arguments();
+
+        let arguments = call.arguments();
+        let parameters = signature.params.as_slice();
+
+        assert_eq!(
+            type_parameters.len(),
+            type_arguments.len(),
+            "type variables to match type parameters on {}",
+            call.location()
+        );
+
+        for (parameter, &argument) in self.tcx.zip_call_args(&arguments, parameters) {
+            if !parameter.ty.contains(type_parameter_id) {
+                continue;
+            }
+
+            let argument_type = self.tcx.type_of(argument)?;
+
+            self.eq(type_variable, argument_type, parameter.ty.clone());
+        }
+
+        for bound_type in callable.name().all_bound_types() {
+            if bound_type.id != type_parameter_id {
+                continue;
+            }
+
+            let type_param_id = bound_type.id.as_node_id();
+            let type_param = self.tcx.hir_expect_type_parameter(type_param_id);
+
+            for type_param_constraint in &type_param.constraints {
+                let constraint_type = self.tcx.mk_type_ref_from(type_param_constraint, type_param.id)?;
+
+                self.sub(type_variable, constraint_type, type_param.id);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn create_constraints_for_variant(
+        &self,
+        node_id: NodeId,
+        path: &lume_hir::Path,
+        type_parameter_id: TypeId,
+        type_variable: TypeVariableId,
+    ) -> Result<()> {
+        let parent_path = path
+            .clone()
+            .parent()
+            .expect("expected Variant path segment to have Type parent");
+
+        let enum_def = self.tcx.enum_def_with_name(&parent_path)?;
+        let enum_case_def = self.tcx.enum_case_with_name(path)?;
+
+        let arguments = match &self.tcx.hir_expect_node(node_id) {
+            lume_hir::Node::Expression(expr) => {
+                if let lume_hir::ExpressionKind::Variant(variant) = &expr.kind {
+                    let argument_ids = &variant.arguments;
+
+                    argument_ids
+                        .iter()
+                        .map(|id| self.tcx.type_of(*id))
+                        .collect::<Result<Vec<_>>>()?
+                } else {
+                    return Ok(());
+                }
+            }
+            lume_hir::Node::Pattern(pattern) => {
+                if let lume_hir::PatternKind::Variant(pattern) = &pattern.kind {
+                    let field_ids = &pattern.fields;
+
+                    field_ids
+                        .iter()
+                        .map(|subpattern| self.tcx.type_of_pattern(subpattern))
+                        .collect::<Result<Vec<_>>>()?
+                } else {
+                    return Ok(());
+                }
+            }
+            _ => return Ok(()),
+        };
+
+        let params = &enum_case_def.parameters;
+
+        for (param, arg) in params.iter().zip(arguments) {
+            let parameter_type = self.tcx.mk_type_ref_from(param, enum_def.id)?;
+            if !parameter_type.contains(type_parameter_id) {
+                continue;
+            }
+
+            self.eq(type_variable, arg, parameter_type);
+        }
+
+        for bound_type in enum_def.name().all_bound_types() {
+            if bound_type.id != type_parameter_id {
+                continue;
+            }
+
+            let type_param_id = bound_type.id.as_node_id();
+            let type_param = self.tcx.hir_expect_type_parameter(type_param_id);
+
+            for type_param_constraint in &type_param.constraints {
+                let constraint_type = self.tcx.mk_type_ref_from(type_param_constraint, type_param.id)?;
+
+                self.sub(type_variable, constraint_type, type_param.id);
+            }
         }
 
         Ok(())
