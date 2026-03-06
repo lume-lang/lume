@@ -92,7 +92,7 @@ impl UnificationPass<'_> {
             match &mut node {
                 InferedNode::Pattern(pattern) => {
                     if let lume_hir::PatternKind::Variant(variant) = &pattern.kind {
-                        self.create_type_constraints(pattern.id, &variant.name)?;
+                        self.create_constraints_from_variant(pattern.id, &variant.name)?;
                     }
                 }
                 InferedNode::VariableDeclaration(decl) => {
@@ -101,97 +101,131 @@ impl UnificationPass<'_> {
                     }
                 }
                 InferedNode::Cast(expr) => {
-                    self.create_type_constraints(expr.id, &expr.target.name)?;
+                    self.create_constraints_from_type(expr.id, &expr.target.name)?;
                 }
                 InferedNode::Construct(expr) => {
-                    self.create_type_constraints(expr.id, &expr.path)?;
+                    self.create_constraints_from_type(expr.id, &expr.path)?;
                 }
                 InferedNode::StaticCall(expr) => {
-                    self.create_type_constraints(expr.id, &expr.name)?;
+                    self.create_constraints_from_callable(expr.id, &expr.name)?;
                 }
                 InferedNode::Variant(expr) => {
-                    self.create_type_constraints(expr.id, &expr.name)?;
+                    self.create_constraints_from_variant(expr.id, &expr.name)?;
                 }
             }
         }
 
         Ok(())
     }
-}
 
-impl UnificationPass<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn create_type_constraints(&mut self, expr: NodeId, path: &lume_hir::Path) -> Result<()> {
-        let expr_location = self.tcx.hir_span_of_node(expr);
+    fn create_constraints_from_type(&mut self, expr: NodeId, path: &lume_hir::Path) -> Result<()> {
+        let location = self.tcx.hir_span_of_node(expr);
 
-        match &path.name {
-            lume_hir::PathSegment::Type { .. } => {
-                let Some(type_def) = self.tcx.tdb().find_type(path) else {
-                    return Ok(());
-                };
+        let Some(type_def) = self.tcx.tdb().find_type(path) else {
+            tracing::warn!(path = %path.to_wide_string(), "type_not_found");
+            return Ok(());
+        };
 
-                let declared_type_args = path.bound_types().len();
-                let struct_definition = self.tcx.hir_expect_struct(type_def.id);
+        let type_def_id = type_def.id;
+        let declared_type_args = path.bound_types().len();
+        let struct_definition = self.tcx.hir_expect_struct(type_def.id);
 
-                for type_param_id in struct_definition
-                    .type_parameters
-                    .clone()
-                    .into_iter()
-                    .skip(declared_type_args)
-                {
-                    let type_var = allocate_type_variable(self.tcx.hir_mut(), type_param_id.into(), expr_location);
+        for type_param_id in struct_definition
+            .type_parameters
+            .clone()
+            .into_iter()
+            .skip(declared_type_args)
+        {
+            let type_variable = allocate_type_variable(self.tcx.hir_mut(), type_param_id.into(), location);
 
-                    self.create_constraints_of(expr, path, type_var)?;
-                }
+            tracing::info!(
+                type_var = type_variable.to_string(),
+                type_def = self.tcx.hir_path_of_node(type_def_id).to_wide_string(),
+                type_parameter = self.tcx.hir_path_of_node(type_param_id).to_string(),
+                location = location.to_string(),
+                "introduce_type_var",
+            );
+
+            self.create_constraints_of(expr, path, type_variable)?;
+        }
+
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn create_constraints_from_callable(&mut self, expr: NodeId, path: &lume_hir::Path) -> Result<()> {
+        let location = self.tcx.hir_span_of_node(expr);
+
+        let Some(callable) = self.tcx.callable_with_name(path) else {
+            tracing::warn!(path = %path.to_wide_string(), "callable_not_found");
+            return Ok(());
+        };
+
+        let signature = self.tcx.signature_of(callable)?;
+
+        let path_segments = path.segments();
+        let callable_segments = callable.name().segments().into_iter().cloned().collect::<Vec<_>>();
+
+        for (idx, callable_segment) in callable_segments.into_iter().enumerate() {
+            let declared_type_args = path_segments[idx].bound_types().len();
+
+            let bound_types = callable_segment
+                .bound_types()
+                .iter()
+                .skip(declared_type_args)
+                .map(|ty| ty.id)
+                .collect::<Vec<_>>();
+
+            for type_param_id in bound_types {
+                let type_variable = allocate_type_variable(self.tcx.hir_mut(), type_param_id, location);
+
+                tracing::info!(
+                    type_var = type_variable.to_string(),
+                    callable = self.tcx.hir_path_of_node(signature.id).to_wide_string(),
+                    type_parameter = self.tcx.hir_path_of_node(type_param_id.as_node_id()).to_string(),
+                    location = location.to_string(),
+                    "introduce_type_var",
+                );
+
+                self.create_constraints_of(expr, path, type_variable)?;
             }
-            lume_hir::PathSegment::Callable { .. } => {
-                let Some(callable) = self.tcx.callable_with_name(path) else {
-                    return Ok(());
-                };
+        }
 
-                let path_segments = path.segments();
-                let callable_segments = callable.name().segments().into_iter().cloned().collect::<Vec<_>>();
+        Ok(())
+    }
 
-                for (idx, callable_segment) in callable_segments.into_iter().enumerate() {
-                    let declared_type_args = path_segments[idx].bound_types().len();
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn create_constraints_from_variant(&mut self, expr: NodeId, path: &lume_hir::Path) -> Result<()> {
+        let location = self.tcx.hir_span_of_node(expr);
 
-                    let bound_types = callable_segment
-                        .bound_types()
-                        .iter()
-                        .skip(declared_type_args)
-                        .map(|ty| ty.id)
-                        .collect::<Vec<_>>();
+        let parent_path = path
+            .clone()
+            .parent()
+            .expect("expected Variant path segment to have Type parent");
 
-                    for type_param_id in bound_types {
-                        let type_var = allocate_type_variable(self.tcx.hir_mut(), type_param_id, expr_location);
+        let enum_def = self.tcx.enum_def_with_name(&parent_path)?;
+        let declared_type_args = path.all_bound_types().len();
 
-                        self.create_constraints_of(expr, path, type_var)?;
-                    }
-                }
-            }
-            lume_hir::PathSegment::Variant { .. } => {
-                let parent_path = path
-                    .clone()
-                    .parent()
-                    .expect("expected Variant path segment to have Type parent");
+        let bound_types = enum_def
+            .type_parameters
+            .iter()
+            .copied()
+            .skip(declared_type_args)
+            .collect::<Vec<_>>();
 
-                let enum_def = self.tcx.enum_def_with_name(&parent_path)?;
-                let declared_type_args = path.all_bound_types().len();
+        for type_param_id in bound_types {
+            let type_variable = allocate_type_variable(self.tcx.hir_mut(), type_param_id.into(), location);
 
-                let bound_types = enum_def
-                    .type_parameters
-                    .iter()
-                    .copied()
-                    .skip(declared_type_args)
-                    .collect::<Vec<_>>();
+            tracing::info!(
+                type_var = type_variable.to_string(),
+                variant = path.to_wide_string(),
+                type_parameter = self.tcx.hir_path_of_node(type_param_id).to_string(),
+                location = location.to_string(),
+                "introduce_type_var",
+            );
 
-                for type_param_id in bound_types {
-                    let type_var = allocate_type_variable(self.tcx.hir_mut(), type_param_id.into(), expr_location);
-
-                    self.create_constraints_of(expr, path, type_var)?;
-                }
-            }
-            lume_hir::PathSegment::Namespace { .. } => {}
+            self.create_constraints_of(expr, path, type_variable)?;
         }
 
         Ok(())
