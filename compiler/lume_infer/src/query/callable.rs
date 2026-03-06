@@ -67,6 +67,48 @@ pub enum BlanketLookup {
     Exclude,
 }
 
+/// An iterator which iterates over arguments from a call expression, zipped
+/// with it's corresponding callable parameter.
+///
+/// This `struct` is created by [`TyInferCtx::zip_call_args`].
+pub struct CallArgumentZipper<'tcx, Arg = lume_hir::Expression> {
+    arguments: &'tcx [Arg],
+    parameters: &'tcx [lume_types::Parameter],
+
+    idx: usize,
+    vararg: bool,
+}
+
+impl<'tcx, Arg> CallArgumentZipper<'tcx, Arg> {
+    pub fn create_from(arguments: &'tcx [Arg], parameters: &'tcx [lume_types::Parameter]) -> Self {
+        let vararg = parameters.last().is_some_and(|param| param.vararg);
+
+        Self {
+            arguments,
+            parameters,
+            idx: 0,
+            vararg,
+        }
+    }
+}
+
+impl<'tcx, Arg> Iterator for CallArgumentZipper<'tcx, Arg> {
+    type Item = (&'tcx lume_types::Parameter, &'tcx Arg);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let argument = self.arguments.get(self.idx)?;
+        let parameter = match self.parameters.get(self.idx) {
+            Some(param) => param,
+            None if self.vararg => self.parameters.last()?,
+            None => return None,
+        };
+
+        self.idx += 1;
+
+        Some((parameter, argument))
+    }
+}
+
 impl TyInferCtx {
     /// Gets the [`Callable`] with the given ID.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
@@ -960,6 +1002,23 @@ impl TyInferCtx {
         let callable = self.callable_of(id)?;
 
         self.signature_of(callable)
+    }
+
+    /// Creates an iterator for iterating over arguments, zipped with their
+    /// corresponding parameters, for the given arguments and parameters.
+    ///
+    /// The only difference between a normal `.zip()` and this method is the
+    /// handling of variable parameters: if the slice of arguments are longer
+    /// than the parameters AND the last parameter is a vararg, this
+    /// iterator will continue to yield the last parameter until the arguments
+    /// deplete.
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub fn zip_call_args<'tcx, Arg>(
+        &'tcx self,
+        arguments: &'tcx [Arg],
+        parameters: &'tcx [lume_types::Parameter],
+    ) -> CallArgumentZipper<'tcx, Arg> {
+        CallArgumentZipper::create_from(arguments, parameters)
     }
 
     /// Returns all the methods defined directly within the given type.

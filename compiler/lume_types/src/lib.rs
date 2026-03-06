@@ -636,6 +636,47 @@ impl TypeRef {
     }
 }
 
+impl TypeRef {
+    /// Walks all the type references within the given instance.
+    ///
+    /// The first yielded type reference is the instance itself, followed by all
+    /// bound types, in a breadth-first fashion.
+    pub fn walk(&self) -> impl Iterator<Item = &TypeRef> {
+        TypeWalker::new(self)
+    }
+
+    /// Walks all the type references within the given instance, as mutable
+    /// references.
+    ///
+    /// The first yielded type reference is the instance itself, followed by all
+    /// bound types, in a breadth-first fashion.
+    pub fn walk_mut(&mut self) -> impl Iterator<Item = &mut TypeRef> {
+        TypeWalkerMut::new(self)
+    }
+
+    /// Checks whether the given type ID is contained within the current type
+    /// reference.
+    pub fn contains(&self, needle: TypeId) -> bool {
+        self.contains_some(needle).is_some()
+    }
+
+    /// Checks whether the given type ID is contained within the current type
+    /// reference. If it is, returns a reference to the containing type
+    /// reference.
+    pub fn contains_some(&self, needle: TypeId) -> Option<&TypeRef> {
+        self.walk().find(|ty| ty.instance_of == needle.as_node_id())
+    }
+
+    /// Replaces all instances of types with ID of `needle` with `replacement`.
+    pub fn replace_contained(&mut self, needle: TypeId, replacement: &TypeRef) {
+        self.walk_mut().for_each(|ty| {
+            if ty.instance_of == needle.as_node_id() {
+                replacement.bound_types.clone_into(&mut ty.bound_types);
+            }
+        });
+    }
+}
+
 impl PartialEq for TypeRef {
     fn eq(&self, other: &Self) -> bool {
         self.instance_of == other.instance_of && self.bound_types == other.bound_types
@@ -922,5 +963,62 @@ impl Deref for TyCtx {
 
     fn deref(&self) -> &Self::Target {
         &self.gcx
+    }
+}
+
+pub struct TypeWalker<'ty> {
+    stack: smallvec::SmallVec<[&'ty TypeRef; 8]>,
+}
+
+impl<'ty> TypeWalker<'ty> {
+    pub fn new(root: &'ty TypeRef) -> Self {
+        Self {
+            stack: smallvec::smallvec![root],
+        }
+    }
+}
+
+impl<'ty> Iterator for TypeWalker<'ty> {
+    type Item = &'ty TypeRef;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self.stack.pop()?;
+        self.stack.extend(&next.bound_types);
+
+        Some(next)
+    }
+}
+
+pub struct TypeWalkerMut<'ty> {
+    stack: smallvec::SmallVec<[*mut TypeRef; 8]>,
+    _marker: std::marker::PhantomData<&'ty mut TypeRef>,
+}
+
+impl<'ty> TypeWalkerMut<'ty> {
+    pub fn new(root: &'ty mut TypeRef) -> Self {
+        Self {
+            stack: smallvec::smallvec![std::ptr::from_mut(root)],
+            _marker: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<'ty> Iterator for TypeWalkerMut<'ty> {
+    type Item = &'ty mut TypeRef;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let ptr = self.stack.pop()?;
+
+        // SAFETY:
+        // Each pointer in the stack was derived from a unique `&mut TypeRef`, so
+        // the lifetime `'ty` is tied to the original `&'ty mut TypeRef`.
+        let node = unsafe { &mut *ptr };
+
+        // Reverse order so the first child is yielded first.
+        for child in node.bound_types.iter_mut().rev() {
+            self.stack.push(std::ptr::from_mut(child));
+        }
+
+        Some(node)
     }
 }

@@ -341,7 +341,11 @@ impl TyInferCtx {
                 let parent_name = self.hir_path_of_node(parent);
                 Path::with_root(parent_name, lume_hir::PathSegment::callable(field.name.clone()))
             }
-            _ => panic!("bug!: cannot get path name of node"),
+            Node::TypeVariable(type_variable) => Path::rooted(lume_hir::PathSegment::ty(format!(
+                "T?{:X}",
+                type_variable.id.as_usize()
+            ))),
+            Node::Statement(_) | Node::Expression(_) | Node::Pattern(_) => panic!("bug!: cannot get path name of node"),
         }
     }
 

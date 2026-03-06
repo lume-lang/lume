@@ -1,5 +1,44 @@
+//! This module handles the introduction of type variables into an existing HIR,
+//! in response to type arguments not being provided for a generic item.
+//!
+//! For example, in code like this:
+//! ```lm
+//! fn main() {
+//!     // Type parameter `T` of `Array` explicitly defined...
+//!     let array = Array<Int32>::new();
+//!
+//!     // ...but not here. As such, insert a type variable.
+//!     let iter = Array::iter(array);
+//!
+//!     // And also no type argument here either - insert another type variable.
+//!     let next = std::iter::Iterator::next(iter);
+//! }
+//! ```
+//!
+//! It's important to notice that, even though `std::iter::Iterator::next` would
+//! still refer to the same type parameter as `Array::iter`, a new type variable
+//! is introduced. The idea is to create as many type variables as is required,
+//! then unify them in the next stage.
+//!
+//! The above sample would effectively look something like this:
+//! ```lm
+//! fn main() {
+//!     let array = Array<Int32>::new();
+//!     let iter = Array<T?D4170AE284F4DD9C>::iter(array);
+//!     let next = std::iter::Iterator<T?F9722F66044E5AFA>::next(iter);
+//! }
+//! ```
+//!
+//! The `T?...` notation is used to refer to type variables and is actually not
+//! valid syntax for any Lume programs.
+//!
+//! Type variables are meant to be ephemeral and should only be used when
+//! unifying. After type inference is completed, all type variables will be
+//! replaced with their unified type substitute.
+
 use lume_errors::Result;
 use lume_hir::TypeId;
+use lume_infer::TyInferCtx;
 use lume_span::{Location, NodeId};
 
 use crate::{TypeVariableId, UnificationPass, verify};
@@ -77,6 +116,40 @@ impl From<InferedNode> for lume_hir::Node {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum InferedNodeRef<'hir> {
+    Cast(&'hir lume_hir::Cast),
+    Construct(&'hir lume_hir::Construct),
+    VariableDeclaration(&'hir lume_hir::VariableDeclaration),
+    InstanceCall(&'hir lume_hir::InstanceCall),
+    StaticCall(&'hir lume_hir::StaticCall),
+    Variant(&'hir lume_hir::Variant),
+    Pattern(&'hir lume_hir::Pattern),
+}
+
+impl<'hir> TryFrom<&'hir lume_hir::Node> for InferedNodeRef<'hir> {
+    type Error = ();
+
+    fn try_from(value: &'hir lume_hir::Node) -> std::result::Result<Self, Self::Error> {
+        match value {
+            lume_hir::Node::Statement(stmt) => match &stmt.kind {
+                lume_hir::StatementKind::Variable(stmt) => Ok(InferedNodeRef::VariableDeclaration(stmt)),
+                _ => Err(()),
+            },
+            lume_hir::Node::Expression(expr) => match &expr.kind {
+                lume_hir::ExpressionKind::Cast(expr) => Ok(InferedNodeRef::Cast(expr)),
+                lume_hir::ExpressionKind::Construct(expr) => Ok(InferedNodeRef::Construct(expr)),
+                lume_hir::ExpressionKind::InstanceCall(call) => Ok(InferedNodeRef::InstanceCall(call)),
+                lume_hir::ExpressionKind::StaticCall(call) => Ok(InferedNodeRef::StaticCall(call)),
+                lume_hir::ExpressionKind::Variant(variant) => Ok(InferedNodeRef::Variant(variant)),
+                _ => Err(()),
+            },
+            lume_hir::Node::Pattern(pattern) => Ok(InferedNodeRef::Pattern(pattern)),
+            _ => Err(()),
+        }
+    }
+}
+
 impl UnificationPass<'_> {
     #[tracing::instrument(level = "INFO", skip_all, err)]
     pub(crate) fn introduce_type_variables(&mut self) -> Result<()> {
@@ -92,7 +165,7 @@ impl UnificationPass<'_> {
             match &mut node {
                 InferedNode::Pattern(pattern) => {
                     if let lume_hir::PatternKind::Variant(variant) = &mut pattern.kind {
-                        self.create_constraints_from_variant(pattern.id, &mut variant.name)?;
+                        self.introduce_type_variables_on_variant(pattern.id, &mut variant.name)?;
                     }
                 }
                 InferedNode::VariableDeclaration(decl) => {
@@ -101,19 +174,19 @@ impl UnificationPass<'_> {
                     }
                 }
                 InferedNode::Cast(expr) => {
-                    self.create_constraints_from_type(expr.id, &mut expr.target.name)?;
+                    self.introduce_type_variables_on_type(expr.id, &mut expr.target.name)?;
                 }
                 InferedNode::Construct(expr) => {
-                    self.create_constraints_from_type(expr.id, &mut expr.path)?;
+                    self.introduce_type_variables_on_type(expr.id, &mut expr.path)?;
                 }
                 InferedNode::InstanceCall(expr) => {
-                    self.create_constraints_from_callable(expr.id, lume_hir::PathingMut::Segment(&mut expr.name))?;
+                    self.introduce_type_variables_on_callable(expr.id, lume_hir::PathingMut::Segment(&mut expr.name))?;
                 }
                 InferedNode::StaticCall(expr) => {
-                    self.create_constraints_from_callable(expr.id, lume_hir::PathingMut::Full(&mut expr.name))?;
+                    self.introduce_type_variables_on_callable(expr.id, lume_hir::PathingMut::Full(&mut expr.name))?;
                 }
                 InferedNode::Variant(expr) => {
-                    self.create_constraints_from_variant(expr.id, &mut expr.name)?;
+                    self.introduce_type_variables_on_variant(expr.id, &mut expr.name)?;
                 }
             }
 
@@ -123,8 +196,8 @@ impl UnificationPass<'_> {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn create_constraints_from_type(&mut self, node_id: NodeId, path: &mut lume_hir::Path) -> Result<()> {
+    #[tracing::instrument(level = "TRACE", skip_all, fields(path = %path.to_wide_string()), err)]
+    fn introduce_type_variables_on_type(&mut self, node_id: NodeId, path: &mut lume_hir::Path) -> Result<()> {
         let location = self.tcx.hir_span_of_node(node_id);
 
         let Some(type_def) = self.tcx.tdb().find_type(path) else {
@@ -137,7 +210,7 @@ impl UnificationPass<'_> {
         let type_params = self.tcx.type_params_of(type_def.id)?.to_vec();
 
         for type_param_id in type_params.into_iter().skip(declared_type_args) {
-            let type_variable = allocate_type_variable(self.tcx.hir_mut(), type_param_id.into(), location);
+            let type_variable = allocate_type_variable(self.tcx, type_param_id.into(), location);
             let type_variable_type = type_variable_as_type(self.tcx.hir(), type_variable);
 
             if let lume_hir::PathSegment::Type { bound_types, .. } = &mut path.name {
@@ -158,8 +231,8 @@ impl UnificationPass<'_> {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn create_constraints_from_callable(&mut self, expr: NodeId, mut path: lume_hir::PathingMut<'_>) -> Result<()> {
+    #[tracing::instrument(level = "TRACE", skip_all, fields(path = %path), err)]
+    fn introduce_type_variables_on_callable(&mut self, expr: NodeId, mut path: lume_hir::PathingMut<'_>) -> Result<()> {
         let location = self.tcx.hir_span_of_node(expr);
 
         let call = self.tcx.hir_call_expr(expr).expect("expected call expression");
@@ -194,7 +267,7 @@ impl UnificationPass<'_> {
                 continue;
             }
 
-            let type_variable = allocate_type_variable(self.tcx.hir_mut(), type_parameter.into(), location);
+            let type_variable = allocate_type_variable(self.tcx, type_parameter.into(), location);
             let type_variable_type = type_variable_as_type(self.tcx.hir(), type_variable);
 
             match &mut path {
@@ -231,7 +304,7 @@ impl UnificationPass<'_> {
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn create_constraints_from_variant(&mut self, node_id: NodeId, path: &mut lume_hir::Path) -> Result<()> {
+    fn introduce_type_variables_on_variant(&mut self, node_id: NodeId, path: &mut lume_hir::Path) -> Result<()> {
         let location = self.tcx.hir_span_of_node(node_id);
 
         let parent_path = path
@@ -250,7 +323,7 @@ impl UnificationPass<'_> {
             .collect::<Vec<_>>();
 
         for type_parameter in bound_types {
-            let type_variable = allocate_type_variable(self.tcx.hir_mut(), type_parameter.into(), location);
+            let type_variable = allocate_type_variable(self.tcx, type_parameter.into(), location);
             let type_variable_type = type_variable_as_type(self.tcx.hir(), type_variable);
 
             if let Some(lume_hir::PathSegment::Type { bound_types, .. }) = &mut path.root.last_mut() {
@@ -272,17 +345,36 @@ impl UnificationPass<'_> {
     }
 }
 
-fn allocate_type_variable(hir: &mut lume_hir::Map, binding: TypeId, location: Location) -> TypeVariableId {
-    let next_id = hir.nodes.last().unwrap().0.next();
-    let type_definition = lume_hir::Node::TypeVariable(lume_hir::TypeVariable {
-        id: next_id,
-        binding,
-        location,
-    });
+fn allocate_type_variable(tcx: &mut TyInferCtx, binding: TypeId, location: Location) -> TypeVariableId {
+    let id = tcx.hir().nodes.last().unwrap().0.next();
+    let type_var = TypeVariableId(TypeId::from(id));
 
-    assert!(hir.nodes.insert(next_id, type_definition).is_none());
+    assert!(
+        tcx.tdb_mut()
+            .types
+            .insert(id, lume_types::Type {
+                id,
+                kind: lume_types::TypeKind::TypeVariable,
+                name: lume_hir::Path::rooted(lume_hir::PathSegment::Type {
+                    name: id.to_string().into(),
+                    bound_types: Vec::new(),
+                    location,
+                }),
+            })
+            .is_none()
+    );
 
-    TypeVariableId(TypeId::from(next_id))
+    assert!(
+        tcx.hir_mut()
+            .nodes
+            .insert(
+                id,
+                lume_hir::Node::TypeVariable(lume_hir::TypeVariable { id, binding, location })
+            )
+            .is_none()
+    );
+
+    type_var
 }
 
 fn type_variable_as_type(hir: &lume_hir::Map, id: TypeVariableId) -> lume_hir::Type {
