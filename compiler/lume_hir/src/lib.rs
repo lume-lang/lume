@@ -640,6 +640,22 @@ std_type_paths! {
     boolean => Boolean
 }
 
+/// Represents a shared pathing of a function or method, which can be either
+/// the full path or a single segment.
+#[derive(Hash, Debug, PartialEq, Eq)]
+pub enum Pathing<'p> {
+    Full(&'p Path),
+    Segment(&'p PathSegment),
+}
+
+/// Represents a mutable pathing of a function or method, which can be either
+/// the full path or a single segment.
+#[derive(Hash, Debug, PartialEq, Eq)]
+pub enum PathingMut<'p> {
+    Full(&'p mut Path),
+    Segment(&'p mut PathSegment),
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct Signature<'a> {
     pub name: &'a Identifier,
@@ -1383,6 +1399,15 @@ impl CallExpression<'_> {
             Self::Instanced(call) => call.type_arguments(),
             Self::Static(call) => call.type_arguments(),
             Self::Intrinsic(_) => &[],
+        }
+    }
+
+    #[inline]
+    pub fn all_type_arguments(&self) -> Vec<Type> {
+        match self {
+            Self::Instanced(call) => call.type_arguments().to_vec(),
+            Self::Static(call) => call.all_type_arguments(),
+            Self::Intrinsic(_) => vec![],
         }
     }
 

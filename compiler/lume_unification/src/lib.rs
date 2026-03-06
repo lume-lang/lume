@@ -1,4 +1,5 @@
 mod constraints;
+mod introduce;
 mod subst;
 mod verify;
 
@@ -17,6 +18,8 @@ use crate::constraints::Constraint;
 pub(crate) struct UnificationPass<'tcx> {
     tcx: &'tcx mut TyInferCtx,
 
+    affected_nodes: RwLock<Vec<(NodeId, TypeVariableId)>>,
+
     type_vars: RwLock<IndexMap<TypeVariableId, TypeVariable>>,
 }
 
@@ -24,8 +27,13 @@ impl<'tcx> UnificationPass<'tcx> {
     pub fn new(tcx: &'tcx mut TyInferCtx) -> Self {
         UnificationPass {
             tcx,
+            affected_nodes: RwLock::new(Vec::new()),
             type_vars: RwLock::new(IndexMap::new()),
         }
+    }
+
+    pub(crate) fn add_affected_node(&self, id: NodeId, type_variable: TypeVariableId) {
+        self.affected_nodes.try_write().unwrap().push((id, type_variable));
     }
 }
 
@@ -209,7 +217,7 @@ pub fn unify(tcx: &mut TyInferCtx) -> Result<()> {
 
     let mut ucx = UnificationPass::new(tcx);
 
-    ucx.create_constraints()?;
+    ucx.introduce_type_variables()?;
     ucx.create_type_substitutions()?;
     ucx.apply_substitutions()?;
 

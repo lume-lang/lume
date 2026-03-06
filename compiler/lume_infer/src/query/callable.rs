@@ -928,7 +928,10 @@ impl TyInferCtx {
 
                 // Append all the type parameters which are available on the method,
                 // such as the type parameters on the implementation.
-                signature.type_params.extend(self.available_type_params_at(method.id));
+                let mut all_type_params = self.available_type_params_at(method.id);
+                all_type_params.append(&mut signature.type_params);
+
+                signature.type_params = all_type_params;
 
                 Ok(signature)
             }
