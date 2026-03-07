@@ -62,7 +62,20 @@ impl UnificationPass<'_> {
         self.type_vars.try_write().unwrap().entry(type_variable).or_default();
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    /// Creates a new equality containt, stating that `lhs` must be equal to
+    /// `rhs`.
+    ///
+    /// As a good convention in relation to error messaging, the left-hand side
+    /// should be the expected type, and the right-hand side be the found type.
+    #[tracing::instrument(
+        level = "TRACE",
+        skip_all,
+        fields(
+            type_var = %type_variable,
+            lhs = %self.tcx.new_named_type(&lhs, true).unwrap(),
+            rhs = %self.tcx.new_named_type(&rhs, true).unwrap(),
+        )
+    )]
     pub(crate) fn eq(&self, type_variable: TypeVariableId, lhs: TypeRef, rhs: TypeRef) {
         if lhs == rhs {
             return;
@@ -77,7 +90,15 @@ impl UnificationPass<'_> {
             .push(Constraint::Equal { lhs, rhs });
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[tracing::instrument(
+        level = "TRACE",
+        skip_all,
+        fields(
+            type_var = %type_variable,
+            operand = %self.tcx.new_named_type(&of, true).unwrap(),
+            sub = %self.tcx.hir_path_of_node(param).to_wide_string(),
+        )
+    )]
     pub(crate) fn sub(&self, type_variable: TypeVariableId, of: TypeRef, param: NodeId) {
         let mut type_vars = self.type_vars.try_write().unwrap();
 
@@ -88,7 +109,14 @@ impl UnificationPass<'_> {
             .push(Constraint::Subtype { of, param });
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[tracing::instrument(
+        level = "TRACE",
+        skip_all,
+        fields(
+            type_var = %type_variable,
+            substitute = %self.tcx.new_named_type(&with, true).unwrap(),
+        )
+    )]
     pub(crate) fn subst(&self, type_variable: TypeVariableId, with: TypeRef) {
         let mut type_vars = self.type_vars.try_write().unwrap();
         let existing = type_vars.entry(type_variable).or_default().substitute.replace(with);
@@ -152,7 +180,15 @@ fn normalize_equality_constraints(
     }
 }
 
-#[tracing::instrument(level = "TRACE", skip_all, err)]
+#[tracing::instrument(
+    level = "TRACE",
+    skip_all,
+    fields(
+        lhs = %tcx.new_named_type(lhs, true).unwrap(),
+        rhs = %tcx.new_named_type(rhs, true).unwrap(),
+    ),
+    err
+)]
 pub(crate) fn normalize_constraint_types(
     tcx: &TyInferCtx,
     target: TypeId,

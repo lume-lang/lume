@@ -654,6 +654,15 @@ impl TypeRef {
         TypeWalkerMut::new(self)
     }
 
+    /// Iterates over all bound types within the given instance, along the
+    /// corresponding type in the given type reference.
+    ///
+    /// The first yielded type reference is the instance itself, followed by all
+    /// bound types, in a breadth-first fashion.
+    pub fn zip<'ty>(&'ty self, other: &'ty TypeRef) -> impl Iterator<Item = (&'ty TypeRef, &'ty TypeRef)> {
+        TypeZipper::new(self, other)
+    }
+
     /// Checks whether the given type ID is contained within the current type
     /// reference.
     pub fn contains(&self, needle: TypeId) -> bool {
@@ -674,6 +683,25 @@ impl TypeRef {
                 replacement.bound_types.clone_into(&mut ty.bound_types);
             }
         });
+    }
+
+    /// Finds the corresponding type reference which matches the given predicate
+    /// of the instance type reference.
+    ///
+    /// For example, given type references such as:
+    /// ```ignore
+    /// let lhs = typeof(Array<T>);
+    /// let rhs = typeof(Array<Int32>);
+    ///
+    /// let (found, _rhs) = lhs.corresponding_of(&rhs, |ty| tcx.is_type_parameter(ty)).unwrap();
+    /// assert!(found.is_i32());
+    /// ```
+    pub fn corresponding_of<'ty, P: Fn(&TypeRef) -> bool>(
+        &'ty self,
+        other: &'ty TypeRef,
+        predicate: P,
+    ) -> Option<(&'ty TypeRef, &'ty TypeRef)> {
+        self.zip(other).find(|(lhs, _rhs)| predicate(lhs))
     }
 }
 
@@ -1020,5 +1048,29 @@ impl<'ty> Iterator for TypeWalkerMut<'ty> {
         }
 
         Some(node)
+    }
+}
+
+pub struct TypeZipper<'ty> {
+    stack: smallvec::SmallVec<[(&'ty TypeRef, &'ty TypeRef); 8]>,
+}
+
+impl<'ty> TypeZipper<'ty> {
+    pub fn new(lhs: &'ty TypeRef, rhs: &'ty TypeRef) -> Self {
+        Self {
+            stack: smallvec::smallvec![(lhs, rhs)],
+        }
+    }
+}
+
+impl<'ty> Iterator for TypeZipper<'ty> {
+    type Item = (&'ty TypeRef, &'ty TypeRef);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next @ (lhs, rhs) = self.stack.pop()?;
+
+        self.stack.extend(lhs.bound_types.iter().zip(rhs.bound_types.iter()));
+
+        Some(next)
     }
 }

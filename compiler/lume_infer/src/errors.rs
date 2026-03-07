@@ -125,36 +125,6 @@ pub(crate) struct InstanceCallOnStaticMethod {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "could not infer type argument",
-    code = "LM4139",
-    help = "try specifying the type arguments explicitly"
-)]
-pub struct TypeArgumentInferenceFailed {
-    #[label(source, "could not infer type argument {type_param_name}")]
-    pub source: Location,
-
-    pub type_param_name: String,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "could not infer type argument on callable",
-    code = "LM4145",
-    help = "try specifying the type arguments explicitly"
-)]
-pub struct TypeArgumentInferenceFailedCallable {
-    #[label(
-        source,
-        "could not infer type argument {type_param_name} on callable {callable_name}"
-    )]
-    pub source: Location,
-
-    pub type_param_name: String,
-    pub callable_name: String,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "trait `{trait_name}` not implemented", code = "LM4148")]
 pub struct IntrinsicNotImplemented {
     #[label(

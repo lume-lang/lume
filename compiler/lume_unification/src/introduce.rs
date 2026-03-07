@@ -150,6 +150,12 @@ impl<'hir> TryFrom<&'hir lume_hir::Node> for InferedNodeRef<'hir> {
     }
 }
 
+#[derive(Debug, PartialEq)]
+enum Call<'hir> {
+    Instance(&'hir mut lume_hir::InstanceCall),
+    Static(&'hir mut lume_hir::StaticCall),
+}
+
 impl UnificationPass<'_> {
     #[tracing::instrument(level = "INFO", skip_all, err)]
     pub(crate) fn introduce_type_variables(&mut self) -> Result<()> {
@@ -180,10 +186,10 @@ impl UnificationPass<'_> {
                     self.introduce_type_variables_on_type(expr.id, &mut expr.path)?;
                 }
                 InferedNode::InstanceCall(expr) => {
-                    self.introduce_type_variables_on_callable(expr.id, lume_hir::PathingMut::Segment(&mut expr.name))?;
+                    self.introduce_type_variables_on_callable(expr.id, &mut Call::Instance(expr))?;
                 }
                 InferedNode::StaticCall(expr) => {
-                    self.introduce_type_variables_on_callable(expr.id, lume_hir::PathingMut::Full(&mut expr.name))?;
+                    self.introduce_type_variables_on_callable(expr.id, &mut Call::Static(expr))?;
                 }
                 InferedNode::Variant(expr) => {
                     self.introduce_type_variables_on_variant(expr.id, &mut expr.name)?;
@@ -231,15 +237,13 @@ impl UnificationPass<'_> {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(path = %path), err)]
-    fn introduce_type_variables_on_callable(&mut self, expr: NodeId, mut path: lume_hir::PathingMut<'_>) -> Result<()> {
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn introduce_type_variables_on_callable(&mut self, expr: NodeId, path: &mut Call) -> Result<()> {
         let location = self.tcx.hir_span_of_node(expr);
 
         let call = self.tcx.hir_call_expr(expr).expect("expected call expression");
         let callable = self.tcx.probe_callable(call)?;
         let signature = self.tcx.signature_of(callable)?;
-
-        let is_instance = call.is_instance();
 
         let type_params = self.tcx.available_type_params_at(callable.id());
         let type_args = call.all_type_arguments();
@@ -253,38 +257,31 @@ impl UnificationPass<'_> {
         for type_parameter in type_params.into_iter().skip(type_args.len()) {
             let is_bound_to_method = signature.type_params.contains(&type_parameter);
 
-            // NOTE:
-            // If the type parameter exists on the implementing type (as opposed to the
-            // method) of an instance call, the type variable CANNOT be added!
-            //
-            // This is because the `name` of instance call expressions only contain the name
-            // of the method, not anything about the type.
-            //
-            // So, instead of creating a new type variable which we wouldn't be able to
-            // resolve anyway, we skip it and infer the type arguments from the
-            // instance parameter (which is done in the constraint creation stage).
-            if !is_bound_to_method && is_instance {
-                continue;
-            }
-
             let type_variable = allocate_type_variable(self.tcx, type_parameter.into(), location);
             let type_variable_type = type_variable_as_type(self.tcx.hir(), type_variable);
 
-            match &mut path {
-                lume_hir::PathingMut::Full(path) => {
+            match path {
+                Call::Static(call) => {
                     // Push the type variable onto the type path segment or callable path segment,
                     // depending on which one the type parameter is bound to.
                     if is_bound_to_method {
-                        if let lume_hir::PathSegment::Callable { bound_types, .. } = &mut path.name {
+                        if let lume_hir::PathSegment::Callable { bound_types, .. } = &mut call.name.name {
                             bound_types.push(type_variable_type);
                         }
-                    } else if let Some(lume_hir::PathSegment::Type { bound_types, .. }) = &mut path.root.last_mut() {
+                    } else if let Some(lume_hir::PathSegment::Type { bound_types, .. }) = &mut call.name.root.last_mut()
+                    {
                         bound_types.push(type_variable_type);
                     }
                 }
-                lume_hir::PathingMut::Segment(name) => {
-                    if let lume_hir::PathSegment::Callable { bound_types, .. } = name {
-                        bound_types.push(type_variable_type);
+                Call::Instance(call) => {
+                    // Push the type variable onto the type path segment or callable path segment,
+                    // depending on which one the type parameter is bound to.
+                    if is_bound_to_method {
+                        if let lume_hir::PathSegment::Callable { bound_types, .. } = &mut call.name {
+                            bound_types.push(type_variable_type);
+                        }
+                    } else {
+                        call.bound_types.push(type_variable_type);
                     }
                 }
             }
@@ -356,7 +353,7 @@ fn allocate_type_variable(tcx: &mut TyInferCtx, binding: TypeId, location: Locat
                 id,
                 kind: lume_types::TypeKind::TypeVariable,
                 name: lume_hir::Path::rooted(lume_hir::PathSegment::Type {
-                    name: id.to_string().into(),
+                    name: type_var.to_string().into(),
                     bound_types: Vec::new(),
                     location,
                 }),

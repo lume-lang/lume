@@ -91,6 +91,8 @@ impl UnificationPass<'_> {
             self.subst(type_variable, substitution);
         }
 
+        self.tcx.dcx.ensure_untainted()?;
+
         Ok(())
     }
 }
