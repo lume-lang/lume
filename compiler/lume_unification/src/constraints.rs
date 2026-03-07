@@ -15,9 +15,7 @@ pub(crate) enum Constraint {
 impl UnificationPass<'_> {
     #[tracing::instrument(level = "INFO", skip_all, err)]
     pub(crate) fn create_constraints(&self) -> Result<()> {
-        let affected_nodes: Vec<_> = self.affected_nodes.try_write().unwrap().drain(..).collect();
-
-        for (id, type_variable) in affected_nodes {
+        for (id, type_variable) in self.take_affected_nodes() {
             if let Err(err) = self.create_constraints_for(id, type_variable) {
                 self.tcx.dcx().emit(err);
             }
@@ -28,7 +26,7 @@ impl UnificationPass<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn create_constraints_for(&self, node_id: NodeId, type_variable: TypeVariableId) -> Result<()> {
-        self.ensure_entry_for(type_variable);
+        self.env.try_write().unwrap().ensure_entry_for(type_variable);
 
         let node = if let Some(node) = self.tcx.hir_node(node_id)
             && let Ok(inferred) = InferedNodeRef::try_from(node)

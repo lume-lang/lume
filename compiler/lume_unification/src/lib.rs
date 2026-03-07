@@ -17,23 +17,69 @@ use crate::constraints::Constraint;
 
 pub(crate) struct UnificationPass<'tcx> {
     tcx: &'tcx mut TyInferCtx,
-
-    affected_nodes: RwLock<Vec<(NodeId, TypeVariableId)>>,
-
-    type_vars: RwLock<IndexMap<TypeVariableId, TypeVariable>>,
+    env: RwLock<Env>,
 }
 
 impl<'tcx> UnificationPass<'tcx> {
     pub fn new(tcx: &'tcx mut TyInferCtx) -> Self {
         UnificationPass {
             tcx,
-            affected_nodes: RwLock::new(Vec::new()),
-            type_vars: RwLock::new(IndexMap::new()),
+            env: RwLock::new(Env::default()),
         }
     }
 
     pub(crate) fn add_affected_node(&self, id: NodeId, type_variable: TypeVariableId) {
-        self.affected_nodes.try_write().unwrap().push((id, type_variable));
+        self.env.try_write().unwrap().affected_nodes.push((id, type_variable));
+    }
+
+    /// Takes all the affected nodes from the pass.
+    pub(crate) fn take_affected_nodes(&self) -> Vec<(NodeId, TypeVariableId)> {
+        let mut env = self.env.try_write().unwrap();
+
+        env.affected_nodes.drain(..).collect()
+    }
+
+    /// Creates a new equality containt, stating that `lhs` must be equal to
+    /// `rhs`.
+    ///
+    /// As a good convention in relation to error messaging, the left-hand side
+    /// should be the expected type, and the right-hand side be the found type.
+    #[tracing::instrument(
+        level = "TRACE",
+        skip_all,
+        fields(
+            type_var = %type_variable,
+            lhs = %self.tcx.new_named_type(&lhs, true).unwrap(),
+            rhs = %self.tcx.new_named_type(&rhs, true).unwrap(),
+        )
+    )]
+    pub(crate) fn eq(&self, type_variable: TypeVariableId, lhs: TypeRef, rhs: TypeRef) {
+        self.env.try_write().unwrap().eq(type_variable, lhs, rhs);
+    }
+
+    #[tracing::instrument(
+        level = "TRACE",
+        skip_all,
+        fields(
+            type_var = %type_variable,
+            operand = %self.tcx.new_named_type(&of, true).unwrap(),
+            sub = %self.tcx.hir_path_of_node(param).to_wide_string(),
+        )
+    )]
+    pub(crate) fn sub(&self, type_variable: TypeVariableId, of: TypeRef, param: NodeId) {
+        self.env.try_write().unwrap().sub(type_variable, of, param);
+    }
+
+    #[tracing::instrument(
+        level = "TRACE",
+        skip_all,
+        fields(
+            type_var = %type_variable,
+            substitute = %self.tcx.new_named_type(&with, true).unwrap(),
+        )
+    )]
+    pub(crate) fn subst(&self, type_variable: TypeVariableId, with: TypeRef) {
+        self.env.try_write().unwrap().subst(type_variable, with);
     }
 }
 
@@ -52,14 +98,19 @@ pub(crate) struct TypeVariable {
     pub substitute: Option<TypeRef>,
 }
 
-impl UnificationPass<'_> {
+#[derive(Default)]
+pub(crate) struct Env {
+    affected_nodes: Vec<(NodeId, TypeVariableId)>,
+    type_vars: IndexMap<TypeVariableId, TypeVariable>,
+}
+
+impl Env {
     /// Ensure there is an entry for constraints for the given type variable.
     ///
     /// So, even if no constraints could be generated, we would still notice
     /// and empty constraint list and throw an error.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn ensure_entry_for(&self, type_variable: TypeVariableId) {
-        self.type_vars.try_write().unwrap().entry(type_variable).or_default();
+    fn ensure_entry_for(&mut self, type_variable: TypeVariableId) {
+        self.type_vars.entry(type_variable).or_default();
     }
 
     /// Creates a new equality containt, stating that `lhs` must be equal to
@@ -67,59 +118,33 @@ impl UnificationPass<'_> {
     ///
     /// As a good convention in relation to error messaging, the left-hand side
     /// should be the expected type, and the right-hand side be the found type.
-    #[tracing::instrument(
-        level = "TRACE",
-        skip_all,
-        fields(
-            type_var = %type_variable,
-            lhs = %self.tcx.new_named_type(&lhs, true).unwrap(),
-            rhs = %self.tcx.new_named_type(&rhs, true).unwrap(),
-        )
-    )]
-    pub(crate) fn eq(&self, type_variable: TypeVariableId, lhs: TypeRef, rhs: TypeRef) {
+    pub(crate) fn eq(&mut self, type_variable: TypeVariableId, lhs: TypeRef, rhs: TypeRef) {
         if lhs == rhs {
             return;
         }
 
-        let mut type_vars = self.type_vars.try_write().unwrap();
-
-        type_vars
+        self.type_vars
             .entry(type_variable)
             .or_default()
             .constraints
             .push(Constraint::Equal { lhs, rhs });
     }
 
-    #[tracing::instrument(
-        level = "TRACE",
-        skip_all,
-        fields(
-            type_var = %type_variable,
-            operand = %self.tcx.new_named_type(&of, true).unwrap(),
-            sub = %self.tcx.hir_path_of_node(param).to_wide_string(),
-        )
-    )]
-    pub(crate) fn sub(&self, type_variable: TypeVariableId, of: TypeRef, param: NodeId) {
-        let mut type_vars = self.type_vars.try_write().unwrap();
-
-        type_vars
+    pub(crate) fn sub(&mut self, type_variable: TypeVariableId, of: TypeRef, param: NodeId) {
+        self.type_vars
             .entry(type_variable)
             .or_default()
             .constraints
             .push(Constraint::Subtype { of, param });
     }
 
-    #[tracing::instrument(
-        level = "TRACE",
-        skip_all,
-        fields(
-            type_var = %type_variable,
-            substitute = %self.tcx.new_named_type(&with, true).unwrap(),
-        )
-    )]
-    pub(crate) fn subst(&self, type_variable: TypeVariableId, with: TypeRef) {
-        let mut type_vars = self.type_vars.try_write().unwrap();
-        let existing = type_vars.entry(type_variable).or_default().substitute.replace(with);
+    pub(crate) fn subst(&mut self, type_variable: TypeVariableId, with: TypeRef) {
+        let existing = self
+            .type_vars
+            .entry(type_variable)
+            .or_default()
+            .substitute
+            .replace(with);
 
         assert!(
             existing.is_none(),

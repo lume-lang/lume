@@ -13,9 +13,9 @@ impl UnificationPass<'_> {
     pub(crate) fn create_type_substitutions(&mut self) -> Result<()> {
         let mut removals = HashSet::new();
         let mut substitution_map = IndexMap::<TypeVariableId, TypeRef>::new();
-        let tcx_constraints = self.type_vars.try_read().unwrap();
+        let tcx_constraints = &self.env.try_read().unwrap().type_vars;
 
-        'type_var: for (&type_variable_id, type_variable) in tcx_constraints.iter() {
+        'type_var: for (&type_variable_id, type_variable) in tcx_constraints {
             let mut constraints = type_variable.constraints.clone();
 
             let eq_constraints = constraints
@@ -77,11 +77,8 @@ impl UnificationPass<'_> {
             substitution_map.insert(type_variable_id, expected_type.clone());
         }
 
-        // Force the read-lock to drop.
-        drop(tcx_constraints);
-
         if !removals.is_empty() {
-            let mut tcx_constraints = self.type_vars.try_write().unwrap();
+            let tcx_constraints = &mut self.env.try_write().unwrap().type_vars;
             for removal in removals {
                 tcx_constraints.shift_remove(&removal);
             }
@@ -100,9 +97,9 @@ impl UnificationPass<'_> {
 impl UnificationPass<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn apply_substitutions(&mut self) -> Result<()> {
-        let tcx_constraints = self.type_vars.try_read().unwrap();
+        let tcx_constraints = &self.env.try_read().unwrap().type_vars;
 
-        for (&type_variable_id, TypeVariable { substitute, .. }) in tcx_constraints.iter() {
+        for (&type_variable_id, TypeVariable { substitute, .. }) in tcx_constraints {
             let Some(substitute) = substitute else {
                 let type_var_hir = self.tcx.hir().expect_type_variable(type_variable_id.0.as_node_id())?;
                 let type_param = self.tcx.hir_expect_type_parameter(type_var_hir.binding.as_node_id());
