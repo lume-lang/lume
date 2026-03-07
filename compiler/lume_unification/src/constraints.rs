@@ -129,8 +129,12 @@ impl UnificationPass<'_> {
         let type_parameters = self.tcx.available_type_params_at(callable.id());
         let type_arguments = call.all_type_arguments();
 
-        let arguments = call.arguments();
+        let mut arguments = call.arguments();
         let parameters = signature.params.as_slice();
+
+        if let lume_hir::CallExpression::Instanced(instance_call) = call {
+            arguments.insert(0, instance_call.callee);
+        }
 
         assert_eq!(
             type_parameters.len(),
@@ -139,23 +143,65 @@ impl UnificationPass<'_> {
             call.location()
         );
 
-        for (parameter, &argument) in self.tcx.zip_call_args(&arguments, parameters) {
-            if !parameter.ty.contains(type_parameter_id) {
-                continue;
-            }
-
+        for (parameter, &argument) in self.tcx.zip_call_args(parameters, &arguments) {
             let argument_type = self.tcx.type_of(argument)?;
 
-            self.eq(type_variable, argument_type, parameter.ty.clone());
+            // If any arguments within the argument list contain any type variables AND the
+            // corresponding parameter contains the type parameter, we equate the two type
+            // variables to be equal.
+            //
+            // For example, given a sample like this:
+            // ```lm
+            // fn main() {
+            //     let arr = Array::new(); // ?T1 introduced here
+            //     arr.push("Hello, world!"); // ?T2 introduced here
+            // }
+            // ```
+            //
+            // Since `?T1` and `?T2` refer to the same type parameter, and functions as the
+            // same instance of the type argument here, the two type variables must equal.
+            if let Some((argument_constraint, parameter_type)) =
+                argument_type.corresponding_of(&parameter.ty, |ty| self.tcx.is_type_variable(ty))
+                && parameter_type.instance_of == type_parameter_id.as_node_id()
+            {
+                let argument_type_var = self.tcx.as_type_variable(argument_constraint).unwrap();
+
+                self.eq(
+                    type_variable,
+                    TypeRef::new(type_variable.0.as_node_id(), parameter.location),
+                    TypeRef::new(argument_type_var.id, argument_type.location),
+                );
+            }
+
+            // If the parameter holds the type parameter, which is guaranteed to resolve a
+            // type variable, we ensure that the type variable is constrained to
+            // the corresponding argument type.
+            //
+            // For example, given a sample like this:
+            // ```lm
+            // fn identity<T>(value: T) -> T {
+            //     value
+            // }
+            //
+            // fn main() {
+            //     // implicit type variable inserted here for `identity::T`
+            //     let _ = identity("Hello world!");
+            // }
+            // ```
+            //
+            // Since the parameter `value` contains the type parameter `T`, the argument
+            // would constrain the type variable to equal `String`.
+            if parameter.ty.contains(type_parameter_id) {
+                self.eq(type_variable, parameter.ty.clone(), argument_type);
+            }
         }
 
-        for bound_type in callable.name().all_bound_types() {
-            if bound_type.id != type_parameter_id {
+        for bound_type in type_parameters {
+            if bound_type != type_parameter_id.as_node_id() {
                 continue;
             }
 
-            let type_param_id = bound_type.id.as_node_id();
-            let type_param = self.tcx.hir_expect_type_parameter(type_param_id);
+            let type_param = self.tcx.hir_expect_type_parameter(bound_type);
 
             for type_param_constraint in &type_param.constraints {
                 let constraint_type = self.tcx.mk_type_ref_from(type_param_constraint, type_param.id)?;

@@ -165,6 +165,7 @@ impl LoweringContext<'_> {
                 callee,
                 name: name.name,
                 arguments,
+                bound_types: Vec::new(),
                 location,
             })
         } else {

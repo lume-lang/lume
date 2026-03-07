@@ -1015,8 +1015,8 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn zip_call_args<'tcx, Arg>(
         &'tcx self,
-        arguments: &'tcx [Arg],
         parameters: &'tcx [lume_types::Parameter],
+        arguments: &'tcx [Arg],
     ) -> CallArgumentZipper<'tcx, Arg> {
         CallArgumentZipper::create_from(arguments, parameters)
     }
