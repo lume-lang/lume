@@ -49,6 +49,7 @@ pub(crate) enum InferedNode {
     Cast(lume_hir::Cast),
     Construct(lume_hir::Construct),
     VariableDeclaration(lume_hir::VariableDeclaration),
+    IntrinsicCall(lume_hir::IntrinsicCall),
     InstanceCall(lume_hir::InstanceCall),
     StaticCall(lume_hir::StaticCall),
     Variant(lume_hir::Variant),
@@ -67,6 +68,7 @@ impl TryFrom<&lume_hir::Node> for InferedNode {
             lume_hir::Node::Expression(expr) => match &expr.kind {
                 lume_hir::ExpressionKind::Cast(expr) => Ok(InferedNode::Cast(expr.clone())),
                 lume_hir::ExpressionKind::Construct(expr) => Ok(InferedNode::Construct(expr.clone())),
+                lume_hir::ExpressionKind::IntrinsicCall(call) => Ok(InferedNode::IntrinsicCall(call.clone())),
                 lume_hir::ExpressionKind::InstanceCall(call) => Ok(InferedNode::InstanceCall(call.clone())),
                 lume_hir::ExpressionKind::StaticCall(call) => Ok(InferedNode::StaticCall(call.clone())),
                 lume_hir::ExpressionKind::Variant(variant) => Ok(InferedNode::Variant(variant.clone())),
@@ -96,6 +98,11 @@ impl From<InferedNode> for lume_hir::Node {
                 location: stmt.location,
                 kind: lume_hir::StatementKind::Variable(stmt),
             }),
+            InferedNode::IntrinsicCall(call) => lume_hir::Node::Expression(lume_hir::Expression {
+                id: call.id,
+                location: call.location,
+                kind: lume_hir::ExpressionKind::IntrinsicCall(call),
+            }),
             InferedNode::InstanceCall(call) => lume_hir::Node::Expression(lume_hir::Expression {
                 id: call.id,
                 location: call.location,
@@ -121,6 +128,7 @@ pub(crate) enum InferedNodeRef<'hir> {
     Cast(&'hir lume_hir::Cast),
     Construct(&'hir lume_hir::Construct),
     VariableDeclaration(&'hir lume_hir::VariableDeclaration),
+    IntrinsicCall(&'hir lume_hir::IntrinsicCall),
     InstanceCall(&'hir lume_hir::InstanceCall),
     StaticCall(&'hir lume_hir::StaticCall),
     Variant(&'hir lume_hir::Variant),
@@ -139,6 +147,7 @@ impl<'hir> TryFrom<&'hir lume_hir::Node> for InferedNodeRef<'hir> {
             lume_hir::Node::Expression(expr) => match &expr.kind {
                 lume_hir::ExpressionKind::Cast(expr) => Ok(InferedNodeRef::Cast(expr)),
                 lume_hir::ExpressionKind::Construct(expr) => Ok(InferedNodeRef::Construct(expr)),
+                lume_hir::ExpressionKind::IntrinsicCall(call) => Ok(InferedNodeRef::IntrinsicCall(call)),
                 lume_hir::ExpressionKind::InstanceCall(call) => Ok(InferedNodeRef::InstanceCall(call)),
                 lume_hir::ExpressionKind::StaticCall(call) => Ok(InferedNodeRef::StaticCall(call)),
                 lume_hir::ExpressionKind::Variant(variant) => Ok(InferedNodeRef::Variant(variant)),
@@ -152,6 +161,7 @@ impl<'hir> TryFrom<&'hir lume_hir::Node> for InferedNodeRef<'hir> {
 
 #[derive(Debug, PartialEq)]
 enum Call<'hir> {
+    Intrinsic(&'hir mut lume_hir::IntrinsicCall),
     Instance(&'hir mut lume_hir::InstanceCall),
     Static(&'hir mut lume_hir::StaticCall),
 }
@@ -184,6 +194,9 @@ impl UnificationPass<'_> {
                 }
                 InferedNode::Construct(expr) => {
                     self.introduce_type_variables_on_type(expr.id, &mut expr.path)?;
+                }
+                InferedNode::IntrinsicCall(expr) => {
+                    self.introduce_type_variables_on_callable(expr.id, &mut Call::Intrinsic(expr))?;
                 }
                 InferedNode::InstanceCall(expr) => {
                     self.introduce_type_variables_on_callable(expr.id, &mut Call::Instance(expr))?;
@@ -283,6 +296,9 @@ impl UnificationPass<'_> {
                     } else {
                         call.bound_types.push(type_variable_type);
                     }
+                }
+                Call::Intrinsic(call) => {
+                    call.bound_types.push(type_variable_type);
                 }
             }
 
