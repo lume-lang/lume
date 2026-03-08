@@ -229,7 +229,7 @@ impl UnificationPass<'_> {
         let type_params = self.tcx.type_params_of(type_def.id)?.to_vec();
 
         for type_param_id in type_params.into_iter().skip(declared_type_args) {
-            let type_variable = allocate_type_variable(self.tcx, type_param_id.into(), location);
+            let type_variable = allocate_type_variable(self.tcx, type_param_id.into(), type_def_id, location);
             let type_variable_type = type_variable_as_type(self.tcx.hir(), type_variable);
 
             if let lume_hir::PathSegment::Type { bound_types, .. } = &mut path.name {
@@ -258,6 +258,15 @@ impl UnificationPass<'_> {
         let callable = self.tcx.probe_callable(call)?;
         let signature = self.tcx.signature_of(callable)?;
 
+        let owner = if matches!(callable, lume_infer::query::Callable::Method(_)) {
+            self.tcx
+                .hir_parent_iter(signature.id)
+                .find_map(|node| node.is_item().then_some(node.id()))
+                .unwrap_or(signature.id)
+        } else {
+            signature.id
+        };
+
         tracing::trace!(callable = %callable.name().to_wide_string());
 
         let type_params = self.tcx.available_type_params_at(callable.id());
@@ -272,7 +281,7 @@ impl UnificationPass<'_> {
         for type_parameter in type_params.into_iter().skip(type_args.len()) {
             let is_bound_to_method = signature.type_params.contains(&type_parameter);
 
-            let type_variable = allocate_type_variable(self.tcx, type_parameter.into(), location);
+            let type_variable = allocate_type_variable(self.tcx, type_parameter.into(), owner, location);
             let type_variable_type = type_variable_as_type(self.tcx.hir(), type_variable);
 
             match path {
@@ -330,6 +339,8 @@ impl UnificationPass<'_> {
         let enum_def = self.tcx.enum_def_with_name(&parent_path)?;
         let declared_type_args = path.all_bound_types().len();
 
+        let owner_id = enum_def.id;
+
         let bound_types = enum_def
             .type_parameters
             .iter()
@@ -338,7 +349,7 @@ impl UnificationPass<'_> {
             .collect::<Vec<_>>();
 
         for type_parameter in bound_types {
-            let type_variable = allocate_type_variable(self.tcx, type_parameter.into(), location);
+            let type_variable = allocate_type_variable(self.tcx, type_parameter.into(), owner_id, location);
             let type_variable_type = type_variable_as_type(self.tcx.hir(), type_variable);
 
             if let Some(lume_hir::PathSegment::Type { bound_types, .. }) = &mut path.root.last_mut() {
@@ -360,9 +371,11 @@ impl UnificationPass<'_> {
     }
 }
 
-fn allocate_type_variable(tcx: &mut TyInferCtx, binding: TypeId, location: Location) -> TypeVariableId {
+fn allocate_type_variable(tcx: &mut TyInferCtx, binding: TypeId, owner: NodeId, location: Location) -> TypeVariableId {
     let id = tcx.hir().nodes.last().unwrap().0.next();
     let type_var = TypeVariableId(TypeId::from(id));
+
+    let canonical = tcx.hir_canonical_type_of(binding, owner).unwrap().unwrap_or(binding);
 
     assert!(
         tcx.tdb_mut()
@@ -384,7 +397,12 @@ fn allocate_type_variable(tcx: &mut TyInferCtx, binding: TypeId, location: Locat
             .nodes
             .insert(
                 id,
-                lume_hir::Node::TypeVariable(lume_hir::TypeVariable { id, binding, location })
+                lume_hir::Node::TypeVariable(lume_hir::TypeVariable {
+                    id,
+                    binding,
+                    canonical,
+                    location
+                })
             )
             .is_none()
     );

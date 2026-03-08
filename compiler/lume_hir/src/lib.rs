@@ -2004,5 +2004,22 @@ pub struct TypeVariable {
 
     /// Defines the ID of the type parameter which the type variable
     /// is bound to.
+    ///
+    /// This differs from the canonical type parameter in some instances. See
+    /// [`TypeVariable::canonical`].
     pub binding: TypeId,
+
+    /// Defines the ID of the type parameter which the type parameter emplaces
+    /// within the target definition.
+    ///
+    /// In practice, this refers to the type parameter on the target, instead of
+    /// the type parameter:
+    /// ```lm
+    /// struct Foo<T> { }
+    ///         // ^ canonical type parameter
+    ///
+    /// impl<T> Foo<T> { }
+    ///   // ^ binding type parameter
+    /// ```
+    pub canonical: TypeId,
 }
