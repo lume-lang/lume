@@ -258,6 +258,8 @@ impl UnificationPass<'_> {
         let callable = self.tcx.probe_callable(call)?;
         let signature = self.tcx.signature_of(callable)?;
 
+        tracing::trace!(callable = %callable.name().to_wide_string());
+
         let type_params = self.tcx.available_type_params_at(callable.id());
         let type_args = call.all_type_arguments();
 

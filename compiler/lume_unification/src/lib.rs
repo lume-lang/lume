@@ -76,6 +76,7 @@ impl<'tcx> UnificationPass<'tcx> {
         fields(
             type_var = %type_variable,
             substitute = %self.tcx.new_named_type(&with, true).unwrap(),
+            location = %self.tcx.hir_span_of_node(type_variable.0.as_node_id()),
         )
     )]
     pub(crate) fn subst(&self, type_variable: TypeVariableId, with: TypeRef) {
@@ -119,10 +120,6 @@ impl Env {
     /// As a good convention in relation to error messaging, the left-hand side
     /// should be the expected type, and the right-hand side be the found type.
     pub(crate) fn eq(&mut self, type_variable: TypeVariableId, lhs: TypeRef, rhs: TypeRef) {
-        if lhs == rhs {
-            return;
-        }
-
         self.type_vars
             .entry(type_variable)
             .or_default()
