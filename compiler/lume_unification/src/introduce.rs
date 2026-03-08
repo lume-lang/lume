@@ -372,7 +372,7 @@ impl UnificationPass<'_> {
 }
 
 fn allocate_type_variable(tcx: &mut TyInferCtx, binding: TypeId, owner: NodeId, location: Location) -> TypeVariableId {
-    let id = tcx.hir().nodes.last().unwrap().0.next();
+    let id = NodeId::from_usize(tcx.hir().package, tcx.hir().nodes.len() + (usize::MAX / 2));
     let type_var = TypeVariableId(TypeId::from(id));
 
     let canonical = tcx.hir_canonical_type_of(binding, owner).unwrap().unwrap_or(binding);
