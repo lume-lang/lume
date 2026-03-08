@@ -8,6 +8,7 @@
 //! [`TyInferCtx::hir_field`].
 
 use lume_architect::cached_query;
+use lume_errors::Result;
 use lume_hir::{Node, Path};
 use lume_span::*;
 
@@ -192,6 +193,21 @@ impl TyInferCtx {
         type_param
     }
 
+    /// Returns the [`lume_hir::TypeVariable`] with the given ID, if any.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no [`lume_hir::TypeVariable`] with the given ID was found.
+    #[track_caller]
+    #[tracing::instrument(level = "Trace", skip_all)]
+    pub fn hir_expect_type_variable(&self, id: NodeId) -> &lume_hir::TypeVariable {
+        let lume_hir::Node::TypeVariable(type_var) = self.hir_expect_node(id) else {
+            panic!("expected HIR type variable with ID of {id:?}")
+        };
+
+        type_var
+    }
+
     /// Returns the [`lume_hir::StructDefinition`] with the given ID, if any.
     ///
     /// # Panics
@@ -367,6 +383,89 @@ impl TyInferCtx {
             Node::Method(method) => method.block.is_none(),
             Node::TraitMethodImpl(method) => method.block.is_none(),
             _ => false,
+        }
+    }
+
+    /// Returns the type parameter binding of the given type variable.
+    #[cached_query]
+    #[track_caller]
+    #[tracing::instrument(level = "Trace", skip_all)]
+    pub fn hir_tyvar_binding_of(&self, type_var_id: NodeId) -> Option<lume_hir::TypeId> {
+        self.hir().type_variable(type_var_id).map(|type_var| type_var.binding)
+    }
+
+    /// Returns the canonical type parameter binding of the given type variable.
+    #[cached_query]
+    #[track_caller]
+    #[tracing::instrument(level = "Trace", skip_all)]
+    pub fn hir_tyvar_canonical_of(&self, type_var_id: NodeId) -> Option<lume_hir::TypeId> {
+        self.hir().type_variable(type_var_id).map(|type_var| type_var.canonical)
+    }
+
+    /// Returns the canonical type parameter ID of the given type parameter.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    pub fn hir_canonical_type_of(
+        &self,
+        type_parameter_id: lume_hir::TypeId,
+        owner: NodeId,
+    ) -> Result<Option<lume_hir::TypeId>> {
+        tracing::error!(
+            "{:+} => {:+}",
+            self.hir_path_of_node(type_parameter_id.as_node_id()),
+            self.hir_path_of_node(owner),
+        );
+
+        match self.hir().expect_node(owner)? {
+            Node::Type(
+                lume_hir::TypeDefinition::Struct(_)
+                | lume_hir::TypeDefinition::Enum(_)
+                | lume_hir::TypeDefinition::Trait(_),
+            )
+            | Node::Function(_) => Ok(Some(type_parameter_id)),
+            Node::Impl(implementation) => {
+                let Some(param_idx) = implementation
+                    .target
+                    .bound_types()
+                    .iter()
+                    .position(|ty| ty.id == type_parameter_id)
+                else {
+                    return Ok(None);
+                };
+
+                let target_type = self.mk_type_ref_from(&implementation.target, owner)?;
+                let type_params = self.type_params_of(target_type.instance_of)?;
+
+                Ok(type_params.get(param_idx).map(|ty| lume_hir::TypeId::from(*ty)))
+            }
+            Node::TraitImpl(trait_impl) => {
+                if let Some(param_idx) = trait_impl
+                    .target
+                    .bound_types()
+                    .iter()
+                    .position(|ty| ty.id == type_parameter_id)
+                {
+                    let target_type = self.mk_type_ref_from(&trait_impl.target, owner)?;
+                    let type_params = self.type_params_of(target_type.instance_of)?;
+
+                    return Ok(type_params.get(param_idx).map(|ty| lume_hir::TypeId::from(*ty)));
+                }
+
+                if let Some(param_idx) = trait_impl
+                    .name
+                    .bound_types()
+                    .iter()
+                    .position(|ty| ty.id == type_parameter_id)
+                {
+                    let target_type = self.mk_type_ref_from(&trait_impl.name, owner)?;
+                    let type_params = self.type_params_of(target_type.instance_of)?;
+
+                    return Ok(type_params.get(param_idx).map(|ty| lume_hir::TypeId::from(*ty)));
+                }
+
+                Ok(None)
+            }
+            _ => panic!("invalid owner node; expected item"),
         }
     }
 }

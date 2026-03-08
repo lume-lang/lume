@@ -680,7 +680,7 @@ impl TypeRef {
     pub fn replace_contained(&mut self, needle: TypeId, replacement: &TypeRef) {
         self.walk_mut().for_each(|ty| {
             if ty.instance_of == needle.as_node_id() {
-                replacement.bound_types.clone_into(&mut ty.bound_types);
+                *ty = replacement.clone();
             }
         });
     }

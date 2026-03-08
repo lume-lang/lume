@@ -120,14 +120,14 @@ impl UnificationPass<'_> {
 
             substitution_map.insert(
                 source_type_var,
-                normalize_equality_constraints(self.tcx, source_type_var, eq_constraints)?,
+                normalize_equality_constraints(self.tcx, &substitution_map, source_type_var, eq_constraints)?,
             );
         }
 
         // After having unified all type variables to, hopefully, some substitute, all
         // the other subtype constraints needs to be checked.
         'type_var: for type_var_id in env.type_vars.keys().copied() {
-            let type_parameter_binding = self.tcx.hir().expect_type_variable(type_var_id.0.as_node_id())?.binding;
+            let type_parameter_binding = self.tcx.hir_tyvar_binding_of(type_var_id.0.as_node_id()).unwrap();
             let type_parameter = self.tcx.hir_expect_type_parameter(type_parameter_binding.as_node_id());
 
             let Some(substitute) = substitution_map.get(&type_var_id) else {
@@ -205,13 +205,13 @@ impl UnificationPass<'_> {
         let tcx_constraints = &self.env.try_read().unwrap().type_vars;
 
         for (node_id, type_var_id) in self.affected_nodes() {
+            let type_parameter_binding = self.tcx.hir_tyvar_binding_of(type_var_id.0.as_node_id()).unwrap();
             let Some(TypeVariable { substitute, .. }) = tcx_constraints.get(&type_var_id) else {
                 unreachable!();
             };
 
             let Some(substitute) = substitute else {
-                let type_var_hir = self.tcx.hir().expect_type_variable(type_var_id.0.as_node_id())?;
-                let type_param = self.tcx.hir_expect_type_parameter(type_var_hir.binding.as_node_id());
+                let type_param = self.tcx.hir_expect_type_parameter(type_parameter_binding.as_node_id());
 
                 self.tcx.dcx().emit(
                     TypeArgumentInferenceFailed {
@@ -225,7 +225,6 @@ impl UnificationPass<'_> {
             };
 
             let replacement_ty = self.tcx.hir_lift_type(substitute)?;
-            let type_parameter_binding = self.tcx.hir().expect_type_variable(type_var_id.0.as_node_id())?.binding;
 
             let mut node = if let Some(node) = self.tcx.hir_node(node_id)
                 && let Ok(inferred) = InferedNode::try_from(node)
@@ -304,6 +303,10 @@ impl UnificationPass<'_> {
                 .nodes
                 .insert(node_id, Into::<lume_hir::Node>::into(node));
 
+            // Remove the temporary type variable node from the HIR and type database.
+            //
+            // This is to prevent problems in later stages of the compiler, which aren't
+            // meant to handle them.
             self.tcx.hir_mut().nodes.swap_remove(&type_var_id.0.as_node_id());
             self.tcx.tdb_mut().types.swap_remove(&type_var_id.0.as_node_id());
         }

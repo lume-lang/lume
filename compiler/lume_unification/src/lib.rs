@@ -153,14 +153,15 @@ impl Env {
 #[tracing::instrument(level = "TRACE", skip_all, fields(%type_variable), err)]
 fn normalize_equality_constraints<'ty, I: Iterator<Item = (&'ty TypeRef, &'ty TypeRef)>>(
     tcx: &TyInferCtx,
+    substitution_map: &IndexMap<TypeVariableId, TypeRef>,
     type_variable: TypeVariableId,
     constraints: I,
 ) -> Result<TypeRef> {
-    let type_parameter_binding = tcx.hir().expect_type_variable(type_variable.0.as_node_id())?.binding;
+    let canonical_type_binding = tcx.hir_tyvar_canonical_of(type_variable.0.as_node_id()).unwrap();
     let mut normalized_type: Option<TypeRef> = None;
 
     for (lhs, rhs) in constraints {
-        let (normalized_lhs, normalized_rhs) = normalize_constraint_types(tcx, type_parameter_binding, lhs, rhs)?;
+        let (normalized_lhs, normalized_rhs) = normalize_constraint_types(tcx, canonical_type_binding, lhs, rhs)?;
 
         tracing::trace!(
             type_var = %type_variable,
@@ -174,16 +175,22 @@ fn normalize_equality_constraints<'ty, I: Iterator<Item = (&'ty TypeRef, &'ty Ty
         // INVARIANT:
         // Type variables should always exist as the right-hand side of the constraint,
         // since the left-hand side is meant for the "expected" type.
-        if tcx.is_type_variable(&normalized_rhs) {
-            continue;
-        }
+        let resolved_type = if tcx.is_type_variable(&normalized_rhs) {
+            let rhs_type_var_id = TypeVariableId(normalized_rhs.instance_of.into());
 
-        // Use the normalized type which does *not* contain the type variable itself,
-        // since that wouldn't be very useful to the type checker.
-        let resolved_type = if normalized_lhs.instance_of == type_parameter_binding.as_node_id() {
-            normalized_rhs
+            let Some(existing) = substitution_map.get(&rhs_type_var_id) else {
+                continue;
+            };
+
+            existing.clone()
         } else {
-            normalized_lhs
+            // Use the normalized type which does *not* contain the type variable itself,
+            // since that wouldn't be very useful to the type checker.
+            if normalized_lhs.instance_of == canonical_type_binding.as_node_id() {
+                normalized_rhs
+            } else {
+                normalized_lhs
+            }
         };
 
         tracing::trace!(
@@ -228,6 +235,8 @@ pub(crate) fn normalize_constraint_types(
     if target == lhs.instance_of || target == rhs.instance_of {
         return Ok((lhs.to_owned(), rhs.to_owned()));
     }
+
+    tracing::trace!(target = ?target.as_node_id(), ?lhs, ?rhs);
 
     // If the two types being normalized don't refer to the type parent type, we
     // cannot normalize them. For example, image a set of constraints like this:
