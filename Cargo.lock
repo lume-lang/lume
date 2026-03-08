@@ -1535,7 +1535,7 @@ dependencies = [
 [[package]]
 name = "lume_architect"
 version = "0.0.1"
-source = "git+https://github.com/lume-lang/architect#5cda231d4b2673f464ea2edda5a1abfb0c5f93a4"
+source = "git+https://github.com/lume-lang/architect#283c9f04f63a41f3602b1c47d830b7b03d44542f"
 dependencies = [
  "bitflags 2.11.0",
  "fxhash",
@@ -1547,7 +1547,7 @@ dependencies = [
 [[package]]
 name = "lume_architect_derive"
 version = "0.0.1"
-source = "git+https://github.com/lume-lang/architect#5cda231d4b2673f464ea2edda5a1abfb0c5f93a4"
+source = "git+https://github.com/lume-lang/architect#283c9f04f63a41f3602b1c47d830b7b03d44542f"
 dependencies = [
  "darling",
  "proc-macro2",

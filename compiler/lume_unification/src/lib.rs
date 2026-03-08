@@ -267,6 +267,9 @@ pub(crate) fn normalize_constraint_types(
 /// - or raise the inside error inside the diagnostics context in `tcx`.
 #[tracing::instrument(level = "INFO", skip_all, err)]
 pub fn unify(tcx: &mut TyInferCtx) -> Result<()> {
+    lume_architect::DatabaseContext::db(tcx).disable_caching();
+    lume_architect::DatabaseContext::db(tcx).clear_all();
+
     verify::verify_type_names(tcx);
 
     let mut ucx = UnificationPass::new(tcx);
@@ -283,14 +286,8 @@ pub fn unify(tcx: &mut TyInferCtx) -> Result<()> {
     // Very few method calls would've been cached at this point in the compile
     // process, so we can safetly clear the entire thing, without having
     // to worry too much about the potential performance loss.
-    invalidate_type_cache(tcx);
+    lume_architect::DatabaseContext::db(tcx).enable_caching();
+    lume_architect::DatabaseContext::db(tcx).clear_all();
 
     tcx.dcx().ensure_untainted()
-}
-
-/// Invalidate the type cache.
-#[tracing::instrument(level = "DEBUG", skip_all)]
-fn invalidate_type_cache(tcx: &mut TyInferCtx) {
-    let ctx: &lume_session::GlobalCtx = &*tcx;
-    lume_architect::DatabaseContext::db(ctx).clear_all();
 }
