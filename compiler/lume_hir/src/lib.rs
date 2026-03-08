@@ -1259,6 +1259,7 @@ impl Expression {
                 name,
                 callee,
                 arguments: args,
+                bound_types: Vec::new(),
                 location,
             }),
         }
@@ -1427,7 +1428,7 @@ impl CallExpression<'_> {
         match self {
             Self::Instanced(call) => call.all_type_arguments(),
             Self::Static(call) => call.all_type_arguments(),
-            Self::Intrinsic(_) => vec![],
+            Self::Intrinsic(call) => call.bound_types().to_vec(),
         }
     }
 
@@ -1539,6 +1540,10 @@ impl InstanceCall {
 pub struct IntrinsicCall {
     pub id: NodeId,
     pub kind: IntrinsicKind,
+
+    /// Bound types for the receiver type.
+    pub bound_types: Vec<Type>,
+
     pub location: Location,
 }
 
@@ -1548,6 +1553,10 @@ impl IntrinsicCall {
             name: self.kind.name().to_string(),
             location: self.location,
         }
+    }
+
+    pub fn bound_types(&self) -> &[Type] {
+        &self.bound_types
     }
 }
 

@@ -55,6 +55,13 @@ impl UnificationPass<'_> {
             InferedNodeRef::Construct(expr) => {
                 self.create_constraints_for_type(&expr.path, type_parameter_id, type_variable)?;
             }
+            InferedNodeRef::IntrinsicCall(expr) => {
+                self.create_constraints_for_callable(
+                    lume_hir::CallExpression::Intrinsic(expr),
+                    type_parameter_id,
+                    type_variable,
+                )?;
+            }
             InferedNodeRef::InstanceCall(expr) => {
                 self.create_constraints_for_callable(
                     lume_hir::CallExpression::Instanced(expr),

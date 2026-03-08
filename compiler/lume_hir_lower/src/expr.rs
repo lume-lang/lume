@@ -336,6 +336,7 @@ impl LoweringContext<'_> {
                         kind: lume_hir::ExpressionKind::IntrinsicCall(lume_hir::IntrinsicCall {
                             id: value_id,
                             kind: lume_hir::IntrinsicKind::Add { lhs: src, rhs: rhs_id },
+                            bound_types: Vec::new(),
                             location,
                         }),
                         location,
@@ -378,6 +379,7 @@ impl LoweringContext<'_> {
                         kind: lume_hir::ExpressionKind::IntrinsicCall(lume_hir::IntrinsicCall {
                             id: value_id,
                             kind: lume_hir::IntrinsicKind::Sub { lhs: src, rhs: rhs_id },
+                            bound_types: Vec::new(),
                             location,
                         }),
                         location,
@@ -443,7 +445,12 @@ impl LoweringContext<'_> {
         Ok(lume_hir::Expression {
             id,
             location,
-            kind: lume_hir::ExpressionKind::IntrinsicCall(lume_hir::IntrinsicCall { id, kind, location }),
+            kind: lume_hir::ExpressionKind::IntrinsicCall(lume_hir::IntrinsicCall {
+                id,
+                kind,
+                bound_types: Vec::new(),
+                location,
+            }),
         })
     }
 
