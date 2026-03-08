@@ -15,7 +15,7 @@ pub(crate) enum Constraint {
 impl UnificationPass<'_> {
     #[tracing::instrument(level = "INFO", skip_all, err)]
     pub(crate) fn create_constraints(&self) -> Result<()> {
-        for (id, type_variable) in self.take_affected_nodes() {
+        for (id, type_variable) in self.affected_nodes() {
             if let Err(err) = self.create_constraints_for(id, type_variable) {
                 self.tcx.dcx().emit(err);
             }

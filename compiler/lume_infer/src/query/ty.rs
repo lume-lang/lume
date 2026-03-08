@@ -136,6 +136,27 @@ impl TyInferCtx {
         false
     }
 
+    /// Determines whether the given [`TypeRef`] refers to a type variable.
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
+    pub fn is_type_variable(&self, ty: &TypeRef) -> bool {
+        matches!(
+            self.tdb().type_(ty.instance_of).map(|t| t.kind),
+            Some(TypeKind::TypeVariable)
+        )
+    }
+
+    /// If the given [`TypeRef`] refers to a type variable, returns a reference
+    /// to it's definition.
+    ///
+    /// Otherwise, returns [`None`].
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
+    pub fn as_type_variable(&self, ty: &TypeRef) -> Option<&lume_hir::TypeVariable> {
+        match self.hir_expect_node(ty.instance_of) {
+            lume_hir::Node::TypeVariable(type_var) => Some(type_var),
+            _ => None,
+        }
+    }
+
     /// Determines whether the given [`TypeRef`] is a type reference of `Self`.
     #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn is_self_type(&self, ty: &TypeRef) -> bool {

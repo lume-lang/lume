@@ -28,15 +28,15 @@ impl<'tcx> UnificationPass<'tcx> {
         }
     }
 
+    /// Registers the given node as being affected by unification, caused by the
+    /// given type variable.
     pub(crate) fn add_affected_node(&self, id: NodeId, type_variable: TypeVariableId) {
         self.env.try_write().unwrap().affected_nodes.push((id, type_variable));
     }
 
-    /// Takes all the affected nodes from the pass.
-    pub(crate) fn take_affected_nodes(&self) -> Vec<(NodeId, TypeVariableId)> {
-        let mut env = self.env.try_write().unwrap();
-
-        env.affected_nodes.drain(..).collect()
+    /// Iterates all the affected nodes from the pass.
+    pub(crate) fn affected_nodes(&self) -> Vec<(NodeId, TypeVariableId)> {
+        self.env.try_read().unwrap().affected_nodes.clone()
     }
 
     /// Creates a new equality containt, stating that `lhs` must be equal to
@@ -153,56 +153,63 @@ impl Env {
     }
 }
 
-#[tracing::instrument(level = "TRACE", skip_all, err)]
-fn normalize_equality_constraints(
+#[tracing::instrument(level = "TRACE", skip_all, fields(%type_variable), err)]
+fn normalize_equality_constraints<'ty, I: Iterator<Item = (&'ty TypeRef, &'ty TypeRef)>>(
     tcx: &TyInferCtx,
     type_variable: TypeVariableId,
-    constraints: Vec<Constraint>,
+    constraints: I,
 ) -> Result<TypeRef> {
-    debug_assert!(!constraints.is_empty(), "equality constraint list must not be empty");
-    debug_assert!(constraints.iter().all(|c| matches!(c, Constraint::Equal { .. })));
+    let type_parameter_binding = tcx.hir().expect_type_variable(type_variable.0.as_node_id())?.binding;
+    let mut normalized_type: Option<TypeRef> = None;
 
-    let type_var_hir = tcx.hir().expect_type_variable(type_variable.0.as_node_id())?;
-    let mut normalized_types: Option<(TypeRef, TypeRef)> = None;
+    for (lhs, rhs) in constraints {
+        let (normalized_lhs, normalized_rhs) = normalize_constraint_types(tcx, type_parameter_binding, lhs, rhs)?;
 
-    for constraint in constraints {
-        let Constraint::Equal { lhs, rhs } = constraint else {
-            unreachable!();
+        tracing::trace!(
+            type_var = %type_variable,
+            lhs = %tcx.new_named_type(lhs, true).unwrap(),
+            rhs = %tcx.new_named_type(rhs, true).unwrap(),
+            normalized_lhs = %tcx.new_named_type(&normalized_lhs, true).unwrap(),
+            normalized_rhs = %tcx.new_named_type(&normalized_rhs, true).unwrap(),
+            "normalized_eq"
+        );
+
+        // INVARIANT:
+        // Type variables should always exist as the right-hand side of the constraint,
+        // since the left-hand side is meant for the "expected" type.
+        if tcx.is_type_variable(&normalized_rhs) {
+            continue;
+        }
+
+        // Use the normalized type which does *not* contain the type variable itself,
+        // since that wouldn't be very useful to the type checker.
+        let resolved_type = if normalized_lhs.instance_of == type_parameter_binding.as_node_id() {
+            normalized_rhs
+        } else {
+            normalized_lhs
         };
 
-        let (normalized_lhs, normalized_rhs) = normalize_constraint_types(tcx, type_var_hir.binding, &lhs, &rhs)?;
+        tracing::trace!(
+            type_variable = %type_variable,
+            subst = %tcx.new_named_type(&resolved_type, true)?,
+            "substitute_type_variable"
+        );
 
-        match normalized_types.as_ref() {
-            None => {
-                // Define a "primary" set of normalized types, which will be compared against
-                // if multiple equality sets exist within the constraint list.
-                normalized_types = Some((normalized_lhs, normalized_rhs));
-            }
-            Some((expected_lhs, expected_rhs)) => {
+        match normalized_type.as_ref() {
+            Some(entry) => {
                 // If there's more than a single equality constraint, we have to check
                 // whether they resolve to the same type. Otherwise, we must raise errors.
-
-                if &normalized_lhs != expected_lhs {
-                    tcx.raise_mismatched_types(expected_lhs, &normalized_lhs);
+                if entry != &resolved_type {
+                    tcx.raise_mismatched_types(entry, &resolved_type);
                 }
-
-                if &normalized_rhs != expected_rhs {
-                    tcx.raise_mismatched_types(expected_rhs, &normalized_rhs);
-                }
+            }
+            None => {
+                normalized_type = Some(resolved_type);
             }
         }
     }
 
-    let type_variable_target = type_var_hir.binding.as_node_id();
-    let (normalized_lhs, normalized_rhs) = normalized_types.expect("expected constraints to be normalized and exist");
-
-    // Return the normalized type which does *not* contain the type variable itself,
-    // since that wouldn't be very useful to the type checker.
-    if normalized_lhs.instance_of == type_variable_target {
-        Ok(normalized_rhs)
-    } else {
-        Ok(normalized_lhs)
-    }
+    Ok(normalized_type.expect("expected constraints to be normalized and exist"))
 }
 
 #[tracing::instrument(

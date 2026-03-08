@@ -1425,7 +1425,7 @@ impl CallExpression<'_> {
     #[inline]
     pub fn all_type_arguments(&self) -> Vec<Type> {
         match self {
-            Self::Instanced(call) => call.type_arguments().to_vec(),
+            Self::Instanced(call) => call.all_type_arguments(),
             Self::Static(call) => call.all_type_arguments(),
             Self::Intrinsic(_) => vec![],
         }
@@ -1516,12 +1516,22 @@ pub struct InstanceCall {
     pub callee: NodeId,
     pub name: PathSegment,
     pub arguments: Vec<NodeId>,
+
+    /// Bound types for the receiver type.
+    pub bound_types: Vec<Type>,
     pub location: Location,
 }
 
 impl InstanceCall {
     pub fn type_arguments(&self) -> &[Type] {
         self.name.bound_types()
+    }
+
+    pub fn all_type_arguments(&self) -> Vec<Type> {
+        let mut args = self.type_arguments().to_vec();
+        args.extend(self.bound_types.clone());
+
+        args
     }
 }
 

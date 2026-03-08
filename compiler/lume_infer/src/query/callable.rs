@@ -1129,6 +1129,15 @@ impl TyInferCtx {
 
         self.is_type_parameter(&receiving_type)
     }
+
+    /// Determines whether the given type parameter ID is bound to the given
+    /// method callable.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub fn is_bound_to_method(&self, type_parameter: NodeId, callable: Callable<'_>) -> Result<bool> {
+        let signature = self.signature_of(callable)?;
+
+        Ok(signature.type_params.contains(&type_parameter))
+    }
 }
 
 fn param_of(tcx: &TyInferCtx, parent: NodeId, param: &lume_hir::Parameter) -> Result<lume_types::Parameter> {
