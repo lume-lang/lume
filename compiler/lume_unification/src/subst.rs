@@ -1,94 +1,190 @@
-use std::collections::HashSet;
-
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use lume_errors::{Diagnostic, Result};
+use lume_infer::TyInferCtx;
 use lume_span::Location;
 use lume_types::{NamedTypeRef, TypeRef};
 
 use crate::constraints::Constraint;
-use crate::{TypeVariable, TypeVariableId, UnificationPass, normalize_equality_constraints};
+use crate::introduce::InferedNode;
+use crate::{Env, TypeVariable, TypeVariableId, UnificationPass, normalize_equality_constraints};
+
+#[derive(Default)]
+pub(crate) struct LinkedVariableList {
+    ltr: IndexMap<TypeVariableId, IndexSet<TypeVariableId>>,
+    rtl: IndexMap<TypeVariableId, IndexSet<TypeVariableId>>,
+}
+
+impl LinkedVariableList {
+    pub fn add_relation(&mut self, lhs: TypeVariableId, rhs: TypeVariableId) {
+        tracing::debug!(%lhs, %rhs, "add_resolution_link");
+
+        self.ltr.entry(lhs).or_default().insert(rhs);
+        self.rtl.entry(rhs).or_default().insert(lhs);
+    }
+
+    pub fn walk(&self, id: TypeVariableId) -> impl Iterator<Item = TypeVariableId> {
+        let ltr = LinkedListIter::create_from(&self.ltr, id);
+        let rtl = LinkedListIter::create_from(&self.rtl, id);
+
+        ltr.chain(rtl)
+    }
+}
+
+struct LinkedListIter<'l> {
+    stack: smallvec::SmallVec<[TypeVariableId; 8]>,
+    map: &'l IndexMap<TypeVariableId, IndexSet<TypeVariableId>>,
+}
+
+impl<'l> LinkedListIter<'l> {
+    pub fn create_from(map: &'l IndexMap<TypeVariableId, IndexSet<TypeVariableId>>, root: TypeVariableId) -> Self {
+        Self {
+            stack: smallvec::smallvec![root],
+            map,
+        }
+    }
+}
+
+impl Iterator for LinkedListIter<'_> {
+    type Item = TypeVariableId;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let item = self.stack.pop()?;
+        if let Some(set) = self.map.get(&item) {
+            self.stack.extend(set.iter().copied());
+        }
+
+        Some(item)
+    }
+}
+
+impl Env {
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    pub fn coalesce_type_variables(&self, tcx: &TyInferCtx) -> Result<LinkedVariableList> {
+        let mut linked_list = LinkedVariableList::default();
+
+        for (&type_var_id, type_var) in self.type_vars.iter().rev() {
+            for constraint in &type_var.constraints {
+                // INVARIANT:
+                // Type variables should always exist as the right-hand side of the constraint,
+                // since the left-hand side is meant for the "expected" type.
+                let Constraint::Equal { rhs, .. } = constraint else {
+                    continue;
+                };
+
+                let Some(constraint_variable) = tcx.as_type_variable(rhs) else {
+                    continue;
+                };
+
+                let constraint_variable_id = TypeVariableId(constraint_variable.id.into());
+                debug_assert_ne!(type_var_id, constraint_variable_id);
+
+                linked_list.add_relation(type_var_id, constraint_variable_id);
+            }
+        }
+
+        Ok(linked_list)
+    }
+
+    /// Gets an iterator of all the constraints of the given type variable.
+    fn constraints_of(&self, id: TypeVariableId) -> impl Iterator<Item = &Constraint> {
+        static EMPTY: Vec<Constraint> = Vec::new();
+
+        self.type_vars
+            .get(&id)
+            .map_or(EMPTY.iter(), |type_var| type_var.constraints.iter())
+    }
+}
 
 impl UnificationPass<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn create_type_substitutions(&mut self) -> Result<()> {
-        let mut removals = HashSet::new();
+        let env = self.env.try_read().unwrap();
+        let linked_list = env.coalesce_type_variables(self.tcx)?;
+
         let mut substitution_map = IndexMap::<TypeVariableId, TypeRef>::new();
-        let tcx_constraints = &self.env.try_read().unwrap().type_vars;
 
-        'type_var: for (&type_variable_id, type_variable) in tcx_constraints {
-            let mut constraints = type_variable.constraints.clone();
+        for source_type_var in env.type_vars.keys().copied() {
+            let eq_constraints = linked_list.walk(source_type_var).flat_map(|id| {
+                env.constraints_of(id).filter_map(|constraint| {
+                    let Constraint::Equal { lhs, rhs } = constraint else {
+                        return None;
+                    };
 
-            let eq_constraints = constraints
-                .extract_if(.., |c| matches!(c, Constraint::Equal { .. }))
-                .collect::<Vec<_>>();
+                    if !self.tcx.is_type_variable(rhs) {
+                        return Some((lhs, rhs));
+                    }
 
-            if eq_constraints.is_empty() {
-                let type_var_hir = self.tcx.hir().expect_type_variable(type_variable_id.0.as_node_id())?;
-                let type_param = self.tcx.hir_expect_type_parameter(type_var_hir.binding.as_node_id());
+                    None
+                })
+            });
 
+            substitution_map.insert(
+                source_type_var,
+                normalize_equality_constraints(self.tcx, source_type_var, eq_constraints)?,
+            );
+        }
+
+        // After having unified all type variables to, hopefully, some substitute, all
+        // the other subtype constraints needs to be checked.
+        'type_var: for type_var_id in env.type_vars.keys().copied() {
+            let type_parameter_binding = self.tcx.hir().expect_type_variable(type_var_id.0.as_node_id())?.binding;
+            let type_parameter = self.tcx.hir_expect_type_parameter(type_parameter_binding.as_node_id());
+
+            let Some(substitute) = substitution_map.get(&type_var_id) else {
                 self.tcx.dcx().emit(
                     TypeArgumentInferenceFailed {
-                        source: self.tcx.hir_span_of_node(type_variable_id.0.as_node_id()),
-                        type_param_name: type_param.name.to_string(),
+                        source: self.tcx.hir_span_of_node(type_var_id.0.as_node_id()),
+                        type_param_name: type_parameter.name.to_string(),
                     }
                     .into(),
                 );
 
-                removals.insert(type_variable_id);
                 continue;
-            }
+            };
 
-            let expected_type = normalize_equality_constraints(self.tcx, type_variable_id, eq_constraints)?;
+            for constraint in env.constraints_of(type_var_id) {
+                let Constraint::Subtype { of, param } = constraint else {
+                    continue;
+                };
 
-            for constraint in constraints {
-                match constraint {
-                    Constraint::Equal { .. } => unreachable!(),
-                    Constraint::Subtype { of, param } => {
-                        debug_assert!(
-                            self.tcx.is_trait(&of)?,
-                            "expected subtype-constraint to reference trait"
-                        );
+                debug_assert!(
+                    self.tcx.is_trait(of).unwrap(),
+                    "expected subtype-constraint to reference trait"
+                );
 
-                        if !self.tcx.trait_impl_by(&of, &expected_type)? {
-                            let type_param = self.tcx.hir_expect_type_parameter(param);
-                            let type_param_constraint = type_param
-                                .constraints
-                                .iter()
-                                .find(|c| c.id.as_node_id() == of.instance_of)
-                                .unwrap();
+                if !self.tcx.trait_impl_by(of, substitute)? {
+                    let type_param = self.tcx.hir_expect_type_parameter(*param);
+                    let type_param_constraint = type_param
+                        .constraints
+                        .iter()
+                        .find(|c| c.id.as_node_id() == of.instance_of)
+                        .unwrap();
 
-                            self.tcx.dcx().emit(
-                                TypeParameterConstraintUnsatisfied {
-                                    source: self.tcx.hir_span_of_node(type_variable_id.0.as_node_id()),
-                                    constraint_loc: type_param_constraint.location,
-                                    param_name: type_param.name.to_string(),
-                                    type_name: self.tcx.new_named_type(&expected_type, true)?,
-                                    constraint_name: self.tcx.new_named_type(&of, true)?,
-                                }
-                                .into(),
-                            );
-
-                            continue 'type_var;
+                    self.tcx.dcx().emit(
+                        TypeParameterConstraintUnsatisfied {
+                            source: self.tcx.hir_span_of_node(type_var_id.0.as_node_id()),
+                            constraint_loc: type_param_constraint.location,
+                            param_name: type_param.name.to_string(),
+                            type_name: self.tcx.new_named_type(substitute, true)?,
+                            constraint_name: self.tcx.new_named_type(of, true)?,
                         }
-                    }
+                        .into(),
+                    );
+
+                    continue 'type_var;
                 }
             }
-
-            substitution_map.insert(type_variable_id, expected_type.clone());
         }
 
-        if !removals.is_empty() {
-            let tcx_constraints = &mut self.env.try_write().unwrap().type_vars;
-            for removal in removals {
-                tcx_constraints.shift_remove(&removal);
-            }
-        }
+        // Ensure the read-lock of `env` is dropped before
+        // adding the substitutes.
+        drop(env);
+
+        self.tcx.dcx().ensure_untainted()?;
 
         for (type_variable, substitution) in substitution_map {
             self.subst(type_variable, substitution);
         }
-
-        self.tcx.dcx.ensure_untainted()?;
 
         Ok(())
     }
@@ -97,16 +193,29 @@ impl UnificationPass<'_> {
 impl UnificationPass<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn apply_substitutions(&mut self) -> Result<()> {
+        fn replace_in(bound_types: &mut [lume_hir::Type], type_var_id: TypeVariableId, replacement: lume_hir::Type) {
+            let idx = bound_types
+                .iter()
+                .position(|ty| ty.id == type_var_id.0)
+                .expect("expected type variable in node");
+
+            bound_types[idx] = replacement;
+        }
+
         let tcx_constraints = &self.env.try_read().unwrap().type_vars;
 
-        for (&type_variable_id, TypeVariable { substitute, .. }) in tcx_constraints {
+        for (node_id, type_var_id) in self.affected_nodes() {
+            let Some(TypeVariable { substitute, .. }) = tcx_constraints.get(&type_var_id) else {
+                unreachable!();
+            };
+
             let Some(substitute) = substitute else {
-                let type_var_hir = self.tcx.hir().expect_type_variable(type_variable_id.0.as_node_id())?;
+                let type_var_hir = self.tcx.hir().expect_type_variable(type_var_id.0.as_node_id())?;
                 let type_param = self.tcx.hir_expect_type_parameter(type_var_hir.binding.as_node_id());
 
                 self.tcx.dcx().emit(
                     TypeArgumentInferenceFailed {
-                        source: self.tcx.hir_span_of_node(type_variable_id.0.as_node_id()),
+                        source: self.tcx.hir_span_of_node(type_var_id.0.as_node_id()),
                         type_param_name: type_param.name.to_string(),
                     }
                     .into(),
@@ -115,82 +224,88 @@ impl UnificationPass<'_> {
                 continue;
             };
 
-            let Some(expr) = self.tcx.hir().expression(type_variable_id.0.as_node_id()) else {
-                panic!("bug!: expected ID in type variable to reference Expression");
+            let replacement_ty = self.tcx.hir_lift_type(substitute)?;
+            let type_parameter_binding = self.tcx.hir().expect_type_variable(type_var_id.0.as_node_id())?.binding;
+
+            let mut node = if let Some(node) = self.tcx.hir_node(node_id)
+                && let Ok(inferred) = InferedNode::try_from(node)
+            {
+                inferred
+            } else {
+                continue;
             };
 
-            let (mut replacement_path, target_path) = match &expr.kind {
-                lume_hir::ExpressionKind::Cast(expr) => {
-                    let Some(type_def) = self.tcx.tdb().find_type(&expr.target.name) else {
-                        return Ok(());
-                    };
-
-                    (expr.target.name.clone(), type_def.name.clone())
-                }
-                lume_hir::ExpressionKind::Construct(expr) => {
-                    let Some(type_def) = self.tcx.tdb().find_type(&expr.path) else {
-                        return Ok(());
-                    };
-
-                    (expr.path.clone(), type_def.name.clone())
-                }
-                lume_hir::ExpressionKind::StaticCall(call) => {
-                    let Some(callable) = self.tcx.callable_with_name(&call.name) else {
-                        unreachable!()
-                    };
-
-                    (call.name.clone(), callable.name().clone())
-                }
-                lume_hir::ExpressionKind::Variant(expr) => {
-                    let parent_path = expr.name.clone().parent().unwrap();
-                    let enum_def = self.tcx.enum_def_with_name(&parent_path)?;
-
-                    let mut enum_name = enum_def.name.clone();
-                    enum_name.place_bound_types(self.tcx.type_params_as_types(&enum_def.type_parameters)?);
-
-                    let enum_case_name = lume_hir::Path::with_root(enum_name, expr.name.name.clone());
-
-                    (expr.name.clone(), enum_case_name)
-                }
-                _ => unreachable!(),
-            };
-
-            for (num_segment, segment) in target_path.segments().into_iter().enumerate() {
-                match segment {
-                    lume_hir::PathSegment::Type { bound_types, .. }
-                    | lume_hir::PathSegment::Callable { bound_types, .. } => {
-                        for (num_type, bound_type) in bound_types.iter().enumerate() {
-                            if bound_type.id != type_variable_id.0 {
-                                continue;
-                            }
-
-                            let replacement_ty = self.tcx.hir_lift_type(substitute)?;
-                            replacement_path.segments_mut()[num_segment].put_bound_type(num_type, replacement_ty);
-                        }
+            match &mut node {
+                InferedNode::Cast(expr) => {
+                    if let lume_hir::PathSegment::Type { bound_types, .. } = &mut expr.target.name.name {
+                        replace_in(bound_types, type_var_id, replacement_ty);
                     }
-                    _ => {}
+                }
+                InferedNode::Construct(expr) => {
+                    if let lume_hir::PathSegment::Type { bound_types, .. } = &mut expr.path.name {
+                        replace_in(bound_types, type_var_id, replacement_ty);
+                    }
+                }
+                InferedNode::VariableDeclaration(_decl) => continue,
+                InferedNode::IntrinsicCall(expr) => {
+                    replace_in(&mut expr.bound_types, type_var_id, replacement_ty);
+                }
+                InferedNode::InstanceCall(call) => {
+                    let callable = self.tcx.probe_callable_instance(call)?;
+                    let is_bound_to_method = self
+                        .tcx
+                        .is_bound_to_method(type_parameter_binding.as_node_id(), callable)?;
+
+                    // Push the type replacement onto the type path segment or callable path
+                    // segment, depending on which one the type parameter is
+                    // bound to.
+                    if is_bound_to_method {
+                        if let lume_hir::PathSegment::Callable { bound_types, .. } = &mut call.name {
+                            replace_in(bound_types, type_var_id, replacement_ty);
+                        }
+                    } else {
+                        replace_in(&mut call.bound_types, type_var_id, replacement_ty);
+                    }
+                }
+                InferedNode::StaticCall(call) => {
+                    let callable = self.tcx.probe_callable_static(call)?;
+                    let is_bound_to_method = self
+                        .tcx
+                        .is_bound_to_method(type_parameter_binding.as_node_id(), callable)?;
+
+                    // Push the type replacement onto the type path segment or callable path
+                    // segment, depending on which one the type parameter is
+                    // bound to.
+                    if is_bound_to_method
+                        && let lume_hir::PathSegment::Callable { bound_types, .. } = &mut call.name.name
+                    {
+                        replace_in(bound_types, type_var_id, replacement_ty);
+                    } else if let Some(lume_hir::PathSegment::Type { bound_types, .. }) = &mut call.name.root.last_mut()
+                    {
+                        replace_in(bound_types, type_var_id, replacement_ty);
+                    }
+                }
+                InferedNode::Variant(expr) => {
+                    if let Some(lume_hir::PathSegment::Type { bound_types, .. }) = &mut expr.name.root.last_mut() {
+                        replace_in(bound_types, type_var_id, replacement_ty);
+                    }
+                }
+                InferedNode::Pattern(pattern) => {
+                    if let lume_hir::PatternKind::Variant(variant) = &mut pattern.kind
+                        && let Some(lume_hir::PathSegment::Type { bound_types, .. }) = &mut variant.name.root.last_mut()
+                    {
+                        replace_in(bound_types, type_var_id, replacement_ty);
+                    }
                 }
             }
 
-            let Some(expr) = self.tcx.hir_mut().expression_mut(type_variable_id.0.as_node_id()) else {
-                panic!("bug!: expected ID in type variable to reference Expression");
-            };
+            self.tcx
+                .hir_mut()
+                .nodes
+                .insert(node_id, Into::<lume_hir::Node>::into(node));
 
-            match &mut expr.kind {
-                lume_hir::ExpressionKind::Cast(expr) => {
-                    expr.target.name = replacement_path;
-                }
-                lume_hir::ExpressionKind::Construct(expr) => {
-                    expr.path = replacement_path;
-                }
-                lume_hir::ExpressionKind::StaticCall(call) => {
-                    call.name = replacement_path;
-                }
-                lume_hir::ExpressionKind::Variant(expr) => {
-                    expr.name = replacement_path;
-                }
-                _ => unreachable!(),
-            }
+            self.tcx.hir_mut().nodes.swap_remove(&type_var_id.0.as_node_id());
+            self.tcx.tdb_mut().types.swap_remove(&type_var_id.0.as_node_id());
         }
 
         Ok(())
