@@ -664,21 +664,21 @@ impl TypeRef {
 
     /// Checks whether the given type ID is contained within the current type
     /// reference.
-    pub fn contains(&self, needle: TypeId) -> bool {
+    pub fn contains(&self, needle: NodeId) -> bool {
         self.contains_some(needle).is_some()
     }
 
     /// Checks whether the given type ID is contained within the current type
     /// reference. If it is, returns a reference to the containing type
     /// reference.
-    pub fn contains_some(&self, needle: TypeId) -> Option<&TypeRef> {
-        self.walk().find(|ty| ty.instance_of == needle.as_node_id())
+    pub fn contains_some(&self, needle: NodeId) -> Option<&TypeRef> {
+        self.walk().find(|ty| ty.instance_of == needle)
     }
 
     /// Replaces all instances of types with ID of `needle` with `replacement`.
-    pub fn replace_contained(&mut self, needle: TypeId, replacement: &TypeRef) {
+    pub fn replace_contained(&mut self, needle: NodeId, replacement: &TypeRef) {
         self.walk_mut().for_each(|ty| {
-            if ty.instance_of == needle.as_node_id() {
+            if ty.instance_of == needle {
                 *ty = replacement.clone();
             }
         });
