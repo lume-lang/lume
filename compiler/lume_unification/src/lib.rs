@@ -211,6 +211,8 @@ fn normalize_equality_constraints<'ty, I: Iterator<Item = (&'ty TypeRef, &'ty Ty
                 normalized_type = Some(resolved_type);
             }
         }
+
+        tcx.dcx().ensure_untainted()?;
     }
 
     normalized_type.ok_or_else(|| {
