@@ -8,7 +8,7 @@ use lume_architect::DatabaseContext;
 use lume_errors::{DiagCtx, Error};
 use lume_hir::{Path, TypeParameter};
 use lume_span::*;
-use lume_types::{FunctionSig, NamedTypeRef, TyCtx, TypeDatabaseContext, TypeRef};
+use lume_types::{FunctionSig, TyCtx, TypeDatabaseContext, TypeRef};
 
 mod define;
 pub mod errors;
@@ -318,8 +318,8 @@ impl TyInferCtx {
                 return Err(errors::MismatchedTypes {
                     reason_loc: to.location,
                     found_loc: from.location,
-                    expected: self.new_named_type(to, true)?,
-                    found: self.new_named_type(from, true)?,
+                    expected: self.ty_stringifier(to).include_namespace(true).stringify()?,
+                    found: self.ty_stringifier(from).include_namespace(true).stringify()?,
                 }
                 .into());
             }
@@ -342,8 +342,8 @@ impl TyInferCtx {
 
             return Err(errors::TraitNotImplemented {
                 location: from.location,
-                trait_name: self.new_named_type(to, false)?,
-                type_name: self.new_named_type(from, false)?,
+                trait_name: self.ty_stringifier(to).stringify()?,
+                type_name: self.ty_stringifier(from).stringify()?,
             }
             .into());
         }
@@ -361,8 +361,8 @@ impl TyInferCtx {
                         source: from.location,
                         constraint_loc: constraint.location,
                         param_name: to_arg.name.to_string(),
-                        type_name: self.new_named_type(from, false)?,
-                        constraint_name: self.new_named_type(&constraint_type, false)?,
+                        type_name: self.ty_stringifier(from).stringify()?,
+                        constraint_name: self.ty_stringifier(&constraint_type).stringify()?,
                     }
                     .into());
                 }
@@ -397,8 +397,8 @@ impl TyInferCtx {
         Err(errors::MismatchedTypes {
             reason_loc: to.location,
             found_loc: from.location,
-            expected: self.new_named_type(to, false)?,
-            found: self.new_named_type(from, false)?,
+            expected: self.ty_stringifier(to).stringify()?,
+            found: self.ty_stringifier(from).stringify()?,
         }
         .into())
     }
@@ -458,10 +458,14 @@ impl TyInferCtx {
             reason_loc: expected.location,
             found_loc: found.location,
             expected: self
-                .new_named_type(expected, true)
+                .ty_stringifier(expected)
+                .include_namespace(true)
+                .stringify()
                 .expect("could not expand type reference"),
             found: self
-                .new_named_type(found, true)
+                .ty_stringifier(found)
+                .include_namespace(true)
+                .stringify()
                 .expect("could not expand type reference"),
         }
         .into()
@@ -479,21 +483,8 @@ impl TyInferCtx {
     ///
     /// Returns `Err` if any types referenced by the given [`TypeRef`], or any
     /// child instances, are missing from the type context.
-    pub fn new_named_type(&self, type_ref: &TypeRef, expand: bool) -> Result<NamedTypeRef> {
-        let path = self.type_ref_name(type_ref)?;
-        let name = if expand { format!("{path:+}") } else { format!("{path}") };
-
-        let bound_types = if path.bound_types().is_empty() {
-            type_ref
-                .bound_types
-                .iter()
-                .map(|arg| self.new_named_type(arg, expand))
-                .collect::<Result<Vec<_>>>()?
-        } else {
-            Vec::new()
-        };
-
-        Ok(NamedTypeRef { name, bound_types })
+    pub fn new_named_type(&self, type_ref: &TypeRef, expand: bool) -> Result<String> {
+        self.ty_stringifier(type_ref).include_namespace(expand).stringify()
     }
 
     /// Creates a human-readable version of the given signature.
@@ -571,7 +562,7 @@ impl TyInferCtx {
                     .map(|constraint| {
                         let constraint_type = self.mk_type_ref_from(constraint, type_param.id)?;
 
-                        Ok(self.new_named_type(&constraint_type, expand)?.to_string())
+                        self.new_named_type(&constraint_type, expand)
                     })
                     .collect::<Result<Vec<_>>>()?
                     .join(", ")

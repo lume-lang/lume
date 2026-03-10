@@ -1,6 +1,5 @@
 use error_snippet_derive::Diagnostic;
 use lume_span::Location;
-use lume_types::NamedTypeRef;
 
 #[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]
 #[diagnostic(
@@ -13,11 +12,11 @@ pub struct CaseNotCovered {
     pub location: Location,
 
     pub unmatched_case: String,
-    pub matched_type: NamedTypeRef,
+    pub matched_type: String,
 }
 
 impl CaseNotCovered {
-    pub fn from_cases(matched_type: NamedTypeRef, cases: Vec<String>, location: Location) -> Self {
+    pub fn from_cases(matched_type: String, cases: Vec<String>, location: Location) -> Self {
         let mut unmatched_len = 0;
         let mut unmatched_cases = Vec::<String>::new();
 
@@ -54,7 +53,7 @@ pub struct CaseNotCoveredInteger {
     pub location: Location,
 
     pub unmatched_case: String,
-    pub matched_type: NamedTypeRef,
+    pub matched_type: String,
 }
 
 #[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]
@@ -68,7 +67,7 @@ pub struct CaseNotCoveredFloat {
     pub location: Location,
 
     pub unmatched_case: String,
-    pub matched_type: NamedTypeRef,
+    pub matched_type: String,
 }
 
 #[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]
@@ -82,5 +81,5 @@ pub struct CaseNotCoveredString {
     pub location: Location,
 
     pub unmatched_case: String,
-    pub matched_type: NamedTypeRef,
+    pub matched_type: String,
 }

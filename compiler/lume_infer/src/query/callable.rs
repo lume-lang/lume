@@ -384,7 +384,7 @@ impl TyInferCtx {
 
             return Ok(super::diagnostics::MissingMethod {
                 source: expr.location,
-                type_name: self.new_named_type(&callee_type, false)?,
+                type_name: self.ty_stringifier(&callee_type).stringify()?,
                 method_name: expr.name(),
                 suggestions: Vec::new(),
             });
@@ -425,7 +425,7 @@ impl TyInferCtx {
 
         Ok(super::diagnostics::MissingMethod {
             source: name.location(),
-            type_name: self.new_named_type(&callee_type, false)?,
+            type_name: self.ty_stringifier(&callee_type).stringify()?,
             method_name: name.name().clone(),
             suggestions,
         })

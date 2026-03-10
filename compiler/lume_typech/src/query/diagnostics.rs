@@ -1,7 +1,6 @@
 use error_snippet_derive::Diagnostic;
 use lume_hir::Path;
 use lume_span::Location;
-use lume_types::NamedTypeRef;
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "argument count mismatch", code = "LM4116")]
@@ -43,8 +42,8 @@ pub(crate) struct TypeParameterConstraintUnsatisfied {
     pub constraint_loc: Location,
 
     pub param_name: String,
-    pub type_name: NamedTypeRef,
-    pub constraint_name: NamedTypeRef,
+    pub type_name: String,
+    pub constraint_name: String,
 }
 
 #[derive(Diagnostic, Debug)]

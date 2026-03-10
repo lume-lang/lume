@@ -198,8 +198,8 @@ impl TyCheckCtx {
             return Err(MismatchedTypes {
                 found_loc: value_expr.location,
                 reason_loc: declared_type.location,
-                expected: self.new_named_type(&resolved_type, false)?,
-                found: self.new_named_type(&value_type, false)?,
+                expected: self.ty_stringifier(&resolved_type).stringify()?,
+                found: self.ty_stringifier(&value_type).stringify()?,
             }
             .into());
         }
@@ -236,8 +236,8 @@ impl TyCheckCtx {
             return Err(MismatchedTypes {
                 found_loc,
                 reason_loc: expected.location,
-                expected: self.new_named_type(&expected, false)?,
-                found: self.new_named_type(&actual, false)?,
+                expected: self.ty_stringifier(&expected).stringify()?,
+                found: self.ty_stringifier(&actual).stringify()?,
             }
             .into());
         }
@@ -304,8 +304,8 @@ impl TyCheckCtx {
 
                             return Err(super::errors::MismatchedTypesBoolean {
                                 source: hir_expr.location,
-                                found: self.new_named_type(&ty, false)?,
-                                expected: self.new_named_type(&TypeRef::bool(), false)?,
+                                found: self.ty_stringifier(&ty).stringify()?,
+                                expected: self.ty_stringifier(&TypeRef::bool()).stringify()?,
                             }
                             .into());
                         }
@@ -379,8 +379,8 @@ impl TyCheckCtx {
                 source: expr.location,
                 target_loc: target_expr.location,
                 value_loc: value_expr.location,
-                target_ty: self.new_named_type(&target, false)?.to_string(),
-                value_ty: self.new_named_type(&value, false)?.to_string(),
+                target_ty: self.new_named_type(&target, false)?,
+                value_ty: self.new_named_type(&value, false)?,
             }
             .into());
         }
@@ -416,8 +416,8 @@ impl TyCheckCtx {
         }
 
         if self.cast_impl_of(&source_type, &dest_type).is_none() {
-            let source_named = self.new_named_type(&source_type, false)?;
-            let dest_named = self.new_named_type(&dest_type, false)?;
+            let source_named = self.ty_stringifier(&source_type).stringify()?;
+            let dest_named = self.ty_stringifier(&dest_type).stringify()?;
 
             let expr_location = self.hir_expect_expr(expr.id).location;
 
@@ -551,7 +551,7 @@ impl TyCheckCtx {
             self.dcx().emit(
                 UnknownField {
                     source: field_left.location,
-                    ty: self.new_named_type(&constructed_type, false)?,
+                    ty: self.ty_stringifier(&constructed_type).stringify()?,
                     field: field_left.to_string(),
                 }
                 .into(),
@@ -620,7 +620,7 @@ impl TyCheckCtx {
             self.dcx().emit(
                 UnknownField {
                     source: expr.location,
-                    ty: self.new_named_type(&callee_ty, true)?,
+                    ty: self.ty_stringifier(&callee_ty).include_namespace(true).stringify()?,
                     field: expr.name.name.clone(),
                 }
                 .into(),

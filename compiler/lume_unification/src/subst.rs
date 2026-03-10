@@ -2,7 +2,7 @@ use indexmap::{IndexMap, IndexSet};
 use lume_errors::{Diagnostic, Result};
 use lume_infer::TyInferCtx;
 use lume_span::Location;
-use lume_types::{NamedTypeRef, TypeRef};
+use lume_types::TypeRef;
 
 use crate::constraints::Constraint;
 use crate::introduce::InferedNode;
@@ -166,8 +166,12 @@ impl UnificationPass<'_> {
                             source: substitute.location,
                             constraint_loc: type_param_constraint.location,
                             param_name: type_param.name.to_string(),
-                            type_name: self.tcx.new_named_type(substitute, true)?,
-                            constraint_name: self.tcx.new_named_type(of, true)?,
+                            type_name: self
+                                .tcx
+                                .ty_stringifier(substitute)
+                                .include_namespace(true)
+                                .stringify()?,
+                            constraint_name: self.tcx.ty_stringifier(of).include_namespace(true).stringify()?,
                         }
                         .into(),
                     );
@@ -326,8 +330,8 @@ pub(crate) struct TypeParameterConstraintUnsatisfied {
     pub constraint_loc: Location,
 
     pub param_name: String,
-    pub type_name: NamedTypeRef,
-    pub constraint_name: NamedTypeRef,
+    pub type_name: String,
+    pub constraint_name: String,
 }
 
 #[derive(Diagnostic, Debug)]

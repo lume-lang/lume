@@ -1,7 +1,6 @@
 use error_snippet_derive::Diagnostic;
 use lume_hir::Path;
 use lume_span::Location;
-use lume_types::NamedTypeRef;
 
 #[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]
 #[diagnostic(
@@ -16,8 +15,8 @@ pub struct MismatchedTypes {
     #[label(source, note, "...because of type defined here")]
     pub reason_loc: Location,
 
-    pub expected: NamedTypeRef,
-    pub found: NamedTypeRef,
+    pub expected: String,
+    pub found: String,
 }
 
 #[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]
@@ -30,8 +29,8 @@ pub struct MismatchedTypesBoolean {
     #[label(source, "expected type {expected}, but found type {found}")]
     pub source: Location,
 
-    pub expected: NamedTypeRef,
-    pub found: NamedTypeRef,
+    pub expected: String,
+    pub found: String,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -44,8 +43,8 @@ pub struct UnavailableCast {
     #[label(source, "cannot cast {from} to type {to}")]
     pub source: Location,
 
-    pub from: NamedTypeRef,
-    pub to: NamedTypeRef,
+    pub from: String,
+    pub to: String,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -130,8 +129,8 @@ pub struct MismatchedTypesBranches {
     #[label(source, note, "...because of type defined here")]
     pub reason_loc: Location,
 
-    pub expected: NamedTypeRef,
-    pub found: NamedTypeRef,
+    pub expected: String,
+    pub found: String,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -145,8 +144,8 @@ pub struct MismatchedTypesBranchesCondition {
     #[label(source, "expected type {expected}, but found type {found}...")]
     pub found_loc: Location,
 
-    pub expected: NamedTypeRef,
-    pub found: NamedTypeRef,
+    pub expected: String,
+    pub found: String,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -164,7 +163,7 @@ pub struct UnknownField {
     #[label(source, "type {ty} has no field {field}")]
     pub source: Location,
 
-    pub ty: NamedTypeRef,
+    pub ty: String,
     pub field: String,
 }
 
@@ -178,7 +177,7 @@ pub struct MissingReturnBranch {
     #[label(source, "not all branches return a value")]
     pub source: Location,
 
-    pub expected: NamedTypeRef,
+    pub expected: String,
 }
 
 #[derive(Diagnostic, Debug)]
