@@ -685,23 +685,23 @@ impl TypeRef {
         });
     }
 
-    /// Finds the corresponding type reference which matches the given predicate
-    /// of the instance type reference.
+    /// Walks the nested types within the two types and filters all the types
+    /// which match the given predicate.
     ///
     /// For example, given type references such as:
     /// ```ignore
     /// let lhs = typeof(Array<T>);
     /// let rhs = typeof(Array<Int32>);
     ///
-    /// let (found, _rhs) = lhs.corresponding_of(&rhs, |ty| tcx.is_type_parameter(ty)).unwrap();
+    /// let (found, _rhs) = lhs.filter_with(&rhs, |lhs, _rhs| tcx.is_type_parameter(lhs)).unwrap();
     /// assert!(found.is_i32());
     /// ```
-    pub fn corresponding_of<'ty, P: Fn(&TypeRef) -> bool>(
+    pub fn filter_with<'ty, P: Fn(&TypeRef, &TypeRef) -> bool>(
         &'ty self,
         other: &'ty TypeRef,
         predicate: P,
-    ) -> Option<(&'ty TypeRef, &'ty TypeRef)> {
-        self.zip(other).find(|(lhs, _rhs)| predicate(lhs))
+    ) -> impl Iterator<Item = (&'ty TypeRef, &'ty TypeRef)> {
+        self.zip(other).filter(move |(lhs, rhs)| predicate(lhs, rhs))
     }
 }
 

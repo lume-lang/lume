@@ -76,9 +76,10 @@ impl Env {
                 };
 
                 let constraint_variable_id = TypeVariableId(constraint_variable.id.into());
-                debug_assert_ne!(type_var_id, constraint_variable_id);
 
-                linked_list.add_relation(type_var_id, constraint_variable_id);
+                if type_var_id != constraint_variable_id {
+                    linked_list.add_relation(type_var_id, constraint_variable_id);
+                }
             }
         }
 

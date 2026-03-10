@@ -213,7 +213,13 @@ fn normalize_equality_constraints<'ty, I: Iterator<Item = (&'ty TypeRef, &'ty Ty
         }
     }
 
-    Ok(normalized_type.expect("expected constraints to be normalized and exist"))
+    normalized_type.ok_or_else(|| {
+        crate::subst::TypeArgumentInferenceFailed {
+            source: tcx.hir_span_of_node(type_variable.0.as_node_id()),
+            type_param_name: tcx.hir_path_of_node(canonical_type_binding.as_node_id()).to_string(),
+        }
+        .into()
+    })
 }
 
 #[tracing::instrument(
