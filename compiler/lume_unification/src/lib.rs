@@ -6,7 +6,7 @@ mod verify;
 use std::fmt::Display;
 use std::sync::RwLock;
 
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use lume_errors::Result;
 use lume_hir::TypeId;
 use lume_infer::TyInferCtx;
@@ -95,7 +95,7 @@ impl Display for TypeVariableId {
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TypeVariable {
-    pub constraints: Vec<Constraint>,
+    pub constraints: IndexSet<Constraint>,
     pub substitute: Option<TypeRef>,
 }
 
@@ -124,7 +124,7 @@ impl Env {
             .entry(type_variable)
             .or_default()
             .constraints
-            .push(Constraint::Equal { lhs, rhs });
+            .insert(Constraint::Equal { lhs, rhs });
     }
 
     pub(crate) fn sub(&mut self, type_variable: TypeVariableId, of: TypeRef, param: NodeId) {
@@ -132,7 +132,7 @@ impl Env {
             .entry(type_variable)
             .or_default()
             .constraints
-            .push(Constraint::Subtype { of, param });
+            .insert(Constraint::Subtype { of, param });
     }
 
     pub(crate) fn subst(&mut self, type_variable: TypeVariableId, with: TypeRef) {
