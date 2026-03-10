@@ -1,3 +1,5 @@
+pub mod engine;
+
 mod constraints;
 mod introduce;
 mod subst;

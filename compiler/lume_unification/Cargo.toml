@@ -15,6 +15,7 @@ lume_types = { path = "../lume_types" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 
+derive_more = { version = "*", features = ["debug", "eq"] }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 indexmap = { workspace = true }
