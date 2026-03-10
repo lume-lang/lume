@@ -2,7 +2,7 @@
    ╭─[type_arg_inference_trait_unbound.lm:6:9]
  5 │ fn main() {
  6 │     foo(6_i32);
-   ∶         ^^^^^ type Int32 does not implement Foo...
+   ∶         ^^^^^ type std::Int32 does not implement Foo...
  7 │ }
    ∶
  2 │

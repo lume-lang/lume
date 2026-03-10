@@ -88,7 +88,7 @@ impl Env {
 
     /// Gets an iterator of all the constraints of the given type variable.
     fn constraints_of(&self, id: TypeVariableId) -> impl Iterator<Item = &Constraint> {
-        static EMPTY: Vec<Constraint> = Vec::new();
+        static EMPTY: &indexmap::set::Slice<Constraint> = indexmap::set::Slice::<Constraint>::new();
 
         self.type_vars
             .get(&id)
@@ -158,12 +158,12 @@ impl UnificationPass<'_> {
                     let type_param_constraint = type_param
                         .constraints
                         .iter()
-                        .find(|c| c.id.as_node_id() == of.instance_of)
+                        .find(|c| c.name == self.tcx.hir_path_of_node(of.instance_of))
                         .unwrap();
 
                     self.tcx.dcx().emit(
                         TypeParameterConstraintUnsatisfied {
-                            source: self.tcx.hir_span_of_node(type_var_id.0.as_node_id()),
+                            source: substitute.location,
                             constraint_loc: type_param_constraint.location,
                             param_name: type_param.name.to_string(),
                             type_name: self.tcx.new_named_type(substitute, true)?,

@@ -6,7 +6,7 @@ use lume_types::TypeRef;
 use crate::introduce::InferedNodeRef;
 use crate::{TypeVariableId, UnificationPass};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Constraint {
     Equal { lhs: TypeRef, rhs: TypeRef },
     Subtype { of: TypeRef, param: NodeId },
