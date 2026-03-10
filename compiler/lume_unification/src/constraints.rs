@@ -45,7 +45,21 @@ impl UnificationPass<'_> {
                     self.create_constraints_for_variant(pattern.id, &variant.name, type_parameter_id, type_variable)?;
                 }
             }
-            InferedNodeRef::VariableDeclaration(_decl) => {}
+            InferedNodeRef::VariableDeclaration(decl) => {
+                if let Some(declared_type) = &decl.declared_type {
+                    self.create_constraints_for_type(&declared_type.name, canonical_parameter_id, type_variable)?;
+
+                    let declared_type_ref = self.tcx.mk_type_ref_from(declared_type, decl.value)?;
+                    let value_type_ref = self.tcx.type_of(decl.value)?;
+
+                    self.canonicalize_type_variables(
+                        declared_type_ref,
+                        value_type_ref,
+                        type_parameter_id,
+                        type_variable,
+                    );
+                }
+            }
             InferedNodeRef::Cast(expr) => {
                 self.create_constraints_for_type(&expr.target.name, canonical_parameter_id, type_variable)?;
             }
@@ -148,72 +162,10 @@ impl UnificationPass<'_> {
         );
 
         for (parameter, &argument) in self.tcx.zip_call_args(parameters, &arguments) {
-            let mut parameter_type = parameter.ty.clone();
+            let parameter_type = parameter.ty.clone();
             let argument_type = self.tcx.type_of(argument)?;
 
-            // If any arguments within the argument list contain any type variables AND the
-            // corresponding parameter contains the type parameter, we equate the two type
-            // variables to be equal.
-            //
-            // For example, given a sample like this:
-            // ```lm
-            // fn main() {
-            //     let arr = Array::new(); // ?T1 introduced here
-            //     arr.push("Hello, world!"); // ?T2 introduced here
-            // }
-            // ```
-            //
-            // Since `?T1` and `?T2` refer to the same type parameter, and functions as the
-            // same instance of the type argument here, the two type variables must equal.
-            if let Some((argument_constraint, inner_parameter_ty)) =
-                argument_type.corresponding_of(&parameter_type, |ty| self.tcx.is_type_variable(ty))
-                && inner_parameter_ty.instance_of == type_parameter_id.as_node_id()
-            {
-                let argument_type_var = self.tcx.as_type_variable(argument_constraint).unwrap();
-
-                self.eq(
-                    type_variable,
-                    TypeRef::new(type_variable.0.as_node_id(), parameter.location),
-                    TypeRef::new(argument_type_var.id, argument_type.location),
-                );
-            }
-
-            // If the parameter holds the type parameter, which is guaranteed to resolve a
-            // type variable, we ensure that the type variable is constrained to
-            // the corresponding argument type.
-            //
-            // For example, given a sample like this:
-            // ```lm
-            // fn identity<T>(value: T) -> T {
-            //     value
-            // }
-            //
-            // fn main() {
-            //     // implicit type variable inserted here for `identity::T`
-            //     let _ = identity("Hello world!");
-            // }
-            // ```
-            //
-            // Since the parameter `value` contains the type parameter `T`, the argument
-            // would constrain the type variable to equal `String`.
-            if parameter_type.contains(type_parameter_id) {
-                tracing::trace!(
-                    before = ?type_parameter_id.as_node_id(),
-                    after = ?canonical_parameter_id.as_node_id(),
-                    before_location = %self.tcx.hir_span_of_node(type_parameter_id.as_node_id()),
-                    after_location = %self.tcx.hir_span_of_node(canonical_parameter_id.as_node_id()),
-                    "canonicalize"
-                );
-
-                // Replace the type variable with the canonical type parameter, so normalization
-                // uses the same ID.
-                parameter_type.replace_contained(
-                    type_parameter_id,
-                    &TypeRef::new(canonical_parameter_id.as_node_id(), parameter_type.location),
-                );
-
-                self.eq(type_variable, parameter_type.clone(), argument_type);
-            }
+            self.canonicalize_type_variables(parameter_type, argument_type, type_parameter_id, type_variable);
         }
 
         for bound_type in type_parameters {
@@ -228,6 +180,12 @@ impl UnificationPass<'_> {
 
                 self.sub(type_variable, constraint_type, type_param.id);
             }
+        }
+
+        if let Some(expected_type) = self.tcx.try_expected_type_of(call.id())? {
+            let value_type_ref = self.tcx.type_of(call.id())?;
+
+            self.canonicalize_type_variables(expected_type, value_type_ref, type_parameter_id, type_variable);
         }
 
         Ok(())
@@ -304,5 +262,99 @@ impl UnificationPass<'_> {
         }
 
         Ok(())
+    }
+}
+
+impl UnificationPass<'_> {
+    #[tracing::instrument[
+        level = "TRACE",
+        skip_all,
+        fields(
+            %type_variable,
+            expected_type = %self.tcx.new_named_type(&expected_type, true).unwrap(),
+            given_type = %self.tcx.new_named_type(&given_type, true).unwrap(),
+        )
+    ]]
+    fn canonicalize_type_variables(
+        &self,
+        mut expected_type: TypeRef,
+        given_type: TypeRef,
+        type_parameter_id: TypeId,
+        type_variable: TypeVariableId,
+    ) {
+        let canonical_parameter_id = self.tcx.hir_tyvar_canonical_of(type_variable.0.as_node_id()).unwrap();
+
+        // If any arguments within the argument list contain any type variables AND the
+        // corresponding parameter contains the type parameter, we equate the two type
+        // variables to be equal.
+        //
+        // For example, given a sample like this:
+        // ```lm
+        // fn main() {
+        //     let arr = Array::new(); // ?T1 introduced here
+        //     arr.push("Hello, world!"); // ?T2 introduced here
+        // }
+        // ```
+        //
+        // Since `?T1` and `?T2` refer to the same type parameter, and functions as the
+        // same instance of the type argument here, the two type variables must equal.
+        for (found_type_ref, expected_inner_type) in
+            given_type.filter_with(&expected_type, |lhs, _rhs| self.tcx.is_type_variable(lhs))
+        {
+            let found_type_variable = self.tcx.as_type_variable(found_type_ref).unwrap();
+
+            if expected_inner_type.instance_of == type_parameter_id.as_node_id() {
+                self.eq(
+                    type_variable,
+                    TypeRef::new(canonical_parameter_id.as_node_id(), expected_type.location),
+                    TypeRef::new(found_type_variable.id, given_type.location),
+                );
+            }
+
+            if found_type_variable.id == type_variable.0.as_node_id() {
+                self.eq(
+                    type_variable,
+                    TypeRef::new(canonical_parameter_id.as_node_id(), expected_type.location),
+                    expected_inner_type.clone(),
+                );
+            }
+        }
+
+        // If the parameter holds the type parameter, which is guaranteed to resolve a
+        // type variable, we ensure that the type variable is constrained to
+        // the corresponding argument type.
+        //
+        // For example, given a sample like this:
+        // ```lm
+        // fn identity<T>(value: T) -> T {
+        //     value
+        // }
+        //
+        // fn main() {
+        //     // implicit type variable inserted here for `identity::T`
+        //     let _ = identity("Hello world!");
+        // }
+        // ```
+        //
+        // Since the parameter `value` contains the type parameter `T`, the argument
+        // would constrain the type variable to equal `String`.
+        if expected_type.contains(type_parameter_id) {
+            tracing::trace!(
+                before = ?type_parameter_id.as_node_id(),
+                after = ?canonical_parameter_id.as_node_id(),
+                before_location = %self.tcx.hir_span_of_node(type_parameter_id.as_node_id()),
+                after_location = %self.tcx.hir_span_of_node(canonical_parameter_id.as_node_id()),
+                "canonicalize"
+            );
+
+            // Replace the type variable with the canonical type parameter, so normalization
+            // uses the same ID.
+            expected_type.replace_contained(
+                type_parameter_id,
+                &TypeRef::new(canonical_parameter_id.as_node_id(), expected_type.location),
+            );
+
+            self.eq(type_variable, expected_type, given_type);
+        }
     }
 }

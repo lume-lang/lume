@@ -41,7 +41,7 @@ use lume_hir::TypeId;
 use lume_infer::TyInferCtx;
 use lume_span::{Location, NodeId};
 
-use crate::{TypeVariableId, UnificationPass, verify};
+use crate::{TypeVariableId, UnificationPass};
 
 /// Denotes all available types which can be inferred and unified.
 #[derive(Debug, Clone, PartialEq)]
@@ -185,8 +185,8 @@ impl UnificationPass<'_> {
                     }
                 }
                 InferedNode::VariableDeclaration(decl) => {
-                    if let Some(declared_type) = &decl.declared_type {
-                        verify::verify_type_name(self.tcx, &declared_type.name, declared_type.location);
+                    if let Some(declared_type) = &mut decl.declared_type {
+                        self.introduce_type_variables_on_type(decl.id, &mut declared_type.name)?;
                     }
                 }
                 InferedNode::Cast(expr) => {
