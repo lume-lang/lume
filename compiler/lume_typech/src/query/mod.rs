@@ -119,8 +119,8 @@ impl TyCheckCtx {
                             source: arg.location,
                             constraint_loc: constraint.location,
                             param_name: param.name.to_string(),
-                            type_name: self.new_named_type(&arg, false)?,
-                            constraint_name: self.new_named_type(&constraint_type, false)?,
+                            type_name: self.ty_stringifier(&arg).stringify()?,
+                            constraint_name: self.ty_stringifier(&constraint_type).stringify()?,
                         }
                         .into(),
                     );
@@ -483,8 +483,8 @@ impl TyCheckCtx {
             let found_type = self.type_of_condition_scope(case)?;
 
             if !self.check_type_compatibility(&found_type, &expected_type)? {
-                let found = self.new_named_type(&found_type, false)?;
-                let expected = self.new_named_type(&expected_type, false)?;
+                let found = self.ty_stringifier(&found_type).stringify()?;
+                let expected = self.ty_stringifier(&expected_type).stringify()?;
 
                 if has_else_case {
                     return Err(crate::check::errors::MismatchedTypesBranches {
@@ -510,7 +510,7 @@ impl TyCheckCtx {
             let Some(else_block) = cases.iter().rfind(|case| case.condition.is_none()) else {
                 return Err(crate::check::errors::MissingReturnBranch {
                     source: last_case.location,
-                    expected: self.new_named_type(&expected_type, false)?,
+                    expected: self.ty_stringifier(&expected_type).stringify()?,
                 }
                 .into());
             };

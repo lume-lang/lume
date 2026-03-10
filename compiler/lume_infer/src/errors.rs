@@ -4,7 +4,6 @@ use std::sync::Arc;
 use error_snippet_derive::Diagnostic;
 use lume_hir::{Identifier, Path};
 use lume_span::{Location, SourceFile};
-use lume_types::NamedTypeRef;
 
 #[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]
 #[diagnostic(
@@ -19,8 +18,8 @@ pub struct MismatchedTypes {
     #[label(source, note, "...because of type defined here")]
     pub reason_loc: Location,
 
-    pub expected: NamedTypeRef,
-    pub found: NamedTypeRef,
+    pub expected: String,
+    pub found: String,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -29,8 +28,8 @@ pub struct TraitNotImplemented {
     #[label(source, "the trait {trait_name} is not implemented for the type {type_name}")]
     pub location: Location,
 
-    pub trait_name: NamedTypeRef,
-    pub type_name: NamedTypeRef,
+    pub trait_name: String,
+    pub type_name: String,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -111,8 +110,8 @@ pub(crate) struct TypeParameterConstraintUnsatisfied {
     pub constraint_loc: Location,
 
     pub param_name: String,
-    pub type_name: NamedTypeRef,
-    pub constraint_name: NamedTypeRef,
+    pub type_name: String,
+    pub constraint_name: String,
 }
 
 #[derive(Diagnostic, Debug)]

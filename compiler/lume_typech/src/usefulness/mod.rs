@@ -38,7 +38,7 @@ impl TyCheckCtx {
             return Err(errors::CaseNotCoveredFloat {
                 location: ty.location,
                 unmatched_case: String::from(".."),
-                matched_type: self.new_named_type(ty, true)?,
+                matched_type: self.ty_stringifier(ty).include_namespace(true).stringify()?,
             }
             .into());
         }
@@ -49,7 +49,7 @@ impl TyCheckCtx {
             return Err(errors::CaseNotCoveredInteger {
                 location: ty.location,
                 unmatched_case: String::from(".."),
-                matched_type: self.new_named_type(ty, true)?,
+                matched_type: self.ty_stringifier(ty).include_namespace(true).stringify()?,
             }
             .into());
         }
@@ -60,7 +60,7 @@ impl TyCheckCtx {
             return Err(errors::CaseNotCoveredString {
                 location: ty.location,
                 unmatched_case: String::from(".."),
-                matched_type: self.new_named_type(ty, true)?,
+                matched_type: self.ty_stringifier(ty).include_namespace(true).stringify()?,
             }
             .into());
         }
@@ -131,7 +131,7 @@ impl TyCheckCtx {
         }
 
         if !missing_variants.is_empty() {
-            let matched_type = self.new_named_type(ty, true)?;
+            let matched_type = self.ty_stringifier(ty).include_namespace(true).stringify()?;
             let mut unmatched_cases = Vec::with_capacity(missing_variants.len());
 
             for missing_variant in missing_variants {
@@ -172,7 +172,7 @@ impl TyCheckCtx {
         }
 
         if !missing_variants.is_empty() {
-            let matched_type = self.new_named_type(ty, false)?;
+            let matched_type = self.ty_stringifier(ty).stringify()?;
             let mut unmatched_cases = Vec::with_capacity(missing_variants.len());
 
             for missing_variant in missing_variants {

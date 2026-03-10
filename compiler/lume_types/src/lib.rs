@@ -1,4 +1,3 @@
-use std::fmt::Write;
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -734,44 +733,6 @@ impl std::fmt::Display for TypeRef {
                     .collect::<Vec<_>>()
                     .join(", ")
             )?;
-        }
-
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct NamedTypeRef {
-    pub name: String,
-    pub bound_types: Vec<NamedTypeRef>,
-}
-
-impl NamedTypeRef {
-    /// Creates a new [`NamedTypeRef`] with the given name.
-    pub fn new(name: impl Into<String>) -> Self {
-        Self {
-            name: name.into(),
-            bound_types: vec![],
-        }
-    }
-}
-
-impl std::fmt::Display for NamedTypeRef {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.name)?;
-
-        if !self.bound_types.is_empty() {
-            f.write_char('<')?;
-
-            for (index, type_arg) in self.bound_types.iter().enumerate() {
-                type_arg.fmt(f)?;
-
-                if index < self.bound_types.len() - 1 {
-                    f.write_str(", ")?;
-                }
-            }
-
-            f.write_char('>')?;
         }
 
         Ok(())

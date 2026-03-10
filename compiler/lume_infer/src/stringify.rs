@@ -1,4 +1,5 @@
-use lume_errors::Result;
+use lume_errors::{MapDiagnostic, Result};
+use lume_types::TypeRef;
 
 use crate::TyInferCtx;
 use crate::query::CallReference;
@@ -55,7 +56,7 @@ impl Default for IncludeParameters {
     }
 }
 
-pub struct Stringifier<'tcx> {
+pub struct FnStringifier<'tcx> {
     call_reference: CallReference,
     tcx: &'tcx TyInferCtx,
 
@@ -67,9 +68,9 @@ pub struct Stringifier<'tcx> {
     include_return_type: IncludeReturnType,
 }
 
-impl<'tcx> Stringifier<'tcx> {
+impl<'tcx> FnStringifier<'tcx> {
     pub fn new(call_reference: CallReference, tcx: &'tcx TyInferCtx) -> Self {
-        Stringifier {
+        FnStringifier {
             call_reference,
             tcx,
             include_visibility: IncludeVisibility::default(),
@@ -172,9 +173,112 @@ impl<'tcx> Stringifier<'tcx> {
     }
 }
 
+pub struct TyStringifier<'tcx> {
+    type_ref: &'tcx TypeRef,
+    tcx: &'tcx TyInferCtx,
+
+    include_namespace: bool,
+}
+
+impl<'tcx> TyStringifier<'tcx> {
+    pub fn new(type_ref: &'tcx TypeRef, tcx: &'tcx TyInferCtx) -> Self {
+        TyStringifier {
+            type_ref,
+            tcx,
+            include_namespace: false,
+        }
+    }
+
+    pub fn new_from(&'tcx self, type_ref: &'tcx TypeRef) -> Self {
+        TyStringifier {
+            type_ref,
+            tcx: self.tcx,
+            include_namespace: self.include_namespace,
+        }
+    }
+
+    pub fn include_namespace(mut self, include: bool) -> Self {
+        self.include_namespace = include;
+        self
+    }
+
+    pub fn write(&self, w: &mut dyn std::fmt::Write) -> Result<()> {
+        let path = self.tcx.type_ref_name(self.type_ref)?;
+
+        for segment in &path.root {
+            if self.include_namespace
+                && let lume_hir::PathSegment::Namespace { name } = segment
+            {
+                write!(w, "{name}::").map_diagnostic()?;
+            }
+
+            if let lume_hir::PathSegment::Type { .. }
+            | lume_hir::PathSegment::Callable { .. }
+            | lume_hir::PathSegment::Variant { .. } = segment
+            {
+                if self.include_namespace {
+                    write!(w, "{segment:+}::").map_diagnostic()?;
+                } else {
+                    write!(w, "{segment}::").map_diagnostic()?;
+                }
+            }
+        }
+
+        write!(w, "{}", path.name()).map_diagnostic()?;
+
+        if !self.type_ref.bound_types.is_empty() {
+            write!(w, "<").map_diagnostic()?;
+
+            for (idx, bound_type) in self.type_ref.bound_types.iter().enumerate() {
+                let is_last = idx >= self.type_ref.bound_types.len() - 1;
+
+                self.new_from(bound_type).write(w)?;
+
+                if !is_last {
+                    write!(w, ", ").map_diagnostic()?;
+                }
+            }
+
+            write!(w, ">").map_diagnostic()?;
+        } else if !path.name.bound_types().is_empty() {
+            write!(w, "<").map_diagnostic()?;
+
+            for (idx, bound_type) in path.name.bound_types().iter().enumerate() {
+                let is_last = idx >= self.type_ref.bound_types.len() - 1;
+
+                if self.include_namespace {
+                    write!(w, "{bound_type:+}::").map_diagnostic()?;
+                } else {
+                    write!(w, "{bound_type}::").map_diagnostic()?;
+                }
+
+                if !is_last {
+                    write!(w, ", ").map_diagnostic()?;
+                }
+            }
+
+            write!(w, ">").map_diagnostic()?;
+        }
+
+        Ok(())
+    }
+
+    pub fn stringify(self) -> Result<String> {
+        let mut str = String::new();
+        self.write(&mut str)?;
+
+        Ok(str)
+    }
+}
+
 impl TyInferCtx {
     #[inline]
-    pub fn stringifier(&'_ self, call_ref: CallReference) -> Stringifier<'_> {
-        Stringifier::new(call_ref, self)
+    pub fn fn_stringifier(&'_ self, call_ref: CallReference) -> FnStringifier<'_> {
+        FnStringifier::new(call_ref, self)
+    }
+
+    #[inline]
+    pub fn ty_stringifier<'tcx>(&'tcx self, type_ref: &'tcx TypeRef) -> TyStringifier<'tcx> {
+        TyStringifier::new(type_ref, self)
     }
 }

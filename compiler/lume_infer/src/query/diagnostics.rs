@@ -4,7 +4,7 @@ use std::sync::Arc;
 use error_snippet_derive::Diagnostic;
 use lume_hir::{Identifier, Path, PathSegment};
 use lume_span::{Location, NodeId, SourceFile};
-use lume_types::{NamedTypeRef, TypeKind};
+use lume_types::TypeKind;
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "could not find method", code = "LM4113")]
@@ -12,7 +12,7 @@ pub(crate) struct MissingMethod {
     #[label(source, "could not find method {method_name} on type {type_name}")]
     pub source: Location,
 
-    pub type_name: NamedTypeRef,
+    pub type_name: String,
     pub method_name: Identifier,
 
     #[related(collection)]

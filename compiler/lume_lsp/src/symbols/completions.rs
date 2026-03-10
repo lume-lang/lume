@@ -72,7 +72,7 @@ fn field_completions_of(package: &CheckedPackage, node: NodeId) -> impl Iterator
             .tcx
             .mk_type_ref_from(&field.field_type, field.id)
             .and_then(|ty| package.tcx.new_named_type(&ty, false))
-            .map_or_else(|_| String::from("<unknown>"), |name| name.to_string());
+            .unwrap_or_else(|_| String::from("<unknown>"));
 
         let documentation = package.tcx.documentation_string_of(field.id).cloned().map(|value| {
             lsp_types::Documentation::MarkupContent(lsp_types::MarkupContent {
@@ -109,7 +109,7 @@ fn method_completions_of(
 
         let details = package
             .tcx
-            .stringifier(CallReference::Method(method.id))
+            .fn_stringifier(CallReference::Method(method.id))
             .include_parameters(true)
             .include_return_type(IncludeReturnType::NonVoid)
             .include_visibility(false)
@@ -119,7 +119,7 @@ fn method_completions_of(
         let label_details = {
             let details = package
                 .tcx
-                .stringifier(CallReference::Method(method.id))
+                .fn_stringifier(CallReference::Method(method.id))
                 .include_name(false)
                 .include_parameters(true)
                 .include_return_type(IncludeReturnType::NonVoid)
@@ -127,11 +127,7 @@ fn method_completions_of(
                 .stringify()
                 .ok()?;
 
-            let description = package
-                .tcx
-                .new_named_type(&method_signature.ret_ty, false)
-                .ok()?
-                .to_string();
+            let description = package.tcx.new_named_type(&method_signature.ret_ty, false).ok()?;
 
             Some(lsp_types::CompletionItemLabelDetails {
                 detail: Some(details),
