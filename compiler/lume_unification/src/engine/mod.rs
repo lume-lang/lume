@@ -1,5 +1,4 @@
 pub(crate) mod constraints;
-pub(crate) mod normalize;
 
 #[cfg(test)]
 mod tests;
@@ -11,7 +10,6 @@ use std::sync::RwLock;
 use indexmap::IndexMap;
 use lume_errors::Result;
 use lume_span::Location;
-use normalize::normalize_equality_constraints;
 
 pub trait Context: Sized {
     /// Unique ID which can represent any node, type or otherwise.
@@ -29,18 +27,12 @@ pub trait Context: Sized {
     /// Gets the location of the given ID.
     fn span_of(&self, id: Self::ID) -> Location;
 
-    /// Gets the canonical type parameter ID of the given type parameter ID.
-    fn canonical_type_parameter(&self, owner: Self::ID, type_parameter_id: Self::ID) -> Result<Self::ID>;
-
     /// Create a fresh type variable for the given owner, bound to the type
     /// variable `binding`.
     fn fresh_var(&mut self, owner: Self::ID, binding: Self::ID, location: Location) -> TypeVar<Self>;
 
-    /// Gets the instanced type parameter ID of the given type variable.
-    fn binding_of(&self, type_var: TypeVar<Self>) -> Option<Self::ID>;
-
-    /// Gets the canonical type parameter ID of the given type variable.
-    fn canonical_of(&self, type_var: TypeVar<Self>) -> Option<Self::ID>;
+    /// Turn the given type variable into a type.
+    fn as_type(&self, type_var: TypeVar<Self>) -> Self::Ty;
 
     /// Determines whether the given type is a reference to a type variable.
     fn is_type_variable(&self, ty: &Self::Ty) -> bool;
@@ -132,13 +124,13 @@ impl<C: Context> Default for TypeVarEnv<C> {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(derive_more::Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Constraint<C: Context> {
-    /// Declares that `lhs` must be equal to `rhs`.
-    Equal { lhs: C::Ty, rhs: C::Ty },
+    /// Declares that the type variable must be equal to `ty`.
+    Equal { ty: C::Ty },
 
-    /// Declares that `ty` must implement `bound`.
-    Subtype { of: C::Ty, type_parameter_id: C::ID },
+    /// Declares that the type variable must implement `bound`.
+    Subtype { of: C::Ty, type_parameter: C::ID },
 }
 
 #[derive(derive_more::Debug, Clone, PartialEq, Eq)]
@@ -180,47 +172,41 @@ impl<C: Context> Env<C> {
         self.type_vars.entry(type_variable).or_default();
     }
 
-    /// Creates a new equality containt, stating that `lhs` must be equal to
-    /// `rhs`.
-    ///
-    /// As a good convention in relation to error messaging, the left-hand side
-    /// should be the expected type, and the right-hand side be the found type.
-    pub(crate) fn eq(&mut self, type_variable: TypeVar<C>, lhs: C::Ty, rhs: C::Ty) {
+    /// Gets the environment associated with the given type variable.
+    fn env(&self, type_variable: TypeVar<C>) -> Option<&TypeVarEnv<C>> {
+        self.type_vars.get(&type_variable)
+    }
+
+    /// Creates a new equality containt, stating that `type_variable` must be
+    /// equal to `ty`.
+    pub(crate) fn eq(&mut self, type_variable: TypeVar<C>, ty: C::Ty) {
         self.type_vars
             .entry(type_variable)
             .or_default()
             .constraints
-            .push(Constraint::Equal { lhs, rhs });
+            .push(Constraint::Equal { ty });
     }
 
     /// Creates a new subtyping containt, stating that the given type variable,
     /// `type_variable`, must subtype `of`.
-    pub(crate) fn sub(&mut self, type_variable: TypeVar<C>, of: C::Ty, type_parameter_id: C::ID) {
+    pub(crate) fn sub(&mut self, type_variable: TypeVar<C>, of: C::Ty, type_parameter: C::ID) {
         self.type_vars
             .entry(type_variable)
             .or_default()
             .constraints
-            .push(Constraint::Subtype { of, type_parameter_id });
+            .push(Constraint::Subtype { of, type_parameter });
     }
 
     /// Declares the substitution type for the given type variable.
-    ///
-    /// # Panics
-    ///
-    /// If a type has already been substituted for this type variable, this
-    /// method panics.
     pub(crate) fn subst(&mut self, type_variable: TypeVar<C>, with: C::Ty) {
-        let existing = self
-            .type_vars
-            .entry(type_variable)
-            .or_default()
-            .substitute
-            .replace(with);
+        self.type_vars.entry(type_variable).or_default().substitute = Some(with);
+    }
 
-        assert!(
-            existing.is_none(),
-            "bug!: replaced existing substitution of {type_variable}"
-        );
+    /// Gets an iterator of all the constraints of the given type variable.
+    pub(crate) fn constraints_of(&self, id: TypeVar<C>) -> impl Iterator<Item = &Constraint<C>> {
+        self.type_vars
+            .get(&id)
+            .map_or([].iter(), |type_var| type_var.constraints.iter())
     }
 }
 
@@ -257,91 +243,24 @@ impl<'ctx, C: Context> Engine<'ctx, C> {
     pub(crate) fn add_affected_node(&self, id: C::ID, type_variable: TypeVar<C>) {
         self.env.try_write().unwrap().affected_nodes.push((id, type_variable));
     }
-}
 
-impl<C: Context> Engine<'_, C> {
-    /// Ensure there is an entry for constraints for the given type variable.
-    ///
-    /// So, even if no constraints could be generated, we would still notice
-    /// and empty constraint list and throw an error.
-    pub(crate) fn ensure_entry_for(&self, type_variable: TypeVar<C>) {
+    pub(crate) fn resolved_of(&self, type_variable: TypeVar<C>) -> Option<C::Ty> {
         self.env
-            .try_write()
+            .try_read()
             .unwrap()
-            .type_vars
-            .entry(type_variable)
-            .or_default();
+            .env(type_variable)
+            .and_then(|env| env.substitute.clone())
     }
 
-    /// Create a fresh type variable for the given owner, bound to the type
-    /// variable `binding`.
-    #[tracing::instrument(
-        level = "TRACE",
-        skip_all,
-        fields(
-            owner = %self.ctx.name_of(owner).unwrap(),
-            binding = %self.ctx.name_of(binding).unwrap(),
-        ),
-        ret(Display)
-    )]
-    pub(crate) fn fresh_var(&mut self, owner: C::ID, binding: C::ID, location: Location) -> TypeVar<C> {
-        let tyvar = self.ctx.fresh_var(owner, binding, location);
+    /// Fully resolve a type variable to its concrete type.
+    pub(crate) fn resolve(&self, type_variable: TypeVar<C>) -> std::result::Result<C::Ty, Error<C>> {
+        let walked = self.walk(self.ctx.as_type(type_variable));
 
-        self.env.try_write().unwrap().ensure_entry_for(tyvar);
-
-        tyvar
-    }
-
-    /// Creates a new equality containt, stating that `lhs` must be equal to
-    /// `rhs`.
-    ///
-    /// As a good convention in relation to error messaging, the left-hand side
-    /// should be the expected type, and the right-hand side be the found type.
-    #[tracing::instrument(
-        level = "TRACE",
-        skip_all,
-        fields(
-            type_var = %type_variable,
-            lhs = %self.ctx.name_of_type(&lhs).unwrap(),
-            rhs = %self.ctx.name_of_type(&rhs).unwrap(),
-        )
-    )]
-    pub(crate) fn eq(&self, type_variable: TypeVar<C>, lhs: C::Ty, rhs: C::Ty) {
-        self.env.try_write().unwrap().eq(type_variable, lhs, rhs);
-    }
-
-    /// Creates a new subtyping containt, stating that the given type variable,
-    /// `type_variable`, must subtype `of`.
-    #[tracing::instrument(
-        level = "TRACE",
-        skip_all,
-        fields(
-            type_var = %type_variable,
-            operand = %self.ctx.name_of_type(&of).unwrap(),
-            sub = %self.ctx.name_of(type_parameter_id).unwrap(),
-        )
-    )]
-    pub(crate) fn sub(&self, type_variable: TypeVar<C>, of: C::Ty, type_parameter_id: C::ID) {
-        self.env.try_write().unwrap().sub(type_variable, of, type_parameter_id);
-    }
-
-    /// Declares the substitution type for the given type variable.
-    ///
-    /// # Panics
-    ///
-    /// If a type has already been substituted for this type variable, this
-    /// method panics.
-    #[tracing::instrument(
-        level = "TRACE",
-        skip_all,
-        fields(
-            type_var = %type_variable,
-            substitute = %self.ctx.name_of_type(&with).unwrap(),
-            location = %self.ctx.span_of(type_variable.0),
-        )
-    )]
-    pub(crate) fn subst(&self, type_variable: TypeVar<C>, with: C::Ty) {
-        self.env.try_write().unwrap().subst(type_variable, with);
+        if let Some(type_variable) = self.ctx.as_type_variable(&walked) {
+            Err(Error::Unsolved(type_variable))
+        } else {
+            Ok(walked)
+        }
     }
 }
 
@@ -368,4 +287,55 @@ impl<'ty, C: Context, T: Type<C>> Iterator for TypeWalker<'ty, C, T> {
 
         Some(next)
     }
+}
+
+#[tracing::instrument(
+    level = "TRACE",
+    skip_all,
+    fields(
+        lhs = %ctx.name_of_type(lhs).unwrap(),
+        rhs = %ctx.name_of_type(rhs).unwrap(),
+    ),
+    err(Debug)
+)]
+pub(crate) fn normalize_constraint_types<C: Context>(
+    ctx: &C,
+    target: C::ID,
+    lhs: &C::Ty,
+    rhs: &C::Ty,
+) -> std::result::Result<(C::Ty, C::Ty), Error<C>> {
+    // If either of the items in the set are the target, we send them back.
+    if lhs.id() == target || rhs.id() == target {
+        return Ok((lhs.to_owned(), rhs.to_owned()));
+    }
+
+    tracing::trace!(target = ?target, ?lhs, ?rhs);
+
+    // If the two types being normalized don't refer to the type parent type, we
+    // cannot normalize them. For example, image a set of constraints like this:
+    // ```
+    // U = [Option<?T> = Option<String>]
+    // ```
+    // can be normalized, since they both refer to the same containing type,
+    // `Option`.
+    //
+    // Contrarily, this example cannot be normalized since they do not
+    // refer to the same containing type:
+    // ```
+    // U = [Array<?T> = Option<String>]
+    // ```
+    if lhs.id() == rhs.id() {
+        for (bound_lhs, bound_rhs) in lhs.bound_types().iter().zip(rhs.bound_types().iter()) {
+            if !bound_lhs.contains(target) && !bound_rhs.contains(target) {
+                continue;
+            }
+
+            return normalize_constraint_types(ctx, target, bound_lhs, bound_rhs);
+        }
+    }
+
+    Err(Error::Mismatch {
+        lhs: lhs.to_owned(),
+        rhs: rhs.to_owned(),
+    })
 }
