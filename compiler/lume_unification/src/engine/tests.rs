@@ -61,8 +61,11 @@ impl Context for DummyContext {
         Type::Var(type_var.0)
     }
 
-    fn is_type_variable(&self, ty: &Self::Ty) -> bool {
-        matches!(ty, Type::Var { .. })
+    fn kind_of_type(&self, ty: &Self::Ty) -> crate::engine::TypeKind<Self> {
+        match ty {
+            Type::Con { id, .. } => crate::engine::TypeKind::Concrete(*id),
+            Type::Var(id) => crate::engine::TypeKind::Variable(TypeVar(*id)),
+        }
     }
 
     fn as_type_variable(&self, ty: &Self::Ty) -> Option<TypeVar<Self>> {

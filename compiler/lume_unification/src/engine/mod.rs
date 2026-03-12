@@ -7,7 +7,7 @@ use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use std::sync::RwLock;
 
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use lume_errors::Result;
 use lume_span::Location;
 
@@ -27,15 +27,15 @@ pub trait Context: Sized {
     /// Gets the location of the given ID.
     fn span_of(&self, id: Self::ID) -> Location;
 
+    /// Determines the kind of the given type.
+    fn kind_of_type(&self, ty: &Self::Ty) -> TypeKind<Self>;
+
     /// Create a fresh type variable for the given owner, bound to the type
     /// variable `binding`.
     fn fresh_var(&mut self, owner: Self::ID, binding: Self::ID, location: Location) -> TypeVar<Self>;
 
     /// Turn the given type variable into a type.
     fn as_type(&self, type_var: TypeVar<Self>) -> Self::Ty;
-
-    /// Determines whether the given type is a reference to a type variable.
-    fn is_type_variable(&self, ty: &Self::Ty) -> bool;
 
     /// If the type is a reference to a type variable, gets it as a type
     /// variable. Otherwise, [`None`].
@@ -74,6 +74,19 @@ pub trait Type<C: Context>: Hash + Debug + Clone + PartialEq + Eq {
     }
 }
 
+/// Denotes the kind of type being represented.
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TypeKind<C: Context> {
+    /// Concrete type - fixed at compile time
+    Concrete(C::ID),
+
+    /// Inference variable - flexible and solvable
+    Variable(TypeVar<C>),
+
+    /// Type parameter - rigid and fixed within it's scope
+    Parameter(C::ID),
+}
+
 /// Unique ID of an existential type variable.
 #[derive(derive_more::Debug)]
 pub struct TypeVar<C: Context>(pub(crate) C::ID);
@@ -109,7 +122,7 @@ impl<C: Context> Display for TypeVar<C> {
 #[derive(Clone)]
 pub(crate) struct TypeVarEnv<C: Context> {
     /// Set of all constraints for the current type variable
-    pub constraints: Vec<Constraint<C>>,
+    pub constraints: IndexSet<Constraint<C>>,
 
     /// Current available substitute for the type variable.
     pub substitute: Option<C::Ty>,
@@ -118,19 +131,31 @@ pub(crate) struct TypeVarEnv<C: Context> {
 impl<C: Context> Default for TypeVarEnv<C> {
     fn default() -> Self {
         Self {
-            constraints: Vec::new(),
+            constraints: IndexSet::new(),
             substitute: None,
         }
     }
 }
 
-#[derive(derive_more::Debug, Clone, PartialEq, Eq)]
+#[derive(derive_more::Debug, Clone, derive_more::PartialEq, derive_more::Eq)]
 pub(crate) enum Constraint<C: Context> {
     /// Declares that the type variable must be equal to `ty`.
     Equal { ty: C::Ty },
 
     /// Declares that the type variable must implement `bound`.
     Subtype { of: C::Ty, type_parameter: C::ID },
+}
+
+impl<C: Context> Hash for Constraint<C> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            Self::Equal { ty } => ty.hash(state),
+            Self::Subtype { of, type_parameter } => {
+                of.hash(state);
+                type_parameter.hash(state);
+            }
+        }
+    }
 }
 
 #[derive(derive_more::Debug, Clone, PartialEq, Eq)]
@@ -149,6 +174,9 @@ pub enum Error<C: Context> {
         bound: C::Ty,
         type_parameter: C::ID,
     },
+
+    /// Attempted to equate two rigid types together
+    RigidMismatch { lhs: C::Ty, rhs: C::Ty },
 
     /// Could not resolve any concrete type for the given type variable.
     Unsolved(TypeVar<C>),
@@ -184,7 +212,7 @@ impl<C: Context> Env<C> {
             .entry(type_variable)
             .or_default()
             .constraints
-            .push(Constraint::Equal { ty });
+            .insert(Constraint::Equal { ty });
     }
 
     /// Creates a new subtyping containt, stating that the given type variable,
@@ -194,7 +222,7 @@ impl<C: Context> Env<C> {
             .entry(type_variable)
             .or_default()
             .constraints
-            .push(Constraint::Subtype { of, type_parameter });
+            .insert(Constraint::Subtype { of, type_parameter });
     }
 
     /// Declares the substitution type for the given type variable.
@@ -203,10 +231,10 @@ impl<C: Context> Env<C> {
     }
 
     /// Gets an iterator of all the constraints of the given type variable.
-    pub(crate) fn constraints_of(&self, id: TypeVar<C>) -> impl Iterator<Item = &Constraint<C>> {
+    pub(crate) fn constraints_of(&self, id: TypeVar<C>) -> Vec<&Constraint<C>> {
         self.type_vars
             .get(&id)
-            .map_or([].iter(), |type_var| type_var.constraints.iter())
+            .map_or(Vec::new(), |type_var| type_var.constraints.iter().collect())
     }
 }
 
