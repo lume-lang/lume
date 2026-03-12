@@ -37,11 +37,10 @@
 //! replaced with their unified type substitute.
 
 use lume_errors::Result;
-use lume_hir::TypeId;
 use lume_infer::TyInferCtx;
-use lume_span::{Location, NodeId};
+use lume_span::NodeId;
 
-use crate::{TypeVariableId, UnificationPass};
+use crate::engine::{Engine, TypeVar};
 
 /// Denotes all available types which can be inferred and unified.
 #[derive(Debug, Clone, PartialEq)]
@@ -166,11 +165,11 @@ enum Call<'hir> {
     Static(&'hir mut lume_hir::StaticCall),
 }
 
-impl UnificationPass<'_> {
+impl Engine<'_, TyInferCtx> {
     #[tracing::instrument(level = "INFO", skip_all, err)]
     pub(crate) fn introduce_type_variables(&mut self) -> Result<()> {
-        for id in self.tcx.hir().nodes.keys().copied().collect::<Vec<_>>() {
-            let mut node = if let Some(node) = self.tcx.hir_node(id)
+        for id in self.ctx.hir().nodes.keys().copied().collect::<Vec<_>>() {
+            let mut node = if let Some(node) = self.ctx.hir_node(id)
                 && let Ok(inferred) = InferedNode::try_from(node)
             {
                 inferred
@@ -209,7 +208,7 @@ impl UnificationPass<'_> {
                 }
             }
 
-            self.tcx.hir_mut().nodes.insert(id, Into::<lume_hir::Node>::into(node));
+            self.ctx.hir_mut().nodes.insert(id, Into::<lume_hir::Node>::into(node));
         }
 
         Ok(())
@@ -217,20 +216,20 @@ impl UnificationPass<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(path = %path.to_wide_string()), err)]
     fn introduce_type_variables_on_type(&mut self, node_id: NodeId, path: &mut lume_hir::Path) -> Result<()> {
-        let location = self.tcx.hir_span_of_node(node_id);
+        let location = self.ctx.hir_span_of_node(node_id);
 
-        let Some(type_def) = self.tcx.tdb().find_type(path) else {
+        let Some(type_def) = self.ctx.tdb().find_type(path) else {
             tracing::warn!(path = %path.to_wide_string(), "type_not_found");
             return Ok(());
         };
 
         let type_def_id = type_def.id;
         let declared_type_args = path.bound_types().len();
-        let type_params = self.tcx.type_params_of(type_def.id)?.to_vec();
+        let type_params = self.ctx.type_params_of(type_def.id)?.to_vec();
 
         for type_param_id in type_params.into_iter().skip(declared_type_args) {
-            let type_variable = allocate_type_variable(self.tcx, type_param_id.into(), type_def_id, location);
-            let type_variable_type = type_variable_as_type(self.tcx.hir(), type_variable);
+            let type_variable = self.fresh_var(type_def_id, type_param_id, location);
+            let type_variable_type = type_variable_as_type(self.ctx.hir(), type_variable);
 
             if let lume_hir::PathSegment::Type { bound_types, .. } = &mut path.name {
                 bound_types.push(type_variable_type);
@@ -238,8 +237,8 @@ impl UnificationPass<'_> {
 
             tracing::info!(
                 type_var = type_variable.to_string(),
-                type_def = self.tcx.hir_path_of_node(type_def_id).to_wide_string(),
-                type_parameter = self.tcx.hir_path_of_node(type_param_id).to_string(),
+                type_def = self.ctx.hir_path_of_node(type_def_id).to_wide_string(),
+                type_parameter = self.ctx.hir_path_of_node(type_param_id).to_string(),
                 location = location.to_string(),
                 "introduce_type_var",
             );
@@ -252,14 +251,14 @@ impl UnificationPass<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn introduce_type_variables_on_callable(&mut self, expr: NodeId, path: &mut Call) -> Result<()> {
-        let location = self.tcx.hir_span_of_node(expr);
+        let location = self.ctx.hir_span_of_node(expr);
 
-        let call = self.tcx.hir_call_expr(expr).expect("expected call expression");
-        let callable = self.tcx.probe_callable(call)?;
-        let signature = self.tcx.signature_of(callable)?;
+        let call = self.ctx.hir_call_expr(expr).expect("expected call expression");
+        let callable = self.ctx.probe_callable(call)?;
+        let signature = self.ctx.signature_of(callable)?;
 
         let owner = if matches!(callable, lume_infer::query::Callable::Method(_)) {
-            self.tcx
+            self.ctx
                 .hir_parent_iter(signature.id)
                 .find_map(|node| node.is_item().then_some(node.id()))
                 .unwrap_or(signature.id)
@@ -269,7 +268,7 @@ impl UnificationPass<'_> {
 
         tracing::trace!(callable = %callable.name().to_wide_string());
 
-        let type_params = self.tcx.available_type_params_at(callable.id());
+        let type_params = self.ctx.available_type_params_at(callable.id());
         let type_args = call.all_type_arguments();
 
         // All all the type arguments have already been declared, theres
@@ -281,8 +280,8 @@ impl UnificationPass<'_> {
         for type_parameter in type_params.into_iter().skip(type_args.len()) {
             let is_bound_to_method = signature.type_params.contains(&type_parameter);
 
-            let type_variable = allocate_type_variable(self.tcx, type_parameter.into(), owner, location);
-            let type_variable_type = type_variable_as_type(self.tcx.hir(), type_variable);
+            let type_variable = self.fresh_var(owner, type_parameter, location);
+            let type_variable_type = type_variable_as_type(self.ctx.hir(), type_variable);
 
             match path {
                 Call::Static(call) => {
@@ -315,8 +314,8 @@ impl UnificationPass<'_> {
 
             tracing::info!(
                 type_var = type_variable.to_string(),
-                callable = self.tcx.hir_path_of_node(signature.id).to_wide_string(),
-                type_parameter = self.tcx.hir_path_of_node(type_parameter).to_string(),
+                callable = self.ctx.hir_path_of_node(signature.id).to_wide_string(),
+                type_parameter = self.ctx.hir_path_of_node(type_parameter).to_string(),
                 location = location.to_string(),
                 "introduce_type_var",
             );
@@ -329,14 +328,14 @@ impl UnificationPass<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn introduce_type_variables_on_variant(&mut self, node_id: NodeId, path: &mut lume_hir::Path) -> Result<()> {
-        let location = self.tcx.hir_span_of_node(node_id);
+        let location = self.ctx.hir_span_of_node(node_id);
 
         let parent_path = path
             .clone()
             .parent()
             .expect("expected Variant path segment to have Type parent");
 
-        let enum_def = self.tcx.enum_def_with_name(&parent_path)?;
+        let enum_def = self.ctx.enum_def_with_name(&parent_path)?;
         let declared_type_args = path.all_bound_types().len();
 
         let owner_id = enum_def.id;
@@ -349,8 +348,8 @@ impl UnificationPass<'_> {
             .collect::<Vec<_>>();
 
         for type_parameter in bound_types {
-            let type_variable = allocate_type_variable(self.tcx, type_parameter.into(), owner_id, location);
-            let type_variable_type = type_variable_as_type(self.tcx.hir(), type_variable);
+            let type_variable = self.fresh_var(owner_id, type_parameter, location);
+            let type_variable_type = type_variable_as_type(self.ctx.hir(), type_variable);
 
             if let Some(lume_hir::PathSegment::Type { bound_types, .. }) = &mut path.root.last_mut() {
                 bound_types.push(type_variable_type);
@@ -359,7 +358,7 @@ impl UnificationPass<'_> {
             tracing::info!(
                 type_var = type_variable.to_string(),
                 variant = path.to_wide_string(),
-                type_parameter = self.tcx.hir_path_of_node(type_parameter).to_string(),
+                type_parameter = self.ctx.hir_path_of_node(type_parameter).to_string(),
                 location = location.to_string(),
                 "introduce_type_var",
             );
@@ -371,47 +370,8 @@ impl UnificationPass<'_> {
     }
 }
 
-fn allocate_type_variable(tcx: &mut TyInferCtx, binding: TypeId, owner: NodeId, location: Location) -> TypeVariableId {
-    let id = NodeId::from_usize(tcx.hir().package, tcx.hir().nodes.len() + (usize::MAX / 2));
-    let type_var = TypeVariableId(TypeId::from(id));
-
-    let canonical = tcx.hir_canonical_type_of(binding, owner).unwrap().unwrap_or(binding);
-
-    assert!(
-        tcx.tdb_mut()
-            .types
-            .insert(id, lume_types::Type {
-                id,
-                kind: lume_types::TypeKind::TypeVariable,
-                name: lume_hir::Path::rooted(lume_hir::PathSegment::Type {
-                    name: type_var.to_string().into(),
-                    bound_types: Vec::new(),
-                    location,
-                }),
-            })
-            .is_none()
-    );
-
-    assert!(
-        tcx.hir_mut()
-            .nodes
-            .insert(
-                id,
-                lume_hir::Node::TypeVariable(lume_hir::TypeVariable {
-                    id,
-                    binding,
-                    canonical,
-                    location
-                })
-            )
-            .is_none()
-    );
-
-    type_var
-}
-
-fn type_variable_as_type(hir: &lume_hir::Map, id: TypeVariableId) -> lume_hir::Type {
-    let type_variable = hir.expect_type_variable(id.0.as_node_id()).unwrap();
+fn type_variable_as_type(hir: &lume_hir::Map, id: TypeVar<TyInferCtx>) -> lume_hir::Type {
+    let type_variable = hir.expect_type_variable(id.0).unwrap();
     let type_variable_name = lume_hir::PathSegment::Type {
         name: id.to_string().into(),
         bound_types: Vec::new(),
@@ -419,7 +379,7 @@ fn type_variable_as_type(hir: &lume_hir::Map, id: TypeVariableId) -> lume_hir::T
     };
 
     lume_hir::Type {
-        id: id.0,
+        id: id.0.into(),
         name: lume_hir::Path::rooted(type_variable_name),
         self_type: false,
         location: type_variable.location,

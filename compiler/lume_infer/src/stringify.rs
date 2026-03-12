@@ -230,7 +230,7 @@ impl<'tcx> TyStringifier<'tcx> {
             write!(w, "<").map_diagnostic()?;
 
             for (idx, bound_type) in self.type_ref.bound_types.iter().enumerate() {
-                let is_last = idx >= self.type_ref.bound_types.len() - 1;
+                let is_last = idx + 1 >= self.type_ref.bound_types.len();
 
                 self.new_from(bound_type).write(w)?;
 
@@ -244,7 +244,7 @@ impl<'tcx> TyStringifier<'tcx> {
             write!(w, "<").map_diagnostic()?;
 
             for (idx, bound_type) in path.name.bound_types().iter().enumerate() {
-                let is_last = idx >= self.type_ref.bound_types.len() - 1;
+                let is_last = idx + 1 >= self.type_ref.bound_types.len();
 
                 if self.include_namespace {
                     write!(w, "{bound_type:+}::").map_diagnostic()?;
