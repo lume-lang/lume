@@ -113,7 +113,7 @@ impl<C: Context> Engine<'_, C> {
                 });
             }
 
-            if let Some(resolved) = self.resolved_of(variable_env) {
+            if let Some(resolved) = self.substitute_of(variable_env) {
                 self.occurs_check(type_variable, &resolved)?;
             }
 
@@ -192,7 +192,7 @@ impl<C: Context> Engine<'_, C> {
     #[tracing::instrument(level = "TRACE", skip_all, fields(ty = %self.ctx.name_of_type(&ty).unwrap()))]
     pub(crate) fn walk(&self, ty: C::Ty) -> C::Ty {
         if let Some(variable_env) = self.ctx.as_type_variable(&ty) {
-            match self.resolved_of(variable_env) {
+            match self.substitute_of(variable_env) {
                 Some(ty) => self.walk(ty),
                 None => ty,
             }
@@ -295,7 +295,15 @@ impl<C: Context> Engine<'_, C> {
 
         for type_variable in self.type_variables() {
             let result = || -> std::result::Result<(), Error<C>> {
-                let resolved = self.resolve(type_variable)?;
+                let mut resolved = self.resolve(type_variable)?;
+
+                // Ensure that all type variables within the resolved substitute is resolved
+                // into concrete types.
+                resolved.walk_mut().for_each(|ty| {
+                    if matches!(self.ctx.kind_of_type(ty), TypeKind::Variable(_)) {
+                        *ty = self.walk(ty.to_owned());
+                    }
+                });
 
                 self.subst(type_variable, resolved)?;
                 self.check_bounds_of(type_variable)?;

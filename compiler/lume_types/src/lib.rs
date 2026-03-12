@@ -955,36 +955,54 @@ impl Deref for TyCtx {
     }
 }
 
-pub struct TypeWalker<'ty> {
-    stack: smallvec::SmallVec<[&'ty TypeRef; 8]>,
+pub trait TypeFolder: Sized {
+    /// Returns a slice of all bound types for this type.
+    fn bound_types(&self) -> &[Self];
+
+    /// Returns a slice of all bound types for this type.
+    fn bound_types_mut(&mut self) -> &mut [Self];
 }
 
-impl<'ty> TypeWalker<'ty> {
-    pub fn new(root: &'ty TypeRef) -> Self {
+impl TypeFolder for TypeRef {
+    fn bound_types(&self) -> &[Self] {
+        &self.bound_types
+    }
+
+    fn bound_types_mut(&mut self) -> &mut [Self] {
+        &mut self.bound_types
+    }
+}
+
+pub struct TypeWalker<'ty, F> {
+    stack: smallvec::SmallVec<[&'ty F; 8]>,
+}
+
+impl<'ty, F> TypeWalker<'ty, F> {
+    pub fn new(root: &'ty F) -> Self {
         Self {
             stack: smallvec::smallvec![root],
         }
     }
 }
 
-impl<'ty> Iterator for TypeWalker<'ty> {
-    type Item = &'ty TypeRef;
+impl<'ty, F: TypeFolder> Iterator for TypeWalker<'ty, F> {
+    type Item = &'ty F;
 
     fn next(&mut self) -> Option<Self::Item> {
         let next = self.stack.pop()?;
-        self.stack.extend(&next.bound_types);
+        self.stack.extend(next.bound_types());
 
         Some(next)
     }
 }
 
-pub struct TypeWalkerMut<'ty> {
-    stack: smallvec::SmallVec<[*mut TypeRef; 8]>,
-    _marker: std::marker::PhantomData<&'ty mut TypeRef>,
+pub struct TypeWalkerMut<'ty, F> {
+    stack: smallvec::SmallVec<[*mut F; 8]>,
+    _marker: std::marker::PhantomData<&'ty mut F>,
 }
 
-impl<'ty> TypeWalkerMut<'ty> {
-    pub fn new(root: &'ty mut TypeRef) -> Self {
+impl<'ty, F> TypeWalkerMut<'ty, F> {
+    pub fn new(root: &'ty mut F) -> Self {
         Self {
             stack: smallvec::smallvec![std::ptr::from_mut(root)],
             _marker: std::marker::PhantomData,
@@ -992,8 +1010,8 @@ impl<'ty> TypeWalkerMut<'ty> {
     }
 }
 
-impl<'ty> Iterator for TypeWalkerMut<'ty> {
-    type Item = &'ty mut TypeRef;
+impl<'ty, F: TypeFolder> Iterator for TypeWalkerMut<'ty, F> {
+    type Item = &'ty mut F;
 
     fn next(&mut self) -> Option<Self::Item> {
         let ptr = self.stack.pop()?;
@@ -1004,7 +1022,7 @@ impl<'ty> Iterator for TypeWalkerMut<'ty> {
         let node = unsafe { &mut *ptr };
 
         // Reverse order so the first child is yielded first.
-        for child in node.bound_types.iter_mut().rev() {
+        for child in node.bound_types_mut().iter_mut().rev() {
             self.stack.push(std::ptr::from_mut(child));
         }
 
@@ -1012,25 +1030,26 @@ impl<'ty> Iterator for TypeWalkerMut<'ty> {
     }
 }
 
-pub struct TypeZipper<'ty> {
-    stack: smallvec::SmallVec<[(&'ty TypeRef, &'ty TypeRef); 8]>,
+pub struct TypeZipper<'ty, F> {
+    stack: smallvec::SmallVec<[(&'ty F, &'ty F); 8]>,
 }
 
-impl<'ty> TypeZipper<'ty> {
-    pub fn new(lhs: &'ty TypeRef, rhs: &'ty TypeRef) -> Self {
+impl<'ty, F> TypeZipper<'ty, F> {
+    pub fn new(lhs: &'ty F, rhs: &'ty F) -> Self {
         Self {
             stack: smallvec::smallvec![(lhs, rhs)],
         }
     }
 }
 
-impl<'ty> Iterator for TypeZipper<'ty> {
-    type Item = (&'ty TypeRef, &'ty TypeRef);
+impl<'ty, F: TypeFolder> Iterator for TypeZipper<'ty, F> {
+    type Item = (&'ty F, &'ty F);
 
     fn next(&mut self) -> Option<Self::Item> {
         let next @ (lhs, rhs) = self.stack.pop()?;
 
-        self.stack.extend(lhs.bound_types.iter().zip(rhs.bound_types.iter()));
+        let iter = lhs.bound_types().iter().zip(rhs.bound_types().iter());
+        self.stack.extend(iter);
 
         Some(next)
     }

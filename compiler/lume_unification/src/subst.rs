@@ -1,7 +1,7 @@
 use lume_errors::Result;
 use lume_infer::TyInferCtx;
 
-use crate::engine::{Engine, TypeVar, TypeVarEnv};
+use crate::engine::{Context, Engine, TypeVar, TypeVarEnv};
 use crate::introduce::InferedNode;
 
 impl Engine<'_, TyInferCtx> {
@@ -31,6 +31,12 @@ impl Engine<'_, TyInferCtx> {
 
             let substitute = substitute.as_ref().expect("expected type variables to be resolved");
             let replacement_ty = self.ctx.hir_lift_type(substitute)?;
+
+            tracing::trace!(
+                type_variable = %type_var_id,
+                substitute = %self.ctx.name_of_type(substitute).unwrap_or(String::from("<unknown>")),
+                "replaced_type_var"
+            );
 
             let mut node = if let Some(node) = self.ctx.hir_node(node_id)
                 && let Ok(inferred) = InferedNode::try_from(node)
