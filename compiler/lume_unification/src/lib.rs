@@ -30,23 +30,9 @@ pub fn unify(tcx: &mut TyInferCtx) -> Result<()> {
     engine.introduce_type_variables()?;
     engine.create_constraints()?;
 
-    if let Err(err) = engine.substitute_all() {
-        match err {
-            engine::Error::Mismatch { lhs, rhs } => {
-                engine.ctx.raise_mismatched_types(&lhs, &rhs);
-            }
-            engine::Error::InfiniteType { var, ty } => {
-                panic!("infinite type {var:#?}, {ty:#?}");
-            }
-            engine::Error::BoundUnsatisfied { ty, bound, .. } => {
-                panic!("BoundUnsatisfied {ty:#?}, {bound:#?}");
-            }
-            engine::Error::RigidMismatch { lhs, rhs } => {
-                panic!("RigidMismatch {lhs:#?}, {rhs:#?}");
-            }
-            engine::Error::Unsolved(type_variable) => {
-                panic!("Unsolved {type_variable}");
-            }
+    if let Err(errors) = engine.substitute_all() {
+        for error in errors {
+            handle_error(&engine, error);
         }
     }
 
@@ -64,6 +50,27 @@ pub fn unify(tcx: &mut TyInferCtx) -> Result<()> {
     lume_architect::DatabaseContext::db(tcx).clear_all();
 
     tcx.dcx().ensure_untainted()
+}
+
+/// Emits the given error to the diagnostics context.
+fn handle_error(engine: &Engine<'_, TyInferCtx>, error: crate::engine::Error<TyInferCtx>) {
+    match error {
+        engine::Error::Mismatch { lhs, rhs } => {
+            engine.ctx.raise_mismatched_types(&lhs, &rhs);
+        }
+        engine::Error::InfiniteType { var, ty } => {
+            panic!("infinite type {var:#?}, {ty:#?}");
+        }
+        engine::Error::BoundUnsatisfied { ty, bound, .. } => {
+            panic!("BoundUnsatisfied {ty:#?}, {bound:#?}");
+        }
+        engine::Error::RigidMismatch { lhs, rhs } => {
+            panic!("RigidMismatch {lhs:#?}, {rhs:#?}");
+        }
+        engine::Error::Unsolved(type_variable) => {
+            panic!("Unsolved {type_variable}");
+        }
+    }
 }
 
 impl Context for TyInferCtx {

@@ -182,6 +182,8 @@ pub enum Error<C: Context> {
     Unsolved(TypeVar<C>),
 }
 
+pub type AggregateError<C> = Vec<Error<C>>;
+
 pub(crate) struct Env<C: Context> {
     /// List of affected nodes, along with a type variable which was introduced
     /// in the node.

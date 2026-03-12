@@ -192,7 +192,7 @@ fn mismatched_instances() {
     engine.eq(var, con1);
     engine.eq(var, con2);
 
-    let err = engine.substitute_all().unwrap_err();
+    let err = engine.solve(var).unwrap_err();
     assert!(matches!(err, Error::Mismatch { .. }));
 }
 
@@ -208,7 +208,7 @@ fn mismatched_bound_types() {
     engine.eq(var, con1);
     engine.eq(var, con2);
 
-    let err = engine.substitute_all().unwrap_err();
+    let err = engine.solve(var).unwrap_err();
     assert!(matches!(err, Error::Mismatch { .. }));
 }
 
@@ -224,7 +224,7 @@ fn mismatched_bound_types_len() {
     engine.eq(var, con1);
     engine.eq(var, con2);
 
-    let err = engine.substitute_all().unwrap_err();
+    let err = engine.solve(var).unwrap_err();
     assert!(matches!(err, Error::Mismatch { .. }));
 }
 
@@ -232,15 +232,15 @@ fn mismatched_bound_types_len() {
 fn bound_unsatisfied() {
     let mut ctx = DummyContext::default();
 
-    let var1 = ctx.var();
+    let var = ctx.var();
     let con2 = Type::con0("Foo");
     let obl2 = Type::sub0("Display");
 
     let engine = Engine::new(&mut ctx);
-    engine.eq(var1, con2);
-    engine.sub(var1, obl2, ID::from_name("T"));
+    engine.eq(var, con2);
+    engine.sub(var, obl2, ID::from_name("T"));
 
-    let err = engine.substitute_all().unwrap_err();
+    let err = engine.solve(var).unwrap_err();
     assert!(matches!(err, Error::BoundUnsatisfied { .. }));
 }
 
@@ -248,12 +248,12 @@ fn bound_unsatisfied() {
 fn infinite_type() {
     let mut ctx = DummyContext::default();
 
-    let var1 = ctx.var();
-    let con1 = Type::con("Option", vec![ctx.as_type(var1)]);
+    let var = ctx.var();
+    let con1 = Type::con("Option", vec![ctx.as_type(var)]);
 
     let engine = Engine::new(&mut ctx);
-    engine.eq(var1, con1);
+    engine.eq(var, con1);
 
-    let err = engine.substitute_all().unwrap_err();
+    let err = engine.solve(var).unwrap_err();
     assert!(matches!(err, Error::InfiniteType { .. }));
 }
