@@ -1,23 +1,17 @@
 use lume_errors::Result;
-use lume_hir::TypeId;
+use lume_infer::TyInferCtx;
 use lume_span::NodeId;
 use lume_types::TypeRef;
 
+use crate::engine::*;
 use crate::introduce::InferedNodeRef;
-use crate::{TypeVariableId, UnificationPass};
 
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub(crate) enum Constraint {
-    Equal { lhs: TypeRef, rhs: TypeRef },
-    Subtype { of: TypeRef, param: NodeId },
-}
-
-impl UnificationPass<'_> {
+impl Engine<'_, TyInferCtx> {
     #[tracing::instrument(level = "INFO", skip_all, err)]
     pub(crate) fn create_constraints(&self) -> Result<()> {
         for (id, type_variable) in self.affected_nodes() {
             if let Err(err) = self.create_constraints_for(id, type_variable) {
-                self.tcx.dcx().emit(err);
+                self.ctx.dcx().emit(err);
             }
         }
 
@@ -25,10 +19,10 @@ impl UnificationPass<'_> {
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn create_constraints_for(&self, node_id: NodeId, type_variable: TypeVariableId) -> Result<()> {
-        self.env.try_write().unwrap().ensure_entry_for(type_variable);
+    fn create_constraints_for(&self, node_id: NodeId, type_variable: TypeVar<TyInferCtx>) -> Result<()> {
+        self.ensure_entry_for(type_variable);
 
-        let node = if let Some(node) = self.tcx.hir_node(node_id)
+        let node = if let Some(node) = self.ctx.hir_node(node_id)
             && let Ok(inferred) = InferedNodeRef::try_from(node)
         {
             inferred
@@ -36,8 +30,8 @@ impl UnificationPass<'_> {
             return Ok(());
         };
 
-        let type_parameter_id = self.tcx.hir_tyvar_binding_of(type_variable.0.as_node_id()).unwrap();
-        let canonical_parameter_id = self.tcx.hir_tyvar_canonical_of(type_variable.0.as_node_id()).unwrap();
+        let type_parameter_id = self.ctx.hir_tyvar_binding_of(type_variable.0).unwrap().as_node_id();
+        let canonical_parameter_id = self.ctx.hir_tyvar_canonical_of(type_variable.0).unwrap().as_node_id();
 
         match node {
             InferedNodeRef::Pattern(pattern) => {
@@ -49,8 +43,8 @@ impl UnificationPass<'_> {
                 if let Some(declared_type) = &decl.declared_type {
                     self.create_constraints_for_type(&declared_type.name, canonical_parameter_id, type_variable)?;
 
-                    let declared_type_ref = self.tcx.mk_type_ref_from(declared_type, decl.value)?;
-                    let value_type_ref = self.tcx.type_of(decl.value)?;
+                    let declared_type_ref = self.ctx.mk_type_ref_from(declared_type, decl.value)?;
+                    let value_type_ref = self.ctx.type_of(decl.value)?;
 
                     self.canonicalize_type_variables(
                         declared_type_ref,
@@ -99,10 +93,10 @@ impl UnificationPass<'_> {
     fn create_constraints_for_type(
         &self,
         path: &lume_hir::Path,
-        canonical_parameter_id: TypeId,
-        type_variable: TypeVariableId,
+        canonical_parameter_id: NodeId,
+        type_variable: TypeVar<TyInferCtx>,
     ) -> Result<()> {
-        let Some(type_def) = self.tcx.tdb().find_type(path) else {
+        let Some(type_def) = self.ctx.tdb().find_type(path) else {
             return Ok(());
         };
 
@@ -112,12 +106,12 @@ impl UnificationPass<'_> {
             }
 
             let type_param_id = bound_type.id.as_node_id();
-            let type_param = self.tcx.hir_expect_type_parameter(type_param_id);
+            let type_param = self.ctx.hir_expect_type_parameter(type_param_id);
 
             for type_param_constraint in &type_param.constraints {
-                let constraint_type = self.tcx.mk_type_ref_from(type_param_constraint, type_param.id)?;
+                let constraint_type = self.ctx.mk_type_ref_from(type_param_constraint, type_param.id)?;
 
-                self.sub(type_variable, constraint_type, type_param.id);
+                self.sub(type_variable, constraint_type, type_param_id);
             }
         }
 
@@ -129,20 +123,20 @@ impl UnificationPass<'_> {
         skip_all,
         fields(
             name = %call.name(),
-            location = %self.tcx.hir_span_of_node(call.id()),
+            location = %self.ctx.span_of(call.id()),
         ),
         err
     )]
     fn create_constraints_for_callable(
         &self,
         call: lume_hir::CallExpression,
-        type_parameter_id: TypeId,
-        type_variable: TypeVariableId,
+        type_parameter_id: NodeId,
+        type_variable: TypeVar<TyInferCtx>,
     ) -> Result<()> {
-        let callable = self.tcx.probe_callable(call)?;
-        let signature = self.tcx.signature_of(callable)?;
+        let callable = self.ctx.probe_callable(call)?;
+        let signature = self.ctx.signature_of(callable)?;
 
-        let type_parameters = self.tcx.available_type_params_at(callable.id());
+        let type_parameters = self.ctx.available_type_params_at(callable.id());
         let type_arguments = call.all_type_arguments();
 
         let mut arguments = call.arguments();
@@ -152,7 +146,7 @@ impl UnificationPass<'_> {
             arguments.insert(0, instance_call.callee);
         }
 
-        let canonical_parameter_id = self.tcx.hir_tyvar_canonical_of(type_variable.0.as_node_id()).unwrap();
+        let canonical_parameter_id = self.ctx.hir_tyvar_canonical_of(type_variable.0).unwrap().as_node_id();
 
         assert_eq!(
             type_parameters.len(),
@@ -161,30 +155,31 @@ impl UnificationPass<'_> {
             call.location()
         );
 
-        for (parameter, &argument) in self.tcx.zip_call_args(parameters, &arguments) {
+        for (parameter, &argument) in self.ctx.zip_call_args(parameters, &arguments) {
             let parameter_type = parameter.ty.clone();
-            let argument_type = self.tcx.type_of(argument)?;
+            let argument_type = self.ctx.type_of(argument)?;
 
             self.canonicalize_type_variables(parameter_type, argument_type, type_parameter_id, type_variable);
         }
 
         for bound_type in type_parameters {
-            if bound_type != canonical_parameter_id.as_node_id() {
+            if bound_type != canonical_parameter_id {
                 continue;
             }
 
-            let type_param = self.tcx.hir_expect_type_parameter(bound_type);
+            let type_param = self.ctx.hir_expect_type_parameter(bound_type);
 
             for type_param_constraint in &type_param.constraints {
-                let constraint_type = self.tcx.mk_type_ref_from(type_param_constraint, type_param.id)?;
+                let constraint_type = self.ctx.mk_type_ref_from(type_param_constraint, type_param.id)?;
 
                 self.sub(type_variable, constraint_type, type_param.id);
             }
         }
 
-        if let Some(expected_type) = self.tcx.try_expected_type_of(call.id())? {
-            let value_type_ref = self.tcx.type_of(call.id())?;
-
+        if signature.ret_ty.contains(type_parameter_id)
+            && let Some(expected_type) = self.ctx.try_expected_type_of(call.id())?
+        {
+            let value_type_ref = self.ctx.type_of(call.id())?;
             self.canonicalize_type_variables(expected_type, value_type_ref, type_parameter_id, type_variable);
         }
 
@@ -196,25 +191,25 @@ impl UnificationPass<'_> {
         &self,
         node_id: NodeId,
         path: &lume_hir::Path,
-        type_parameter_id: TypeId,
-        type_variable: TypeVariableId,
+        type_parameter_id: NodeId,
+        type_variable: TypeVar<TyInferCtx>,
     ) -> Result<()> {
         let parent_path = path
             .clone()
             .parent()
             .expect("expected Variant path segment to have Type parent");
 
-        let enum_def = self.tcx.enum_def_with_name(&parent_path)?;
-        let enum_case_def = self.tcx.enum_case_with_name(path)?;
+        let enum_def = self.ctx.enum_def_with_name(&parent_path)?;
+        let enum_case_def = self.ctx.enum_case_with_name(path)?;
 
-        let arguments = match &self.tcx.hir_expect_node(node_id) {
+        let arguments = match &self.ctx.hir_expect_node(node_id) {
             lume_hir::Node::Expression(expr) => {
                 if let lume_hir::ExpressionKind::Variant(variant) = &expr.kind {
                     let argument_ids = &variant.arguments;
 
                     argument_ids
                         .iter()
-                        .map(|id| self.tcx.type_of(*id))
+                        .map(|id| self.ctx.type_of(*id))
                         .collect::<Result<Vec<_>>>()?
                 } else {
                     return Ok(());
@@ -226,7 +221,7 @@ impl UnificationPass<'_> {
 
                     field_ids
                         .iter()
-                        .map(|subpattern| self.tcx.type_of_pattern(subpattern))
+                        .map(|subpattern| self.ctx.type_of_pattern(subpattern))
                         .collect::<Result<Vec<_>>>()?
                 } else {
                     return Ok(());
@@ -238,12 +233,15 @@ impl UnificationPass<'_> {
         let params = &enum_case_def.parameters;
 
         for (param, arg) in params.iter().zip(arguments) {
-            let parameter_type = self.tcx.mk_type_ref_from(param, enum_def.id)?;
+            let parameter_type = self.ctx.mk_type_ref_from(param, enum_def.id)?;
             if !parameter_type.contains(type_parameter_id) {
                 continue;
             }
 
-            self.eq(type_variable, arg, parameter_type);
+            let (_normalized_arg, normalized_parameter_type) =
+                normalize_constraint_types(self.ctx, type_parameter_id, &arg, &parameter_type).unwrap();
+
+            self.eq(type_variable, normalized_parameter_type);
         }
 
         for bound_type in enum_def.name().all_bound_types() {
@@ -252,12 +250,12 @@ impl UnificationPass<'_> {
             }
 
             let type_param_id = bound_type.id.as_node_id();
-            let type_param = self.tcx.hir_expect_type_parameter(type_param_id);
+            let type_param = self.ctx.hir_expect_type_parameter(type_param_id);
 
             for type_param_constraint in &type_param.constraints {
-                let constraint_type = self.tcx.mk_type_ref_from(type_param_constraint, type_param.id)?;
+                let constraint_type = self.ctx.mk_type_ref_from(type_param_constraint, type_param.id)?;
 
-                self.sub(type_variable, constraint_type, type_param.id);
+                self.sub(type_variable, constraint_type, type_param_id);
             }
         }
 
@@ -265,25 +263,23 @@ impl UnificationPass<'_> {
     }
 }
 
-impl UnificationPass<'_> {
+impl Engine<'_, TyInferCtx> {
     #[tracing::instrument[
         level = "TRACE",
         skip_all,
         fields(
             %type_variable,
-            expected_type = %self.tcx.new_named_type(&expected_type, true).unwrap(),
-            given_type = %self.tcx.new_named_type(&given_type, true).unwrap(),
+            expected_type = %self.ctx.name_of_type(&expected_type).unwrap(),
+            given_type = %self.ctx.name_of_type(&given_type).unwrap(),
         )
     ]]
     fn canonicalize_type_variables(
         &self,
-        mut expected_type: TypeRef,
+        expected_type: TypeRef,
         given_type: TypeRef,
-        type_parameter_id: TypeId,
-        type_variable: TypeVariableId,
+        type_parameter_id: NodeId,
+        type_variable: TypeVar<TyInferCtx>,
     ) {
-        let canonical_parameter_id = self.tcx.hir_tyvar_canonical_of(type_variable.0.as_node_id()).unwrap();
-
         // If any arguments within the argument list contain any type variables AND the
         // corresponding parameter contains the type parameter, we equate the two type
         // variables to be equal.
@@ -299,24 +295,12 @@ impl UnificationPass<'_> {
         // Since `?T1` and `?T2` refer to the same type parameter, and functions as the
         // same instance of the type argument here, the two type variables must equal.
         for (found_type_ref, expected_inner_type) in
-            given_type.filter_with(&expected_type, |lhs, _rhs| self.tcx.is_type_variable(lhs))
+            given_type.filter_with(&expected_type, |lhs, _rhs| self.ctx.is_type_variable(lhs))
         {
-            let found_type_variable = self.tcx.as_type_variable(found_type_ref).unwrap();
+            let found_type_variable = self.ctx.as_type_variable(found_type_ref).unwrap();
 
-            if expected_inner_type.instance_of == type_parameter_id.as_node_id() {
-                self.eq(
-                    type_variable,
-                    TypeRef::new(canonical_parameter_id.as_node_id(), expected_type.location),
-                    TypeRef::new(found_type_variable.id, given_type.location),
-                );
-            }
-
-            if found_type_variable.id == type_variable.0.as_node_id() {
-                self.eq(
-                    type_variable,
-                    TypeRef::new(canonical_parameter_id.as_node_id(), expected_type.location),
-                    expected_inner_type.clone(),
-                );
+            if found_type_variable.id == type_variable.0 {
+                self.eq(type_variable, expected_inner_type.to_owned());
             }
         }
 
@@ -338,23 +322,10 @@ impl UnificationPass<'_> {
         //
         // Since the parameter `value` contains the type parameter `T`, the argument
         // would constrain the type variable to equal `String`.
-        if expected_type.contains(type_parameter_id) {
-            tracing::trace!(
-                before = ?type_parameter_id.as_node_id(),
-                after = ?canonical_parameter_id.as_node_id(),
-                before_location = %self.tcx.hir_span_of_node(type_parameter_id.as_node_id()),
-                after_location = %self.tcx.hir_span_of_node(canonical_parameter_id.as_node_id()),
-                "canonicalize"
-            );
-
-            // Replace the type variable with the canonical type parameter, so normalization
-            // uses the same ID.
-            expected_type.replace_contained(
-                type_parameter_id,
-                &TypeRef::new(canonical_parameter_id.as_node_id(), expected_type.location),
-            );
-
-            self.eq(type_variable, expected_type, given_type);
+        for (inner_given_type, _inner_expected_type) in
+            given_type.filter_with(&expected_type, |_lhs, rhs| rhs.instance_of == type_parameter_id)
+        {
+            self.eq(type_variable, inner_given_type.to_owned());
         }
     }
 }
