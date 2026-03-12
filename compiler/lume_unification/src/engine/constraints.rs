@@ -39,7 +39,7 @@ impl<C: Context> Engine<'_, C> {
         level = "TRACE",
         skip_all,
         fields(
-            type_var = %type_variable,
+            %type_variable,
             ty = %self.ctx.name_of_type(&ty).unwrap(),
         )
     )]
@@ -53,7 +53,7 @@ impl<C: Context> Engine<'_, C> {
         level = "TRACE",
         skip_all,
         fields(
-            type_var = %type_variable,
+            %type_variable,
             operand = %self.ctx.name_of_type(&of).unwrap(),
             type_parameter = %self.ctx.name_of(type_parameter).unwrap(),
         )
@@ -72,7 +72,7 @@ impl<C: Context> Engine<'_, C> {
         level = "TRACE",
         skip_all,
         fields(
-            type_var = %type_variable,
+            %type_variable,
             substitute = %self.ctx.name_of_type(&with).unwrap(),
             location = %self.ctx.span_of(type_variable.0),
         ),
@@ -99,7 +99,7 @@ impl<C: Context> Engine<'_, C> {
         level = "TRACE",
         skip_all,
         fields(
-            type_var = %type_variable,
+            %type_variable,
             ty = %self.ctx.name_of_type(ty).unwrap(),
         ),
         err(Debug)
@@ -148,18 +148,24 @@ impl<C: Context> Engine<'_, C> {
         let lhs = self.walk(lhs);
         let rhs = self.walk(rhs);
 
-        match (self.ctx.as_type_variable(&lhs), self.ctx.as_type_variable(&rhs)) {
+        match (self.ctx.kind_of_type(&lhs), self.ctx.kind_of_type(&rhs)) {
             // Identical type variables - no reason to bind
-            (Some(a), Some(b)) if a.0 == b.0 => Ok(()),
+            (TypeKind::Variable(a), TypeKind::Variable(b)) if a == b => Ok(()),
+
+            // Identical type parameters - no reason to bind
+            (TypeKind::Parameter(a), TypeKind::Parameter(b)) if a == b => Ok(()),
+
+            // Type parameters cannot be equal in the same scope
+            (TypeKind::Parameter(_), TypeKind::Parameter(_)) => Err(Error::RigidMismatch { lhs, rhs }),
 
             // Type variable on the left - regular bind
-            (Some(var), _) => self.subst(var, rhs),
+            (TypeKind::Variable(var), _) => self.subst(var, rhs),
 
             // Type variable on the right - symmetric case
-            (_, Some(var)) => self.subst(var, lhs),
+            (_, TypeKind::Variable(var)) => self.subst(var, lhs),
 
             // Concrete types - ensure matching type argument count and unify each argument.
-            (None, None) => {
+            (TypeKind::Concrete(_), TypeKind::Concrete(_)) => {
                 let lhs_bindings = lhs.bound_types().to_vec();
                 let rhs_bindings = rhs.bound_types().to_vec();
 
@@ -173,11 +179,17 @@ impl<C: Context> Engine<'_, C> {
 
                 Ok(())
             }
+
+            // Concrete types can never equate to type parameters
+            (TypeKind::Concrete(_), TypeKind::Parameter(_)) | (TypeKind::Parameter(_), TypeKind::Concrete(_)) => {
+                Err(Error::RigidMismatch { lhs, rhs })
+            }
         }
     }
 
     /// Walks the substitution chain from the given type, until we reach either
     /// an unresolved type variable or valid substitute.
+    #[tracing::instrument(level = "TRACE", skip_all, fields(ty = %self.ctx.name_of_type(&ty).unwrap()))]
     pub(crate) fn walk(&self, ty: C::Ty) -> C::Ty {
         if let Some(variable_env) = self.ctx.as_type_variable(&ty) {
             match self.resolved_of(variable_env) {
@@ -185,15 +197,39 @@ impl<C: Context> Engine<'_, C> {
                 None => ty,
             }
         } else {
+            tracing::trace!(result = %self.ctx.name_of_type(&ty).unwrap());
+
             ty
         }
     }
 
     /// Attempts to unify all the constraints of the given type variable into a
     /// single type.
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(type_variable = %var), err(Debug))]
     fn coalesce_constraints(&self, var: TypeVar<C>) -> std::result::Result<C::Ty, Error<C>> {
         let env = self.env.try_read().unwrap();
         let mut result: Option<C::Ty> = None;
+
+        if tracing::enabled!(tracing::Level::DEBUG) {
+            for constraint in env.constraints_of(var) {
+                match constraint {
+                    Constraint::Equal { ty } => {
+                        tracing::debug!(
+                            type_variable = %var,
+                            ty = %self.ctx.name_of_type(ty).unwrap(),
+                            "constraint_eq"
+                        );
+                    }
+                    Constraint::Subtype { of, .. } => {
+                        tracing::debug!(
+                            type_variable = %var,
+                            sub = %self.ctx.name_of_type(of).unwrap(),
+                            "constraint_sub"
+                        );
+                    }
+                }
+            }
+        }
 
         for constraint in env.constraints_of(var) {
             let Constraint::Equal { ty } = constraint else {
@@ -216,6 +252,7 @@ impl<C: Context> Engine<'_, C> {
         result.ok_or(Error::Unsolved(var))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(type_variable = %type_var), err(Debug))]
     pub(crate) fn solve(&self, type_var: TypeVar<C>) -> std::result::Result<(), Error<C>> {
         let coalesced_type = self.coalesce_constraints(type_var)?;
         let resolved_ty = self.walk(coalesced_type);
@@ -223,6 +260,7 @@ impl<C: Context> Engine<'_, C> {
         self.subst(type_var, resolved_ty)
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(type_variable = %type_var), err(Debug))]
     pub(crate) fn check_bounds_of(&self, type_var: TypeVar<C>) -> std::result::Result<(), Error<C>> {
         let env = self.env.try_read().unwrap();
         let type_env = env.env(type_var).unwrap();
