@@ -290,26 +290,50 @@ impl<C: Context> Engine<'_, C> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err(Debug))]
-    fn resolve_all(&self) -> std::result::Result<(), Error<C>> {
-        for type_variable in self.type_variables() {
-            let resolved = self.resolve(type_variable)?;
+    fn resolve_all(&self) -> std::result::Result<(), AggregateError<C>> {
+        let mut errors = AggregateError::new();
 
-            self.subst(type_variable, resolved)?;
-            self.check_bounds_of(type_variable)?;
+        for type_variable in self.type_variables() {
+            let result = || -> std::result::Result<(), Error<C>> {
+                let resolved = self.resolve(type_variable)?;
+
+                self.subst(type_variable, resolved)?;
+                self.check_bounds_of(type_variable)?;
+
+                Ok(())
+            }();
+
+            if let Err(err) = result {
+                errors.push(err);
+            }
+        }
+
+        if !errors.is_empty() {
+            return Err(errors);
         }
 
         Ok(())
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err(Debug))]
-    pub(crate) fn substitute_all(&self) -> std::result::Result<(), Error<C>> {
+    pub(crate) fn substitute_all(&self) -> std::result::Result<(), AggregateError<C>> {
+        let mut errors = AggregateError::new();
+
         // Solve each variable against its constraints...
         for type_variable in self.type_variables() {
-            self.solve(type_variable)?;
+            if let Err(err) = self.solve(type_variable) {
+                errors.push(err);
+            }
         }
 
         // ...then flatten all substitution chains.
-        self.resolve_all()?;
+        if let Err(err) = self.resolve_all() {
+            errors.extend(err);
+        }
+
+        if !errors.is_empty() {
+            return Err(errors);
+        }
 
         Ok(())
     }
