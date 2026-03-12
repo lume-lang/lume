@@ -151,13 +151,25 @@ impl<C: Context> Default for TypeVarEnv<C> {
     }
 }
 
-#[derive(derive_more::Debug, Clone, derive_more::PartialEq, derive_more::Eq)]
+#[derive(derive_more::Debug, derive_more::PartialEq, derive_more::Eq)]
 pub(crate) enum Constraint<C: Context> {
     /// Declares that the type variable must be equal to `ty`.
     Equal { ty: C::Ty },
 
     /// Declares that the type variable must implement `bound`.
     Subtype { of: C::Ty, type_parameter: C::ID },
+}
+
+impl<C: Context> Clone for Constraint<C> {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Equal { ty } => Self::Equal { ty: ty.clone() },
+            Self::Subtype { of, type_parameter } => Self::Subtype {
+                of: of.clone(),
+                type_parameter: *type_parameter,
+            },
+        }
+    }
 }
 
 impl<C: Context> Hash for Constraint<C> {
@@ -247,10 +259,10 @@ impl<C: Context> Env<C> {
     }
 
     /// Gets an iterator of all the constraints of the given type variable.
-    pub(crate) fn constraints_of(&self, id: TypeVar<C>) -> Vec<&Constraint<C>> {
+    pub(crate) fn constraints_of(&self, id: TypeVar<C>) -> IndexSet<Constraint<C>> {
         self.type_vars
             .get(&id)
-            .map_or(Vec::new(), |type_var| type_var.constraints.iter().collect())
+            .map_or(IndexSet::new(), |type_var| type_var.constraints.clone())
     }
 }
 

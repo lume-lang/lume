@@ -208,10 +208,16 @@ impl<C: Context> Engine<'_, C> {
     #[tracing::instrument(level = "DEBUG", skip_all, fields(type_variable = %var), err(Debug))]
     fn coalesce_constraints(&self, var: TypeVar<C>) -> std::result::Result<C::Ty, Error<C>> {
         let env = self.env.try_read().unwrap();
+        let constraints = env.constraints_of(var);
+
         let mut result: Option<C::Ty> = None;
 
+        // Force the read lock to drop, since `unify` might want to acquite a write lock
+        // for substitution.
+        drop(env);
+
         if tracing::enabled!(tracing::Level::DEBUG) {
-            for constraint in env.constraints_of(var) {
+            for constraint in &constraints {
                 match constraint {
                     Constraint::Equal { ty } => {
                         tracing::debug!(
@@ -231,7 +237,7 @@ impl<C: Context> Engine<'_, C> {
             }
         }
 
-        for constraint in env.constraints_of(var) {
+        for constraint in constraints {
             let Constraint::Equal { ty } = constraint else {
                 continue;
             };
