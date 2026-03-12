@@ -372,12 +372,15 @@ impl TyInferCtx {
             return Ok(());
         }
 
+        let from_bindings = self.type_parameter_refs_of(from)?;
+        let to_bindings = self.type_parameter_refs_of(to)?;
+
         // If the two types share the same elemental type, the type arguments
         // may be compatible.
-        if from.instance_of == to.instance_of && from.bound_types.len() == to.bound_types.len() {
+        if from.instance_of == to.instance_of && from_bindings.len() == to_bindings.len() {
             tracing::debug!("checking type argument downcast: {from:?} => {to:?}");
 
-            for (from_arg, to_arg) in from.bound_types.iter().zip(to.bound_types.iter()) {
+            for (from_arg, to_arg) in from_bindings.iter().zip(to_bindings.iter()) {
                 self.ensure_type_compatibility(from_arg, to_arg)?;
             }
 
@@ -575,14 +578,20 @@ impl TyInferCtx {
     /// Lifts the given [`TypeRef`] into a HIR [`lume_hir::Type`] instance.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn hir_lift_type(&self, ty: &TypeRef) -> Result<lume_hir::Type> {
-        let name = self.type_ref_name(ty)?.to_owned();
-        let location = ty.location;
+        let mut name = self.type_ref_name(ty)?.to_owned();
+        let mut bound_types = name.bound_types().to_vec();
+
+        for (idx, bound_type) in ty.bound_types.iter().enumerate() {
+            bound_types[idx] = self.hir_lift_type(bound_type)?;
+        }
+
+        name.place_bound_types(bound_types);
 
         Ok(lume_hir::Type {
             id: lume_hir::TypeId::from(ty.instance_of),
             name,
             self_type: false,
-            location,
+            location: ty.location,
         })
     }
 
