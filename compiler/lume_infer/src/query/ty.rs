@@ -79,6 +79,17 @@ impl TyInferCtx {
             .collect::<Vec<_>>())
     }
 
+    pub fn type_parameter_refs_of(&self, ty: &TypeRef) -> Result<Vec<TypeRef>> {
+        Ok(if ty.bound_types.is_empty() {
+            self.type_params_of(ty.instance_of)?
+                .iter()
+                .map(|&param_id| TypeRef::new(param_id, self.hir_span_of_node(param_id)))
+                .collect()
+        } else {
+            ty.bound_types.clone()
+        })
+    }
+
     /// Determines whether the given [`TypeRef`] is a kind of
     /// [`TypeKind::Struct`].
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
