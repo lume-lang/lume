@@ -162,4 +162,8 @@ impl Type<TyInferCtx> for TypeRef {
     fn bound_types(&self) -> &[Self] {
         &self.bound_types
     }
+
+    fn bound_types_mut(&mut self) -> &mut [Self] {
+        &mut self.bound_types
+    }
 }

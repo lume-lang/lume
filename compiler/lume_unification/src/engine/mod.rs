@@ -52,12 +52,26 @@ pub trait Type<C: Context>: Hash + Debug + Clone + PartialEq + Eq {
     /// Gets a slice of all the immediate bound types within the type.
     fn bound_types(&self) -> &[Self];
 
+    /// Gets a slice of all the immediate bound types within the type.
+    fn bound_types_mut(&mut self) -> &mut [Self];
+
     /// Walks all the type references within the given instance.
     ///
     /// The first yielded type reference is the instance itself, followed by all
     /// bound types, in a breadth-first fashion.
     fn walk(&self) -> impl Iterator<Item = &Self> {
         TypeWalker::new(self)
+    }
+
+    /// Walks all the type references within the given instance.
+    ///
+    /// The first yielded type reference is the instance itself, followed by all
+    /// bound types, in a breadth-first fashion.
+    fn walk_mut<'ty>(&'ty mut self) -> impl Iterator<Item = &'ty mut Self>
+    where
+        C: 'ty,
+    {
+        TypeWalkerMut::new(self)
     }
 
     /// Checks whether the given type ID is contained within the current type
@@ -274,7 +288,8 @@ impl<'ctx, C: Context> Engine<'ctx, C> {
         self.env.try_write().unwrap().affected_nodes.push((id, type_variable));
     }
 
-    pub(crate) fn resolved_of(&self, type_variable: TypeVar<C>) -> Option<C::Ty> {
+    /// Gets the current substitute of the given type variable.
+    pub(crate) fn substitute_of(&self, type_variable: TypeVar<C>) -> Option<C::Ty> {
         self.env
             .try_read()
             .unwrap()
@@ -316,6 +331,40 @@ impl<'ty, C: Context, T: Type<C>> Iterator for TypeWalker<'ty, C, T> {
         self.stack.extend(next.bound_types());
 
         Some(next)
+    }
+}
+
+pub struct TypeWalkerMut<'ty, C, T> {
+    stack: smallvec::SmallVec<[*mut T; 8]>,
+    _phantom: std::marker::PhantomData<(&'ty mut T, &'ty C)>,
+}
+
+impl<'ty, C: Context, T: Type<C>> TypeWalkerMut<'ty, C, T> {
+    pub fn new(root: &'ty mut T) -> Self {
+        Self {
+            stack: smallvec::smallvec![std::ptr::from_mut(root)],
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<'ty, C: Context, T: Type<C> + 'ty> Iterator for TypeWalkerMut<'ty, C, T> {
+    type Item = &'ty mut T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let ptr = self.stack.pop()?;
+
+        // SAFETY:
+        // Each pointer in the stack was derived from a unique `&mut TypeRef`, so
+        // the lifetime `'ty` is tied to the original `&'ty mut TypeRef`.
+        let node = unsafe { &mut *ptr };
+
+        // Reverse order so the first child is yielded first.
+        for child in node.bound_types_mut().iter_mut().rev() {
+            self.stack.push(std::ptr::from_mut(child));
+        }
+
+        Some(node)
     }
 }
 

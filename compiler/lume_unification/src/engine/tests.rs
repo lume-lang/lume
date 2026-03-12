@@ -65,12 +65,13 @@ impl Context for DummyContext {
         match ty {
             Type::Con { id, .. } => crate::engine::TypeKind::Concrete(*id),
             Type::Var(id) => crate::engine::TypeKind::Variable(TypeVar(*id)),
+            Type::Param(id) => crate::engine::TypeKind::Parameter(*id),
         }
     }
 
     fn as_type_variable(&self, ty: &Self::Ty) -> Option<TypeVar<Self>> {
         match ty {
-            Type::Con { .. } => None,
+            Type::Con { .. } | Type::Param(_) => None,
             Type::Var(id) => Some(TypeVar(*id)),
         }
     }
@@ -93,6 +94,9 @@ enum Type {
 
     /// A potentially unsolved type variable.
     Var(ID),
+
+    /// A rigid type parameter
+    Param(ID),
 }
 
 impl Type {
@@ -123,6 +127,11 @@ impl Type {
             bindings,
         }
     }
+
+    #[inline]
+    pub fn param<N: Hash + ?Sized>(name: &N) -> Self {
+        Self::Param(ID::from_name(name))
+    }
 }
 
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
@@ -134,14 +143,21 @@ enum TypeKind {
 impl crate::engine::Type<DummyContext> for Type {
     fn id(&self) -> <DummyContext as Context>::ID {
         match self {
-            Self::Con { id, .. } | Self::Var(id) => *id,
+            Self::Con { id, .. } | Self::Var(id) | Self::Param(id) => *id,
         }
     }
 
     fn bound_types(&self) -> &[Self] {
         match self {
             Self::Con { bindings, .. } => bindings,
-            Self::Var { .. } => &[],
+            Self::Var { .. } | Self::Param(_) => &[],
+        }
+    }
+
+    fn bound_types_mut(&mut self) -> &mut [Self] {
+        match self {
+            Self::Con { bindings, .. } => bindings,
+            Self::Var { .. } | Self::Param(_) => &mut [],
         }
     }
 }
@@ -240,8 +256,8 @@ fn bound_unsatisfied() {
     engine.eq(var, con2);
     engine.sub(var, obl2, ID::from_name("T"));
 
-    let err = engine.solve(var).unwrap_err();
-    assert!(matches!(err, Error::BoundUnsatisfied { .. }));
+    let errors = engine.substitute_all().unwrap_err();
+    assert!(matches!(errors.first().unwrap(), Error::BoundUnsatisfied { .. }));
 }
 
 #[test]
@@ -256,4 +272,37 @@ fn infinite_type() {
 
     let err = engine.solve(var).unwrap_err();
     assert!(matches!(err, Error::InfiniteType { .. }));
+}
+
+#[test]
+fn type_parameter_substitution() {
+    // ```lm
+    // fn array_of<TItem>(_: TItem) -> Array<TItem>;
+    //
+    // fn foo<T>(val: T) {
+    //     // `value` = `T?X`
+    //     // `arr` = `T?Y`
+    //
+    //     let arr = array_of(val);
+    //     // `arr` should resolve to `Array<T>` instead of `Array<T?X>`
+    // }
+    // ```
+
+    let mut ctx = DummyContext::default();
+
+    let param1 = Type::param("T");
+
+    let var1 = ctx.var(); // Type variable `X`
+    let var2 = ctx.var(); // Type variable `Y`
+
+    let arr = Type::con("Array", vec![ctx.as_type(var1)]);
+
+    let engine = Engine::new(&mut ctx);
+    engine.eq(var1, param1.clone());
+    engine.eq(var2, arr.clone());
+
+    engine.substitute_all().unwrap();
+
+    assert_eq!(engine.resolve(var1).unwrap(), param1);
+    assert_eq!(engine.resolve(var2).unwrap(), Type::con("Array", vec![param1]));
 }
