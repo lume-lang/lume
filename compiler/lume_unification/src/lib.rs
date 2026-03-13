@@ -1,6 +1,7 @@
 pub mod engine;
 
 mod constraints;
+mod diagnostics;
 mod introduce;
 mod subst;
 mod verify;
@@ -55,20 +56,49 @@ pub fn unify(tcx: &mut TyInferCtx) -> Result<()> {
 /// Emits the given error to the diagnostics context.
 fn handle_error(engine: &Engine<'_, TyInferCtx>, error: crate::engine::Error<TyInferCtx>) {
     match error {
-        engine::Error::Mismatch { lhs, rhs } => {
+        engine::Error::Mismatch { lhs, rhs } | engine::Error::RigidMismatch { lhs, rhs } => {
             engine.ctx.raise_mismatched_types(&lhs, &rhs);
         }
-        engine::Error::InfiniteType { var, ty } => {
-            panic!("infinite type {var:#?}, {ty:#?}");
+        engine::Error::InfiniteType { var, .. } => {
+            let binding = engine.ctx.hir_tyvar_binding_of(var.0).unwrap();
+
+            engine.ctx.dcx().emit(
+                diagnostics::InfiniteType {
+                    location: engine.ctx.span_of(var.0),
+                    type_parameter_span: engine.ctx.span_of(binding.as_node_id()),
+                    type_parameter_name: engine.ctx.name_of(binding.as_node_id()).unwrap(),
+                }
+                .into(),
+            );
         }
-        engine::Error::BoundUnsatisfied { ty, bound, .. } => {
-            panic!("BoundUnsatisfied {ty:#?}, {bound:#?}");
-        }
-        engine::Error::RigidMismatch { lhs, rhs } => {
-            panic!("RigidMismatch {lhs:#?}, {rhs:#?}");
+        engine::Error::BoundUnsatisfied {
+            ty,
+            bound,
+            type_parameter,
+        } => {
+            let type_parameter = engine.ctx.hir_expect_type_parameter(type_parameter);
+
+            engine.ctx.dcx().emit(
+                diagnostics::BoundUnsatisfied {
+                    source: ty.location,
+                    constraint_loc: bound.location,
+                    param_name: type_parameter.name.to_string(),
+                    type_name: engine.ctx.name_of_type(&ty).unwrap(),
+                    constraint_name: engine.ctx.name_of_type(&bound).unwrap(),
+                }
+                .into(),
+            );
         }
         engine::Error::Unsolved(type_variable) => {
-            panic!("Unsolved {type_variable}");
+            let binding = engine.ctx.hir_tyvar_binding_of(type_variable.0).unwrap();
+
+            engine.ctx.dcx().emit(
+                diagnostics::UnresolvedTypeVariable {
+                    location: engine.ctx.span_of(type_variable.0),
+                    type_parameter_name: engine.ctx.name_of(binding.as_node_id()).unwrap(),
+                }
+                .into(),
+            );
         }
     }
 }
