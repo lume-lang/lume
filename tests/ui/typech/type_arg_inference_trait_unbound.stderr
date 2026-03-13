@@ -1,4 +1,4 @@
-× error[LM4120]: type constraint not satisfied
+× error[LM4141]: type constraint not satisfied
    ╭─[type_arg_inference_trait_unbound.lm:6:9]
  5 │ fn main() {
  6 │     foo(6_i32);

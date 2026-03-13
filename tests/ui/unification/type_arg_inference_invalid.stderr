@@ -1,8 +1,8 @@
-× error[LM4139]: could not infer type argument
+× error[LM4139]: could not infer type
    ╭─[type_arg_inference_invalid.lm:4:5]
  3 │ fn main() {
  4 │     foo();
-   ∶     ^^^^^ could not infer type argument T
+   ∶     ^^^^^ could not infer the type for T
  5 │ }
    ╰──
    help: try specifying the type arguments explicitly

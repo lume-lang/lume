@@ -1,4 +1,4 @@
-× error[LM4120]: type constraint not satisfied
+× error[LM4141]: type constraint not satisfied
     ╭─[type_arg_inference_subtyped_trait_unbound.lm:8:19]
  7  │ fn main() {
  8  │     let foo = Foo<Int32> { };
