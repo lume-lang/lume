@@ -1,0 +1,17 @@
+//# test-return = 0
+
+fn main() {
+    let array = [1, 2, 3, 4, 5];
+    let iter = array.iter();
+
+    loop {
+        switch std::iter::Iterator::next(iter) {
+            std::Optional<Int32>::Some(value) => {
+                std::io::println("is_some() => {0}", value.to_string());
+            },
+            std::Optional<Int32>::None => {
+                break;
+            },
+        }
+    }
+}

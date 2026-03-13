@@ -2,7 +2,7 @@ namespace std
 
 import std (Optional)
 import std::mem (Block)
-import std::ops (Dispose)
+import std::iter (Iterator)
 
 /// Defines an ordered, integer-indexed container which can be used as a container for values. Since the `Array` type
 /// is a generic type, all values within the array must be of the same type.
@@ -101,5 +101,25 @@ impl<T> Array<T> {
         }
 
         self.mem.expand(capacity);
+    }
+}
+
+pub struct ArrayIterator<T> {
+    inner: Array<T>;
+    index: UInt64;
+}
+
+impl<T> Array<T> {
+    pub fn iter(self) -> ArrayIterator<T> {
+        ArrayIterator<T> { inner: self, index: 0_u64 }
+    }
+}
+
+use<T> Iterator<T>: ArrayIterator<T> {
+    fn next(self) -> Optional<T> {
+        let elem = self.inner.get(self.index);
+        self.index = self.index + 1;
+
+        elem
     }
 }
