@@ -1670,7 +1670,7 @@ pub struct Condition {
 pub struct Is {
     pub id: NodeId,
     pub target: NodeId,
-    pub pattern: Pattern,
+    pub pattern: NodeId,
     pub location: Location,
 }
 
@@ -1798,7 +1798,7 @@ pub struct Switch {
 
 #[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct SwitchCase {
-    pub pattern: Pattern,
+    pub pattern: NodeId,
     pub branch: NodeId,
     pub location: Location,
 }
@@ -1886,7 +1886,7 @@ pub struct IdentifierPattern {
 #[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct VariantPattern {
     pub name: Path,
-    pub fields: Vec<Pattern>,
+    pub fields: Vec<NodeId>,
     pub location: Location,
 }
 

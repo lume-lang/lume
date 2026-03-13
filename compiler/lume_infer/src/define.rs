@@ -839,7 +839,7 @@ impl TyInferCtx {
             }
             lume_hir::ExpressionKind::Is(s) => {
                 self.define_expr_scope(tree, s.target, expr_id)?;
-                self.define_pat_scope(tree, &s.pattern, expr_id)?;
+                self.define_pat_scope(tree, s.pattern, expr_id)?;
 
                 Ok(())
             }
@@ -862,7 +862,7 @@ impl TyInferCtx {
                 self.define_expr_scope(tree, s.operand, expr_id)?;
 
                 for case in &s.cases {
-                    self.define_pat_scope(tree, &case.pattern, expr_id)?;
+                    self.define_pat_scope(tree, case.pattern, expr_id)?;
                     self.define_expr_scope(tree, case.branch, expr_id)?;
                 }
 
@@ -880,23 +880,20 @@ impl TyInferCtx {
     }
 
     #[allow(clippy::self_only_used_in_recursion, reason = "pedantic")]
-    fn define_pat_scope(
-        &self,
-        tree: &mut BTreeMap<NodeId, NodeId>,
-        pat: &lume_hir::Pattern,
-        parent: NodeId,
-    ) -> Result<()> {
-        if let Some(existing) = tree.insert(pat.id, parent) {
+    fn define_pat_scope(&self, tree: &mut BTreeMap<NodeId, NodeId>, pattern_id: NodeId, parent: NodeId) -> Result<()> {
+        if let Some(existing) = tree.insert(pattern_id, parent) {
             assert_eq!(existing, parent);
         }
 
-        match &pat.kind {
+        let pattern = self.hir.expect_pattern(pattern_id).unwrap();
+
+        match &pattern.kind {
             lume_hir::PatternKind::Literal(_)
             | lume_hir::PatternKind::Identifier(_)
             | lume_hir::PatternKind::Wildcard(_) => Ok(()),
             lume_hir::PatternKind::Variant(var) => {
-                for field in &var.fields {
-                    self.define_pat_scope(tree, field, pat.id)?;
+                for &field in &var.fields {
+                    self.define_pat_scope(tree, field, pattern_id)?;
                 }
 
                 Ok(())

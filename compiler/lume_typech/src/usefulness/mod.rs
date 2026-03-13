@@ -2,6 +2,7 @@ mod errors;
 
 use indexmap::IndexSet;
 use lume_errors::Result;
+use lume_span::NodeId;
 use lume_types::TypeRef;
 
 use crate::TyCheckCtx;
@@ -10,7 +11,7 @@ impl TyCheckCtx {
     /// Checks whether the given `switch` expression is exhausted.
     pub(crate) fn check_switch_exhaustiveness(&self, expr: &lume_hir::Switch) -> Result<()> {
         let operand_type = self.type_of(expr.operand)?;
-        let patterns = expr.cases.iter().map(|case| &case.pattern).collect::<Vec<_>>();
+        let patterns = expr.cases.iter().map(|case| case.pattern).collect::<Vec<_>>();
 
         self.do_patterns_exhaust_type(&operand_type, &patterns, &[])
     }
@@ -20,16 +21,21 @@ impl TyCheckCtx {
     fn do_patterns_exhaust_type(
         &self,
         ty: &TypeRef,
-        patterns: &[&lume_hir::Pattern],
+        pattern_ids: &[NodeId],
         parents: &[(&lume_hir::VariantPattern, usize)],
     ) -> Result<()> {
+        let patterns = pattern_ids
+            .iter()
+            .map(|&id| self.hir_expect_pattern(id))
+            .collect::<Vec<_>>();
+
         // If the patterns have any fallback patterns, it is always exhausted.
         if patterns.iter().any(|pat| pat.is_fallback()) {
             return Ok(());
         }
 
         if ty.is_bool() {
-            return self.do_patterns_exhaust_bool(ty, patterns, parents);
+            return self.do_patterns_exhaust_bool(ty, pattern_ids, parents);
         }
 
         // If there aren't any fallback patterns, we do not consider any floating-point
@@ -71,7 +77,7 @@ impl TyCheckCtx {
 
         let mut missing_variants: IndexSet<usize> = (0..enum_def.cases.len()).collect();
 
-        for pattern in patterns {
+        for pattern in &patterns {
             if let lume_hir::PatternKind::Variant(variant_pattern) = &pattern.kind {
                 debug_assert!(variant_pattern.enum_name().is_name_match(&enum_def.name));
 
@@ -115,7 +121,7 @@ impl TyCheckCtx {
                 // }
                 // ```
                 // which would raise the correct error.
-                let matching_patterns = matching_variant_patterns(variant_pattern, patterns);
+                let matching_patterns = matching_variant_patterns(variant_pattern, &patterns);
 
                 for (field_idx, enum_field) in enum_case_def.parameters.iter().enumerate() {
                     let enum_field_ty = self
@@ -152,14 +158,16 @@ impl TyCheckCtx {
     fn do_patterns_exhaust_bool(
         &self,
         ty: &TypeRef,
-        patterns: &[&lume_hir::Pattern],
+        patterns: &[NodeId],
         parents: &[(&lume_hir::VariantPattern, usize)],
     ) -> Result<()> {
         assert!(ty.is_bool());
 
         let mut missing_variants: IndexSet<bool> = IndexSet::from_iter([true, false]);
 
-        for pattern in patterns {
+        for &pattern_id in patterns {
+            let pattern = self.hir_expect_pattern(pattern_id);
+
             let lume_hir::PatternKind::Literal(literal_pattern) = &pattern.kind else {
                 continue;
             };
@@ -251,7 +259,7 @@ fn matching_variant_patterns<'pat>(
 ///
 /// when passing the patterns of the `switch` expression and a `column` of
 /// 1, this method returns the patterns `[Two::A, Two::B, Two::C]`.
-fn column_of_patterns<'pat>(patterns: &[&'pat lume_hir::Pattern], column: usize) -> Vec<&'pat lume_hir::Pattern> {
+fn column_of_patterns(patterns: &[&lume_hir::Pattern], column: usize) -> Vec<NodeId> {
     let mut subpatterns = Vec::new();
 
     for pattern in patterns {
@@ -264,7 +272,7 @@ fn column_of_patterns<'pat>(patterns: &[&'pat lume_hir::Pattern], column: usize)
             continue;
         };
 
-        subpatterns.push(subpattern);
+        subpatterns.push(*subpattern);
     }
 
     subpatterns

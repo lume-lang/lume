@@ -234,7 +234,7 @@ impl Engine<'_, TyInferCtx> {
 
                     field_ids
                         .iter()
-                        .map(|subpattern| self.ctx.type_of_pattern(subpattern))
+                        .map(|&subpattern| self.ctx.type_of_pattern(self.ctx.hir_expect_pattern(subpattern)))
                         .collect::<Result<Vec<_>>>()?
                 } else {
                     return Ok(());
