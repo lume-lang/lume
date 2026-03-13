@@ -119,7 +119,7 @@ impl TraitLookup {
 }
 
 fn key_of(trait_type: &TypeRef, impl_type: &TypeRef) -> TraitImplKey {
-    let hash = lume_span::hash_id(&(trait_type, impl_type));
+    let hash = lume_hash::portable_hash(&(trait_type, impl_type));
 
     TraitImplKey(hash)
 }

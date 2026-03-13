@@ -1,0 +1,16 @@
+[package]
+name = "lume_hash"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+fxhash = { version = "^0.2" }
+blake3 = { version = "1.8.3", features = ["serde"] }
+
+[lints]
+workspace = true

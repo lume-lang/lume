@@ -10,12 +10,12 @@ doctest = false
 
 [dependencies]
 lume_errors = { path = "../../crates/lume_errors" }
+lume_hash = { path = "../../crates/lume_hash" }
 lume_options = { path = "../../rt/lume_options" }
 lume_span = { path = "../../crates/lume_span" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
-fxhash = "^0.2"
 indexmap = { workspace = true, features = ["serde"] }
 lume_architect = { workspace = true }
 rust-embed = { version = "=8.7.0", features = [

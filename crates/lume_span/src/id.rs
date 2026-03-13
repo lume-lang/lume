@@ -44,7 +44,7 @@ impl From<usize> for Idx {
 
 impl<T: std::hash::Hash + ?Sized> From<&T> for Idx {
     fn from(value: &T) -> Self {
-        Idx(crate::hash_id(value))
+        Idx(lume_hash::portable_hash(value))
     }
 }
 
@@ -104,7 +104,7 @@ impl PackageId {
     /// Creates a new [`PackageId`] with the hash of the given value.
     #[inline]
     pub fn from_name<T: std::hash::Hash + ?Sized>(value: &T) -> Self {
-        Self(crate::hash_id(value))
+        Self(lume_hash::portable_hash(value))
     }
 
     /// Determines if the [`PackageId`] refers to the standard library.
@@ -116,7 +116,7 @@ impl PackageId {
 
 impl<T: std::hash::Hash + ?Sized> From<&T> for PackageId {
     fn from(value: &T) -> Self {
-        PackageId(crate::hash_id(value))
+        PackageId(lume_hash::portable_hash(value))
     }
 }
 
@@ -165,7 +165,7 @@ impl NodeId {
     pub fn from_name<T: std::hash::Hash + ?Sized>(package: PackageId, value: &T) -> Self {
         Self {
             package,
-            index: Idx::from_usize(crate::hash_id(value)),
+            index: Idx::from_usize(lume_hash::portable_hash(value)),
         }
     }
 
@@ -175,7 +175,7 @@ impl NodeId {
         // wrong or misleading, so we're explicitly removing that possiblity.
         static HASH_OFFSET: usize = 0x4D6B_0189;
 
-        crate::hash_id(&(self, HASH_OFFSET))
+        lume_hash::portable_hash(&(self, HASH_OFFSET))
     }
 }
 
