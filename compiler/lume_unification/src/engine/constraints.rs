@@ -44,6 +44,10 @@ impl<C: Context> Engine<'_, C> {
         )
     )]
     pub(crate) fn eq(&self, type_variable: TypeVar<C>, ty: C::Ty) {
+        if let Some(ty_type_variable) = self.ctx.as_type_variable(&ty) {
+            self.env.try_write().unwrap().union(type_variable, ty_type_variable);
+        }
+
         self.env.try_write().unwrap().eq(type_variable, ty);
     }
 
@@ -210,7 +214,7 @@ impl<C: Context> Engine<'_, C> {
         let env = self.env.try_read().unwrap();
         let constraints = env.constraints_of(var);
 
-        let mut result: Option<C::Ty> = None;
+        let mut solution: Option<C::Ty> = None;
 
         // Force the read lock to drop, since `unify` might want to acquite a write lock
         // for substitution.
@@ -244,18 +248,17 @@ impl<C: Context> Engine<'_, C> {
 
             let resolved_type = self.walk(ty.to_owned());
 
-            match result {
-                None => result = Some(resolved_type),
+            match solution.take() {
+                None => solution = Some(resolved_type),
                 Some(existing) => {
                     self.unify(existing, resolved_type)?;
 
-                    let resolved_var_type = self.walk(self.ctx.as_type(var));
-                    result = Some(resolved_var_type);
+                    solution = Some(self.walk(self.ctx.as_type(var)));
                 }
             }
         }
 
-        result.ok_or(Error::Unsolved(var))
+        solution.ok_or(Error::Unsolved(var))
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, fields(type_variable = %type_var), err(Debug))]

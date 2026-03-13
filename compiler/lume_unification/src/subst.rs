@@ -1,7 +1,7 @@
 use lume_errors::Result;
 use lume_infer::TyInferCtx;
 
-use crate::engine::{Context, Engine, TypeVar, TypeVarEnv};
+use crate::engine::{Context, Engine, TypeVar};
 use crate::introduce::InferedNode;
 
 impl Engine<'_, TyInferCtx> {
@@ -20,21 +20,19 @@ impl Engine<'_, TyInferCtx> {
             bound_types[idx] = replacement;
         }
 
-        let tcx_constraints = &self.env.try_read().unwrap().type_vars;
+        let env = self.env.try_read().unwrap();
 
         for (node_id, type_var_id) in self.affected_nodes() {
             let type_parameter_binding = self.ctx.hir_tyvar_binding_of(type_var_id.0).unwrap();
+            let substitute = env
+                .substitute_of(type_var_id)
+                .expect("expected type variables to be resolved");
 
-            let Some(TypeVarEnv { substitute, .. }) = tcx_constraints.get(&type_var_id) else {
-                unreachable!();
-            };
-
-            let substitute = substitute.as_ref().expect("expected type variables to be resolved");
-            let replacement_ty = self.ctx.hir_lift_type(substitute)?;
+            let replacement_ty = self.ctx.hir_lift_type(&substitute)?;
 
             tracing::trace!(
                 type_variable = %type_var_id,
-                substitute = %self.ctx.name_of_type(substitute).unwrap_or(String::from("<unknown>")),
+                substitute = %self.ctx.name_of_type(&substitute).unwrap_or(String::from("<unknown>")),
                 "replaced_type_var"
             );
 
