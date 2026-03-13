@@ -117,7 +117,9 @@ impl<C: Context> Engine<'_, C> {
                 });
             }
 
-            if let Some(resolved) = self.substitute_of(variable_env) {
+            if let Some(resolved) = self.substitute_of(variable_env)
+                && &resolved != ty
+            {
                 self.occurs_check(type_variable, &resolved)?;
             }
 
@@ -196,8 +198,20 @@ impl<C: Context> Engine<'_, C> {
     #[tracing::instrument(level = "TRACE", skip_all, fields(ty = %self.ctx.name_of_type(&ty).unwrap()))]
     pub(crate) fn walk(&self, ty: C::Ty) -> C::Ty {
         if let Some(variable_env) = self.ctx.as_type_variable(&ty) {
-            match self.substitute_of(variable_env) {
-                Some(ty) => self.walk(ty),
+            let ty_root = self.env.try_read().unwrap().representative_of(variable_env);
+
+            match self.substitute_of(ty_root) {
+                Some(ty) => {
+                    // Prevent walking into the same type, if they references to the
+                    // same underlying type variable.
+                    if let Some(substitute_var) = self.ctx.as_type_variable(&ty)
+                        && self.env.try_read().unwrap().representative_of(substitute_var) == ty_root
+                    {
+                        ty
+                    } else {
+                        self.walk(ty)
+                    }
+                }
                 None => ty,
             }
         } else {
