@@ -295,8 +295,39 @@ impl<C: Context> Env<C> {
 
     /// Unionize the two type variables inside the same set.
     #[tracing::instrument(level = "TRACE", skip_all, fields(%a, %b))]
-    fn union(&self, a: TypeVar<C>, b: TypeVar<C>) {
+    fn union(&mut self, a: TypeVar<C>, b: TypeVar<C>) {
+        if a == b {
+            return;
+        }
+
         self.union.try_write().unwrap().union(a, b);
+
+        // Since the two type variables have unionized, merge the environment of the
+        // non-representative into the new union representative environment.
+        let new_root_key = self.union.try_write().unwrap().find(a).unwrap();
+        tracing::debug!(%new_root_key, %a, %b);
+
+        for old_env_key in [a, b] {
+            if old_env_key == new_root_key {
+                continue;
+            }
+
+            let Some(old_env) = self.type_vars.swap_remove(&old_env_key) else {
+                continue;
+            };
+
+            tracing::debug!(
+                from = %old_env_key,
+                to = %new_root_key,
+                "merge_type_var_env"
+            );
+
+            self.type_vars
+                .entry(new_root_key)
+                .or_default()
+                .constraints
+                .extend(old_env.constraints);
+        }
     }
 
     /// Ensure there is an entry for constraints for the given type variable.

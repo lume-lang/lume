@@ -202,6 +202,19 @@ impl Engine<'_, TyInferCtx> {
         let enum_def = self.ctx.enum_def_with_name(&parent_path)?;
         let enum_case_def = self.ctx.enum_case_with_name(path)?;
 
+        if let Some(expected_type) = self.ctx.try_expected_type_of(node_id)? {
+            let value_type = match self.ctx.hir_expect_node(node_id) {
+                lume_hir::Node::Expression(expr) => self.ctx.type_of_expr(expr)?,
+                lume_hir::Node::Pattern(pattern) => self.ctx.type_of_pattern(pattern)?,
+                _ => unreachable!("bug!: invalid node type"),
+            };
+
+            tracing::error!("expected_type => {}", self.ctx.name_of_type(&expected_type)?);
+            tracing::error!("value_type => {}", self.ctx.name_of_type(&value_type)?);
+
+            self.canonicalize_type_variables(expected_type, value_type, type_parameter_id, type_variable);
+        }
+
         let arguments = match &self.ctx.hir_expect_node(node_id) {
             lume_hir::Node::Expression(expr) => {
                 if let lume_hir::ExpressionKind::Variant(variant) = &expr.kind {
@@ -238,10 +251,10 @@ impl Engine<'_, TyInferCtx> {
                 continue;
             }
 
-            let (_normalized_arg, normalized_parameter_type) =
+            let (normalized_argument, _normalized_parameter_type) =
                 normalize_constraint_types(self.ctx, type_parameter_id, &arg, &parameter_type).unwrap();
 
-            self.eq(type_variable, normalized_parameter_type);
+            self.eq(type_variable, normalized_argument);
         }
 
         for bound_type in enum_def.name().all_bound_types() {
