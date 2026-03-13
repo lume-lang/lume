@@ -12,7 +12,7 @@ pub struct SourceFileId(usize);
 
 impl From<&PathBuf> for SourceFileId {
     fn from(value: &PathBuf) -> Self {
-        Self(lume_span::hash_id(value))
+        Self(lume_hash::portable_hash(value))
     }
 }
 

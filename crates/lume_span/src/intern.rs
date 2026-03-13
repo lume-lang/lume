@@ -15,8 +15,6 @@ use std::sync::{LazyLock, RwLock};
 
 use indexmap::IndexMap;
 
-use crate::hash_id;
-
 pub trait Internable
 where
     Self: Sized,
@@ -183,7 +181,7 @@ impl Interner {
         B: Borrow<T>,
     {
         let mut container = self.container.write().unwrap();
-        let key = hash_id(val);
+        let key = lume_hash::portable_hash(val);
 
         if container.contains_key(&key) {
             return Interned(key, std::marker::PhantomData);

@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
 use indexmap::IndexMap;
-use lume_span::{NodeId, hash_id};
+use lume_span::NodeId;
 use serde::{Deserialize, Serialize};
 
 pub mod visitor;
@@ -46,7 +46,7 @@ impl From<&lume_types::TypeRef> for TypeMetadataId {
             return Self(value.instance_of.index.as_usize());
         }
 
-        Self(hash_id(&value.instance_of))
+        Self(lume_hash::portable_hash(&value.instance_of))
     }
 }
 
@@ -97,7 +97,7 @@ impl TypeMetadata {
     /// Gets the `type_id` field as a single `usize`.
     #[inline]
     pub fn type_id_usize(&self) -> usize {
-        lume_span::hash_id(&self.type_id)
+        lume_hash::portable_hash(&self.type_id)
     }
 }
 

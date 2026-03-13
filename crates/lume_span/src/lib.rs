@@ -9,24 +9,11 @@ pub mod id;
 pub mod intern;
 pub mod source;
 
-use std::hash::Hash;
 use std::sync::Arc;
 
 pub use id::*;
 pub use intern::*;
 pub use source::{FileName, SourceFile, SourceFileId, SourceMap};
-
-/// Hashes some ID using the `FxHasher` algorithm, which was extracted
-/// from the Rustc compiler.
-///
-/// The reason for using this instead of the [`std::hash::DefaultHasher`] is
-/// that we require some deterministic hashing algorithm for consistent results,
-/// so we can use it for incremental builds and caching. The default hasher does
-/// not have any specific algorithm defined, so it cannot be relied upon to
-/// create the same hash given the same input.
-pub fn hash_id<T: Hash + ?Sized>(id: &T) -> usize {
-    fxhash::hash(id)
-}
 
 /// Represents some marked location within a source file.
 ///

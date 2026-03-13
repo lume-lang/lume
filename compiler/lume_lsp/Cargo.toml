@@ -12,6 +12,7 @@ doctest = false
 lume_driver = { path = "../lume_driver", default-features = false }
 lume_errors = { path = "../../crates/lume_errors" }
 lume_fmt = { path = "../../tools/fmt" }
+lume_hash = { path = "../../crates/lume_hash" }
 lume_hir = { path = "../lume_hir" }
 lume_infer = { path = "../lume_infer" }
 lume_session = { path = "../lume_session" }

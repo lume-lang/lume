@@ -400,7 +400,7 @@ impl CraneliftBackend {
             bytes.push(0);
         }
 
-        let key = format!("@__lumec_str_{}", lume_span::hash_id(value));
+        let key = format!("@__lumec_str_{}", lume_hash::portable_hash(value));
 
         if let Some(existing_id) = self.reference_data(&key) {
             return existing_id;

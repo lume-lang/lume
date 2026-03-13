@@ -483,34 +483,38 @@ impl Default for Package {
 
 /// Represents a unique hash for a given iteration of a package, including
 /// source file content, package metadata, etc..
-#[derive(Serialize, Deserialize, Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PackageHash(u64);
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PackageHash(lume_hash::SecureHash);
 
 impl Display for PackageHash {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "%{:X}", self.0)
+        write!(f, "%{}", self.0)
     }
 }
 
 impl Package {
     /// Generates a hash for the current package iteration.
     pub fn package_hash(&self) -> PackageHash {
-        use std::hash::{Hash, Hasher};
-        let mut state = fxhash::FxHasher::default();
+        use lume_hash::SecureHasher;
+        let mut state = SecureHasher::new();
 
-        self.id.hash(&mut state);
-        self.name.hash(&mut state);
-        self.version.hash(&mut state);
+        state.update(&usize::to_ne_bytes(self.id.as_usize()));
+        state.update(self.name.as_bytes());
+        state.update(self.version.to_string().as_bytes());
 
         for (file_name, source_file) in &self.files {
-            file_name.hash(&mut state);
-            source_file.content.hash(&mut state);
+            state.update(file_name.to_string().as_bytes());
+            state.update(source_file.content.as_bytes());
         }
 
-        self.dependencies.graph.hash(&mut state);
-        self.dependencies.no_std.hash(&mut state);
+        for (dependency, version) in &self.dependencies.graph {
+            state.update(&usize::to_ne_bytes(dependency.as_usize()));
+            state.update(version.to_string().as_bytes());
+        }
 
-        PackageHash(state.finish())
+        state.update(if self.dependencies.no_std { &[1] } else { &[0] });
+
+        PackageHash(state.finalize())
     }
 }
 

@@ -8,7 +8,7 @@ struct ID(u64);
 impl ID {
     #[inline]
     pub fn from_name<N: Hash + ?Sized>(name: &N) -> Self {
-        Self(lume_span::hash_id(name) as u64)
+        Self(lume_hash::portable_hash(name) as u64)
     }
 }
 

@@ -15,7 +15,7 @@ use error_snippet_derive::Diagnostic;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
-use crate::{PackageId, hash_id};
+use crate::PackageId;
 
 #[derive(Serialize, Deserialize, Default, Hash, Debug, Eq, PartialEq, Clone)]
 pub enum FileName {
@@ -73,7 +73,7 @@ impl SourceFileId {
     /// Creates a new [`SourceFileId`] with the given parent package ID and
     /// name.
     pub fn new(package: PackageId, name: impl Into<String>) -> Self {
-        Self(package, hash_id(&name.into()))
+        Self(package, lume_hash::portable_hash(&name.into()))
     }
 }
 

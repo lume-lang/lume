@@ -135,7 +135,7 @@ impl<C: Context> Eq for TypeVar<C> {}
 
 impl<C: Context> Display for TypeVar<C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "T?{:X}", lume_span::hash_id(&self.0))
+        write!(f, "T?{:X}", lume_hash::portable_hash(&self.0))
     }
 }
 
