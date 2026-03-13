@@ -1,0 +1,13 @@
+//# test-outcome=success
+
+fn identity<TI>(value: TI) {}
+
+fn foo<T1>(val: T1) {
+    identity(arr(val));
+}
+
+fn arr<T3>(val: T3) -> Array<T3> {
+    let arr = Array<T3>::with_capacity(1_u64);
+    arr.push(val);
+    arr
+}

@@ -1,4 +1,5 @@
 pub(crate) mod constraints;
+pub(crate) mod union;
 
 #[cfg(test)]
 mod tests;
@@ -43,6 +44,11 @@ pub trait Context: Sized {
 
     /// Determines whether the given type implements the given subtype.
     fn implements_subtype(&self, ty: &Self::Ty, subtype: &Self::Ty) -> bool;
+
+    /// Determines if the given type is a type variable.
+    fn is_type_variable(&self, ty: &Self::Ty) -> bool {
+        matches!(self.kind_of_type(ty), TypeKind::Variable(_))
+    }
 }
 
 pub trait Type<C: Context>: Hash + Debug + Clone + PartialEq + Eq {
@@ -133,7 +139,9 @@ impl<C: Context> Display for TypeVar<C> {
     }
 }
 
-#[derive(Clone)]
+impl<C: Context> union::UnionKey for TypeVar<C> {}
+
+#[derive(derive_more::Debug)]
 pub(crate) struct TypeVarEnv<C: Context> {
     /// Set of all constraints for the current type variable
     pub constraints: IndexSet<Constraint<C>>,
@@ -188,13 +196,16 @@ impl<C: Context> Hash for Constraint<C> {
 pub enum Error<C: Context> {
     /// The constraints for a type variable required two incompatible types to
     /// be equal.
+    #[debug("Mismatch({lhs:?}, {rhs:?})")]
     Mismatch { lhs: C::Ty, rhs: C::Ty },
 
     /// The resolved type for a type variable contains itself, causing an
     /// infinite type.
+    #[debug("InfiniteType({var}, {ty:?})")]
     InfiniteType { var: TypeVar<C>, ty: C::Ty },
 
     /// The resolved type for a type variable could not satisfy a subtype bound.
+    #[debug("BoundUnsatisfied({ty:?}, {bound:?})")]
     BoundUnsatisfied {
         ty: C::Ty,
         bound: C::Ty,
@@ -202,9 +213,11 @@ pub enum Error<C: Context> {
     },
 
     /// Attempted to equate two rigid types together
+    #[debug("RigidMismatch({lhs:?}, {rhs:?})")]
     RigidMismatch { lhs: C::Ty, rhs: C::Ty },
 
     /// Could not resolve any concrete type for the given type variable.
+    #[debug("Unresolved({_0})")]
     Unsolved(TypeVar<C>),
 }
 
@@ -262,27 +275,54 @@ pub(crate) struct Env<C: Context> {
 
     /// Mapping of type variables and their corresponding environment.
     pub(crate) type_vars: IndexMap<TypeVar<C>, TypeVarEnv<C>>,
+
+    /// Union-find data structure for grouping sets of type variables.
+    pub(crate) union: RwLock<union::UnionFind<TypeVar<C>>>,
 }
 
 impl<C: Context> Env<C> {
+    /// Gets the representative (root key) of the given type variable.
+    ///
+    /// If the type variable is not in the union-find, it returns itself.
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%type_variable), ret(Display))]
+    fn representative_of(&self, type_variable: TypeVar<C>) -> TypeVar<C> {
+        self.union
+            .try_write()
+            .unwrap()
+            .find(type_variable)
+            .unwrap_or(type_variable)
+    }
+
+    /// Unionize the two type variables inside the same set.
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%a, %b))]
+    fn union(&self, a: TypeVar<C>, b: TypeVar<C>) {
+        self.union.try_write().unwrap().union(a, b);
+    }
+
     /// Ensure there is an entry for constraints for the given type variable.
     ///
     /// So, even if no constraints could be generated, we would still notice
     /// and empty constraint list and throw an error.
     fn ensure_entry_for(&mut self, type_variable: TypeVar<C>) {
-        self.type_vars.entry(type_variable).or_default();
+        let root = self.representative_of(type_variable);
+
+        self.type_vars.entry(root).or_default();
     }
 
     /// Gets the environment associated with the given type variable.
     fn env(&self, type_variable: TypeVar<C>) -> Option<&TypeVarEnv<C>> {
-        self.type_vars.get(&type_variable)
+        let root = self.representative_of(type_variable);
+
+        self.type_vars.get(&root)
     }
 
     /// Creates a new equality containt, stating that `type_variable` must be
     /// equal to `ty`.
     pub(crate) fn eq(&mut self, type_variable: TypeVar<C>, ty: C::Ty) {
+        let root = self.representative_of(type_variable);
+
         self.type_vars
-            .entry(type_variable)
+            .entry(root)
             .or_default()
             .constraints
             .insert(Constraint::Equal { ty });
@@ -291,8 +331,10 @@ impl<C: Context> Env<C> {
     /// Creates a new subtyping containt, stating that the given type variable,
     /// `type_variable`, must subtype `of`.
     pub(crate) fn sub(&mut self, type_variable: TypeVar<C>, of: C::Ty, type_parameter: C::ID) {
+        let root = self.representative_of(type_variable);
+
         self.type_vars
-            .entry(type_variable)
+            .entry(root)
             .or_default()
             .constraints
             .insert(Constraint::Subtype { of, type_parameter });
@@ -300,14 +342,25 @@ impl<C: Context> Env<C> {
 
     /// Declares the substitution type for the given type variable.
     pub(crate) fn subst(&mut self, type_variable: TypeVar<C>, with: C::Ty) {
-        self.type_vars.entry(type_variable).or_default().substitute = Some(with);
+        let root = self.representative_of(type_variable);
+
+        self.type_vars.entry(root).or_default().substitute = Some(with);
     }
 
     /// Gets an iterator of all the constraints of the given type variable.
     pub(crate) fn constraints_of(&self, id: TypeVar<C>) -> IndexSet<Constraint<C>> {
+        let root = self.representative_of(id);
+
         self.type_vars
-            .get(&id)
+            .get(&root)
             .map_or(IndexSet::new(), |type_var| type_var.constraints.clone())
+    }
+
+    /// Gets the current substitute of the given type variable.
+    pub(crate) fn substitute_of(&self, type_variable: TypeVar<C>) -> Option<C::Ty> {
+        let root = self.representative_of(type_variable);
+
+        self.env(root).and_then(|env| env.substitute.clone())
     }
 }
 
@@ -316,6 +369,7 @@ impl<C: Context> Default for Env<C> {
         Self {
             affected_nodes: Vec::new(),
             type_vars: IndexMap::new(),
+            union: RwLock::new(union::UnionFind::default()),
         }
     }
 }
@@ -347,14 +401,11 @@ impl<'ctx, C: Context> Engine<'ctx, C> {
 
     /// Gets the current substitute of the given type variable.
     pub(crate) fn substitute_of(&self, type_variable: TypeVar<C>) -> Option<C::Ty> {
-        self.env
-            .try_read()
-            .unwrap()
-            .env(type_variable)
-            .and_then(|env| env.substitute.clone())
+        self.env.try_read().unwrap().substitute_of(type_variable)
     }
 
     /// Fully resolve a type variable to its concrete type.
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%type_variable), err(Debug))]
     pub(crate) fn resolve(&self, type_variable: TypeVar<C>) -> std::result::Result<C::Ty, Error<C>> {
         let walked = self.walk(self.ctx.as_type(type_variable));
 
