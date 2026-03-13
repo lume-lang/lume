@@ -32,7 +32,7 @@ pub fn unify(tcx: &mut TyInferCtx) -> Result<()> {
     engine.create_constraints()?;
 
     if let Err(errors) = engine.substitute_all() {
-        for error in errors {
+        for error in errors.into_values() {
             handle_error(&engine, error);
         }
     }
@@ -66,7 +66,7 @@ fn handle_error(engine: &Engine<'_, TyInferCtx>, error: crate::engine::Error<TyI
                 diagnostics::InfiniteType {
                     location: engine.ctx.span_of(var.0),
                     type_parameter_span: engine.ctx.span_of(binding.as_node_id()),
-                    type_parameter_name: engine.ctx.name_of(binding.as_node_id()).unwrap(),
+                    type_parameter_name: engine.ctx.hir_path_of_node(binding.as_node_id()).to_string(),
                 }
                 .into(),
             );
@@ -95,7 +95,7 @@ fn handle_error(engine: &Engine<'_, TyInferCtx>, error: crate::engine::Error<TyI
             engine.ctx.dcx().emit(
                 diagnostics::UnresolvedTypeVariable {
                     location: engine.ctx.span_of(type_variable.0),
-                    type_parameter_name: engine.ctx.name_of(binding.as_node_id()).unwrap(),
+                    type_parameter_name: engine.ctx.hir_path_of_node(binding.as_node_id()).to_string(),
                 }
                 .into(),
             );

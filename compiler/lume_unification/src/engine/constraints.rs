@@ -297,7 +297,7 @@ impl<C: Context> Engine<'_, C> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err(Debug))]
     fn resolve_all(&self) -> std::result::Result<(), AggregateError<C>> {
-        let mut errors = AggregateError::new();
+        let mut errors = AggregateError::default();
 
         for type_variable in self.type_variables() {
             let result = || -> std::result::Result<(), Error<C>> {
@@ -318,7 +318,7 @@ impl<C: Context> Engine<'_, C> {
             }();
 
             if let Err(err) = result {
-                errors.push(err);
+                errors.push(type_variable, err);
             }
         }
 
@@ -331,12 +331,12 @@ impl<C: Context> Engine<'_, C> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err(Debug))]
     pub(crate) fn substitute_all(&self) -> std::result::Result<(), AggregateError<C>> {
-        let mut errors = AggregateError::new();
+        let mut errors = AggregateError::default();
 
         // Solve each variable against its constraints...
         for type_variable in self.type_variables() {
             if let Err(err) = self.solve(type_variable) {
-                errors.push(err);
+                errors.push(type_variable, err);
             }
         }
 

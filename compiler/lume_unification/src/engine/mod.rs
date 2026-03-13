@@ -208,7 +208,52 @@ pub enum Error<C: Context> {
     Unsolved(TypeVar<C>),
 }
 
-pub type AggregateError<C> = Vec<Error<C>>;
+pub struct AggregateError<C: Context> {
+    set: IndexMap<TypeVar<C>, Error<C>>,
+}
+
+impl<C: Context> AggregateError<C> {
+    pub fn push(&mut self, type_var: TypeVar<C>, error: Error<C>) {
+        // Prevents multiple errors from the same type variable to be raised.
+        self.set.insert(type_var, error);
+    }
+
+    pub fn extend(&mut self, other: Self) {
+        for (type_var, error) in other.set {
+            if !self.set.contains_key(&type_var) {
+                self.set.insert(type_var, error);
+            }
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.set.is_empty()
+    }
+
+    pub fn into_values(self) -> impl Iterator<Item = Error<C>> {
+        self.set.into_values()
+    }
+}
+
+impl<C: Context> Debug for AggregateError<C> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.set.values().enumerate().try_for_each(|(idx, err)| {
+            Debug::fmt(err, f)?;
+
+            if idx < self.set.len() - 1 {
+                write!(f, ", ")?;
+            }
+
+            Ok(())
+        })
+    }
+}
+
+impl<C: Context> Default for AggregateError<C> {
+    fn default() -> Self {
+        Self { set: IndexMap::new() }
+    }
+}
 
 pub(crate) struct Env<C: Context> {
     /// List of affected nodes, along with a type variable which was introduced

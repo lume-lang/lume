@@ -257,7 +257,9 @@ fn bound_unsatisfied() {
     engine.sub(var, obl2, ID::from_name("T"));
 
     let errors = engine.substitute_all().unwrap_err();
-    assert!(matches!(errors.first().unwrap(), Error::BoundUnsatisfied { .. }));
+    let error = errors.into_values().next().unwrap();
+
+    assert!(matches!(error, Error::BoundUnsatisfied { .. }));
 }
 
 #[test]

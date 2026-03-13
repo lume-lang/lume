@@ -5,10 +5,10 @@ use lume_span::Location;
 #[diagnostic(
     message = "could not infer type",
     code = "LM4139",
-    help = "try specifying the type explicitly"
+    help = "try specifying the type arguments explicitly"
 )]
 pub struct UnresolvedTypeVariable {
-    #[label(source, "could not infer the type for type parameter {type_parameter_name}")]
+    #[label(source, "could not infer the type for {type_parameter_name}")]
     pub location: Location,
 
     pub type_parameter_name: String,
