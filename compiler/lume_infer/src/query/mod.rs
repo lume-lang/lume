@@ -474,7 +474,7 @@ impl TyInferCtx {
                                 panic!("bug!: found sub-pattern inside non-variant pattern");
                             };
 
-                            let field_idx = variant_pat.fields.iter().position(|f| f.id == def_id).unwrap();
+                            let field_idx = variant_pat.fields.iter().position(|&f| f == def_id).unwrap();
                             let field_type = self.type_of_variant_field(&variant_pat.name, field_idx)?;
 
                             return Ok(field_type);
@@ -886,7 +886,7 @@ impl TyInferCtx {
                 }
                 lume_hir::ExpressionKind::If(_) => Ok(Some(TypeRef::bool().with_location(expr.location))),
                 lume_hir::ExpressionKind::Is(expr) => {
-                    if id == expr.pattern.id
+                    if id == expr.pattern
                         && let Some(lume_hir::Node::Pattern(_)) = self.hir_node(id)
                     {
                         return self.type_of(expr.target).map(Some);
@@ -1115,7 +1115,7 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn is_switch_constant(&self, expr: &lume_hir::Switch) -> bool {
         for case in &expr.cases {
-            match &case.pattern.kind {
+            match &self.hir_expect_pattern(case.pattern).kind {
                 lume_hir::PatternKind::Variant(_) => return false,
                 lume_hir::PatternKind::Literal(lit) => {
                     if !matches!(

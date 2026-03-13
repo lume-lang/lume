@@ -2,7 +2,7 @@ use crate::*;
 
 impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn pattern(&mut self, pattern: lume_ast::Pattern) -> Result<lume_hir::Pattern> {
+    pub(super) fn pattern(&mut self, pattern: lume_ast::Pattern) -> Result<NodeId> {
         let id = self.next_node_id();
 
         let pat = match pattern {
@@ -61,13 +61,13 @@ impl LoweringContext<'_> {
             }
         };
 
-        self.map.nodes.insert(id, lume_hir::Node::Pattern(pat.clone()));
+        self.map.nodes.insert(id, lume_hir::Node::Pattern(pat));
 
-        Ok(pat)
+        Ok(id)
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn subpattern(&mut self, pattern: lume_ast::Pattern) -> Result<lume_hir::Pattern> {
+    fn subpattern(&mut self, pattern: lume_ast::Pattern) -> Result<NodeId> {
         match pattern {
             lume_ast::Pattern::Literal(_) | lume_ast::Pattern::Wildcard(_) | lume_ast::Pattern::Variant(_) => {
                 self.pattern(pattern)
@@ -86,10 +86,12 @@ impl LoweringContext<'_> {
                     location,
                 };
 
-                self.current_locals
-                    .define(name.to_string(), lume_hir::VariableSource::Pattern(pattern.clone()));
+                self.map.nodes.insert(id, lume_hir::Node::Pattern(pattern.clone()));
 
-                Ok(pattern)
+                self.current_locals
+                    .define(name.to_string(), lume_hir::VariableSource::Pattern(pattern));
+
+                Ok(id)
             }
         }
     }

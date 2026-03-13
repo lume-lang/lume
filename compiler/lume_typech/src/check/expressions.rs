@@ -565,8 +565,10 @@ impl TyCheckCtx {
     /// since only boolean values can be tested in logical expressions.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn is_expression(&self, expr: &lume_hir::Is) -> Result<()> {
+        let pattern = self.hir().expect_pattern(expr.pattern)?;
+
         let target_ty = self.type_of(expr.target)?;
-        let pattern_ty = self.type_of_pattern(&expr.pattern)?;
+        let pattern_ty = self.type_of_pattern(pattern)?;
 
         if let Err(err) = self.ensure_type_compatibility(&target_ty, &pattern_ty) {
             self.dcx().emit(err);
@@ -656,19 +658,21 @@ impl TyCheckCtx {
         let branch_ty = self.type_of(first_case.branch)?;
 
         for case in &expr.cases {
+            let case_pattern = self.hir().expect_pattern(case.pattern)?;
+
             let case_branch_ty = self.type_of(case.branch)?;
-            let case_pattern_ty = self.type_of_pattern(&case.pattern)?;
+            let case_pattern_ty = self.type_of_pattern(case_pattern)?;
 
-            self.pattern(&case.pattern)?;
+            self.pattern(case_pattern)?;
 
-            if matches!(case.pattern.kind, lume_hir::PatternKind::Variant(_))
+            if matches!(case_pattern.kind, lume_hir::PatternKind::Variant(_))
                 && !self.is_type_visible_to(&case_pattern_ty, expr.id)?
             {
                 let type_def = self.tdb().expect_type(case_pattern_ty.instance_of)?;
 
                 self.dcx().emit(
                     InaccessibleType {
-                        source: case.pattern.location,
+                        source: case_pattern.location,
                         type_def: type_def.name.location,
                         type_name: type_def.name.clone(),
                     }

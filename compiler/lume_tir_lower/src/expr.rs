@@ -322,7 +322,7 @@ impl LowerFunction<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn is_expression(&mut self, expr: &lume_hir::Is) -> Result<lume_tir::ExpressionKind> {
         let target = self.expression(expr.target)?;
-        let pattern = self.pattern(&expr.pattern)?;
+        let pattern = self.pattern(expr.pattern)?;
 
         Ok(lume_tir::ExpressionKind::Is(Box::new(lume_tir::Is {
             id: expr.id,
@@ -449,7 +449,9 @@ impl LowerFunction<'_> {
                 break;
             }
 
-            let pattern = match &case.pattern.kind {
+            let hir_pattern = self.lower.tcx.hir_expect_pattern(case.pattern);
+
+            let pattern = match &hir_pattern.kind {
                 lume_hir::PatternKind::Literal(literal) => {
                     let const_literal = match &literal.literal.kind {
                         lume_hir::LiteralKind::Int(lit) => lume_tir::SwitchConstantLiteral::Integer(lit.value),
@@ -496,9 +498,10 @@ impl LowerFunction<'_> {
         for (idx, case) in expr.cases.iter().enumerate() {
             let is_last_case = idx >= expr.cases.len() - 1;
             let return_type = self.lower.tcx.type_of(case.branch)?;
+            let hir_pattern = self.lower.tcx.hir_expect_pattern(case.pattern);
 
-            let pattern = match &case.pattern.kind {
-                lume_hir::PatternKind::Literal(_) | lume_hir::PatternKind::Variant(_) => self.pattern(&case.pattern)?,
+            let pattern = match &hir_pattern.kind {
+                lume_hir::PatternKind::Literal(_) | lume_hir::PatternKind::Variant(_) => self.pattern(case.pattern)?,
                 lume_hir::PatternKind::Identifier(_) | lume_hir::PatternKind::Wildcard(_) => {
                     let branch = self.expression(case.branch)?;
 

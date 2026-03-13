@@ -1,9 +1,11 @@
 use error_snippet::Result;
+use lume_span::NodeId;
 
 use crate::LowerFunction;
 
 impl LowerFunction<'_> {
-    pub(crate) fn pattern(&mut self, pattern: &lume_hir::Pattern) -> Result<lume_tir::Pattern> {
+    pub(crate) fn pattern(&mut self, pattern_id: NodeId) -> Result<lume_tir::Pattern> {
+        let pattern = self.lower.tcx.hir_expect_pattern(pattern_id);
         let pattern_type = self.lower.tcx.type_of_pattern(pattern)?;
 
         match &pattern.kind {
@@ -38,7 +40,7 @@ impl LowerFunction<'_> {
                 let fields = pat
                     .fields
                     .iter()
-                    .map(|field| self.pattern(field))
+                    .map(|&field| self.pattern(field))
                     .collect::<Result<Vec<_>>>()?;
 
                 Ok(lume_tir::Pattern {

@@ -263,6 +263,25 @@ impl Map {
         })
     }
 
+    /// Gets the pattern with the given ID.
+    pub fn pattern(&self, id: NodeId) -> Option<&Pattern> {
+        if let Node::Pattern(expr) = self.node(id)? {
+            Some(expr)
+        } else {
+            None
+        }
+    }
+
+    /// Gets the pattern with the given ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if no `Pattern` with the given ID was found in the map.
+    pub fn expect_pattern(&self, id: NodeId) -> Result<&Pattern> {
+        self.pattern(id)
+            .ok_or_else(|| SimpleDiagnostic::new(format!("expected pattern with ID {id:?}, found none")).into())
+    }
+
     /// Determines whether the given name has been imported.
     pub fn get_imported(&self, name: &Path) -> Option<&Path> {
         self.imports.iter().find(|i| i.is_name_match(name))

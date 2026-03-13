@@ -291,7 +291,7 @@ fn traverse_expr<V: Visitor>(hir: &Map, visitor: &mut V, expr: &Expression) -> R
         }
         ExpressionKind::Is(expr) => {
             traverse_expr(hir, visitor, hir.expect_expression(expr.target)?)?;
-            traverse_pattern(hir, visitor, &expr.pattern)?;
+            traverse_pattern(hir, visitor, hir.expect_pattern(expr.pattern)?)?;
         }
         ExpressionKind::Member(expr) => {
             traverse_expr(hir, visitor, hir.expect_expression(expr.callee)?)?;
@@ -305,7 +305,7 @@ fn traverse_expr<V: Visitor>(hir: &Map, visitor: &mut V, expr: &Expression) -> R
             traverse_expr(hir, visitor, hir.expect_expression(expr.operand)?)?;
 
             for case in &expr.cases {
-                traverse_pattern(hir, visitor, &case.pattern)?;
+                traverse_pattern(hir, visitor, hir.expect_pattern(case.pattern)?)?;
                 traverse_expr(hir, visitor, hir.expect_expression(case.branch)?)?;
             }
         }
@@ -335,8 +335,8 @@ fn traverse_pattern<V: Visitor>(hir: &Map, visitor: &mut V, pattern: &Pattern) -
         PatternKind::Variant(pat) => {
             traverse_path(hir, visitor, &pat.name)?;
 
-            for field in &pat.fields {
-                traverse_pattern(hir, visitor, field)?;
+            for &field in &pat.fields {
+                traverse_pattern(hir, visitor, hir.expect_pattern(field)?)?;
             }
         }
         PatternKind::Wildcard(_) => {}
