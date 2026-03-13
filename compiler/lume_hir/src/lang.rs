@@ -55,6 +55,10 @@ lang_items! {
     ArrayWithCapacity       "array_with_capacity"       "Array::with_capacity",
     ArrayPush               "array_push"                "Array::push",
 
+    // Iterators
+    Iterator                "iterator"                  "Iterator",
+    Next                    "next"                      "Iterator::next",
+
     // Intrinsic trait definitions
     Add                     "add_trait"                 "Add",
     Sub                     "sub_trait"                 "Sub",

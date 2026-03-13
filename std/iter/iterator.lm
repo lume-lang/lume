@@ -1,0 +1,14 @@
+namespace std::iter
+
+import std (Optional)
+
+![lang_item(name = "iterator")]
+pub trait Iterator<T> {
+    /// Advances the iterator to the next value.
+    ///
+    /// When the iterator is finished has no more values to yield, it returns `None`. Otherwise, it
+    /// returns `Some` with the value. However, implementations may choose to resume iteration after
+    /// the last item or stop the iterator early, so this behaviour should not be relied upon.
+    ![lang_item(name = "next")]
+    fn next(self) -> Optional<T>;
+}
