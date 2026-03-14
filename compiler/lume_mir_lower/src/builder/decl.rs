@@ -431,7 +431,7 @@ impl Builder<'_, '_> {
         if allocate_on_heap {
             self.store_on_heap(value, value_type, location)
         } else {
-            self.store_on_stack(value, location)
+            self.store_on_stack(value, value_type, location)
         }
     }
 

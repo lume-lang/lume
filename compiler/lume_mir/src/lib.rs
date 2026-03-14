@@ -1250,7 +1250,15 @@ impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.kind {
             InstructionKind::Let { register, decl, ty } => write!(f, "let {register}: {ty} = {decl}"),
-            InstructionKind::CreateSlot { slot, ty } => write!(f, "{slot} = slot ({} bytes)", ty.bytesize()),
+            InstructionKind::CreateSlot { slot, ty } => write!(
+                f,
+                "{slot} = slot ({} bytes)",
+                if ty.is_scalar_type() {
+                    ty.bytesize() + POINTER_SIZE
+                } else {
+                    ty.bytesize()
+                }
+            ),
             InstructionKind::Allocate { register, ty, .. } => write!(f, "{register} = alloc {ty}"),
             InstructionKind::Store { target, value } => write!(f, "*{target} = {value}"),
             InstructionKind::StoreSlot { target, value, offset } => write!(f, "*{target}[+x{offset:X}] = {value}"),

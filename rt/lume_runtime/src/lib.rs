@@ -23,6 +23,22 @@ pub unsafe extern "C" fn type_of(metadata: *const ()) -> *const () {
     unsafe { metadata.byte_add(POINTER_SIZE) }
 }
 
+/// Retrieves of the type metadata of the given value.
+///
+/// Since Lume passes the metadata of boxed values in the word before, we can
+/// simply read it and pass it back. The value is guaranteed to be a boxed
+/// value, since `value` is a type parameter.
+#[unsafe(export_name = "std::type_of_value")]
+pub unsafe extern "C" fn type_of_value(value: *const (), _param: *const ()) -> *const () {
+    unsafe {
+        value
+            .byte_sub(POINTER_SIZE)
+            .cast::<*const ()>()
+            .read()
+            .byte_add(POINTER_SIZE)
+    }
+}
+
 /// Finds the method with the given ID on the given type metadata.
 ///
 /// If the method is not found, returns `null` pointer.
