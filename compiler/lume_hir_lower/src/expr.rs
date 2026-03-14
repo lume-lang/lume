@@ -73,7 +73,7 @@ impl LoweringContext<'_> {
     fn expr_array(&mut self, expr: lume_ast::Array) -> Result<lume_hir::Expression> {
         let location = self.location(expr.location);
 
-        let var = {
+        let array_id = {
             let val_id = self.next_node_id();
             let val = lume_hir::Expression::static_call(val_id, ARRAY_NEW_PATH.clone(), vec![], location);
             self.map.nodes.insert(val_id, lume_hir::Node::Expression(val));
@@ -82,21 +82,16 @@ impl LoweringContext<'_> {
             let var = lume_hir::Statement::define_variable(var_id, ARRAY_INTERNAL_NAME.into(), val_id, location);
             self.map.nodes.insert(var_id, lume_hir::Node::Statement(var.clone()));
 
-            var
+            var_id
         };
 
-        let lume_hir::StatementKind::Variable(decl) = &var.kind else {
-            unreachable!()
-        };
-
-        let mut body = vec![var.id];
+        let mut body = vec![array_id];
 
         for value in expr.values {
             let value = self.expression(value)?;
 
             let var_ref_id = self.next_node_id();
-            let var_ref =
-                lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), decl.clone(), location);
+            let var_ref = lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), array_id, location);
             self.map.nodes.insert(var_ref_id, lume_hir::Node::Expression(var_ref));
 
             let val_id = self.next_node_id();
@@ -111,7 +106,7 @@ impl LoweringContext<'_> {
         }
 
         let var_ref_id = self.next_node_id();
-        let var_ref = lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), decl.clone(), location);
+        let var_ref = lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), array_id, location);
         self.map.nodes.insert(var_ref_id, lume_hir::Node::Expression(var_ref));
 
         let res_id = self.next_node_id();

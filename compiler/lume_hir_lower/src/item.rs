@@ -160,14 +160,18 @@ impl LoweringContext<'_> {
             let param_type = self.hir_type(param.param_type)?;
             let location = self.location(param.location);
 
-            parameters.push(lume_hir::Parameter {
+            let parameter = lume_hir::Parameter {
                 id,
                 index,
                 name,
                 param_type,
                 vararg: param.vararg,
                 location,
-            });
+            };
+
+            self.map.nodes.insert(id, lume_hir::Node::Parameter(parameter.clone()));
+
+            parameters.push(parameter);
         }
 
         self.ensure_unique_series(&parameters, |duplicate, existing| {

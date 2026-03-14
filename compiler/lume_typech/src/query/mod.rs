@@ -600,6 +600,7 @@ impl TyCheckCtx {
                 Node::TraitMethodDef(_) | Node::TraitMethodImpl(_) => unreachable!("handled in start of method"),
 
                 Node::TraitImpl(_)
+                | Node::Parameter(_)
                 | Node::Impl(_)
                 | Node::Pattern(_)
                 | Node::Statement(_)
@@ -662,6 +663,11 @@ impl TyCheckCtx {
         match node {
             Node::Type(def) => Ok(def.should_export()),
             Node::Function(_) | Node::Field(_) => Ok(self.is_visible_outside_package(id)),
+            Node::Parameter(_) => {
+                let parent = self.hir_parent_of(node.id()).expect("expected parameter parent");
+
+                self.should_export(parent)
+            }
 
             Node::Method(method) => {
                 if method.visibility != lume_hir::Visibility::Public {

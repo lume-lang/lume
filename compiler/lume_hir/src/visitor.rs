@@ -169,6 +169,7 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
             }
         }
         Node::Field(_)
+        | Node::Parameter(_)
         | Node::Method(_)
         | Node::TraitMethodDef(_)
         | Node::TraitMethodImpl(_)

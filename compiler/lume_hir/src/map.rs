@@ -151,6 +151,26 @@ impl Map {
             .ok_or_else(|| SimpleDiagnostic::new(format!("expected type variable with ID {id:?}, found none")).into())
     }
 
+    /// Gets the parameter with the given ID.
+    pub fn parameter(&self, id: NodeId) -> Option<&Parameter> {
+        if let Node::Parameter(parameter) = self.node(id)? {
+            Some(parameter)
+        } else {
+            None
+        }
+    }
+
+    /// Gets the parameter with the given ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if no `Parameter` with the given ID was found in the
+    /// map.
+    pub fn expect_parameter(&self, id: NodeId) -> Result<&Parameter> {
+        self.parameter(id)
+            .ok_or_else(|| SimpleDiagnostic::new(format!("expected parameter with ID {id:?}, found none")).into())
+    }
+
     /// Gets all the statements within the HIR map.
     pub fn statements(&self) -> impl Iterator<Item = &Statement> {
         self.nodes.values().filter_map(|node| {
