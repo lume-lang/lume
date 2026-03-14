@@ -76,13 +76,6 @@ fn traverse_stmt<V: Visitor>(visitor: &mut V, stmt: &mut Statement) -> Result<()
                 traverse_stmt(visitor, stmt)?;
             }
         }
-        Statement::IteratorLoop(stmt) => {
-            traverse_expr(visitor, &mut stmt.collection)?;
-
-            for stmt in &mut stmt.block.statements {
-                traverse_stmt(visitor, stmt)?;
-            }
-        }
         Statement::Expression(expr) => {
             traverse_expr(visitor, expr)?;
         }

@@ -315,7 +315,6 @@ pub enum Statement {
     Final(Final),
     Return(Return),
     InfiniteLoop(InfiniteLoop),
-    IteratorLoop(IteratorLoop),
     Expression(Expression),
 }
 
@@ -328,7 +327,6 @@ impl Statement {
             Self::Final(stmt) => stmt.location,
             Self::Return(stmt) => stmt.location,
             Self::InfiniteLoop(stmt) => stmt.location,
-            Self::IteratorLoop(stmt) => stmt.location,
             Self::Expression(stmt) => stmt.location(),
         }
     }
@@ -338,7 +336,6 @@ impl Statement {
     pub fn is_returning(&self) -> bool {
         match self {
             Statement::InfiniteLoop(stmt) => stmt.is_returning(),
-            Statement::IteratorLoop(stmt) => stmt.is_returning(),
             Statement::Return(_) | Statement::Continue(_) => true,
             Statement::Final(_) | Statement::Variable(_) | Statement::Break(_) => false,
             Statement::Expression(expr) => expr.is_returning(),
@@ -391,21 +388,6 @@ pub struct InfiniteLoop {
 }
 
 impl InfiniteLoop {
-    /// Determines whether the block returns from the control flow.
-    pub fn is_returning(&self) -> bool {
-        self.block.is_returning()
-    }
-}
-
-#[derive(Hash, Debug, Clone, PartialEq)]
-pub struct IteratorLoop {
-    pub id: NodeId,
-    pub collection: Expression,
-    pub block: Block,
-    pub location: Location,
-}
-
-impl IteratorLoop {
     /// Determines whether the block returns from the control flow.
     pub fn is_returning(&self) -> bool {
         self.block.is_returning()

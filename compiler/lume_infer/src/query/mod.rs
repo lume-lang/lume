@@ -340,7 +340,6 @@ impl TyInferCtx {
     pub fn type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
         match &stmt.kind {
             lume_hir::StatementKind::Final(fin) => self.type_of(fin.value),
-            lume_hir::StatementKind::IteratorLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::InfiniteLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::Return(ret) => self.type_of_return(ret),
             _ => Ok(TypeRef::void().with_location(stmt.location)),
@@ -799,8 +798,7 @@ impl TyInferCtx {
             lume_hir::Node::Statement(stmt) => match &stmt.kind {
                 lume_hir::StatementKind::Variable(_)
                 | lume_hir::StatementKind::Final(_)
-                | lume_hir::StatementKind::Return(_)
-                | lume_hir::StatementKind::IteratorLoop(_) => Ok(true),
+                | lume_hir::StatementKind::Return(_) => Ok(true),
                 lume_hir::StatementKind::Break(_) => unreachable!("break statements cannot have sub expressions"),
                 lume_hir::StatementKind::Continue(_) => unreachable!("continue statements cannot have sub expressions"),
                 lume_hir::StatementKind::InfiniteLoop(_) => unreachable!("infinite loops cannot have sub expressions"),
@@ -947,7 +945,6 @@ impl TyInferCtx {
                 },
                 lume_hir::StatementKind::Return(ret) => self.return_type_within(ret.id).map(Some),
                 lume_hir::StatementKind::InfiniteLoop(_) => unreachable!("infinite loops cannot have sub expressions"),
-                lume_hir::StatementKind::IteratorLoop(_) => todo!("expected_type_of IteratorLoop statement"),
                 lume_hir::StatementKind::Expression(expr) => {
                     let location = self.hir_span_of_node(*expr);
 

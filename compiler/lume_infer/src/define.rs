@@ -764,12 +764,6 @@ impl TyInferCtx {
                 }
             }
             lume_hir::StatementKind::InfiniteLoop(s) => self.define_block_scope(tree, &s.block, stmt_id),
-            lume_hir::StatementKind::IteratorLoop(s) => {
-                self.define_block_scope(tree, &s.block, stmt_id)?;
-                self.define_expr_scope(tree, s.collection, stmt_id)?;
-
-                Ok(())
-            }
             lume_hir::StatementKind::Expression(s) => self.define_expr_scope(tree, *s, stmt_id),
         }
     }

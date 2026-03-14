@@ -224,13 +224,6 @@ fn traverse_stmt<V: Visitor>(hir: &Map, visitor: &mut V, stmt: &Statement) -> Re
                 traverse_stmt(hir, visitor, hir.expect_statement(*stmt)?)?;
             }
         }
-        StatementKind::IteratorLoop(stmt) => {
-            traverse_expr(hir, visitor, hir.expect_expression(stmt.collection)?)?;
-
-            for stmt in &stmt.block.statements {
-                traverse_stmt(hir, visitor, hir.expect_statement(*stmt)?)?;
-            }
-        }
         StatementKind::Expression(expr) => {
             traverse_expr(hir, visitor, hir.expect_expression(*expr)?)?;
         }

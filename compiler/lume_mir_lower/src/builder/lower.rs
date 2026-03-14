@@ -101,7 +101,6 @@ fn statement(builder: &mut Builder<'_, '_>, stmt: &lume_tir::Statement) -> Optio
         lume_tir::Statement::InfiniteLoop(stmt) => {
             infinite_loop(builder, stmt);
         }
-        lume_tir::Statement::IteratorLoop(_) => todo!("mir: iterator loop"),
         lume_tir::Statement::Expression(expr) => return Some(expression(builder, expr)),
     }
 

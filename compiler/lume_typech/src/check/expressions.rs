@@ -152,11 +152,6 @@ impl TyCheckCtx {
                 self.return_statement(ret)
             }
             lume_hir::StatementKind::InfiniteLoop(stmt) => self.define_block_scope(&stmt.block),
-            lume_hir::StatementKind::IteratorLoop(stmt) => {
-                self.expression(stmt.collection)?;
-
-                self.define_block_scope(&stmt.block)
-            }
             lume_hir::StatementKind::Expression(expr) => self.expression(*expr),
             lume_hir::StatementKind::Break(_) | lume_hir::StatementKind::Continue(_) => Ok(()),
         }
