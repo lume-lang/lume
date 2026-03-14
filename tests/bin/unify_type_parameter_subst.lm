@@ -6,9 +6,7 @@ fn main() {
 
     loop {
         switch std::iter::Iterator::next(iter) {
-            std::Optional<Int32>::Some(value) => {
-                std::io::println("is_some() => {0}", value.to_string());
-            },
+            std::Optional<Int32>::Some(value) => { },
             std::Optional<Int32>::None => {
                 break;
             },
