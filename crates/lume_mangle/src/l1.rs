@@ -84,6 +84,7 @@ pub fn mangled_name_of(tcx: &TyCheckCtx, id: NodeId) -> Result<String> {
             Err(SimpleDiagnostic::new("cannot get mangled name of trait implementation").into())
         }
         lume_hir::Node::Field(_) => Err(SimpleDiagnostic::new("cannot get mangled name of field").into()),
+        lume_hir::Node::Parameter(_) => Err(SimpleDiagnostic::new("cannot get mangled name of parameter").into()),
         lume_hir::Node::Pattern(_) => Err(SimpleDiagnostic::new("cannot get mangled name of pattern").into()),
         lume_hir::Node::Statement(_) => Err(SimpleDiagnostic::new("cannot get mangled name of statement").into()),
         lume_hir::Node::Expression(_) => Err(SimpleDiagnostic::new("cannot get mangled name of expression").into()),

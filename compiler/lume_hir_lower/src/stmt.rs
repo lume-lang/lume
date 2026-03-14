@@ -56,10 +56,8 @@ impl LoweringContext<'_> {
     pub(super) fn isolated_block(&mut self, expr: lume_ast::Block, params: &[lume_hir::Parameter]) -> lume_hir::Block {
         lume_hir::with_boundary!(self.current_locals, || {
             for param in params {
-                self.current_locals.define(
-                    param.name.to_string(),
-                    lume_hir::VariableSource::Parameter(param.clone()),
-                );
+                self.current_locals
+                    .define(param.name.to_string(), lume_hir::VariableSource::Parameter(param.id));
             }
 
             let id = self.next_node_id();
@@ -130,7 +128,7 @@ impl LoweringContext<'_> {
         };
 
         self.current_locals
-            .define(name.to_string(), lume_hir::VariableSource::Variable(decl.clone()));
+            .define(name.to_string(), lume_hir::VariableSource::Variable(decl.id));
 
         let statement = lume_hir::Statement {
             id,

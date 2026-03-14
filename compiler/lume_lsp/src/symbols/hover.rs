@@ -256,11 +256,7 @@ pub(crate) fn hover_content_of_variable_ref(package: &CheckedPackage, id: NodeId
         return Ok(String::new());
     };
 
-    let variable_type = match &variable_ref.reference {
-        lume_hir::VariableSource::Variable(var_decl) => package.tcx.type_of_vardecl(var_decl)?,
-        lume_hir::VariableSource::Parameter(param) => package.tcx.mk_type_ref_from(&param.param_type, id)?,
-        lume_hir::VariableSource::Pattern(pattern) => package.tcx.type_of_pattern(pattern)?,
-    };
+    let variable_type = package.tcx.type_of(variable_ref.id)?;
 
     let variable_name = variable_ref.name.as_str();
     let variable_type_name = package.tcx.new_named_type(&variable_type, true)?;

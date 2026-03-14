@@ -30,7 +30,7 @@ impl LoweringContext<'_> {
                 };
 
                 self.current_locals
-                    .define(name.to_string(), lume_hir::VariableSource::Pattern(pattern.clone()));
+                    .define(name.to_string(), lume_hir::VariableSource::Pattern(pattern.id));
 
                 pattern
             }
@@ -86,10 +86,10 @@ impl LoweringContext<'_> {
                     location,
                 };
 
-                self.map.nodes.insert(id, lume_hir::Node::Pattern(pattern.clone()));
+                self.map.nodes.insert(id, lume_hir::Node::Pattern(pattern));
 
                 self.current_locals
-                    .define(name.to_string(), lume_hir::VariableSource::Pattern(pattern));
+                    .define(name.to_string(), lume_hir::VariableSource::Pattern(id));
 
                 Ok(id)
             }

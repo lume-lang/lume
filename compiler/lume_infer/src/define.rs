@@ -638,8 +638,12 @@ impl TyInferCtx {
                 assert_eq!(existing, parent);
             }
 
-            for &type_param in &trait_def.type_parameters {
+            for &type_param in &method.signature.type_parameters {
                 tree.insert(type_param, method.id);
+            }
+
+            for parameter in &method.signature.parameters {
+                tree.insert(parameter.id, method.id);
             }
 
             if let Some(block) = &method.block {
@@ -670,6 +674,10 @@ impl TyInferCtx {
                 tree.insert(type_param, method.id);
             }
 
+            for parameter in &method.signature.parameters {
+                tree.insert(parameter.id, method.id);
+            }
+
             if let Some(block) = &method.block {
                 self.define_block_scope(tree, block, method.id)?;
             }
@@ -698,6 +706,10 @@ impl TyInferCtx {
                 tree.insert(type_param, method.id);
             }
 
+            for parameter in &method.parameters {
+                tree.insert(parameter.id, method.id);
+            }
+
             if let Some(block) = &method.block {
                 self.define_block_scope(tree, block, method.id)?;
             }
@@ -715,6 +727,10 @@ impl TyInferCtx {
 
         for &type_param in &func.signature.type_parameters {
             tree.insert(type_param, parent);
+        }
+
+        for parameter in &func.signature.parameters {
+            tree.insert(parameter.id, parent);
         }
 
         if let Some(block) = &func.block {

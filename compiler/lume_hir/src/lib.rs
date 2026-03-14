@@ -27,6 +27,7 @@ pub enum Node {
     TraitImpl(TraitImplementation),
     Impl(Implementation),
     Field(Field),
+    Parameter(Parameter),
     Method(MethodDefinition),
     TraitMethodDef(TraitMethodDefinition),
     TraitMethodImpl(TraitMethodImplementation),
@@ -52,6 +53,7 @@ impl Node {
             Self::TraitImpl(n) => n.id,
             Self::Impl(n) => n.id,
             Self::Field(def) => def.id,
+            Self::Parameter(def) => def.id,
             Self::Method(def) => def.id,
             Self::TraitMethodDef(def) => def.id,
             Self::TraitMethodImpl(def) => def.id,
@@ -69,6 +71,7 @@ impl Node {
             Self::TraitImpl(n) => n.location,
             Self::Impl(n) => n.location,
             Self::Field(n) => n.location,
+            Self::Parameter(n) => n.location,
             Self::Method(n) => n.location,
             Self::TraitMethodDef(n) => n.location,
             Self::TraitMethodImpl(n) => n.location,
@@ -86,6 +89,7 @@ impl Node {
             | Self::TraitImpl(_)
             | Self::Impl(_) => true,
             Self::Field(_)
+            | Self::Parameter(_)
             | Self::Type(TypeDefinition::TypeParameter(_))
             | Self::Method(_)
             | Self::TraitMethodDef(_)
@@ -107,6 +111,7 @@ impl Node {
             Self::TraitImpl(_) => NodeType::TraitImpl,
             Self::Impl(_) => NodeType::Impl,
             Self::Field(_) => NodeType::Field,
+            Self::Parameter(_) => NodeType::Parameter,
             Self::Method(_) => NodeType::Method,
             Self::TraitMethodDef(_) => NodeType::TraitMethodDef,
             Self::TraitMethodImpl(_) => NodeType::TraitMethodImpl,
@@ -128,6 +133,7 @@ pub enum NodeType {
     TraitImpl,
     Impl,
     Field,
+    Parameter,
     Method,
     TraitMethodDef,
     TraitMethodImpl,
@@ -1268,7 +1274,7 @@ impl Expression {
     }
 
     /// Creates a new [`Expression`] with a [`Variable`] value.
-    pub fn variable(id: NodeId, name: Identifier, decl: VariableDeclaration, location: Location) -> Self {
+    pub fn variable(id: NodeId, name: Identifier, decl: NodeId, location: Location) -> Self {
         Self {
             id,
             location,
@@ -1799,21 +1805,11 @@ pub struct Variable {
     pub location: Location,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Copy, Clone, PartialEq)]
 pub enum VariableSource {
-    Parameter(Parameter),
-    Variable(VariableDeclaration),
-    Pattern(Pattern),
-}
-
-impl WithLocation for VariableSource {
-    fn location(&self) -> Location {
-        match self {
-            Self::Parameter(pat) => pat.location,
-            Self::Variable(pat) => pat.location,
-            Self::Pattern(pat) => pat.location,
-        }
-    }
+    Parameter(NodeId),
+    Variable(NodeId),
+    Pattern(NodeId),
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]

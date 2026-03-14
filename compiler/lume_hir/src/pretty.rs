@@ -86,6 +86,7 @@ impl PrettyPrint for Node {
             Self::TraitImpl(node) => node.pretty_fmt(map, f),
             Self::Impl(node) => node.pretty_fmt(map, f),
             Self::Field(node) => node.pretty_fmt(map, f),
+            Self::Parameter(node) => node.pretty_fmt(map, f),
             Self::Method(node) => node.pretty_fmt(map, f),
             Self::TraitMethodDef(node) => node.pretty_fmt(map, f),
             Self::TraitMethodImpl(node) => node.pretty_fmt(map, f),
@@ -698,11 +699,11 @@ impl PrettyPrint for Variable {
 }
 
 impl PrettyPrint for VariableSource {
-    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn pretty_fmt(&self, _map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Parameter(src) => src.pretty_fmt(map, f),
-            Self::Variable(src) => src.pretty_fmt(map, f),
-            Self::Pattern(src) => src.pretty_fmt(map, f),
+            Self::Parameter(src) => write!(f, "Parameter({src})"),
+            Self::Variable(src) => write!(f, "Variable({src})"),
+            Self::Pattern(src) => write!(f, "Pattern({src})"),
         }
     }
 }

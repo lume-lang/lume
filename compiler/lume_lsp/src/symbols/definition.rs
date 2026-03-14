@@ -65,10 +65,10 @@ pub(crate) fn definition_of(engine: &Engine, location: Location) -> Option<Locat
                 return None;
             };
 
-            match &variable_ref.reference {
-                lume_hir::VariableSource::Parameter(param) => Some(param.name.location),
-                lume_hir::VariableSource::Variable(var_decl) => Some(var_decl.name.location),
-                lume_hir::VariableSource::Pattern(pattern) => Some(pattern.location),
+            match variable_ref.reference {
+                lume_hir::VariableSource::Parameter(id)
+                | lume_hir::VariableSource::Variable(id)
+                | lume_hir::VariableSource::Pattern(id) => Some(package.tcx.hir_span_of_node(id)),
             }
         }
         SymbolKind::VariableDeclaration { .. } | SymbolKind::Field { .. } | SymbolKind::Literal { .. } => None,

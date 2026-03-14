@@ -560,10 +560,14 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all)]
     fn variable_expression(&self, expr: &lume_hir::Variable) -> lume_tir::ExpressionKind {
-        let reference = match &expr.reference {
-            lume_hir::VariableSource::Parameter(param) => VariableId(param.index),
-            lume_hir::VariableSource::Variable(var) => self.variables.mapping_of(var.id).unwrap(),
-            lume_hir::VariableSource::Pattern(pat) => self.variables.mapping_of(pat.id).unwrap(),
+        let reference = match expr.reference {
+            lume_hir::VariableSource::Parameter(param) => {
+                let parameter = self.lower.tcx.hir().expect_parameter(param).unwrap();
+
+                VariableId(parameter.index)
+            }
+            lume_hir::VariableSource::Variable(var) => self.variables.mapping_of(var).unwrap(),
+            lume_hir::VariableSource::Pattern(pat) => self.variables.mapping_of(pat).unwrap(),
         };
 
         let source = match expr.reference {

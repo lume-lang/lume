@@ -179,9 +179,26 @@ impl TyInferCtx {
                 None => TypeRef::void().with_location(switch.location),
             },
             lume_hir::ExpressionKind::Variable(var) => match &var.reference {
-                lume_hir::VariableSource::Parameter(param) => self.mk_type_ref_from(&param.param_type, var.id)?,
-                lume_hir::VariableSource::Variable(var) => self.type_of_vardecl(var)?,
-                lume_hir::VariableSource::Pattern(pat) => self.type_of_pattern(pat)?,
+                lume_hir::VariableSource::Parameter(param) => {
+                    let lume_hir::Node::Parameter(parameter) = self.hir.expect_node(*param)? else {
+                        unreachable!();
+                    };
+
+                    self.mk_type_ref_from(&parameter.param_type, var.id)?
+                }
+                lume_hir::VariableSource::Variable(var_id) => {
+                    let lume_hir::StatementKind::Variable(var_decl) = &self.hir().expect_statement(*var_id)?.kind
+                    else {
+                        unreachable!()
+                    };
+
+                    self.type_of_vardecl(var_decl)?
+                }
+                lume_hir::VariableSource::Pattern(pat) => {
+                    let pattern = self.hir.expect_pattern(*pat)?;
+
+                    self.type_of_pattern(pattern)?
+                }
             },
             lume_hir::ExpressionKind::Variant(var) => {
                 let enum_segment = var.name.clone().parent().unwrap();
@@ -1094,8 +1111,8 @@ impl TyInferCtx {
         {
             for expr in self.hir.expressions() {
                 if let lume_hir::ExpressionKind::Variable(var_ref) = &expr.kind
-                    && let lume_hir::VariableSource::Variable(var_source) = &var_ref.reference
-                    && var_source.id == decl.id
+                    && let lume_hir::VariableSource::Variable(var_source) = var_ref.reference
+                    && var_source == decl.id
                 {
                     refs.push(expr.id);
                 }
@@ -1197,6 +1214,7 @@ impl TyInferCtx {
             | Node::TraitMethodDef(_)
             | Node::TraitMethodImpl(_)
             | Node::Impl(_)
+            | Node::Parameter(_)
             | Node::Pattern(_)
             | Node::Statement(_)
             | Node::Expression(_)
