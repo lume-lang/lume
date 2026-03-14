@@ -193,6 +193,30 @@ impl Function {
     pub fn name_as_str(&self) -> String {
         format!("{:+}", self.name)
     }
+
+    pub fn add_parameter<N: Into<String>>(
+        &mut self,
+        name: N,
+        ty: TypeRef,
+        variable: VariableId,
+        kind: ParameterKind,
+        location: Location,
+    ) -> usize {
+        let name = name.into();
+        let index = self.parameters.len();
+
+        self.parameters.push(Parameter {
+            index,
+            var: variable,
+            name: lume_span::Internable::intern(&name),
+            ty,
+            vararg: false,
+            kind,
+            location,
+        });
+
+        index
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -208,6 +232,7 @@ pub struct Parameter {
     pub name: Interned<String>,
     pub ty: TypeRef,
     pub vararg: bool,
+    pub kind: ParameterKind,
     pub location: Location,
 }
 
@@ -225,6 +250,19 @@ impl PartialEq for Parameter {
     fn eq(&self, other: &Self) -> bool {
         self.ty == other.ty
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ParameterKind {
+    /// Regular function parameter
+    Regular,
+
+    /// Pointer to type metadata of the type argument for
+    /// the given type parameter.
+    TypeMetadata { type_parameter_id: NodeId },
+
+    /// Type argument for dynamic dispatch receiver
+    DynamicAnchor,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

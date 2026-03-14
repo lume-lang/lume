@@ -70,10 +70,19 @@ impl<'tcx> ModuleTransformer<'tcx> {
         for param in &func.parameters {
             let param_ty = lower_type(&self.mcx, &param.ty);
 
+            let kind = match param.kind {
+                lume_tir::ParameterKind::Regular => lume_mir::ParameterKind::Regular,
+                lume_tir::ParameterKind::TypeMetadata { type_parameter_id } => {
+                    lume_mir::ParameterKind::TypeMetadata { type_parameter_id }
+                }
+                lume_tir::ParameterKind::DynamicAnchor => lume_mir::ParameterKind::DynamicAnchor,
+            };
+
             signature.parameters.push(lume_mir::Parameter {
                 name: param.name,
                 ty: param_ty,
                 type_ref: param.ty.clone(),
+                kind,
                 location: param.location,
             });
 

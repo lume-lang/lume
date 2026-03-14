@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 use lume_errors::Result;
-use lume_span::Internable;
-use lume_tir::{Call, ExpressionKind, Function, Parameter, VariableId};
+use lume_span::{Internable, NodeId};
+use lume_tir::{Call, ExpressionKind, Function, VariableId};
 use lume_type_metadata::*;
 use lume_typech::TyCheckCtx;
 use lume_typech::dispatch::DispatchTypeSource;
@@ -9,34 +9,24 @@ use lume_types::TypeRef;
 
 pub(crate) struct ReificationPass<'tcx> {
     tcx: &'tcx TyCheckCtx,
+    dyna: IndexMap<NodeId, FnTypeParameters>,
+}
 
-    dyn_type_params: IndexMap<TypeRef, usize>,
-    dyn_instance_param: Option<VariableId>,
+#[derive(Default)]
+struct FnTypeParameters {
+    /// Parameter indices of the keyed type parameters.
+    pub dyn_params: IndexMap<NodeId, usize>,
+
+    /// Optional variable ID of the dynamic anchor parameter.
+    pub dyn_anchor: Option<VariableId>,
 }
 
 impl<'tcx> ReificationPass<'tcx> {
     pub fn new(tcx: &'tcx TyCheckCtx) -> Self {
         Self {
             tcx,
-            dyn_type_params: IndexMap::new(),
-            dyn_instance_param: None,
+            dyna: IndexMap::new(),
         }
-    }
-
-    /// Executes the pass over the given function.
-    pub fn execute(&mut self, func: &mut Function) -> Result<()> {
-        self.add_metadata_params(func);
-
-        if self.tcx.is_callable_dynamic(func.id) {
-            self.add_dynamic_instance_parameter(func);
-        }
-
-        lume_tir::traverse(func, self)?;
-
-        self.dyn_type_params.clear();
-        self.dyn_instance_param = None;
-
-        Ok(())
     }
 }
 
@@ -45,13 +35,13 @@ impl ReificationPass<'_> {
     /// the given type parameters on the function.
     ///
     /// In effect, a function like this:
-    /// ```rs
+    /// ```lm
     /// fn identity<T>(value: T) -> T {
     ///     return value;
     /// }
     /// ```
     /// gets turned into:
-    /// ```rs
+    /// ```lm
     /// fn identity<T>(value: T, $T: std::Type) -> T {
     ///     return value;
     /// }
@@ -59,24 +49,105 @@ impl ReificationPass<'_> {
     ///
     /// **Note:** the `$T` parameter is not accessible within the function body
     /// and is only shown for presentation purposes.
-    fn add_metadata_params(&mut self, func: &mut Function) {
-        for type_param in &func.type_params {
-            let name = format!("${}", type_param.name).intern();
-            let ty = self.tcx.std_type();
+    pub(crate) fn add_metadata_parameters(&mut self, func: &mut Function) {
+        let mut dyna = FnTypeParameters::default();
 
-            let index = func.parameters.len();
+        for type_param in func.type_params.clone() {
+            let index = func.add_parameter(
+                format!("${}", type_param.name),
+                self.tcx.std_type(),
+                type_param.var,
+                lume_tir::ParameterKind::TypeMetadata {
+                    type_parameter_id: type_param.id,
+                },
+                func.location,
+            );
 
-            func.parameters.push(Parameter {
+            tracing::info!(
+                func = func.name_as_str(),
+                type_parameter = type_param.name,
                 index,
-                var: type_param.var,
-                name,
-                ty,
-                vararg: false,
-                location: func.location,
-            });
+                "add_metadata_type_parameter",
+            );
 
-            self.dyn_type_params.insert(type_param.type_ref.clone(), index);
+            dyna.dyn_params.insert(type_param.id, index);
         }
+
+        if self.tcx.is_callable_dynamic(func.id) {
+            dyna.dyn_anchor = Some(self.add_dynamic_instance_parameter(func));
+        }
+
+        assert!(self.dyna.insert(func.id, dyna).is_none());
+    }
+
+    /// Add a new parameter to the given function, which defines the dynamic
+    /// instance type on which the dynamic dispatch is performed.
+    ///
+    /// In effect, a trait method like this:
+    /// ```lm
+    /// trait Default {
+    ///     fn default() -> Self;
+    /// }
+    /// ```
+    /// gets turned into:
+    /// ```lm
+    /// trait Default {
+    ///     fn default($dyn: std::Type) -> Self {
+    ///         // use $dyn to find the matching method implementation,
+    ///         // which is lowered in the MIR.
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// **Note:** the `$T` parameter is not accessible within the function body
+    /// and is only shown for presentation purposes.
+    fn add_dynamic_instance_parameter(&mut self, func: &mut Function) -> VariableId {
+        let anchor_variable_id = VariableId(usize::MAX);
+
+        func.add_parameter(
+            "$_dyn",
+            self.tcx.std_type(),
+            anchor_variable_id,
+            lume_tir::ParameterKind::DynamicAnchor,
+            func.location,
+        );
+
+        anchor_variable_id
+    }
+}
+
+impl ReificationPass<'_> {
+    /// For each function call to a function which was altered by
+    /// [`Self::add_metadata_parameters()`], add matching metadata arguments
+    /// to each call site.
+    ///
+    /// Transforms call sites such as this:
+    /// ```lm
+    /// fn foo<T>($T: std::Type) -> T {
+    ///     return T::default();
+    /// }
+    ///
+    /// fn foo_i32() -> Int32 {
+    ///     return Int32::default();
+    /// }
+    /// ```
+    /// into this:
+    /// ```lm
+    /// fn foo<T>($T: std::Type) -> T {
+    ///     return Default::default($T);
+    /// }
+    ///
+    /// fn foo_i32() -> Int32 {
+    ///     return Default::default(std::metadata_of<Int32>());
+    /// }
+    /// ```
+    ///
+    /// **Note:** the `$T` parameter is not accessible within the function body
+    /// and is only shown for presentation purposes.
+    pub fn add_metadata_arguments(&mut self, func: &mut Function) -> Result<()> {
+        lume_tir::traverse(func, self)?;
+
+        Ok(())
     }
 
     fn add_metadata_arguments_on_call(&mut self, call: &mut Call) {
@@ -133,50 +204,14 @@ impl ReificationPass<'_> {
 }
 
 impl ReificationPass<'_> {
-    /// Add a new parameter to the given function, which defines the dynamic
-    /// instance type on which the dynamic dispatch is performed.
-    ///
-    /// In effect, a trait method like this:
-    /// ```lm
-    /// trait Default {
-    ///     fn default() -> Self;
-    /// }
-    /// ```
-    /// gets turned into:
-    /// ```lm
-    /// trait Default {
-    ///     fn default($dyn: std::Type) -> Self {
-    ///         // use $dyn to find the matching method implementation,
-    ///         // which is lowered in the MIR.
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// **Note:** the `$T` parameter is not accessible within the function body
-    /// and is only shown for presentation purposes.
-    fn add_dynamic_instance_parameter(&mut self, func: &mut Function) {
-        let name = String::from("$_dyn").intern();
-        let ty = self.tcx.std_type();
-        let var = VariableId(usize::MAX);
-        let index = func.parameters.len();
-
-        func.parameters.push(Parameter {
-            index,
-            var,
-            name,
-            ty,
-            vararg: false,
-            location: func.location,
-        });
-
-        self.dyn_instance_param = Some(var);
-    }
-
     /// Complement of [`add_dynamic_instance_parameter`], this methods adds the
     /// corresponding argument to the given function call, matching the function
     /// which it calls.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn add_dynamic_instance_argument(&mut self, call: &mut Call) -> Result<()> {
+        let current_fn = self.tcx.hir_parent_callable(call.id).unwrap();
+        let fn_dynamic = self.dyna.get(&current_fn.id()).expect("expected dynamic map to exist");
+
         let argument = match self.tcx.dynamic_argument_source_of_call(call.id, call.function)? {
             DispatchTypeSource::CreateFrom(source_type) => {
                 tracing::info!(
@@ -202,7 +237,7 @@ impl ReificationPass<'_> {
                     "inherit dispatch type from parent dynamic parameter",
                 );
 
-                let dyn_param_ref = self.dyn_instance_param.expect("dynamic instance parameter set");
+                let dyn_param_ref = fn_dynamic.dyn_anchor.expect("dynamic anchor parameter set");
 
                 self.inherited_metadata_arg(call, String::from("$_dyn"), dyn_param_ref)
             }
@@ -217,9 +252,9 @@ impl ReificationPass<'_> {
                     "inherit dispatch type from parent type parameter",
                 );
 
-                let dyn_param_idx = *self
-                    .dyn_type_params
-                    .get(&type_param)
+                let dyn_param_idx = *fn_dynamic
+                    .dyn_params
+                    .get(&type_param.instance_of)
                     .expect("dynamic instance parameter set");
 
                 self.inherited_metadata_arg(call, format!("${dyn_param_idx}"), lume_tir::VariableId(dyn_param_idx))

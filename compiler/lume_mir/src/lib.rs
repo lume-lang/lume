@@ -157,6 +157,7 @@ pub struct Parameter {
     pub name: Interned<String>,
     pub ty: Type,
     pub type_ref: TypeRef,
+    pub kind: ParameterKind,
     pub location: Location,
 }
 
@@ -164,6 +165,19 @@ impl std::fmt::Display for Parameter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{}: {}", self.name, self.ty))
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ParameterKind {
+    /// Regular function parameter
+    Regular,
+
+    /// Pointer to type metadata of the type argument for
+    /// the given type parameter.
+    TypeMetadata { type_parameter_id: NodeId },
+
+    /// Type argument for dynamic dispatch receiver
+    DynamicAnchor,
 }
 
 /// Defines a function which is declared within the MIR module map.

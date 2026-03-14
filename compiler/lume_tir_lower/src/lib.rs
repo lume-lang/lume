@@ -4,9 +4,8 @@ pub(crate) mod generic;
 pub(crate) mod metadata;
 pub(crate) mod path;
 pub(crate) mod pattern;
+pub(crate) mod reification;
 pub(crate) mod stmt;
-
-pub mod reify;
 
 use error_snippet::Result;
 use indexmap::IndexMap;
@@ -53,10 +52,14 @@ impl<'tcx> Lower<'tcx> {
         let metadata_builder = metadata::MetadataBuilder::new(self.tcx);
         self.ir.metadata = metadata_builder.build_metadata()?;
 
-        let mut reification_pass = reify::ReificationPass::new(self.tcx);
+        let mut reification_pass = reification::ReificationPass::new(self.tcx);
 
         for function in self.ir.functions.values_mut() {
-            reification_pass.execute(function)?;
+            reification_pass.add_metadata_parameters(function);
+        }
+
+        for function in self.ir.functions.values_mut() {
+            reification_pass.add_metadata_arguments(function)?;
         }
 
         Ok(self.ir)
@@ -312,6 +315,7 @@ impl<'tcx> LowerFunction<'tcx> {
                     name: param.name.intern(),
                     ty: param.ty.clone(),
                     vararg: param.vararg,
+                    kind: lume_tir::ParameterKind::Regular,
                     location: param.location,
                 }
             })
