@@ -1,0 +1,5 @@
+fn default<T>() { }
+
+fn foo() {
+    default<Int32>();
+}

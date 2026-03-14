@@ -1,0 +1,20 @@
+fn "Default::default" ($_dyn: ptr std::Type #0) -> ptr void {
+B0:
+    let #1: u64 = call std::find_method_on(1751523730200737563_u64, #0)
+    let #2: bool = ==(#1, 0_u64)
+    if #2 goto B2 else B1(#1)
+B1(#4):  B0
+    let #5: ptr void = call indirect #4()
+    mark object(#4)
+    mark object(#5)
+    return #5
+B2:  B0
+    unreachable
+}
+
+fn "foo" ($T: ptr std::Type #0) -> void {
+B0:
+    let #1: ptr void = call Default::default(#0)
+    mark object(#1)
+    return
+}

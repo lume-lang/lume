@@ -1,0 +1,21 @@
+fn "Default::default_of" ($T: ptr std::Type #0, $_dyn: ptr std::Type #1) -> box void {
+B0:
+    let #2: u64 = call std::find_method_on(1751523730200737563_u64, #1)
+    let #3: bool = ==(#2, 0_u64)
+    if #3 goto B2 else B1(#2, #0)
+B1(#6, #7):  B0
+    let #8: box void = call indirect #6(#7)
+    mark object(#6)
+    return #8
+B2:  B0
+    unreachable
+}
+
+fn "foo" ($T: ptr std::Type #0) -> void {
+B0:
+    let #1: metadata std::Int32 = metadata std::Int32()
+    let #2: box i32 = call Default::default_of(#1, #0)
+    let #3: box i32 = untagged #2
+    let #4: i32 = *#3
+    return
+}

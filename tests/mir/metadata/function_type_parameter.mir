@@ -1,0 +1,11 @@
+fn "default" ($T: ptr std::Type #0) -> void {
+B0:
+    return
+}
+
+fn "foo" () -> void {
+B0:
+    let #0: metadata std::Int32 = metadata std::Int32()
+    let #1: void = call default(#0)
+    return
+}
