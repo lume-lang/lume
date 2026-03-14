@@ -456,7 +456,7 @@ pub enum ExpressionKind {
     Bitcast(Box<Bitcast>),
     Construct(Box<Construct>),
     Call(Box<Call>),
-    If(If),
+    If(Box<If>),
     IntrinsicCall(Box<IntrinsicCall>),
     Is(Box<Is>),
     Literal(Literal),

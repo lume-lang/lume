@@ -218,12 +218,12 @@ impl LowerFunction<'_> {
         let primary_case = expr.cases.first().unwrap();
         let return_type = self.lower.tcx.type_of_condition_scope(primary_case)?;
 
-        Ok(lume_tir::ExpressionKind::If(lume_tir::If {
+        Ok(lume_tir::ExpressionKind::If(Box::new(lume_tir::If {
             id: expr.id,
             cases,
             return_type,
             location: expr.location,
-        }))
+        })))
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
@@ -550,12 +550,12 @@ impl LowerFunction<'_> {
             cases.push(conditional);
         }
 
-        Ok(lume_tir::ExpressionKind::If(lume_tir::If {
+        Ok(lume_tir::ExpressionKind::If(Box::new(lume_tir::If {
             id: NodeId::empty(expr.id.package),
             cases,
             return_type: switch_ret_type,
             location: expr.location,
-        }))
+        })))
     }
 
     #[tracing::instrument(level = "TRACE", skip_all)]

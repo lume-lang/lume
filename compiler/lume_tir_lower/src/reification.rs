@@ -235,7 +235,7 @@ impl ReificationPass<'_> {
     /// adds the corresponding argument to the given function call, matching
     /// the function which it calls.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn add_dynamic_instance_argument(&mut self, call: &mut Call) -> Result<()> {
+    fn add_dynamic_instance_argument(&self, call: &mut Call) -> Result<()> {
         let current_fn = self.tcx.hir_parent_callable(call.id).unwrap();
         let fn_dynamic = self.dyna.get(&current_fn.id()).expect("expected dynamic map to exist");
 
