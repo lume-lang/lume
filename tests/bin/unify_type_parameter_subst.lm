@@ -2,7 +2,7 @@
 
 fn main() {
     let array = [1, 2, 3, 4, 5];
-    let iter = array.iter();
+    let iter = array.as_iter();
 
     loop {
         switch std::iter::Iterator::next(iter) {
