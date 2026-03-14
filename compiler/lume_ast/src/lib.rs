@@ -1,3 +1,6 @@
+#[macro_use]
+pub mod macros;
+
 use std::hash::Hash;
 
 #[derive(Debug, Clone)]
@@ -92,6 +95,15 @@ impl<'ast> Identifier<'ast> {
     #[inline]
     pub fn is_all_upper(&self) -> bool {
         self.name.chars().all(|c: char| c == '_' || c.is_ascii_uppercase())
+    }
+}
+
+impl<'ast> From<&'ast str> for Identifier<'ast> {
+    fn from(name: &'ast str) -> Self {
+        Identifier {
+            name,
+            location: Location(0..0),
+        }
     }
 }
 
@@ -276,13 +288,15 @@ pub enum PathSegment<'ast> {
 impl<'ast> PathSegment<'ast> {
     /// Creates a new namespace segment, with the given name.
     #[inline]
-    pub fn namespace(name: Identifier<'ast>) -> Self {
-        Self::Namespace { name }
+    pub fn namespace<N: Into<Identifier<'ast>>>(name: N) -> Self {
+        Self::Namespace { name: name.into() }
     }
 
     /// Creates a new type segment, with the given name.
     #[inline]
-    pub fn ty(name: Identifier<'ast>) -> Self {
+    pub fn ty<N: Into<Identifier<'ast>>>(name: N) -> Self {
+        let name = name.into();
+
         Self::Type {
             location: name.location.clone(),
             name,
@@ -292,11 +306,24 @@ impl<'ast> PathSegment<'ast> {
 
     /// Creates a new callable segment, with the given name.
     #[inline]
-    pub fn callable(name: Identifier<'ast>) -> Self {
+    pub fn callable<N: Into<Identifier<'ast>>>(name: N) -> Self {
+        let name = name.into();
+
         Self::Callable {
             location: name.location.clone(),
             name,
             bound_types: Vec::new(),
+        }
+    }
+
+    /// Creates a new variant segment, with the given name.
+    #[inline]
+    pub fn variant<N: Into<Identifier<'ast>>>(name: N) -> Self {
+        let name = name.into();
+
+        Self::Variant {
+            location: name.location.clone(),
+            name,
         }
     }
 
@@ -381,6 +408,18 @@ pub struct Path<'ast> {
 node_location!(Path<'_>);
 
 impl<'ast> Path<'ast> {
+    pub fn new(root: Vec<PathSegment<'ast>>, name: PathSegment<'ast>) -> Self {
+        let mut location = name.location().clone();
+
+        location.0.start = root
+            .iter()
+            .map(|r| r.name().location.start())
+            .min()
+            .unwrap_or(location.0.start);
+
+        Self { root, name, location }
+    }
+
     #[must_use]
     pub fn rooted(name: PathSegment<'ast>) -> Self {
         let location = name.location().clone();
@@ -393,12 +432,18 @@ impl<'ast> Path<'ast> {
     }
 
     #[must_use]
-    pub fn with_root(root: Vec<PathSegment<'ast>>, name: PathSegment<'ast>) -> Self {
-        let start = root.first().map_or(name.location().start(), |s| s.location().start());
+    pub fn with_root(root: Path<'ast>, name: PathSegment<'ast>) -> Self {
+        let mut new_root = root.root;
+        new_root.reserve(1);
+        new_root.push(root.name);
+
+        let start = new_root
+            .first()
+            .map_or(name.location().start(), |s| s.location().start());
         let end = name.location().end();
 
         Self {
-            root,
+            root: new_root,
             name,
             location: Location(start..end),
         }

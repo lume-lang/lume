@@ -12,3 +12,11 @@ pub trait Iterator<T> {
     ![lang_item(name = "next")]
     fn next(self) -> Optional<T>;
 }
+
+/// Allows iterating over a generic collection of elements.
+///
+/// For types to be used as a collection in `for` loops, they must implement this trait.
+pub trait AsIterator<T> {
+    /// Creates a new iterator from the current instance, which iterates through a collection.
+    fn as_iter(self) -> Iterator<T>;
+}
