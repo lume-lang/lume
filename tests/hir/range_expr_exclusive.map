@@ -101,18 +101,7 @@ Map {
                                         name: "a",
                                         location: range_expr_exclusive.lm:54:55,
                                     },
-                                    reference: VariableDeclaration {
-                                        name: "a",
-                                        declared_type: None,
-                                        value: Literal {
-                                            kind: IntLiteral {
-                                                value: 0,
-                                                kind: None,
-                                            },
-                                            location: range_expr_exclusive.lm:23:24,
-                                        },
-                                        location: range_expr_exclusive.lm:15:25,
-                                    },
+                                    reference: Variable(!17371049363423474809),
                                     location: range_expr_exclusive.lm:54:55,
                                 },
                                 Variable {
@@ -120,18 +109,7 @@ Map {
                                         name: "b",
                                         location: range_expr_exclusive.lm:57:58,
                                     },
-                                    reference: VariableDeclaration {
-                                        name: "b",
-                                        declared_type: None,
-                                        value: Literal {
-                                            kind: IntLiteral {
-                                                value: 1,
-                                                kind: None,
-                                            },
-                                            location: range_expr_exclusive.lm:38:39,
-                                        },
-                                        location: range_expr_exclusive.lm:30:40,
-                                    },
+                                    reference: Variable(!8058070645187878734),
                                     location: range_expr_exclusive.lm:57:58,
                                 },
                             ],

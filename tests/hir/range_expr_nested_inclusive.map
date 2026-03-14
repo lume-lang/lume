@@ -103,18 +103,7 @@ Map {
                                                 name: "a",
                                                 location: range_expr_nested_inclusive.lm:55:56,
                                             },
-                                            reference: VariableDeclaration {
-                                                name: "a",
-                                                declared_type: None,
-                                                value: Literal {
-                                                    kind: IntLiteral {
-                                                        value: 0,
-                                                        kind: None,
-                                                    },
-                                                    location: range_expr_nested_inclusive.lm:23:24,
-                                                },
-                                                location: range_expr_nested_inclusive.lm:15:25,
-                                            },
+                                            reference: Variable(!17371049363423474809),
                                             location: range_expr_nested_inclusive.lm:55:56,
                                         },
                                         rhs: Variable {
@@ -122,18 +111,7 @@ Map {
                                                 name: "b",
                                                 location: range_expr_nested_inclusive.lm:59:60,
                                             },
-                                            reference: VariableDeclaration {
-                                                name: "b",
-                                                declared_type: None,
-                                                value: Literal {
-                                                    kind: IntLiteral {
-                                                        value: 1,
-                                                        kind: None,
-                                                    },
-                                                    location: range_expr_nested_inclusive.lm:38:39,
-                                                },
-                                                location: range_expr_nested_inclusive.lm:30:40,
-                                            },
+                                            reference: Variable(!8058070645187878734),
                                             location: range_expr_nested_inclusive.lm:59:60,
                                         },
                                     },
@@ -148,18 +126,7 @@ Map {
                                                         name: "a",
                                                         location: range_expr_nested_inclusive.lm:65:66,
                                                     },
-                                                    reference: VariableDeclaration {
-                                                        name: "a",
-                                                        declared_type: None,
-                                                        value: Literal {
-                                                            kind: IntLiteral {
-                                                                value: 0,
-                                                                kind: None,
-                                                            },
-                                                            location: range_expr_nested_inclusive.lm:23:24,
-                                                        },
-                                                        location: range_expr_nested_inclusive.lm:15:25,
-                                                    },
+                                                    reference: Variable(!17371049363423474809),
                                                     location: range_expr_nested_inclusive.lm:65:66,
                                                 },
                                                 rhs: Variable {
@@ -167,18 +134,7 @@ Map {
                                                         name: "b",
                                                         location: range_expr_nested_inclusive.lm:69:70,
                                                     },
-                                                    reference: VariableDeclaration {
-                                                        name: "b",
-                                                        declared_type: None,
-                                                        value: Literal {
-                                                            kind: IntLiteral {
-                                                                value: 1,
-                                                                kind: None,
-                                                            },
-                                                            location: range_expr_nested_inclusive.lm:38:39,
-                                                        },
-                                                        location: range_expr_nested_inclusive.lm:30:40,
-                                                    },
+                                                    reference: Variable(!8058070645187878734),
                                                     location: range_expr_nested_inclusive.lm:69:70,
                                                 },
                                             },

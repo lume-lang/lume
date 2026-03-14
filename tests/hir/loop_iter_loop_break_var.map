@@ -95,42 +95,7 @@ Map {
                                             name: "!array",
                                             location: <internal>:0:0,
                                         },
-                                        reference: VariableDeclaration {
-                                            name: "!array",
-                                            declared_type: None,
-                                            value: StaticCall {
-                                                name: Path {
-                                                    root: [
-                                                        Namespace {
-                                                            name: Identifier {
-                                                                name: "std",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                        },
-                                                        Type {
-                                                            name: Identifier {
-                                                                name: "Array",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                            bound_types: [],
-                                                            location: <internal>:0:0,
-                                                        },
-                                                    ],
-                                                    name: Callable {
-                                                        name: Identifier {
-                                                            name: "new",
-                                                            location: <internal>:0:0,
-                                                        },
-                                                        bound_types: [],
-                                                        location: <internal>:0:0,
-                                                    },
-                                                    location: <internal>:0:0,
-                                                },
-                                                arguments: [],
-                                                location: loop_iter_loop_break_var.lm:32:41,
-                                            },
-                                            location: loop_iter_loop_break_var.lm:32:41,
-                                        },
+                                        reference: Variable(!8058070645187878734),
                                         location: loop_iter_loop_break_var.lm:32:41,
                                     },
                                     arguments: [
@@ -158,42 +123,7 @@ Map {
                                             name: "!array",
                                             location: <internal>:0:0,
                                         },
-                                        reference: VariableDeclaration {
-                                            name: "!array",
-                                            declared_type: None,
-                                            value: StaticCall {
-                                                name: Path {
-                                                    root: [
-                                                        Namespace {
-                                                            name: Identifier {
-                                                                name: "std",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                        },
-                                                        Type {
-                                                            name: Identifier {
-                                                                name: "Array",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                            bound_types: [],
-                                                            location: <internal>:0:0,
-                                                        },
-                                                    ],
-                                                    name: Callable {
-                                                        name: Identifier {
-                                                            name: "new",
-                                                            location: <internal>:0:0,
-                                                        },
-                                                        bound_types: [],
-                                                        location: <internal>:0:0,
-                                                    },
-                                                    location: <internal>:0:0,
-                                                },
-                                                arguments: [],
-                                                location: loop_iter_loop_break_var.lm:32:41,
-                                            },
-                                            location: loop_iter_loop_break_var.lm:32:41,
-                                        },
+                                        reference: Variable(!8058070645187878734),
                                         location: loop_iter_loop_break_var.lm:32:41,
                                     },
                                     arguments: [
@@ -221,42 +151,7 @@ Map {
                                             name: "!array",
                                             location: <internal>:0:0,
                                         },
-                                        reference: VariableDeclaration {
-                                            name: "!array",
-                                            declared_type: None,
-                                            value: StaticCall {
-                                                name: Path {
-                                                    root: [
-                                                        Namespace {
-                                                            name: Identifier {
-                                                                name: "std",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                        },
-                                                        Type {
-                                                            name: Identifier {
-                                                                name: "Array",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                            bound_types: [],
-                                                            location: <internal>:0:0,
-                                                        },
-                                                    ],
-                                                    name: Callable {
-                                                        name: Identifier {
-                                                            name: "new",
-                                                            location: <internal>:0:0,
-                                                        },
-                                                        bound_types: [],
-                                                        location: <internal>:0:0,
-                                                    },
-                                                    location: <internal>:0:0,
-                                                },
-                                                arguments: [],
-                                                location: loop_iter_loop_break_var.lm:32:41,
-                                            },
-                                            location: loop_iter_loop_break_var.lm:32:41,
-                                        },
+                                        reference: Variable(!8058070645187878734),
                                         location: loop_iter_loop_break_var.lm:32:41,
                                     },
                                     arguments: [
@@ -276,42 +171,7 @@ Map {
                                             name: "!array",
                                             location: <internal>:0:0,
                                         },
-                                        reference: VariableDeclaration {
-                                            name: "!array",
-                                            declared_type: None,
-                                            value: StaticCall {
-                                                name: Path {
-                                                    root: [
-                                                        Namespace {
-                                                            name: Identifier {
-                                                                name: "std",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                        },
-                                                        Type {
-                                                            name: Identifier {
-                                                                name: "Array",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                            bound_types: [],
-                                                            location: <internal>:0:0,
-                                                        },
-                                                    ],
-                                                    name: Callable {
-                                                        name: Identifier {
-                                                            name: "new",
-                                                            location: <internal>:0:0,
-                                                        },
-                                                        bound_types: [],
-                                                        location: <internal>:0:0,
-                                                    },
-                                                    location: <internal>:0:0,
-                                                },
-                                                arguments: [],
-                                                location: loop_iter_loop_break_var.lm:32:41,
-                                            },
-                                            location: loop_iter_loop_break_var.lm:32:41,
-                                        },
+                                        reference: Variable(!8058070645187878734),
                                         location: loop_iter_loop_break_var.lm:32:41,
                                     },
                                     location: loop_iter_loop_break_var.lm:32:41,
@@ -321,303 +181,231 @@ Map {
                         },
                         location: loop_iter_loop_break_var.lm:15:42,
                     },
-                    IteratorLoop {
-                        collection: Variable {
-                            name: Identifier {
-                                name: "collection",
-                                location: loop_iter_loop_break_var.lm:63:73,
-                            },
-                            reference: VariableDeclaration {
-                                name: "collection",
+                    Scope {
+                        body: [
+                            VariableDeclaration {
+                                name: "$collection",
                                 declared_type: None,
-                                value: Scope {
-                                    body: [
-                                        VariableDeclaration {
-                                            name: "!array",
-                                            declared_type: None,
-                                            value: StaticCall {
+                                value: Variable {
+                                    name: Identifier {
+                                        name: "collection",
+                                        location: loop_iter_loop_break_var.lm:63:73,
+                                    },
+                                    reference: Variable(!17371049363423474809),
+                                    location: loop_iter_loop_break_var.lm:63:73,
+                                },
+                                location: loop_iter_loop_break_var.lm:48:96,
+                            },
+                            VariableDeclaration {
+                                name: "$iter",
+                                declared_type: None,
+                                value: StaticCall {
+                                    name: Path {
+                                        root: [
+                                            Namespace {
+                                                name: Identifier {
+                                                    name: "std",
+                                                    location: loop_iter_loop_break_var.lm:0:0,
+                                                },
+                                            },
+                                            Namespace {
+                                                name: Identifier {
+                                                    name: "iter",
+                                                    location: loop_iter_loop_break_var.lm:0:0,
+                                                },
+                                            },
+                                            Type {
+                                                name: Identifier {
+                                                    name: "AsIterator",
+                                                    location: loop_iter_loop_break_var.lm:0:0,
+                                                },
+                                                bound_types: [],
+                                                location: loop_iter_loop_break_var.lm:0:0,
+                                            },
+                                        ],
+                                        name: Callable {
+                                            name: Identifier {
+                                                name: "as_iter",
+                                                location: loop_iter_loop_break_var.lm:0:0,
+                                            },
+                                            bound_types: [],
+                                            location: loop_iter_loop_break_var.lm:0:0,
+                                        },
+                                        location: loop_iter_loop_break_var.lm:0:0,
+                                    },
+                                    arguments: [
+                                        Variable {
+                                            name: Identifier {
+                                                name: "$collection",
+                                                location: loop_iter_loop_break_var.lm:0:0,
+                                            },
+                                            reference: Variable(!10694260463722572977),
+                                            location: loop_iter_loop_break_var.lm:0:0,
+                                        },
+                                    ],
+                                    location: loop_iter_loop_break_var.lm:48:96,
+                                },
+                                location: loop_iter_loop_break_var.lm:48:96,
+                            },
+                            InfiniteLoop {
+                                block: Block {
+                                    statements: [
+                                        Switch {
+                                            operand: StaticCall {
                                                 name: Path {
                                                     root: [
                                                         Namespace {
                                                             name: Identifier {
                                                                 name: "std",
-                                                                location: <internal>:0:0,
+                                                                location: loop_iter_loop_break_var.lm:0:0,
+                                                            },
+                                                        },
+                                                        Namespace {
+                                                            name: Identifier {
+                                                                name: "iter",
+                                                                location: loop_iter_loop_break_var.lm:0:0,
                                                             },
                                                         },
                                                         Type {
                                                             name: Identifier {
-                                                                name: "Array",
-                                                                location: <internal>:0:0,
+                                                                name: "Iterator",
+                                                                location: loop_iter_loop_break_var.lm:0:0,
                                                             },
                                                             bound_types: [],
-                                                            location: <internal>:0:0,
+                                                            location: loop_iter_loop_break_var.lm:0:0,
                                                         },
                                                     ],
                                                     name: Callable {
                                                         name: Identifier {
-                                                            name: "new",
-                                                            location: <internal>:0:0,
+                                                            name: "next",
+                                                            location: loop_iter_loop_break_var.lm:0:0,
                                                         },
                                                         bound_types: [],
-                                                        location: <internal>:0:0,
+                                                        location: loop_iter_loop_break_var.lm:0:0,
                                                     },
-                                                    location: <internal>:0:0,
+                                                    location: loop_iter_loop_break_var.lm:0:0,
                                                 },
-                                                arguments: [],
-                                                location: loop_iter_loop_break_var.lm:32:41,
+                                                arguments: [
+                                                    Variable {
+                                                        name: Identifier {
+                                                            name: "$iter",
+                                                            location: loop_iter_loop_break_var.lm:0:0,
+                                                        },
+                                                        reference: Variable(!13074775399946137413),
+                                                        location: loop_iter_loop_break_var.lm:0:0,
+                                                    },
+                                                ],
+                                                location: loop_iter_loop_break_var.lm:48:96,
                                             },
-                                            location: loop_iter_loop_break_var.lm:32:41,
-                                        },
-                                        InstanceCall {
-                                            name: Callable {
-                                                name: Identifier {
-                                                    name: "push",
-                                                    location: <internal>:0:0,
-                                                },
-                                                bound_types: [],
-                                                location: <internal>:0:0,
-                                            },
-                                            callee: Variable {
-                                                name: Identifier {
-                                                    name: "!array",
-                                                    location: <internal>:0:0,
-                                                },
-                                                reference: VariableDeclaration {
-                                                    name: "!array",
-                                                    declared_type: None,
-                                                    value: StaticCall {
-                                                        name: Path {
-                                                            root: [
-                                                                Namespace {
-                                                                    name: Identifier {
-                                                                        name: "std",
-                                                                        location: <internal>:0:0,
+                                            cases: [
+                                                SwitchCase {
+                                                    pattern: Pattern {
+                                                        kind: VariantPattern {
+                                                            name: Path {
+                                                                root: [
+                                                                    Namespace {
+                                                                        name: Identifier {
+                                                                            name: "std",
+                                                                            location: loop_iter_loop_break_var.lm:0:0,
+                                                                        },
                                                                     },
+                                                                    Type {
+                                                                        name: Identifier {
+                                                                            name: "Optional",
+                                                                            location: loop_iter_loop_break_var.lm:0:0,
+                                                                        },
+                                                                        bound_types: [],
+                                                                        location: loop_iter_loop_break_var.lm:0:0,
+                                                                    },
+                                                                ],
+                                                                name: Variant {
+                                                                    name: Identifier {
+                                                                        name: "Some",
+                                                                        location: loop_iter_loop_break_var.lm:0:0,
+                                                                    },
+                                                                    location: loop_iter_loop_break_var.lm:0:0,
                                                                 },
-                                                                Type {
-                                                                    name: Identifier {
-                                                                        name: "Array",
-                                                                        location: <internal>:0:0,
+                                                                location: loop_iter_loop_break_var.lm:0:0,
+                                                            },
+                                                            fields: [
+                                                                Pattern {
+                                                                    kind: IdentifierPattern {
+                                                                        name: Identifier {
+                                                                            name: "pattern",
+                                                                            location: loop_iter_loop_break_var.lm:52:59,
+                                                                        },
+                                                                        location: loop_iter_loop_break_var.lm:52:59,
                                                                     },
-                                                                    bound_types: [],
-                                                                    location: <internal>:0:0,
+                                                                    location: loop_iter_loop_break_var.lm:52:59,
                                                                 },
                                                             ],
-                                                            name: Callable {
-                                                                name: Identifier {
-                                                                    name: "new",
-                                                                    location: <internal>:0:0,
-                                                                },
-                                                                bound_types: [],
-                                                                location: <internal>:0:0,
-                                                            },
-                                                            location: <internal>:0:0,
+                                                            location: loop_iter_loop_break_var.lm:48:96,
                                                         },
-                                                        arguments: [],
-                                                        location: loop_iter_loop_break_var.lm:32:41,
+                                                        location: loop_iter_loop_break_var.lm:48:96,
                                                     },
-                                                    location: loop_iter_loop_break_var.lm:32:41,
+                                                    branch: Scope {
+                                                        body: [
+                                                            Break {
+                                                                location: loop_iter_loop_break_var.lm:84:90,
+                                                            },
+                                                        ],
+                                                        location: loop_iter_loop_break_var.lm:74:96,
+                                                    },
+                                                    location: loop_iter_loop_break_var.lm:48:96,
                                                 },
-                                                location: loop_iter_loop_break_var.lm:32:41,
-                                            },
-                                            arguments: [
-                                                Literal {
-                                                    kind: IntLiteral {
-                                                        value: 1,
-                                                        kind: None,
+                                                SwitchCase {
+                                                    pattern: Pattern {
+                                                        kind: VariantPattern {
+                                                            name: Path {
+                                                                root: [
+                                                                    Namespace {
+                                                                        name: Identifier {
+                                                                            name: "std",
+                                                                            location: loop_iter_loop_break_var.lm:0:0,
+                                                                        },
+                                                                    },
+                                                                    Type {
+                                                                        name: Identifier {
+                                                                            name: "Optional",
+                                                                            location: loop_iter_loop_break_var.lm:0:0,
+                                                                        },
+                                                                        bound_types: [],
+                                                                        location: loop_iter_loop_break_var.lm:0:0,
+                                                                    },
+                                                                ],
+                                                                name: Variant {
+                                                                    name: Identifier {
+                                                                        name: "None",
+                                                                        location: loop_iter_loop_break_var.lm:0:0,
+                                                                    },
+                                                                    location: loop_iter_loop_break_var.lm:0:0,
+                                                                },
+                                                                location: loop_iter_loop_break_var.lm:0:0,
+                                                            },
+                                                            fields: [],
+                                                            location: loop_iter_loop_break_var.lm:48:96,
+                                                        },
+                                                        location: loop_iter_loop_break_var.lm:48:96,
                                                     },
-                                                    location: loop_iter_loop_break_var.lm:33:34,
+                                                    branch: Scope {
+                                                        body: [
+                                                            Break {
+                                                                location: loop_iter_loop_break_var.lm:48:96,
+                                                            },
+                                                        ],
+                                                        location: loop_iter_loop_break_var.lm:48:96,
+                                                    },
+                                                    location: loop_iter_loop_break_var.lm:48:96,
                                                 },
                                             ],
-                                            location: loop_iter_loop_break_var.lm:32:41,
-                                        },
-                                        InstanceCall {
-                                            name: Callable {
-                                                name: Identifier {
-                                                    name: "push",
-                                                    location: <internal>:0:0,
-                                                },
-                                                bound_types: [],
-                                                location: <internal>:0:0,
-                                            },
-                                            callee: Variable {
-                                                name: Identifier {
-                                                    name: "!array",
-                                                    location: <internal>:0:0,
-                                                },
-                                                reference: VariableDeclaration {
-                                                    name: "!array",
-                                                    declared_type: None,
-                                                    value: StaticCall {
-                                                        name: Path {
-                                                            root: [
-                                                                Namespace {
-                                                                    name: Identifier {
-                                                                        name: "std",
-                                                                        location: <internal>:0:0,
-                                                                    },
-                                                                },
-                                                                Type {
-                                                                    name: Identifier {
-                                                                        name: "Array",
-                                                                        location: <internal>:0:0,
-                                                                    },
-                                                                    bound_types: [],
-                                                                    location: <internal>:0:0,
-                                                                },
-                                                            ],
-                                                            name: Callable {
-                                                                name: Identifier {
-                                                                    name: "new",
-                                                                    location: <internal>:0:0,
-                                                                },
-                                                                bound_types: [],
-                                                                location: <internal>:0:0,
-                                                            },
-                                                            location: <internal>:0:0,
-                                                        },
-                                                        arguments: [],
-                                                        location: loop_iter_loop_break_var.lm:32:41,
-                                                    },
-                                                    location: loop_iter_loop_break_var.lm:32:41,
-                                                },
-                                                location: loop_iter_loop_break_var.lm:32:41,
-                                            },
-                                            arguments: [
-                                                Literal {
-                                                    kind: IntLiteral {
-                                                        value: 2,
-                                                        kind: None,
-                                                    },
-                                                    location: loop_iter_loop_break_var.lm:36:37,
-                                                },
-                                            ],
-                                            location: loop_iter_loop_break_var.lm:32:41,
-                                        },
-                                        InstanceCall {
-                                            name: Callable {
-                                                name: Identifier {
-                                                    name: "push",
-                                                    location: <internal>:0:0,
-                                                },
-                                                bound_types: [],
-                                                location: <internal>:0:0,
-                                            },
-                                            callee: Variable {
-                                                name: Identifier {
-                                                    name: "!array",
-                                                    location: <internal>:0:0,
-                                                },
-                                                reference: VariableDeclaration {
-                                                    name: "!array",
-                                                    declared_type: None,
-                                                    value: StaticCall {
-                                                        name: Path {
-                                                            root: [
-                                                                Namespace {
-                                                                    name: Identifier {
-                                                                        name: "std",
-                                                                        location: <internal>:0:0,
-                                                                    },
-                                                                },
-                                                                Type {
-                                                                    name: Identifier {
-                                                                        name: "Array",
-                                                                        location: <internal>:0:0,
-                                                                    },
-                                                                    bound_types: [],
-                                                                    location: <internal>:0:0,
-                                                                },
-                                                            ],
-                                                            name: Callable {
-                                                                name: Identifier {
-                                                                    name: "new",
-                                                                    location: <internal>:0:0,
-                                                                },
-                                                                bound_types: [],
-                                                                location: <internal>:0:0,
-                                                            },
-                                                            location: <internal>:0:0,
-                                                        },
-                                                        arguments: [],
-                                                        location: loop_iter_loop_break_var.lm:32:41,
-                                                    },
-                                                    location: loop_iter_loop_break_var.lm:32:41,
-                                                },
-                                                location: loop_iter_loop_break_var.lm:32:41,
-                                            },
-                                            arguments: [
-                                                Literal {
-                                                    kind: IntLiteral {
-                                                        value: 3,
-                                                        kind: None,
-                                                    },
-                                                    location: loop_iter_loop_break_var.lm:39:40,
-                                                },
-                                            ],
-                                            location: loop_iter_loop_break_var.lm:32:41,
-                                        },
-                                        Final {
-                                            value: Variable {
-                                                name: Identifier {
-                                                    name: "!array",
-                                                    location: <internal>:0:0,
-                                                },
-                                                reference: VariableDeclaration {
-                                                    name: "!array",
-                                                    declared_type: None,
-                                                    value: StaticCall {
-                                                        name: Path {
-                                                            root: [
-                                                                Namespace {
-                                                                    name: Identifier {
-                                                                        name: "std",
-                                                                        location: <internal>:0:0,
-                                                                    },
-                                                                },
-                                                                Type {
-                                                                    name: Identifier {
-                                                                        name: "Array",
-                                                                        location: <internal>:0:0,
-                                                                    },
-                                                                    bound_types: [],
-                                                                    location: <internal>:0:0,
-                                                                },
-                                                            ],
-                                                            name: Callable {
-                                                                name: Identifier {
-                                                                    name: "new",
-                                                                    location: <internal>:0:0,
-                                                                },
-                                                                bound_types: [],
-                                                                location: <internal>:0:0,
-                                                            },
-                                                            location: <internal>:0:0,
-                                                        },
-                                                        arguments: [],
-                                                        location: loop_iter_loop_break_var.lm:32:41,
-                                                    },
-                                                    location: loop_iter_loop_break_var.lm:32:41,
-                                                },
-                                                location: loop_iter_loop_break_var.lm:32:41,
-                                            },
-                                            location: loop_iter_loop_break_var.lm:32:41,
+                                            location: loop_iter_loop_break_var.lm:48:96,
                                         },
                                     ],
-                                    location: loop_iter_loop_break_var.lm:32:41,
+                                    location: loop_iter_loop_break_var.lm:74:96,
                                 },
-                                location: loop_iter_loop_break_var.lm:15:42,
+                                location: loop_iter_loop_break_var.lm:74:96,
                             },
-                            location: loop_iter_loop_break_var.lm:63:73,
-                        },
-                        block: Block {
-                            statements: [
-                                Break {
-                                    location: loop_iter_loop_break_var.lm:84:90,
-                                },
-                            ],
-                            location: loop_iter_loop_break_var.lm:74:96,
-                        },
+                        ],
                         location: loop_iter_loop_break_var.lm:48:96,
                     },
                 ],
