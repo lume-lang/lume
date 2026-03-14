@@ -1080,10 +1080,7 @@ pub struct Statement {
 impl Statement {
     /// Determines whether the given statement is a loop statement.
     pub fn is_loop(&self) -> bool {
-        matches!(
-            &self.kind,
-            StatementKind::InfiniteLoop(_) | StatementKind::IteratorLoop(_)
-        )
+        matches!(&self.kind, StatementKind::InfiniteLoop(_))
     }
 
     /// Creates a new [`Statement`] with a [`VariableDeclaration`] value.
@@ -1128,7 +1125,6 @@ pub enum StatementKind {
     Final(Final),
     Return(Return),
     InfiniteLoop(InfiniteLoop),
-    IteratorLoop(IteratorLoop),
     Expression(NodeId),
 }
 
@@ -1170,14 +1166,6 @@ pub struct Return {
 #[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct InfiniteLoop {
     pub id: NodeId,
-    pub block: Block,
-    pub location: Location,
-}
-
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
-pub struct IteratorLoop {
-    pub id: NodeId,
-    pub collection: NodeId,
     pub block: Block,
     pub location: Location,
 }

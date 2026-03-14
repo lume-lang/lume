@@ -14,7 +14,6 @@ impl LowerFunction<'_> {
             lume_hir::StatementKind::Final(stmt) => self.final_statement(stmt),
             lume_hir::StatementKind::Return(stmt) => self.return_statement(stmt),
             lume_hir::StatementKind::InfiniteLoop(stmt) => self.infinite_statement(stmt),
-            lume_hir::StatementKind::IteratorLoop(stmt) => self.iterator_statement(stmt),
             lume_hir::StatementKind::Expression(expr) => Ok(lume_tir::Statement::Expression(self.expression(*expr)?)),
         }
     }
@@ -83,18 +82,6 @@ impl LowerFunction<'_> {
 
         Ok(lume_tir::Statement::InfiniteLoop(lume_tir::InfiniteLoop {
             id: stmt.id,
-            block,
-            location: stmt.location,
-        }))
-    }
-
-    fn iterator_statement(&mut self, stmt: &lume_hir::IteratorLoop) -> Result<lume_tir::Statement> {
-        let collection = self.expression(stmt.collection)?;
-        let block = self.lower_block(&stmt.block)?;
-
-        Ok(lume_tir::Statement::IteratorLoop(lume_tir::IteratorLoop {
-            id: stmt.id,
-            collection,
             block,
             location: stmt.location,
         }))

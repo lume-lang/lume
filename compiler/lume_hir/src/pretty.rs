@@ -300,7 +300,6 @@ impl PrettyPrint for StatementKind {
             Self::Final(s) => s.pretty_fmt(map, f),
             Self::Return(s) => s.pretty_fmt(map, f),
             Self::InfiniteLoop(s) => s.pretty_fmt(map, f),
-            Self::IteratorLoop(s) => s.pretty_fmt(map, f),
             Self::Expression(s) => s.pretty_fmt(map, f),
         }
     }
@@ -350,16 +349,6 @@ impl PrettyPrint for Return {
 impl PrettyPrint for InfiniteLoop {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("InfiniteLoop")
-            .field("block", pretty_item!(self.block, map))
-            .field("location", &self.location)
-            .finish()
-    }
-}
-
-impl PrettyPrint for IteratorLoop {
-    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("IteratorLoop")
-            .field("collection", pretty_item!(self.collection, map))
             .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
