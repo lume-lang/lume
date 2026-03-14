@@ -801,6 +801,8 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
                 str("for ")
                     .append(stmt.pattern.as_str())
                     .space()
+                    .append("in")
+                    .space()
                     .append(collection)
                     .space()
                     .append(body)
