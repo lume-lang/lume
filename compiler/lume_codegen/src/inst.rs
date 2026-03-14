@@ -59,12 +59,16 @@ impl LowerFunction<'_> {
                 self.builder.def_var(var, value);
             }
             lume_mir::InstructionKind::CreateSlot { slot, ty } => {
-                #[expect(clippy::cast_possible_truncation)]
-                let size = ty.bytesize() as u32;
+                let mut size = ty.bytesize();
 
+                if ty.is_scalar_type() {
+                    size += lume_mir::POINTER_SIZE;
+                }
+
+                #[expect(clippy::cast_possible_truncation)]
                 let stack_slot = self.builder.create_sized_stack_slot(StackSlotData {
                     kind: StackSlotKind::ExplicitSlot,
-                    size,
+                    size: size as u32,
                     align_shift: 4,
                     key: None,
                 });

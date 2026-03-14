@@ -176,14 +176,26 @@ impl Builder<'_, '_> {
     }
 
     /// Stores the given value in a stack-allocated space.
-    pub(crate) fn store_on_stack(&mut self, value: Operand, location: Location) -> Operand {
-        let operand_type = self.type_of_value(&value);
+    pub(crate) fn store_on_stack(&mut self, value: Operand, ty: &TypeRef, location: Location) -> Operand {
+        let metadata_reg = self.declare_metadata_of(ty, location);
+        let metadata_operand = lume_mir::Operand::reference_of(metadata_reg);
 
+        let operand_type = self.type_of_value(&value);
         let slot = self.alloc_slot(operand_type, location);
-        self.func.current_block_mut().store_slot(slot, 0, value, location);
+
+        self.func
+            .current_block_mut()
+            .store_slot(slot, 0, metadata_operand, location);
+
+        self.func
+            .current_block_mut()
+            .store_slot(slot, POINTER_SIZE, value, location);
 
         lume_mir::Operand {
-            kind: lume_mir::OperandKind::SlotAddress { id: slot, offset: 0 },
+            kind: lume_mir::OperandKind::SlotAddress {
+                id: slot,
+                offset: POINTER_SIZE,
+            },
             location,
         }
     }

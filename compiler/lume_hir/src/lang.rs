@@ -48,6 +48,8 @@ lang_items! {
     Never                   "never"                     "Never",
 
     // Runtime functions
+    TypeOf                  "type_of"                   "type_of",
+    TypeOfValue             "type_of_value"             "type_of_value",
     MethodLookup            "lookup_method"             "find_method_on",
 
     // Array operations

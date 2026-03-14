@@ -19,8 +19,12 @@ pub enum DispatchTypeSource {
     /// type parameters.
     InheritTypeParam { type_param: TypeRef },
 
-    /// Create a new metadata type for the given type.
-    CreateFrom(TypeRef),
+    /// Create a new metadata instance of the given concrete type.
+    CreateConcrete(TypeRef),
+
+    /// Create a new metadata type dynamically at runtime,
+    /// using the function callee.
+    CreateFromCallee,
 }
 
 impl TyCheckCtx {
@@ -88,18 +92,22 @@ impl TyCheckCtx {
         let source_callable = self.hir_parent_callable(call_expr).expect("expr with ID to exist");
         let call_expr = self.hir_call_expr(call_expr).expect("callable with ID to exist");
 
-        if !self.is_callable_dynamic(source_callable.id()) {
-            let dyn_instance_type = self.impl_ty_of_call(call_expr.id())?.expect("non-function call");
-
-            if self.is_type_parameter(&dyn_instance_type) {
-                return Ok(DispatchTypeSource::InheritTypeParam {
-                    type_param: dyn_instance_type.clone(),
-                });
-            }
-
-            return Ok(DispatchTypeSource::CreateFrom(dyn_instance_type));
+        if self.is_callable_dynamic(source_callable.id()) {
+            return Ok(DispatchTypeSource::InheritDyn);
         }
 
-        Ok(DispatchTypeSource::InheritDyn)
+        if self.is_instanced_method(target) {
+            return Ok(DispatchTypeSource::CreateFromCallee);
+        }
+
+        let dyn_instance_type = self.impl_ty_of_call(call_expr.id())?.expect("non-function call");
+
+        if self.is_type_parameter(&dyn_instance_type) {
+            return Ok(DispatchTypeSource::InheritTypeParam {
+                type_param: dyn_instance_type.clone(),
+            });
+        }
+
+        Ok(DispatchTypeSource::CreateConcrete(dyn_instance_type))
     }
 }

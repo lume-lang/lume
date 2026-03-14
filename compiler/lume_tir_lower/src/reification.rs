@@ -150,7 +150,7 @@ impl ReificationPass<'_> {
         Ok(())
     }
 
-    fn add_metadata_arguments_on_call(&mut self, call: &mut Call) {
+    fn add_metadata_arguments_on_call(&self, call: &mut Call) {
         let type_param_len = self.tcx.available_type_params_at(call.function).len();
         let type_arg_len = call.type_arguments.len();
         let remaining_type_args = type_param_len.saturating_sub(type_arg_len);
@@ -188,7 +188,7 @@ impl ReificationPass<'_> {
 
     /// Creates a new TIR intrinsic expression which creates a new metadata
     /// instance for the given type.
-    fn concrete_metadata_arg(&mut self, type_arg: &TypeRef) -> lume_tir::Expression {
+    fn concrete_metadata_arg(&self, type_arg: &TypeRef) -> lume_tir::Expression {
         let id = TypeMetadataId::from(type_arg);
 
         lume_tir::Expression {
@@ -201,30 +201,72 @@ impl ReificationPass<'_> {
             ty: self.tcx.std_type(),
         }
     }
+
+    /// Creates a new TIR intrinsic expression which gets the metadata of the
+    /// given expression.
+    fn dynamic_metadata_arg(&self, expr: lume_tir::Expression) -> lume_tir::Expression {
+        let type_of_id = self
+            .tcx
+            .lang_item(lume_hir::LangItem::TypeOfValue)
+            .expect("expected `TypeOfValue`");
+
+        let expr_type = expr.ty.clone();
+        let location = expr.location();
+
+        let call = lume_tir::Call {
+            id: lume_span::NodeId::default(),
+            function: type_of_id,
+            arguments: vec![expr],
+            type_arguments: vec![expr_type],
+            return_type: self.tcx.std_type(),
+            uninst_return_type: None,
+            location,
+        };
+
+        lume_tir::Expression {
+            kind: ExpressionKind::Call(Box::new(call)),
+            ty: self.tcx.std_type(),
+        }
+    }
 }
 
 impl ReificationPass<'_> {
-    /// Complement of [`add_dynamic_instance_parameter`], this methods adds the
-    /// corresponding argument to the given function call, matching the function
-    /// which it calls.
+    /// Complement of [`Self::add_dynamic_instance_parameter`], this methods
+    /// adds the corresponding argument to the given function call, matching
+    /// the function which it calls.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn add_dynamic_instance_argument(&mut self, call: &mut Call) -> Result<()> {
         let current_fn = self.tcx.hir_parent_callable(call.id).unwrap();
         let fn_dynamic = self.dyna.get(&current_fn.id()).expect("expected dynamic map to exist");
 
         let argument = match self.tcx.dynamic_argument_source_of_call(call.id, call.function)? {
-            DispatchTypeSource::CreateFrom(source_type) => {
+            DispatchTypeSource::CreateConcrete(source_type) => {
                 tracing::info!(
                     call = self
                         .tcx
                         .hir_path_of_node(self.tcx.hir_parent_callable(call.id).unwrap().id())
                         .to_wide_string(),
                     target = self.tcx.hir_path_of_node(call.function).to_wide_string(),
-                    "create dispatch type {}",
-                    self.tcx.new_named_type(&source_type, true).unwrap(),
+                    source = self.tcx.new_named_type(&source_type, true)?,
+                    "create_dispatch_type_concrete",
                 );
 
                 self.concrete_metadata_arg(&source_type)
+            }
+
+            DispatchTypeSource::CreateFromCallee => {
+                tracing::info!(
+                    call = self
+                        .tcx
+                        .hir_path_of_node(self.tcx.hir_parent_callable(call.id).unwrap().id())
+                        .to_wide_string(),
+                    target = self.tcx.hir_path_of_node(call.function).to_wide_string(),
+                    "create_dispatch_type_dynamic",
+                );
+
+                let callee_expr = call.arguments.first().unwrap().clone();
+
+                self.dynamic_metadata_arg(callee_expr)
             }
 
             DispatchTypeSource::InheritDyn => {
@@ -234,7 +276,7 @@ impl ReificationPass<'_> {
                         .hir_path_of_node(self.tcx.hir_parent_callable(call.id).unwrap().id())
                         .to_wide_string(),
                     target = self.tcx.hir_path_of_node(call.function).to_wide_string(),
-                    "inherit dispatch type from parent dynamic parameter",
+                    "type_parameter_inherit_from_anchor",
                 );
 
                 let dyn_param_ref = fn_dynamic.dyn_anchor.expect("dynamic anchor parameter set");
@@ -249,7 +291,7 @@ impl ReificationPass<'_> {
                         .hir_path_of_node(self.tcx.hir_parent_callable(call.id).unwrap().id())
                         .to_wide_string(),
                     target = self.tcx.hir_path_of_node(call.function).to_wide_string(),
-                    "inherit dispatch type from parent type parameter",
+                    "type_parameter_inherit_from_parameter",
                 );
 
                 let dyn_param_idx = *fn_dynamic
