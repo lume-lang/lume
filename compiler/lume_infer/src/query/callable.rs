@@ -397,9 +397,9 @@ impl TyInferCtx {
         };
 
         let callee_type = match expr {
-            lume_hir::CallExpression::Static(call) => {
-                self.find_type_ref(&call.name.clone().parent().unwrap())?.unwrap()
-            }
+            lume_hir::CallExpression::Static(call) => self
+                .find_type_ref_from(&call.name.clone().parent().unwrap(), expr.id())?
+                .unwrap(),
             lume_hir::CallExpression::Instanced(call) => self.type_of(call.callee)?,
             lume_hir::CallExpression::Intrinsic(_) => unreachable!(),
         };
