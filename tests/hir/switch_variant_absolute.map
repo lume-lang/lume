@@ -134,16 +134,7 @@ Map {
                                             name: "a",
                                             location: switch_variant_absolute.lm:67:68,
                                         },
-                                        reference: Pattern {
-                                            kind: IdentifierPattern {
-                                                name: Identifier {
-                                                    name: "a",
-                                                    location: switch_variant_absolute.lm:61:62,
-                                                },
-                                                location: switch_variant_absolute.lm:61:62,
-                                            },
-                                            location: switch_variant_absolute.lm:61:62,
-                                        },
+                                        reference: Pattern(!16755538266343769544),
                                         location: switch_variant_absolute.lm:67:68,
                                     },
                                     location: switch_variant_absolute.lm:56:68,

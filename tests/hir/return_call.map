@@ -91,18 +91,7 @@ Map {
                                     name: "a",
                                     location: return_call.lm:68:69,
                                 },
-                                reference: VariableDeclaration {
-                                    name: "a",
-                                    declared_type: None,
-                                    value: Literal {
-                                        kind: IntLiteral {
-                                            value: 1,
-                                            kind: None,
-                                        },
-                                        location: return_call.lm:23:24,
-                                    },
-                                    location: return_call.lm:15:25,
-                                },
+                                reference: Variable(!17371049363423474809),
                                 location: return_call.lm:68:69,
                             },
                             arguments: [
@@ -111,18 +100,7 @@ Map {
                                         name: "c",
                                         location: return_call.lm:72:73,
                                     },
-                                    reference: VariableDeclaration {
-                                        name: "c",
-                                        declared_type: None,
-                                        value: Literal {
-                                            kind: IntLiteral {
-                                                value: 1,
-                                                kind: None,
-                                            },
-                                            location: return_call.lm:53:54,
-                                        },
-                                        location: return_call.lm:45:55,
-                                    },
+                                    reference: Variable(!16529592137828606434),
                                     location: return_call.lm:72:73,
                                 },
                             ],

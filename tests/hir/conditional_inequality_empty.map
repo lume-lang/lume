@@ -63,18 +63,7 @@ Map {
                                                     name: "a",
                                                     location: conditional_inequality_empty.lm:26:27,
                                                 },
-                                                reference: VariableDeclaration {
-                                                    name: "a",
-                                                    declared_type: None,
-                                                    value: Literal {
-                                                        kind: IntLiteral {
-                                                            value: 0,
-                                                            kind: None,
-                                                        },
-                                                        location: conditional_inequality_empty.lm:20:21,
-                                                    },
-                                                    location: conditional_inequality_empty.lm:12:22,
-                                                },
+                                                reference: Variable(!17371049363423474809),
                                                 location: conditional_inequality_empty.lm:26:27,
                                             },
                                             rhs: Literal {
