@@ -30,13 +30,7 @@ pub unsafe extern "C" fn type_of(metadata: *const ()) -> *const () {
 /// value, since `value` is a type parameter.
 #[unsafe(export_name = "std::type_of_value")]
 pub unsafe extern "C" fn type_of_value(value: *const (), _param: *const ()) -> *const () {
-    unsafe {
-        value
-            .byte_sub(POINTER_SIZE)
-            .cast::<*const ()>()
-            .read()
-            .byte_add(POINTER_SIZE)
-    }
+    unsafe { value.byte_sub(POINTER_SIZE).cast::<*const ()>().read() }
 }
 
 /// Finds the method with the given ID on the given type metadata.
