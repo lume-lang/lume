@@ -1,0 +1,24 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(\"fn main() { let a = 0; }\")"
+---
+SOURCE_FILE@0..17
+  FN@0..17
+    FN_KW@0..2 "fn"
+    NAME@2..6
+      IDENT@2..6 "main"
+    PARAM_LIST@6..8
+      LEFT_PAREN@6..7 "("
+      RIGHT_PAREN@7..8 ")"
+    BLOCK@8..17
+      LEFT_BRACE@8..9 "{"
+      STMT_LIST@9..16
+        LET_STMT@9..16
+          LET_KW@9..12 "let"
+          NAME@12..13
+            IDENT@12..13 "a"
+          ASSIGN@13..14 "="
+          LITERAL@14..15
+            INTEGER_LIT@14..15 "0"
+          SEMICOLON@15..16 ";"
+      RIGHT_BRACE@16..17 "}"

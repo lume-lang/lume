@@ -1,0 +1,35 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        use Add: Int32 {\n            fn add(other: Int32) {}\n        }\")"
+---
+SOURCE_FILE@0..34
+  TRAIT_IMPL@0..34
+    USE_KW@0..3 "use"
+    PATH@3..6
+      PATH_TYPE@3..6
+        IDENT@3..6 "Add"
+    COLON@6..7 ":"
+    PATH@7..12
+      PATH_TYPE@7..12
+        IDENT@7..12 "Int32"
+    LEFT_BRACE@12..13 "{"
+    METHOD@13..33
+      FN_KW@13..15 "fn"
+      NAME@15..18
+        IDENT@15..18 "add"
+      PARAM_LIST@18..31
+        LEFT_PAREN@18..19 "("
+        PARAM@19..30
+          NAME@19..24
+            IDENT@19..24 "other"
+          COLON@24..25 ":"
+          PARAM_TYPE@25..30
+            PATH@25..30
+              PATH_TYPE@25..30
+                IDENT@25..30 "Int32"
+        RIGHT_PAREN@30..31 ")"
+      BLOCK@31..33
+        LEFT_BRACE@31..32 "{"
+        STMT_LIST@32..32
+        RIGHT_BRACE@32..33 "}"
+    RIGHT_BRACE@33..34 "}"

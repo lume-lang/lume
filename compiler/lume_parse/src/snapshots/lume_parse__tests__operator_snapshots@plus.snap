@@ -1,0 +1,13 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"a + b;\")"
+---
+SOURCE_FILE@0..4
+  EXPR_STMT@0..4
+    BIN_EXPR@0..3
+      VARIABLE_EXPR@0..1
+        IDENT@0..1 "a"
+      ADD@1..2 "+"
+      VARIABLE_EXPR@2..3
+        IDENT@2..3 "b"
+    SEMICOLON@3..4 ";"

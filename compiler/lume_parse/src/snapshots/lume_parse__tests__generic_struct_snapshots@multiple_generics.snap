@@ -1,0 +1,18 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"struct Test<T1, T2> {}\")"
+---
+SOURCE_FILE@0..19
+  STRUCT@0..19
+    STRUCT_KW@0..6 "struct"
+    IDENT@6..10 "Test"
+    BOUND_TYPES@10..17
+      LESS@10..11 "<"
+      BOUND_TYPE@11..13
+        IDENT@11..13 "T1"
+      COMMA@13..14 ","
+      BOUND_TYPE@14..16
+        IDENT@14..16 "T2"
+      GREATER@16..17 ">"
+    LEFT_BRACE@17..18 "{"
+    RIGHT_BRACE@18..19 "}"

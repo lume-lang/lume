@@ -1,0 +1,10 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"return 1;\")"
+---
+SOURCE_FILE@0..8
+  RETURN_STMT@0..8
+    RETURN_KW@0..6 "return"
+    LITERAL@6..7
+      INTEGER_LIT@6..7 "1"
+    SEMICOLON@7..8 ";"

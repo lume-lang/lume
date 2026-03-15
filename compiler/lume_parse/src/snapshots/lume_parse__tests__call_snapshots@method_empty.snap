@@ -1,0 +1,19 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = a.call();\")"
+---
+SOURCE_FILE@0..14
+  LET_STMT@0..14
+    LET_KW@0..3 "let"
+    NAME@3..4
+      IDENT@3..4 "_"
+    ASSIGN@4..5 "="
+    INSTANCE_CALL_EXPR@5..13
+      IDENT@5..6 "a"
+      DOT@6..7 "."
+      NAME@7..11
+        IDENT@7..11 "call"
+      ARG_LIST@11..13
+        LEFT_PAREN@11..12 "("
+        RIGHT_PAREN@12..13 ")"
+    SEMICOLON@13..14 ";"

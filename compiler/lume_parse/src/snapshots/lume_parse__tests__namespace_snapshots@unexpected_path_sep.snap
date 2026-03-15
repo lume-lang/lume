@@ -1,0 +1,11 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"namespace ::std\")"
+---
+SOURCE_FILE@0..12
+  NAMESPACE@0..9
+    NAMESPACE_KW@0..9 "namespace"
+  IDENT@9..12 "std"
+
+expected identifier@10..12
+invalid top-level item@12..15

@@ -1,0 +1,14 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"0 as u64;\")"
+---
+SOURCE_FILE@0..7
+  EXPR_STMT@0..7
+    CAST_EXPR@0..6
+      LITERAL@0..1
+        INTEGER_LIT@0..1 "0"
+      AS_KW@1..3 "as"
+      PATH@3..6
+        PATH_NAMESPACE@3..6
+          IDENT@3..6 "u64"
+    SEMICOLON@6..7 ";"

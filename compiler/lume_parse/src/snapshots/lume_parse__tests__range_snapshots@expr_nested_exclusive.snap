@@ -1,0 +1,38 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = ((a + b)..(a + b + 1));\")"
+---
+SOURCE_FILE@0..22
+  LET_STMT@0..22
+    LET_KW@0..3 "let"
+    NAME@3..4
+      IDENT@3..4 "_"
+    ASSIGN@4..5 "="
+    PAREN_EXPR@5..21
+      LEFT_PAREN@5..6 "("
+      RANGE_EXPR@6..20
+        PAREN_EXPR@6..11
+          LEFT_PAREN@6..7 "("
+          BIN_EXPR@7..10
+            VARIABLE_EXPR@7..8
+              IDENT@7..8 "a"
+            ADD@8..9 "+"
+            VARIABLE_EXPR@9..10
+              IDENT@9..10 "b"
+          RIGHT_PAREN@10..11 ")"
+        DOT_DOT@11..13 ".."
+        PAREN_EXPR@13..20
+          LEFT_PAREN@13..14 "("
+          BIN_EXPR@14..19
+            BIN_EXPR@14..17
+              VARIABLE_EXPR@14..15
+                IDENT@14..15 "a"
+              ADD@15..16 "+"
+              VARIABLE_EXPR@16..17
+                IDENT@16..17 "b"
+            ADD@17..18 "+"
+            LITERAL@18..19
+              INTEGER_LIT@18..19 "1"
+          RIGHT_PAREN@19..20 ")"
+      RIGHT_PAREN@20..21 ")"
+    SEMICOLON@21..22 ";"

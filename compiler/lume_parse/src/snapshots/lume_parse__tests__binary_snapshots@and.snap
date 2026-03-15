@@ -1,0 +1,13 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"0 & 0;\")"
+---
+SOURCE_FILE@0..4
+  EXPR_STMT@0..4
+    BIN_EXPR@0..3
+      LITERAL@0..1
+        INTEGER_LIT@0..1 "0"
+      BINARY_AND@1..2 "&"
+      LITERAL@2..3
+        INTEGER_LIT@2..3 "0"
+    SEMICOLON@3..4 ";"

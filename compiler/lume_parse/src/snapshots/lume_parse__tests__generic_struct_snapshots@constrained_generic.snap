@@ -1,0 +1,20 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"struct Test<T: Numeric> {}\")"
+---
+SOURCE_FILE@0..23
+  STRUCT@0..23
+    STRUCT_KW@0..6 "struct"
+    IDENT@6..10 "Test"
+    BOUND_TYPES@10..21
+      LESS@10..11 "<"
+      BOUND_TYPE@11..20
+        IDENT@11..12 "T"
+        CONSTRAINTS@12..20
+          COLON@12..13 ":"
+          PATH@13..20
+            PATH_TYPE@13..20
+              IDENT@13..20 "Numeric"
+      GREATER@20..21 ">"
+    LEFT_BRACE@21..22 "{"
+    RIGHT_BRACE@22..23 "}"

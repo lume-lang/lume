@@ -1,0 +1,45 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement,\n\"switch a { Optional::Some(a) => a, Optional::None => 0 }\")"
+---
+SOURCE_FILE@0..47
+  EXPR_STMT@0..47
+    SWITCH_EXPR@0..47
+      SWITCH_KW@0..6 "switch"
+      VARIABLE_EXPR@6..7
+        IDENT@6..7 "a"
+      LEFT_BRACE@7..8 "{"
+      SWITCH_ARM@8..28
+        PAT@8..25
+          PAT_VARIANT@8..25
+            PATH@8..22
+              PATH_TYPE@8..16
+                IDENT@8..16 "Optional"
+              PATH_SEP@16..18 "::"
+              PATH_VARIANT@18..22
+                IDENT@18..22 "Some"
+            ARG_LIST@22..25
+              LEFT_PAREN@22..23 "("
+              PAT@23..24
+                PAT_IDENT@23..24
+                  PATH@23..24
+                    PATH_NAMESPACE@23..24
+                      IDENT@23..24 "a"
+              RIGHT_PAREN@24..25 ")"
+        BIG_ARROW@25..27 "=>"
+        VARIABLE_EXPR@27..28
+          IDENT@27..28 "a"
+      COMMA@28..29 ","
+      SWITCH_ARM@29..46
+        PAT@29..43
+          PAT_VARIANT@29..43
+            PATH@29..43
+              PATH_TYPE@29..37
+                IDENT@29..37 "Optional"
+              PATH_SEP@37..39 "::"
+              PATH_VARIANT@39..43
+                IDENT@39..43 "None"
+        BIG_ARROW@43..45 "=>"
+        LITERAL@45..46
+          INTEGER_LIT@45..46 "0"
+      RIGHT_BRACE@46..47 "}"

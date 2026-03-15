@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"0 == 0 || 0 == 0;\")"
+---
+SOURCE_FILE@0..11
+  EXPR_STMT@0..11
+    BIN_EXPR@0..10
+      BIN_EXPR@0..4
+        LITERAL@0..1
+          INTEGER_LIT@0..1 "0"
+        EQUAL@1..3 "=="
+        LITERAL@3..4
+          INTEGER_LIT@3..4 "0"
+      OR@4..6 "||"
+      BIN_EXPR@6..10
+        LITERAL@6..7
+          INTEGER_LIT@6..7 "0"
+        EQUAL@7..9 "=="
+        LITERAL@9..10
+          INTEGER_LIT@9..10 "0"
+    SEMICOLON@10..11 ";"

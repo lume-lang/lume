@@ -1,0 +1,16 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(\"fn main() {}\")"
+---
+SOURCE_FILE@0..10
+  FN@0..10
+    FN_KW@0..2 "fn"
+    NAME@2..6
+      IDENT@2..6 "main"
+    PARAM_LIST@6..8
+      LEFT_PAREN@6..7 "("
+      RIGHT_PAREN@7..8 ")"
+    BLOCK@8..10
+      LEFT_BRACE@8..9 "{"
+      STMT_LIST@9..9
+      RIGHT_BRACE@9..10 "}"

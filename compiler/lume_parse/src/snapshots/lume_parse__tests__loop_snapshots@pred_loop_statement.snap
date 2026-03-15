@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"while true { let a = 0; }\")"
+---
+SOURCE_FILE@0..18
+  WHILE_STMT@0..18
+    WHILE_KW@0..5 "while"
+    LITERAL@5..9
+      BOOLEAN_LIT@5..9 "true"
+    BLOCK@9..18
+      LEFT_BRACE@9..10 "{"
+      STMT_LIST@10..17
+        LET_STMT@10..17
+          LET_KW@10..13 "let"
+          NAME@13..14
+            IDENT@13..14 "a"
+          ASSIGN@14..15 "="
+          LITERAL@15..16
+            INTEGER_LIT@15..16 "0"
+          SEMICOLON@16..17 ";"
+      RIGHT_BRACE@17..18 "}"

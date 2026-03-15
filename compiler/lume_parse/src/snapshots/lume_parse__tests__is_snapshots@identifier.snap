@@ -1,0 +1,16 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"0 is test;\")"
+---
+SOURCE_FILE@0..8
+  EXPR_STMT@0..8
+    IS_EXPR@0..7
+      LITERAL@0..1
+        INTEGER_LIT@0..1 "0"
+      IS_KW@1..3 "is"
+      PAT@3..7
+        PAT_IDENT@3..7
+          PATH@3..7
+            PATH_NAMESPACE@3..7
+              IDENT@3..7 "test"
+    SEMICOLON@7..8 ";"

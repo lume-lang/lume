@@ -1,0 +1,23 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(\"priv fn main() -> Void {}\")"
+---
+SOURCE_FILE@0..20
+  FN@0..20
+    VISIBILITY@0..4
+      PRIV_KW@0..4 "priv"
+    FN_KW@4..6 "fn"
+    NAME@6..10
+      IDENT@6..10 "main"
+    PARAM_LIST@10..12
+      LEFT_PAREN@10..11 "("
+      RIGHT_PAREN@11..12 ")"
+    RETURN_TYPE@12..18
+      ARROW@12..14 "->"
+      PATH@14..18
+        PATH_TYPE@14..18
+          IDENT@14..18 "Void"
+    BLOCK@18..20
+      LEFT_BRACE@18..19 "{"
+      STMT_LIST@19..19
+      RIGHT_BRACE@19..20 "}"

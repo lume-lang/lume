@@ -1,0 +1,18 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"trait Add<T1, T2> { }\")"
+---
+SOURCE_FILE@0..17
+  TRAIT@0..17
+    TRAIT_KW@0..5 "trait"
+    IDENT@5..8 "Add"
+    BOUND_TYPES@8..15
+      LESS@8..9 "<"
+      BOUND_TYPE@9..11
+        IDENT@9..11 "T1"
+      COMMA@11..12 ","
+      BOUND_TYPE@12..14
+        IDENT@12..14 "T2"
+      GREATER@14..15 ">"
+    LEFT_BRACE@15..16 "{"
+    RIGHT_BRACE@16..17 "}"

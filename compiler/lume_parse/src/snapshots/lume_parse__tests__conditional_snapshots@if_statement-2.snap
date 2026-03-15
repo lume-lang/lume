@@ -1,0 +1,22 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"if true { let a = 0; }\")"
+---
+SOURCE_FILE@0..15
+  EXPR_STMT@0..15
+    IF_EXPR@0..15
+      IF_KW@0..2 "if"
+      LITERAL@2..6
+        BOOLEAN_LIT@2..6 "true"
+      BLOCK@6..15
+        LEFT_BRACE@6..7 "{"
+        STMT_LIST@7..14
+          LET_STMT@7..14
+            LET_KW@7..10 "let"
+            NAME@10..11
+              IDENT@10..11 "a"
+            ASSIGN@11..12 "="
+            LITERAL@12..13
+              INTEGER_LIT@12..13 "0"
+            SEMICOLON@13..14 ";"
+        RIGHT_BRACE@14..15 "}"

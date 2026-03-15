@@ -1,0 +1,14 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"struct 1A {}\")"
+---
+SOURCE_FILE@0..9
+  STRUCT@0..6
+    STRUCT_KW@0..6 "struct"
+  IDENT@6..7 "A"
+  LEFT_BRACE@7..8 "{"
+  RIGHT_BRACE@8..9 "}"
+
+expected identifier@7..8
+expected kind LEFT_BRACE@8..9
+invalid top-level item@8..9

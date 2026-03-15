@@ -1,0 +1,44 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        use Enumerable<T>: Vector<T> {\n            fn next() -> T { }\n        }\")"
+---
+SOURCE_FILE@0..41
+  TRAIT_IMPL@0..41
+    USE_KW@0..3 "use"
+    PATH@3..16
+      PATH_TYPE@3..16
+        IDENT@3..13 "Enumerable"
+        BOUND_TYPES@13..16
+          LESS@13..14 "<"
+          PATH@14..15
+            PATH_TYPE@14..15
+              IDENT@14..15 "T"
+          GREATER@15..16 ">"
+    COLON@16..17 ":"
+    PATH@17..26
+      PATH_TYPE@17..26
+        IDENT@17..23 "Vector"
+        BOUND_TYPES@23..26
+          LESS@23..24 "<"
+          PATH@24..25
+            PATH_TYPE@24..25
+              IDENT@24..25 "T"
+          GREATER@25..26 ">"
+    LEFT_BRACE@26..27 "{"
+    METHOD@27..40
+      FN_KW@27..29 "fn"
+      NAME@29..33
+        IDENT@29..33 "next"
+      PARAM_LIST@33..35
+        LEFT_PAREN@33..34 "("
+        RIGHT_PAREN@34..35 ")"
+      RETURN_TYPE@35..38
+        ARROW@35..37 "->"
+        PATH@37..38
+          PATH_TYPE@37..38
+            IDENT@37..38 "T"
+      BLOCK@38..40
+        LEFT_BRACE@38..39 "{"
+        STMT_LIST@39..39
+        RIGHT_BRACE@39..40 "}"
+    RIGHT_BRACE@40..41 "}"

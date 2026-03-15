@@ -1,0 +1,9 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"namespace\")"
+---
+SOURCE_FILE@0..9
+  NAMESPACE@0..9
+    NAMESPACE_KW@0..9 "namespace"
+
+expected identifier@7..8

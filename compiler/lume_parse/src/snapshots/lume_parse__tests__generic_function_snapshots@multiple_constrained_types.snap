@@ -1,0 +1,35 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"fn test<T: Numeric + Floating>() -> void {}\")"
+---
+SOURCE_FILE@0..36
+  FN@0..36
+    FN_KW@0..2 "fn"
+    NAME@2..6
+      IDENT@2..6 "test"
+    BOUND_TYPES@6..26
+      LESS@6..7 "<"
+      BOUND_TYPE@7..25
+        IDENT@7..8 "T"
+        CONSTRAINTS@8..25
+          COLON@8..9 ":"
+          PATH@9..16
+            PATH_TYPE@9..16
+              IDENT@9..16 "Numeric"
+          ADD@16..17 "+"
+          PATH@17..25
+            PATH_TYPE@17..25
+              IDENT@17..25 "Floating"
+      GREATER@25..26 ">"
+    PARAM_LIST@26..28
+      LEFT_PAREN@26..27 "("
+      RIGHT_PAREN@27..28 ")"
+    RETURN_TYPE@28..34
+      ARROW@28..30 "->"
+      PATH@30..34
+        PATH_TYPE@30..34
+          IDENT@30..34 "void"
+    BLOCK@34..36
+      LEFT_BRACE@34..35 "{"
+      STMT_LIST@35..35
+      RIGHT_BRACE@35..36 "}"

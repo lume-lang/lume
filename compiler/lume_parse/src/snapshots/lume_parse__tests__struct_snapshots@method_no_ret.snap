@@ -1,0 +1,23 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        impl Foo {\n            fn bar() { }\n        }\")"
+---
+SOURCE_FILE@0..18
+  IMPL@0..18
+    IMPL_KW@0..4 "impl"
+    PATH@4..7
+      PATH_TYPE@4..7
+        IDENT@4..7 "Foo"
+    LEFT_BRACE@7..8 "{"
+    METHOD@8..17
+      FN_KW@8..10 "fn"
+      NAME@10..13
+        IDENT@10..13 "bar"
+      PARAM_LIST@13..15
+        LEFT_PAREN@13..14 "("
+        RIGHT_PAREN@14..15 ")"
+      BLOCK@15..17
+        LEFT_BRACE@15..16 "{"
+        STMT_LIST@16..16
+        RIGHT_BRACE@16..17 "}"
+    RIGHT_BRACE@17..18 "}"

@@ -1,0 +1,23 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"struct Foo { pub fn bar() -> void { } }\")"
+---
+SOURCE_FILE@0..29
+  STRUCT@0..29
+    STRUCT_KW@0..6 "struct"
+    IDENT@6..9 "Foo"
+    LEFT_BRACE@9..10 "{"
+    FIELD@10..29
+      VISIBILITY@10..13
+        PUB_KW@10..13 "pub"
+      IDENT@13..15 "fn"
+      IDENT@15..18 "bar"
+      LEFT_PAREN@18..19 "("
+      RIGHT_PAREN@19..20 ")"
+      ARROW@20..22 "->"
+      IDENT@22..26 "void"
+      LEFT_BRACE@26..27 "{"
+      RIGHT_BRACE@27..28 "}"
+      RIGHT_BRACE@28..29 "}"
+
+methods can only be defined in `impl` blocks@20..23

@@ -1,0 +1,22 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(\"fn external main() -> Void {}\")"
+---
+SOURCE_FILE@0..24
+  FN@0..24
+    FN_KW@0..2 "fn"
+    EXTERN_KW@2..10 "external"
+    NAME@10..14
+      IDENT@10..14 "main"
+    PARAM_LIST@14..16
+      LEFT_PAREN@14..15 "("
+      RIGHT_PAREN@15..16 ")"
+    RETURN_TYPE@16..22
+      ARROW@16..18 "->"
+      PATH@18..22
+        PATH_TYPE@18..22
+          IDENT@18..22 "Void"
+    LEFT_BRACE@22..23 "{"
+    RIGHT_BRACE@23..24 "}"
+
+external items cannot have bodies@27..28

@@ -1,0 +1,13 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"\\\"foo\\\" = b;\")"
+---
+SOURCE_FILE@0..8
+  EXPR_STMT@0..8
+    ASSIGNMENT_EXPR@0..7
+      LITERAL@0..5
+        STRING_LIT@0..5 "\"foo\""
+      ASSIGN@5..6 "="
+      VARIABLE_EXPR@6..7
+        IDENT@6..7 "b"
+    SEMICOLON@7..8 ";"

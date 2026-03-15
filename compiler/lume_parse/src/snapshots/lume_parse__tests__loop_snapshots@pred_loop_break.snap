@@ -1,0 +1,16 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"while true { break; }\")"
+---
+SOURCE_FILE@0..17
+  WHILE_STMT@0..17
+    WHILE_KW@0..5 "while"
+    LITERAL@5..9
+      BOOLEAN_LIT@5..9 "true"
+    BLOCK@9..17
+      LEFT_BRACE@9..10 "{"
+      STMT_LIST@10..16
+        BREAK_STMT@10..16
+          BREAK_KW@10..15 "break"
+          SEMICOLON@15..16 ";"
+      RIGHT_BRACE@16..17 "}"

@@ -1,0 +1,23 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"self::invoke<T>();\")"
+---
+SOURCE_FILE@0..18
+  EXPR_STMT@0..18
+    STATIC_CALL_EXPR@0..17
+      PATH@0..15
+        PATH_TYPE@0..4
+          IDENT@0..4 "self"
+        PATH_SEP@4..6 "::"
+        PATH_CALLABLE@6..15
+          IDENT@6..12 "invoke"
+          BOUND_TYPES@12..15
+            LESS@12..13 "<"
+            PATH@13..14
+              PATH_TYPE@13..14
+                IDENT@13..14 "T"
+            GREATER@14..15 ">"
+      ARG_LIST@15..17
+        LEFT_PAREN@15..16 "("
+        RIGHT_PAREN@16..17 ")"
+    SEMICOLON@17..18 ";"

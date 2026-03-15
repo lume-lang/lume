@@ -1,0 +1,12 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(\"import std::io\")"
+---
+IMPORT@0..13
+  IMPORT_KW@0..6 "import"
+  IMPORT_PATH@6..13
+    IDENT@6..9 "std"
+    PATH_SEP@9..11 "::"
+    IDENT@11..13 "io"
+
+invalid import path@12..13

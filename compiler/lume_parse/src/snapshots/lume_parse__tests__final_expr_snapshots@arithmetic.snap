@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = { 4 + 7 };\")"
+---
+SOURCE_FILE@0..11
+  LET_STMT@0..11
+    LET_KW@0..3 "let"
+    NAME@3..4
+      IDENT@3..4 "_"
+    ASSIGN@4..5 "="
+    LEFT_BRACE@5..6 "{"
+    STMT_LIST@6..9
+      FINAL_STMT@6..9
+        BIN_EXPR@6..9
+          LITERAL@6..7
+            INTEGER_LIT@6..7 "4"
+          ADD@7..8 "+"
+          LITERAL@8..9
+            INTEGER_LIT@8..9 "7"
+    RIGHT_BRACE@9..10 "}"
+    SEMICOLON@10..11 ";"

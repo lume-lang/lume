@@ -1,0 +1,16 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"Foo { bar };\")"
+---
+SOURCE_FILE@0..9
+  EXPR_STMT@0..9
+    CONSTRUCT_EXPR@0..8
+      PATH@0..3
+        PATH_TYPE@0..3
+          IDENT@0..3 "Foo"
+      LEFT_BRACE@3..4 "{"
+      FIELD@4..7
+        NAME@4..7
+          IDENT@4..7 "bar"
+      RIGHT_BRACE@7..8 "}"
+    SEMICOLON@8..9 ";"

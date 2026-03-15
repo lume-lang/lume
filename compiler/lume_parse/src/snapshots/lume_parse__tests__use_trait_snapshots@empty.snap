@@ -1,0 +1,16 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"use Add: Int32 {}\")"
+---
+SOURCE_FILE@0..14
+  TRAIT_IMPL@0..14
+    USE_KW@0..3 "use"
+    PATH@3..6
+      PATH_TYPE@3..6
+        IDENT@3..6 "Add"
+    COLON@6..7 ":"
+    PATH@7..12
+      PATH_TYPE@7..12
+        IDENT@7..12 "Int32"
+    LEFT_BRACE@12..13 "{"
+    RIGHT_BRACE@13..14 "}"

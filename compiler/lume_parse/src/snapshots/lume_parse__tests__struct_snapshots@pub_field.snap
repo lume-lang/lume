@@ -1,0 +1,22 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        struct Foo {\n            pub x: Int32 = 1;\n        }\")"
+---
+SOURCE_FILE@0..24
+  STRUCT@0..24
+    STRUCT_KW@0..6 "struct"
+    IDENT@6..9 "Foo"
+    LEFT_BRACE@9..10 "{"
+    FIELD@10..23
+      VISIBILITY@10..13
+        PUB_KW@10..13 "pub"
+      IDENT@13..14 "x"
+      COLON@14..15 ":"
+      PATH@15..20
+        PATH_TYPE@15..20
+          IDENT@15..20 "Int32"
+      ASSIGN@20..21 "="
+      LITERAL@21..22
+        INTEGER_LIT@21..22 "1"
+      SEMICOLON@22..23 ";"
+    RIGHT_BRACE@23..24 "}"

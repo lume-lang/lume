@@ -1,0 +1,22 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"std::Foo<T> {  };\")"
+---
+SOURCE_FILE@0..14
+  EXPR_STMT@0..14
+    CONSTRUCT_EXPR@0..13
+      PATH@0..11
+        PATH_NAMESPACE@0..3
+          IDENT@0..3 "std"
+        PATH_SEP@3..5 "::"
+        PATH_TYPE@5..11
+          IDENT@5..8 "Foo"
+          BOUND_TYPES@8..11
+            LESS@8..9 "<"
+            PATH@9..10
+              PATH_TYPE@9..10
+                IDENT@9..10 "T"
+            GREATER@10..11 ">"
+      LEFT_BRACE@11..12 "{"
+      RIGHT_BRACE@12..13 "}"
+    SEMICOLON@13..14 ";"

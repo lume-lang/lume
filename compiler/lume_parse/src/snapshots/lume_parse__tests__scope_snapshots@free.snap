@@ -1,0 +1,10 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"{ };\")"
+---
+SOURCE_FILE@0..3
+  EXPR_STMT@0..3
+    LEFT_BRACE@0..1 "{"
+    STMT_LIST@1..1
+    RIGHT_BRACE@1..2 "}"
+    SEMICOLON@2..3 ";"

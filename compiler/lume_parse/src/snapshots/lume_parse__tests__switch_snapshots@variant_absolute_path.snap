@@ -1,0 +1,43 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement,\n\"switch a { std::Address::V4 => 4, std::Address::V6 => 6 }\")"
+---
+SOURCE_FILE@0..48
+  EXPR_STMT@0..48
+    SWITCH_EXPR@0..48
+      SWITCH_KW@0..6 "switch"
+      VARIABLE_EXPR@6..7
+        IDENT@6..7 "a"
+      LEFT_BRACE@7..8 "{"
+      SWITCH_ARM@8..27
+        PAT@8..24
+          PAT_VARIANT@8..24
+            PATH@8..24
+              PATH_NAMESPACE@8..11
+                IDENT@8..11 "std"
+              PATH_SEP@11..13 "::"
+              PATH_TYPE@13..20
+                IDENT@13..20 "Address"
+              PATH_SEP@20..22 "::"
+              PATH_VARIANT@22..24
+                IDENT@22..24 "V4"
+        BIG_ARROW@24..26 "=>"
+        LITERAL@26..27
+          INTEGER_LIT@26..27 "4"
+      COMMA@27..28 ","
+      SWITCH_ARM@28..47
+        PAT@28..44
+          PAT_VARIANT@28..44
+            PATH@28..44
+              PATH_NAMESPACE@28..31
+                IDENT@28..31 "std"
+              PATH_SEP@31..33 "::"
+              PATH_TYPE@33..40
+                IDENT@33..40 "Address"
+              PATH_SEP@40..42 "::"
+              PATH_VARIANT@42..44
+                IDENT@42..44 "V6"
+        BIG_ARROW@44..46 "=>"
+        LITERAL@46..47
+          INTEGER_LIT@46..47 "6"
+      RIGHT_BRACE@47..48 "}"

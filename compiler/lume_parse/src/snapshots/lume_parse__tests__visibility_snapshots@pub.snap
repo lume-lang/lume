@@ -1,0 +1,18 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"pub fn foo() {}\")"
+---
+SOURCE_FILE@0..12
+  FN@0..12
+    VISIBILITY@0..3
+      PUB_KW@0..3 "pub"
+    FN_KW@3..5 "fn"
+    NAME@5..8
+      IDENT@5..8 "foo"
+    PARAM_LIST@8..10
+      LEFT_PAREN@8..9 "("
+      RIGHT_PAREN@9..10 ")"
+    BLOCK@10..12
+      LEFT_BRACE@10..11 "{"
+      STMT_LIST@11..11
+      RIGHT_BRACE@11..12 "}"

@@ -1,0 +1,12 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"impl Int32 {}\")"
+---
+SOURCE_FILE@0..11
+  IMPL@0..11
+    IMPL_KW@0..4 "impl"
+    PATH@4..9
+      PATH_TYPE@4..9
+        IDENT@4..9 "Int32"
+    LEFT_BRACE@9..10 "{"
+    RIGHT_BRACE@10..11 "}"

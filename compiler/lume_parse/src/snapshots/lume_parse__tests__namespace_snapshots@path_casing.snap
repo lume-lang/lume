@@ -1,0 +1,10 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"namespace System::IO\")"
+---
+SOURCE_FILE@0..19
+  NAMESPACE@0..19
+    NAMESPACE_KW@0..9 "namespace"
+    IDENT@9..15 "System"
+    PATH_SEP@15..17 "::"
+    IDENT@17..19 "IO"

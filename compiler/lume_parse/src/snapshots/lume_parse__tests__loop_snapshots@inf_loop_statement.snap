@@ -1,0 +1,19 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"loop { let a = 0; }\")"
+---
+SOURCE_FILE@0..13
+  LOOP_STMT@0..13
+    LOOP_KW@0..4 "loop"
+    BLOCK@4..13
+      LEFT_BRACE@4..5 "{"
+      STMT_LIST@5..12
+        LET_STMT@5..12
+          LET_KW@5..8 "let"
+          NAME@8..9
+            IDENT@8..9 "a"
+          ASSIGN@9..10 "="
+          LITERAL@10..11
+            INTEGER_LIT@10..11 "0"
+          SEMICOLON@11..12 ";"
+      RIGHT_BRACE@12..13 "}"
