@@ -6,7 +6,7 @@ edition = { workspace = true }
 default-run = "lume"
 
 [workspace]
-members = ["compiler/lume_cli", "crates/*", "tools/bootstrap", "tools/manifold", "fuzz", "rt/lume_runtime"]
+members = ["compiler/lume_cli", "compiler/lume_parse", "crates/*", "tools/bootstrap", "tools/manifold", "fuzz", "rt/lume_runtime"]
 resolver = "3"
 
 [[bin]]
@@ -70,3 +70,7 @@ criterion = { version = "0.8.1", features = ["html_reports"] }
 [profile.profiling]
 inherits = "release"
 debug = true
+
+[profile.dev.package]
+insta.opt-level = 3
+similar.opt-level = 3
