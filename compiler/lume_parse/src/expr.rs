@@ -150,9 +150,13 @@ impl Parser {
     fn parse_array_expression(&mut self) -> SyntaxKind {
         self.start_node(SyntaxKind::ARRAY_EXPR);
 
-        self.consume_comma_seq(SyntaxKind::LEFT_BRACKET, SyntaxKind::RIGHT_BRACKET, |parser| {
+        let finished = self.consume_comma_seq(SyntaxKind::LEFT_BRACKET, SyntaxKind::RIGHT_BRACKET, |parser| {
             parser.parse_expression(None);
         });
+
+        if !finished {
+            self.recover_with_set(&[Token![;]]);
+        }
 
         self.finish_node();
 

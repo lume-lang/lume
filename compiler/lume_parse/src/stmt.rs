@@ -40,6 +40,9 @@ impl Parser {
             Token![loop] => self.parse_infinite_loop(),
             Token![for] => self.parse_iterator_loop(),
             Token![while] => self.parse_predicate_loop(),
+            Token![;] => {
+                self.consume(Token![;]);
+            }
             _ => self.parse_expression_stmt(),
         }
     }
