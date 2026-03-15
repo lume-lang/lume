@@ -182,11 +182,19 @@ impl Parser {
         self.consume(Token![switch]);
         self.parse_expression(None);
 
-        self.consume_comma_seq(SyntaxKind::LEFT_BRACE, SyntaxKind::RIGHT_BRACE, |parser| {
+        let finished = self.consume_comma_seq(SyntaxKind::LEFT_BRACE, SyntaxKind::RIGHT_BRACE, |parser| {
+            parser.start_node(SyntaxKind::SWITCH_ARM);
+
             parser.parse_pattern();
             parser.consume(Token![=>]);
             parser.parse_expression(None);
+
+            parser.finish_node();
         });
+
+        if !finished {
+            self.recover_with_set(&[Token![;]]);
+        }
 
         self.finish_node();
 
