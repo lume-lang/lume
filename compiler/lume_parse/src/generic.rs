@@ -38,6 +38,33 @@ impl Parser {
         self.finish_node();
     }
 
+    /// Attempts to determine whether the next token(s) are type arguments.
+    pub(super) fn is_type_arguments(&mut self, offset: usize) -> (usize, bool) {
+        if !self.peek_at(offset, Token![<]) {
+            return (0, false);
+        }
+
+        let mut idx = offset;
+        let mut angles_count = 1_usize;
+
+        for (tok, _span) in self.tokens.iter().rev().skip(offset + 1) {
+            idx += 1;
+
+            match tok {
+                Token![<] => angles_count += 1,
+                Token![>] => angles_count -= 1,
+                Token![,] | Token![::] | SyntaxKind::IDENT | SyntaxKind::LEFT_BRACKET | SyntaxKind::RIGHT_BRACKET => {}
+                _ => return (idx, false),
+            }
+
+            if angles_count == 0 {
+                break;
+            }
+        }
+
+        (idx, true)
+    }
+
     /// Parses zero-or-more type arguments, boxed as [`Box<Type>`].
     pub(super) fn parse_type_arguments(&mut self) -> bool {
         if !self.peek(Token![<]) {
