@@ -1,0 +1,19 @@
+---
+source: compiler/lume_parse/src/tests.rs
+assertion_line: 105
+expression: "parse(Target :: Statement, \"a() as u64;\")"
+---
+SOURCE_FILE@0..9
+  EXPR_STMT@0..9
+    CAST_EXPR@0..8
+      STATIC_CALL_EXPR@0..3
+        NAME@0..1
+          IDENT@0..1 "a"
+        ARG_LIST@1..3
+          LEFT_PAREN@1..2 "("
+          RIGHT_PAREN@2..3 ")"
+      AS_KW@3..5 "as"
+      PATH@5..8
+        PATH_NAMESPACE@5..8
+          IDENT@5..8 "u64"
+    SEMICOLON@8..9 ";"

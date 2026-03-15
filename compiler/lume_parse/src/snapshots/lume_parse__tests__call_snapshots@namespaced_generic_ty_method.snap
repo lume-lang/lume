@@ -1,0 +1,35 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = std::Buffer<T>::call(a, b);\")"
+---
+SOURCE_FILE@0..31
+  LET_STMT@0..31
+    LET_KW@0..3 "let"
+    NAME@3..4
+      IDENT@3..4 "_"
+    ASSIGN@4..5 "="
+    STATIC_CALL_EXPR@5..30
+      PATH@5..25
+        PATH_NAMESPACE@5..8
+          IDENT@5..8 "std"
+        PATH_SEP@8..10 "::"
+        PATH_TYPE@10..19
+          IDENT@10..16 "Buffer"
+          BOUND_TYPES@16..19
+            LESS@16..17 "<"
+            PATH@17..18
+              PATH_TYPE@17..18
+                IDENT@17..18 "T"
+            GREATER@18..19 ">"
+        PATH_SEP@19..21 "::"
+        PATH_CALLABLE@21..25
+          IDENT@21..25 "call"
+      ARG_LIST@25..30
+        LEFT_PAREN@25..26 "("
+        VARIABLE_EXPR@26..27
+          IDENT@26..27 "a"
+        COMMA@27..28 ","
+        VARIABLE_EXPR@28..29
+          IDENT@28..29 "b"
+        RIGHT_PAREN@29..30 ")"
+    SEMICOLON@30..31 ";"

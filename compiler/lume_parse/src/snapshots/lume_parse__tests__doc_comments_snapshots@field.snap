@@ -1,0 +1,24 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"struct Foo {\n            /// This is a doc comment\n            pub bar: Int32 = 0;\n        }\")"
+---
+SOURCE_FILE@0..51
+  STRUCT@0..51
+    STRUCT_KW@0..6 "struct"
+    IDENT@6..9 "Foo"
+    LEFT_BRACE@9..10 "{"
+    FIELD@10..50
+      DOC_COMMENT@10..35
+        DOC_COMMENT@10..35 "/// This is a doc com ..."
+      VISIBILITY@35..38
+        PUB_KW@35..38 "pub"
+      IDENT@38..41 "bar"
+      COLON@41..42 ":"
+      PATH@42..47
+        PATH_TYPE@42..47
+          IDENT@42..47 "Int32"
+      ASSIGN@47..48 "="
+      LITERAL@48..49
+        INTEGER_LIT@48..49 "0"
+      SEMICOLON@49..50 ";"
+    RIGHT_BRACE@50..51 "}"

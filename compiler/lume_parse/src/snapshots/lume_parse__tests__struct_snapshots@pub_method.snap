@@ -1,0 +1,35 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n                return 0;\n            }\n        }\")"
+---
+SOURCE_FILE@0..36
+  IMPL@0..36
+    IMPL_KW@0..4 "impl"
+    PATH@4..7
+      PATH_TYPE@4..7
+        IDENT@4..7 "Foo"
+    LEFT_BRACE@7..8 "{"
+    METHOD@8..35
+      VISIBILITY@8..11
+        PUB_KW@8..11 "pub"
+      FN_KW@11..13 "fn"
+      NAME@13..16
+        IDENT@13..16 "bar"
+      PARAM_LIST@16..18
+        LEFT_PAREN@16..17 "("
+        RIGHT_PAREN@17..18 ")"
+      RETURN_TYPE@18..25
+        ARROW@18..20 "->"
+        PATH@20..25
+          PATH_TYPE@20..25
+            IDENT@20..25 "Int32"
+      BLOCK@25..35
+        LEFT_BRACE@25..26 "{"
+        STMT_LIST@26..34
+          RETURN_STMT@26..34
+            RETURN_KW@26..32 "return"
+            LITERAL@32..33
+              INTEGER_LIT@32..33 "0"
+            SEMICOLON@33..34 ";"
+        RIGHT_BRACE@34..35 "}"
+    RIGHT_BRACE@35..36 "}"

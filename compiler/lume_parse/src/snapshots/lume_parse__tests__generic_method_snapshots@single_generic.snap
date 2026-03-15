@@ -1,0 +1,33 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"impl Test { fn test<T>() -> void {} }\")"
+---
+SOURCE_FILE@0..29
+  IMPL@0..29
+    IMPL_KW@0..4 "impl"
+    PATH@4..8
+      PATH_TYPE@4..8
+        IDENT@4..8 "Test"
+    LEFT_BRACE@8..9 "{"
+    METHOD@9..28
+      FN_KW@9..11 "fn"
+      NAME@11..15
+        IDENT@11..15 "test"
+      BOUND_TYPES@15..18
+        LESS@15..16 "<"
+        BOUND_TYPE@16..17
+          IDENT@16..17 "T"
+        GREATER@17..18 ">"
+      PARAM_LIST@18..20
+        LEFT_PAREN@18..19 "("
+        RIGHT_PAREN@19..20 ")"
+      RETURN_TYPE@20..26
+        ARROW@20..22 "->"
+        PATH@22..26
+          PATH_TYPE@22..26
+            IDENT@22..26 "void"
+      BLOCK@26..28
+        LEFT_BRACE@26..27 "{"
+        STMT_LIST@27..27
+        RIGHT_BRACE@27..28 "}"
+    RIGHT_BRACE@28..29 "}"

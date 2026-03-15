@@ -1,0 +1,17 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"enum Foo { Bar Baz }\")"
+---
+SOURCE_FILE@0..15
+  ENUM@0..11
+    ENUM_KW@0..4 "enum"
+    NAME@4..7
+      IDENT@4..7 "Foo"
+    LEFT_BRACE@7..8 "{"
+    CASE@8..11
+      IDENT@8..11 "Bar"
+  IDENT@11..14 "Baz"
+  RIGHT_BRACE@14..15 "}"
+
+expected COMMA@15..18
+invalid top-level item@15..18

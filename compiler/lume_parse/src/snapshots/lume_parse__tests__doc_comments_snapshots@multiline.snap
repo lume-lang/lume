@@ -1,0 +1,25 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"/// This is a doc comment\n        ///\n        /// Another line in the doc comment\n        fn foo() -> void { }\")"
+---
+SOURCE_FILE@0..78
+  FN@0..78
+    DOC_COMMENT@0..63
+      DOC_COMMENT@0..25 "/// This is a doc com ..."
+      DOC_COMMENT@25..28 "///"
+      DOC_COMMENT@28..63 "/// Another line in t ..."
+    FN_KW@63..65 "fn"
+    NAME@65..68
+      IDENT@65..68 "foo"
+    PARAM_LIST@68..70
+      LEFT_PAREN@68..69 "("
+      RIGHT_PAREN@69..70 ")"
+    RETURN_TYPE@70..76
+      ARROW@70..72 "->"
+      PATH@72..76
+        PATH_TYPE@72..76
+          IDENT@72..76 "void"
+    BLOCK@76..78
+      LEFT_BRACE@76..77 "{"
+      STMT_LIST@77..77
+      RIGHT_BRACE@77..78 "}"

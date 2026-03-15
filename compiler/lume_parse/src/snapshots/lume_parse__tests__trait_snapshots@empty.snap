@@ -1,0 +1,10 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"trait Add { }\")"
+---
+SOURCE_FILE@0..10
+  TRAIT@0..10
+    TRAIT_KW@0..5 "trait"
+    IDENT@5..8 "Add"
+    LEFT_BRACE@8..9 "{"
+    RIGHT_BRACE@9..10 "}"

@@ -1,0 +1,51 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement,\n\"switch a { std::Optional::Some(a) => a, std::Optional::None => 0 }\")"
+---
+SOURCE_FILE@0..57
+  EXPR_STMT@0..57
+    SWITCH_EXPR@0..57
+      SWITCH_KW@0..6 "switch"
+      VARIABLE_EXPR@6..7
+        IDENT@6..7 "a"
+      LEFT_BRACE@7..8 "{"
+      SWITCH_ARM@8..33
+        PAT@8..30
+          PAT_VARIANT@8..30
+            PATH@8..27
+              PATH_NAMESPACE@8..11
+                IDENT@8..11 "std"
+              PATH_SEP@11..13 "::"
+              PATH_TYPE@13..21
+                IDENT@13..21 "Optional"
+              PATH_SEP@21..23 "::"
+              PATH_VARIANT@23..27
+                IDENT@23..27 "Some"
+            ARG_LIST@27..30
+              LEFT_PAREN@27..28 "("
+              PAT@28..29
+                PAT_IDENT@28..29
+                  PATH@28..29
+                    PATH_NAMESPACE@28..29
+                      IDENT@28..29 "a"
+              RIGHT_PAREN@29..30 ")"
+        BIG_ARROW@30..32 "=>"
+        VARIABLE_EXPR@32..33
+          IDENT@32..33 "a"
+      COMMA@33..34 ","
+      SWITCH_ARM@34..56
+        PAT@34..53
+          PAT_VARIANT@34..53
+            PATH@34..53
+              PATH_NAMESPACE@34..37
+                IDENT@34..37 "std"
+              PATH_SEP@37..39 "::"
+              PATH_TYPE@39..47
+                IDENT@39..47 "Optional"
+              PATH_SEP@47..49 "::"
+              PATH_VARIANT@49..53
+                IDENT@49..53 "None"
+        BIG_ARROW@53..55 "=>"
+        LITERAL@55..56
+          INTEGER_LIT@55..56 "0"
+      RIGHT_BRACE@56..57 "}"

@@ -1,0 +1,10 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"struct Test {}\")"
+---
+SOURCE_FILE@0..12
+  STRUCT@0..12
+    STRUCT_KW@0..6 "struct"
+    IDENT@6..10 "Test"
+    LEFT_BRACE@10..11 "{"
+    RIGHT_BRACE@11..12 "}"

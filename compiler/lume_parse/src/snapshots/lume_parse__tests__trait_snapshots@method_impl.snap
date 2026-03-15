@@ -1,0 +1,43 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"trait Add {fn add(other: Int32) -> Int32 { return self + other; } }\")"
+---
+SOURCE_FILE@0..54
+  TRAIT@0..54
+    TRAIT_KW@0..5 "trait"
+    IDENT@5..8 "Add"
+    LEFT_BRACE@8..9 "{"
+    METHOD@9..53
+      FN_KW@9..11 "fn"
+      NAME@11..14
+        IDENT@11..14 "add"
+      PARAM_LIST@14..27
+        LEFT_PAREN@14..15 "("
+        PARAM@15..26
+          NAME@15..20
+            IDENT@15..20 "other"
+          COLON@20..21 ":"
+          PARAM_TYPE@21..26
+            PATH@21..26
+              PATH_TYPE@21..26
+                IDENT@21..26 "Int32"
+        RIGHT_PAREN@26..27 ")"
+      RETURN_TYPE@27..34
+        ARROW@27..29 "->"
+        PATH@29..34
+          PATH_TYPE@29..34
+            IDENT@29..34 "Int32"
+      BLOCK@34..53
+        LEFT_BRACE@34..35 "{"
+        STMT_LIST@35..52
+          RETURN_STMT@35..52
+            RETURN_KW@35..41 "return"
+            BIN_EXPR@41..51
+              VARIABLE_EXPR@41..45
+                IDENT@41..45 "self"
+              ADD@45..46 "+"
+              VARIABLE_EXPR@46..51
+                IDENT@46..51 "other"
+            SEMICOLON@51..52 ";"
+        RIGHT_BRACE@52..53 "}"
+    RIGHT_BRACE@53..54 "}"

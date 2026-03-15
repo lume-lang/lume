@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(\"fn main() -> Void {}\")"
+---
+SOURCE_FILE@0..16
+  FN@0..16
+    FN_KW@0..2 "fn"
+    NAME@2..6
+      IDENT@2..6 "main"
+    PARAM_LIST@6..8
+      LEFT_PAREN@6..7 "("
+      RIGHT_PAREN@7..8 ")"
+    RETURN_TYPE@8..14
+      ARROW@8..10 "->"
+      PATH@10..14
+        PATH_TYPE@10..14
+          IDENT@10..14 "Void"
+    BLOCK@14..16
+      LEFT_BRACE@14..15 "{"
+      STMT_LIST@15..15
+      RIGHT_BRACE@15..16 "}"

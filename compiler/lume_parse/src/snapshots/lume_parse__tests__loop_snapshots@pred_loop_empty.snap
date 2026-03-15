@@ -1,0 +1,13 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"while true { }\")"
+---
+SOURCE_FILE@0..11
+  WHILE_STMT@0..11
+    WHILE_KW@0..5 "while"
+    LITERAL@5..9
+      BOOLEAN_LIT@5..9 "true"
+    BLOCK@9..11
+      LEFT_BRACE@9..10 "{"
+      STMT_LIST@10..10
+      RIGHT_BRACE@10..11 "}"

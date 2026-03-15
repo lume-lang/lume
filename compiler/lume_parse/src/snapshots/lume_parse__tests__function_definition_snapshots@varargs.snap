@@ -1,0 +1,25 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(\"fn foo(...args: Int32) {}\")"
+---
+SOURCE_FILE@0..22
+  FN@0..22
+    FN_KW@0..2 "fn"
+    NAME@2..5
+      IDENT@2..5 "foo"
+    PARAM_LIST@5..20
+      LEFT_PAREN@5..6 "("
+      PARAM@6..19
+        DOT_DOT_DOT@6..9 "..."
+        NAME@9..13
+          IDENT@9..13 "args"
+        COLON@13..14 ":"
+        PARAM_TYPE@14..19
+          PATH@14..19
+            PATH_TYPE@14..19
+              IDENT@14..19 "Int32"
+      RIGHT_PAREN@19..20 ")"
+    BLOCK@20..22
+      LEFT_BRACE@20..21 "{"
+      STMT_LIST@21..21
+      RIGHT_BRACE@21..22 "}"

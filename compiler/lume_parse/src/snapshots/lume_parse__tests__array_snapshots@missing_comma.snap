@@ -1,0 +1,19 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = [a b];\")"
+---
+SOURCE_FILE@0..10
+  LET_STMT@0..10
+    LET_KW@0..3 "let"
+    NAME@3..4
+      IDENT@3..4 "_"
+    ASSIGN@4..5 "="
+    ARRAY_EXPR@5..9
+      LEFT_BRACKET@5..6 "["
+      VARIABLE_EXPR@6..7
+        IDENT@6..7 "a"
+      IDENT@7..8 "b"
+      RIGHT_BRACKET@8..9 "]"
+    SEMICOLON@9..10 ";"
+
+expected COMMA@11..12

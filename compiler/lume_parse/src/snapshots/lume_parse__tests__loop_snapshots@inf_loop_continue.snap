@@ -1,0 +1,14 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"loop { continue; }\")"
+---
+SOURCE_FILE@0..15
+  LOOP_STMT@0..15
+    LOOP_KW@0..4 "loop"
+    BLOCK@4..15
+      LEFT_BRACE@4..5 "{"
+      STMT_LIST@5..14
+        CONTINUE_STMT@5..14
+          CONTINUE_KW@5..13 "continue"
+          SEMICOLON@13..14 ";"
+      RIGHT_BRACE@14..15 "}"

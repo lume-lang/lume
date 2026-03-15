@@ -1,0 +1,28 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = call<T>(a, b);\")"
+---
+SOURCE_FILE@0..18
+  LET_STMT@0..18
+    LET_KW@0..3 "let"
+    NAME@3..4
+      IDENT@3..4 "_"
+    ASSIGN@4..5 "="
+    INSTANCE_CALL_EXPR@5..17
+      NAME@5..9
+        IDENT@5..9 "call"
+      BOUND_TYPES@9..12
+        LESS@9..10 "<"
+        PATH@10..11
+          PATH_TYPE@10..11
+            IDENT@10..11 "T"
+        GREATER@11..12 ">"
+      ARG_LIST@12..17
+        LEFT_PAREN@12..13 "("
+        VARIABLE_EXPR@13..14
+          IDENT@13..14 "a"
+        COMMA@14..15 ","
+        VARIABLE_EXPR@15..16
+          IDENT@15..16 "b"
+        RIGHT_PAREN@16..17 ")"
+    SEMICOLON@17..18 ";"

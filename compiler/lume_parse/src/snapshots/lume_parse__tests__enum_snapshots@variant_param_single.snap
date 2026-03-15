@@ -1,0 +1,19 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"\n        enum Foo {\n            Bar(Int32)\n        }\")"
+---
+SOURCE_FILE@0..19
+  ENUM@0..19
+    ENUM_KW@0..4 "enum"
+    NAME@4..7
+      IDENT@4..7 "Foo"
+    LEFT_BRACE@7..8 "{"
+    CASE@8..18
+      IDENT@8..11 "Bar"
+      PARAM_LIST@11..18
+        LEFT_PAREN@11..12 "("
+        PATH@12..17
+          PATH_TYPE@12..17
+            IDENT@12..17 "Int32"
+        RIGHT_PAREN@17..18 ")"
+    RIGHT_BRACE@18..19 "}"

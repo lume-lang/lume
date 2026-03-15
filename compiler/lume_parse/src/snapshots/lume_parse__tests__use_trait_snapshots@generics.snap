@@ -1,0 +1,59 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        use Add<Int32, Int64>: Int32 {\n            fn add(other: Int32) -> Int64 {\n                return self + other;\n            }\n        }\")"
+---
+SOURCE_FILE@0..71
+  TRAIT_IMPL@0..71
+    USE_KW@0..3 "use"
+    PATH@3..19
+      PATH_TYPE@3..19
+        IDENT@3..6 "Add"
+        BOUND_TYPES@6..19
+          LESS@6..7 "<"
+          PATH@7..12
+            PATH_TYPE@7..12
+              IDENT@7..12 "Int32"
+          COMMA@12..13 ","
+          PATH@13..18
+            PATH_TYPE@13..18
+              IDENT@13..18 "Int64"
+          GREATER@18..19 ">"
+    COLON@19..20 ":"
+    PATH@20..25
+      PATH_TYPE@20..25
+        IDENT@20..25 "Int32"
+    LEFT_BRACE@25..26 "{"
+    METHOD@26..70
+      FN_KW@26..28 "fn"
+      NAME@28..31
+        IDENT@28..31 "add"
+      PARAM_LIST@31..44
+        LEFT_PAREN@31..32 "("
+        PARAM@32..43
+          NAME@32..37
+            IDENT@32..37 "other"
+          COLON@37..38 ":"
+          PARAM_TYPE@38..43
+            PATH@38..43
+              PATH_TYPE@38..43
+                IDENT@38..43 "Int32"
+        RIGHT_PAREN@43..44 ")"
+      RETURN_TYPE@44..51
+        ARROW@44..46 "->"
+        PATH@46..51
+          PATH_TYPE@46..51
+            IDENT@46..51 "Int64"
+      BLOCK@51..70
+        LEFT_BRACE@51..52 "{"
+        STMT_LIST@52..69
+          RETURN_STMT@52..69
+            RETURN_KW@52..58 "return"
+            BIN_EXPR@58..68
+              VARIABLE_EXPR@58..62
+                IDENT@58..62 "self"
+              ADD@62..63 "+"
+              VARIABLE_EXPR@63..68
+                IDENT@63..68 "other"
+            SEMICOLON@68..69 ";"
+        RIGHT_BRACE@69..70 "}"
+    RIGHT_BRACE@70..71 "}"

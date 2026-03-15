@@ -1,0 +1,12 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"switch a { }\")"
+---
+SOURCE_FILE@0..9
+  EXPR_STMT@0..9
+    SWITCH_EXPR@0..9
+      SWITCH_KW@0..6 "switch"
+      VARIABLE_EXPR@6..7
+        IDENT@6..7 "a"
+      LEFT_BRACE@7..8 "{"
+      RIGHT_BRACE@8..9 "}"

@@ -1,0 +1,47 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -> void {}\")"
+---
+SOURCE_FILE@0..57
+  FN@0..57
+    FN_KW@0..2 "fn"
+    NAME@2..6
+      IDENT@2..6 "test"
+    BOUND_TYPES@6..47
+      LESS@6..7 "<"
+      BOUND_TYPE@7..26
+        IDENT@7..9 "T1"
+        CONSTRAINTS@9..26
+          COLON@9..10 ":"
+          PATH@10..17
+            PATH_TYPE@10..17
+              IDENT@10..17 "Numeric"
+          ADD@17..18 "+"
+          PATH@18..26
+            PATH_TYPE@18..26
+              IDENT@18..26 "Floating"
+      COMMA@26..27 ","
+      BOUND_TYPE@27..46
+        IDENT@27..29 "T2"
+        CONSTRAINTS@29..46
+          COLON@29..30 ":"
+          PATH@30..37
+            PATH_TYPE@30..37
+              IDENT@30..37 "Numeric"
+          ADD@37..38 "+"
+          PATH@38..46
+            PATH_TYPE@38..46
+              IDENT@38..46 "Floating"
+      GREATER@46..47 ">"
+    PARAM_LIST@47..49
+      LEFT_PAREN@47..48 "("
+      RIGHT_PAREN@48..49 ")"
+    RETURN_TYPE@49..55
+      ARROW@49..51 "->"
+      PATH@51..55
+        PATH_TYPE@51..55
+          IDENT@51..55 "void"
+    BLOCK@55..57
+      LEFT_BRACE@55..56 "{"
+      STMT_LIST@56..56
+      RIGHT_BRACE@56..57 "}"

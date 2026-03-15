@@ -1,0 +1,16 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"while true { continue; }\")"
+---
+SOURCE_FILE@0..20
+  WHILE_STMT@0..20
+    WHILE_KW@0..5 "while"
+    LITERAL@5..9
+      BOOLEAN_LIT@5..9 "true"
+    BLOCK@9..20
+      LEFT_BRACE@9..10 "{"
+      STMT_LIST@10..19
+        CONTINUE_STMT@10..19
+          CONTINUE_KW@10..18 "continue"
+          SEMICOLON@18..19 ";"
+      RIGHT_BRACE@19..20 "}"

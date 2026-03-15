@@ -1,0 +1,9 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"__IDENT__;\")"
+---
+SOURCE_FILE@0..10
+  EXPR_STMT@0..10
+    VARIABLE_EXPR@0..9
+      IDENT@0..9 "__IDENT__"
+    SEMICOLON@9..10 ";"

@@ -1,0 +1,32 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"impl Foo {\n            /// This is a doc comment\n            pub fn bar() -> void { }\n        }\")"
+---
+SOURCE_FILE@0..52
+  IMPL@0..52
+    IMPL_KW@0..4 "impl"
+    PATH@4..7
+      PATH_TYPE@4..7
+        IDENT@4..7 "Foo"
+    LEFT_BRACE@7..8 "{"
+    METHOD@8..51
+      DOC_COMMENT@8..33
+        DOC_COMMENT@8..33 "/// This is a doc com ..."
+      VISIBILITY@33..36
+        PUB_KW@33..36 "pub"
+      FN_KW@36..38 "fn"
+      NAME@38..41
+        IDENT@38..41 "bar"
+      PARAM_LIST@41..43
+        LEFT_PAREN@41..42 "("
+        RIGHT_PAREN@42..43 ")"
+      RETURN_TYPE@43..49
+        ARROW@43..45 "->"
+        PATH@45..49
+          PATH_TYPE@45..49
+            IDENT@45..49 "void"
+      BLOCK@49..51
+        LEFT_BRACE@49..50 "{"
+        STMT_LIST@50..50
+        RIGHT_BRACE@50..51 "}"
+    RIGHT_BRACE@51..52 "}"

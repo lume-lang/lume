@@ -1,0 +1,23 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"if true { } else if false { }\")"
+---
+SOURCE_FILE@0..21
+  EXPR_STMT@0..21
+    IF_EXPR@0..21
+      IF_KW@0..2 "if"
+      LITERAL@2..6
+        BOOLEAN_LIT@2..6 "true"
+      BLOCK@6..8
+        LEFT_BRACE@6..7 "{"
+        STMT_LIST@7..7
+        RIGHT_BRACE@7..8 "}"
+      ELSE_KW@8..12 "else"
+      IF_EXPR@12..21
+        IF_KW@12..14 "if"
+        LITERAL@14..19
+          BOOLEAN_LIT@14..19 "false"
+        BLOCK@19..21
+          LEFT_BRACE@19..20 "{"
+          STMT_LIST@20..20
+          RIGHT_BRACE@20..21 "}"

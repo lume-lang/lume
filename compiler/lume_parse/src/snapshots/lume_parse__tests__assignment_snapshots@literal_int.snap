@@ -1,0 +1,13 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"1 = b;\")"
+---
+SOURCE_FILE@0..4
+  EXPR_STMT@0..4
+    ASSIGNMENT_EXPR@0..3
+      LITERAL@0..1
+        INTEGER_LIT@0..1 "1"
+      ASSIGN@1..2 "="
+      VARIABLE_EXPR@2..3
+        IDENT@2..3 "b"
+    SEMICOLON@3..4 ";"

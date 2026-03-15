@@ -1,0 +1,24 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"for pattern in [1, 2, 3] { }\")"
+---
+SOURCE_FILE@0..21
+  FOR_STMT@0..21
+    FOR_KW@0..3 "for"
+    IDENT@3..10 "pattern"
+    IN_KW@10..12 "in"
+    ARRAY_EXPR@12..19
+      LEFT_BRACKET@12..13 "["
+      LITERAL@13..14
+        INTEGER_LIT@13..14 "1"
+      COMMA@14..15 ","
+      LITERAL@15..16
+        INTEGER_LIT@15..16 "2"
+      COMMA@16..17 ","
+      LITERAL@17..18
+        INTEGER_LIT@17..18 "3"
+      RIGHT_BRACKET@18..19 "]"
+    BLOCK@19..21
+      LEFT_BRACE@19..20 "{"
+      STMT_LIST@20..20
+      RIGHT_BRACE@20..21 "}"

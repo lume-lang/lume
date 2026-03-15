@@ -1,0 +1,11 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"loop { }\")"
+---
+SOURCE_FILE@0..6
+  LOOP_STMT@0..6
+    LOOP_KW@0..4 "loop"
+    BLOCK@4..6
+      LEFT_BRACE@4..5 "{"
+      STMT_LIST@5..5
+      RIGHT_BRACE@5..6 "}"

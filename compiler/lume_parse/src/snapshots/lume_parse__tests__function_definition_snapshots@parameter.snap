@@ -1,0 +1,29 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(\"fn main(argc: UInt8) -> Void { }\")"
+---
+SOURCE_FILE@0..26
+  FN@0..26
+    FN_KW@0..2 "fn"
+    NAME@2..6
+      IDENT@2..6 "main"
+    PARAM_LIST@6..18
+      LEFT_PAREN@6..7 "("
+      PARAM@7..17
+        NAME@7..11
+          IDENT@7..11 "argc"
+        COLON@11..12 ":"
+        PARAM_TYPE@12..17
+          PATH@12..17
+            PATH_TYPE@12..17
+              IDENT@12..17 "UInt8"
+      RIGHT_PAREN@17..18 ")"
+    RETURN_TYPE@18..24
+      ARROW@18..20 "->"
+      PATH@20..24
+        PATH_TYPE@20..24
+          IDENT@20..24 "Void"
+    BLOCK@24..26
+      LEFT_BRACE@24..25 "{"
+      STMT_LIST@25..25
+      RIGHT_BRACE@25..26 "}"

@@ -1,0 +1,11 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"-0o125;\")"
+---
+SOURCE_FILE@0..7
+  EXPR_STMT@0..7
+    UNARY_EXPR@0..6
+      SUB@0..1 "-"
+      LITERAL@1..6
+        INTEGER_LIT@1..6 "0o125"
+    SEMICOLON@6..7 ";"

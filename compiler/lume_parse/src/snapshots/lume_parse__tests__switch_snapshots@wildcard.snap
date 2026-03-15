@@ -1,0 +1,29 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"switch a { b => c, .. => d }\")"
+---
+SOURCE_FILE@0..19
+  EXPR_STMT@0..19
+    SWITCH_EXPR@0..19
+      SWITCH_KW@0..6 "switch"
+      VARIABLE_EXPR@6..7
+        IDENT@6..7 "a"
+      LEFT_BRACE@7..8 "{"
+      SWITCH_ARM@8..12
+        PAT@8..9
+          PAT_IDENT@8..9
+            PATH@8..9
+              PATH_NAMESPACE@8..9
+                IDENT@8..9 "b"
+        BIG_ARROW@9..11 "=>"
+        VARIABLE_EXPR@11..12
+          IDENT@11..12 "c"
+      COMMA@12..13 ","
+      SWITCH_ARM@13..18
+        PAT@13..15
+          PAT_WILDCARD@13..15
+            DOT_DOT@13..15 ".."
+        BIG_ARROW@15..17 "=>"
+        VARIABLE_EXPR@17..18
+          IDENT@17..18 "d"
+      RIGHT_BRACE@18..19 "}"

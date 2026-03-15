@@ -1,0 +1,14 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(\"import std::io ()\")"
+---
+SOURCE_FILE@0..15
+  IMPORT@0..15
+    IMPORT_KW@0..6 "import"
+    IMPORT_PATH@6..13
+      IDENT@6..9 "std"
+      PATH_SEP@9..11 "::"
+      IDENT@11..13 "io"
+    IMPORT_LIST@13..15
+      LEFT_PAREN@13..14 "("
+      RIGHT_PAREN@14..15 ")"

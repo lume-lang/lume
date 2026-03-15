@@ -1,0 +1,18 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = { 1; };\")"
+---
+SOURCE_FILE@0..10
+  LET_STMT@0..10
+    LET_KW@0..3 "let"
+    NAME@3..4
+      IDENT@3..4 "_"
+    ASSIGN@4..5 "="
+    LEFT_BRACE@5..6 "{"
+    STMT_LIST@6..8
+      EXPR_STMT@6..8
+        LITERAL@6..7
+          INTEGER_LIT@6..7 "1"
+        SEMICOLON@7..8 ";"
+    RIGHT_BRACE@8..9 "}"
+    SEMICOLON@9..10 ";"

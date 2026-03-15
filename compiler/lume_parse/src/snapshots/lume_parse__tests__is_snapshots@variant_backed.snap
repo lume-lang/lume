@@ -1,0 +1,33 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"0 is Foo::A(a, b);\")"
+---
+SOURCE_FILE@0..15
+  EXPR_STMT@0..15
+    IS_EXPR@0..14
+      LITERAL@0..1
+        INTEGER_LIT@0..1 "0"
+      IS_KW@1..3 "is"
+      PAT@3..14
+        PAT_VARIANT@3..14
+          PATH@3..9
+            PATH_TYPE@3..6
+              IDENT@3..6 "Foo"
+            PATH_SEP@6..8 "::"
+            PATH_VARIANT@8..9
+              IDENT@8..9 "A"
+          ARG_LIST@9..14
+            LEFT_PAREN@9..10 "("
+            PAT@10..11
+              PAT_IDENT@10..11
+                PATH@10..11
+                  PATH_NAMESPACE@10..11
+                    IDENT@10..11 "a"
+            COMMA@11..12 ","
+            PAT@12..13
+              PAT_IDENT@12..13
+                PATH@12..13
+                  PATH_NAMESPACE@12..13
+                    IDENT@12..13 "b"
+            RIGHT_PAREN@13..14 ")"
+    SEMICOLON@14..15 ";"
