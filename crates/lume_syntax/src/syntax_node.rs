@@ -93,6 +93,7 @@ pub enum SyntaxKind {
     STMT_LIST,
     CALLEE,
     VALUE,
+    SWITCH_ARM,
 
     // Items
     FN,
