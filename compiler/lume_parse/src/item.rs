@@ -17,6 +17,9 @@ impl Parser {
     pub(crate) fn parse_item(&mut self) {
         let c = self.checkpoint();
 
+        self.parse_doc_comment();
+        self.parse_attributes();
+
         self.parse_visibility();
 
         match self.token() {
@@ -155,6 +158,7 @@ impl Parser {
     fn parse_struct_definition(&mut self, c: Checkpoint) {
         self.start_node_at(SyntaxKind::STRUCT, c);
 
+        self.consume(Token![struct]);
         self.parse_identifier();
         self.parse_type_parameters();
 
@@ -166,8 +170,22 @@ impl Parser {
     fn parse_struct_field(&mut self) {
         self.start_node(SyntaxKind::FIELD);
 
+        self.parse_doc_comment();
+        self.parse_attributes();
+
+        self.parse_visibility();
         self.parse_identifier();
-        self.consume(Token![:]);
+
+        // Report a special error if we found an identifier, such as
+        // a method declaration, which isn't allowed within a `struct` block.
+        if !self.check(Token![:]) && self.peek(SyntaxKind::IDENT) {
+            self.error("methods can only be defined in `impl` blocks");
+            self.recover_statement();
+            self.finish_node();
+
+            return;
+        }
+
         self.parse_type();
 
         if self.check(Token![=]) {
@@ -193,6 +211,9 @@ impl Parser {
     fn parse_method_definition(&mut self) {
         self.start_node(SyntaxKind::METHOD);
 
+        self.parse_doc_comment();
+        self.parse_attributes();
+
         self.parse_visibility();
 
         self.parse_signature();
@@ -217,6 +238,9 @@ impl Parser {
 
     fn parse_trait_method(&mut self) {
         self.start_node(SyntaxKind::METHOD);
+
+        self.parse_doc_comment();
+        self.parse_attributes();
 
         self.parse_signature();
 
@@ -246,7 +270,11 @@ impl Parser {
     fn parse_trait_method_implementation(&mut self) {
         self.start_node(SyntaxKind::METHOD);
 
+        self.parse_doc_comment();
+        self.parse_attributes();
+
         self.parse_signature();
+
         if self.peek(SyntaxKind::LEFT_BRACE) {
             self.parse_block();
         }
@@ -267,9 +295,9 @@ impl Parser {
 
         self.consume(Token![enum]);
 
-        self.parse_identifier();
+        self.parse_name();
         self.parse_type_parameters();
-        self.consume_curly_seq(Parser::parse_enum_case);
+        self.consume_comma_seq(SyntaxKind::LEFT_BRACE, SyntaxKind::RIGHT_BRACE, Parser::parse_enum_case);
 
         self.finish_node();
     }
@@ -278,10 +306,15 @@ impl Parser {
     fn parse_enum_case(&mut self) {
         self.start_node(SyntaxKind::CASE);
 
+        self.parse_doc_comment();
+        self.parse_attributes();
+
         self.parse_identifier();
 
-        if self.peek(SyntaxKind::LEFT_BRACE) {
+        if self.peek(SyntaxKind::LEFT_PAREN) {
+            self.start_node(SyntaxKind::PARAM_LIST);
             self.consume_paren_seq(Parser::parse_type);
+            self.finish_node();
         }
 
         self.finish_node();

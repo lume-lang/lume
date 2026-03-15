@@ -94,6 +94,8 @@ pub enum SyntaxKind {
     CALLEE,
     VALUE,
     SWITCH_ARM,
+    ATTR,
+    ATTR_ARG,
 
     // Items
     FN,
