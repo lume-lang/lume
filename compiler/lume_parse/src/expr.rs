@@ -2,12 +2,6 @@ use crate::*;
 
 const EXPR_RECOVERY_SET: &[SyntaxKind] = &[Token![;], SyntaxKind::RIGHT_BRACE];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ParseBoundTypes {
-    Include,
-    Ignore,
-}
-
 impl Parser {
     /// Parses an expression on the current cursor position.
     pub(super) fn parse_expression(&mut self, c: Option<Checkpoint>) -> Option<SyntaxKind> {
@@ -239,7 +233,10 @@ impl Parser {
             Token![.] => self.parse_member(c),
 
             // If the next token is an equal sign, it's an assignment expression
-            Token![=] => self.parse_assignment(c),
+            Token![=] => {
+                self.parse_identifier();
+                self.parse_assignment(c)
+            }
 
             // If the identifier is following by a separator, it's refering to a namespaced identifier
             Token![::] => self.parse_path_expression(c),
@@ -254,17 +251,18 @@ impl Parser {
 
             // If the identifier is following by a lesser sign, it might be referring to a generic call expression
             Token![<] => {
-                // If we fail to parse the type arguments, move back to the original position
-                // and continue parsing at the fallthrough case.
-                let has_type_args = self.parse_type_arguments();
-                let next_token = self.token();
+                let (next_tok_offset, has_type_args) = self.is_type_arguments(1);
+                let next_token = self.token_at(next_tok_offset + 1);
 
                 match (has_type_args, next_token) {
                     (_, SyntaxKind::LEFT_PAREN) => {
                         self.parse_name();
-                        self.parse_instance_call(c, ParseBoundTypes::Ignore)
+                        self.parse_instance_call(c)
                     }
-                    (_, SyntaxKind::LEFT_BRACE) => self.parse_construction_expression(c),
+                    (_, SyntaxKind::LEFT_BRACE) => {
+                        self.parse_path();
+                        self.parse_construction_expression(c)
+                    }
                     (true, _) => self.parse_path_expression(c),
                     (false, _) => self.parse_variable_reference(c),
                 }
@@ -284,13 +282,10 @@ impl Parser {
     }
 
     /// Parses a call expression on the current cursor position.
-    fn parse_instance_call(&mut self, c: Checkpoint, bound_types: ParseBoundTypes) -> SyntaxKind {
+    fn parse_instance_call(&mut self, c: Checkpoint) -> SyntaxKind {
         self.start_node_at(SyntaxKind::INSTANCE_CALL_EXPR, c);
 
-        if bound_types == ParseBoundTypes::Include {
-            self.parse_type_arguments();
-        }
-
+        self.parse_type_arguments();
         self.parse_call_arguments();
         self.finish_node();
 
@@ -364,7 +359,7 @@ impl Parser {
         if is_method_call || is_generic_method_call {
             tracing::trace!("member expr is method invocation");
 
-            return self.parse_instance_call(c, ParseBoundTypes::Include);
+            return self.parse_instance_call(c);
         }
 
         self.start_node_at(SyntaxKind::MEMBER_EXPR, c);
@@ -375,6 +370,8 @@ impl Parser {
 
             self.parse_member(c);
         }
+
+        self.finish_node();
 
         SyntaxKind::MEMBER_EXPR
     }
@@ -408,7 +405,6 @@ impl Parser {
     fn parse_assignment(&mut self, c: Checkpoint) -> SyntaxKind {
         self.start_node_at(SyntaxKind::ASSIGNMENT_EXPR, c);
 
-        self.parse_identifier();
         self.consume(Token![=]);
         self.parse_expression(None);
 
@@ -435,7 +431,8 @@ impl Parser {
                 self.finish_node();
             }
             SyntaxKind::PATH_VARIANT => {
-                self.start_node_at(SyntaxKind::VARIABLE_EXPR, c);
+                self.start_node_at(SyntaxKind::VARIANT_EXPR, c);
+
                 if self.peek(SyntaxKind::LEFT_PAREN) {
                     self.parse_call_arguments();
                 }
