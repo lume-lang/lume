@@ -1,3 +1,4 @@
+pub(crate) mod attr;
 pub(crate) mod expr;
 pub(crate) mod generic;
 pub(crate) mod item;
@@ -246,13 +247,29 @@ impl Parser {
         }
     }
 
+    /// Parses a a sequence of zero-or-more items, where the closure
+    /// `f` is invoked, as long as the given `open` token is present.
+    ///
+    /// This is useful for when you need zero-or-more items without consuming
+    /// any tokens, such as attributes.
+    fn consume_any_seq(&mut self, open: SyntaxKind, mut f: impl FnMut(&mut Parser)) -> bool {
+        let mut any = false;
+
+        while self.peek(open) {
+            any = true;
+            f(self);
+        }
+
+        any
+    }
+
     /// Parses a sequence of statements, where the closure `f`
     /// is invoked, until the given "close" token is found.
     ///
     /// This is useful for any sequence of expressions or statements, such as
     /// blocks. Upon returning, the `close` token will have been consumed.
     fn consume_seq_to_end(&mut self, close: SyntaxKind, mut f: impl FnMut(&mut Parser)) {
-        while !self.check(close) {
+        while !self.check(close) && !self.eof() {
             f(self);
         }
     }
@@ -340,8 +357,9 @@ impl Parser {
     /// Upon returning, both the `open` and `close` tokens will have been
     /// consumed.
     fn consume_curly_seq(&mut self, f: impl FnMut(&mut Parser)) {
-        self.consume(SyntaxKind::LEFT_BRACE);
-        self.consume_seq_to_end(SyntaxKind::RIGHT_BRACE, f);
+        if self.consume(SyntaxKind::LEFT_BRACE) {
+            self.consume_seq_to_end(SyntaxKind::RIGHT_BRACE, f);
+        }
     }
 
     /// Adds a new token node to the tree.
@@ -405,6 +423,21 @@ impl Parser {
                 self.error_and_skip("expected identifier");
             }
         }
+    }
+
+    /// Reads the current documentation comment into the parser's state, if any
+    /// is present.
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    fn parse_doc_comment(&mut self) {
+        if !self.peek(SyntaxKind::DOC_COMMENT) {
+            return;
+        }
+
+        self.start_node(SyntaxKind::DOC_COMMENT);
+
+        while self.check(SyntaxKind::DOC_COMMENT) {}
+
+        self.finish_node();
     }
 }
 
