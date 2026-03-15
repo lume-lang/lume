@@ -9,7 +9,7 @@ impl Parser {
 
         self.start_node(SyntaxKind::BOUND_TYPES);
 
-        self.consume_comma_seq(Token![<], Token![>], |p| {
+        let finished = self.consume_comma_seq(Token![<], Token![>], |p| {
             p.start_node(SyntaxKind::BOUND_TYPE);
 
             p.parse_identifier();
@@ -29,6 +29,11 @@ impl Parser {
 
             p.finish_node();
         });
+
+        if !finished {
+            self.recover_with_set(&[Token![>]]);
+            self.check(Token![>]);
+        }
 
         self.finish_node();
     }
