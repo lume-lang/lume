@@ -2,6 +2,7 @@ use std::alloc::Layout;
 
 use libc::siginfo_t;
 
+#[cfg(not(target_env = "musl"))]
 unsafe extern "C" {
     fn backtrace(buffer: *const *mut libc::c_void, size: libc::c_int) -> libc::c_int;
     fn backtrace_symbols_fd(buffer: *const *mut libc::c_void, size: libc::c_int, fd: libc::c_int);
@@ -53,6 +54,7 @@ unsafe extern "C" fn signal_handler(signum: libc::c_int, info: *const siginfo_t,
 
     let info = unsafe { info.read() };
 
+    #[cfg(not(target_env = "musl"))]
     let stack = unsafe {
         const MAX_FRAMES: usize = 256;
 
@@ -89,8 +91,9 @@ unsafe extern "C" fn signal_handler(signum: libc::c_int, info: *const siginfo_t,
         unsafe { info.si_addr() }
     );
 
-    let size = stack.len().try_into().unwrap_or_default();
+    #[cfg(not(target_env = "musl"))]
     unsafe {
+        let size = stack.len().try_into().unwrap_or_default();
         backtrace_symbols_fd(stack.as_ptr(), size, libc::STDERR_FILENO);
     }
 
