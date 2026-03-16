@@ -3,6 +3,7 @@ use std::alloc::Layout;
 use libc::siginfo_t;
 
 unsafe extern "C" {
+    fn backtrace(buffer: *const *mut libc::c_void, size: libc::c_int) -> libc::c_int;
     fn backtrace_symbols_fd(buffer: *const *mut libc::c_void, size: libc::c_int, fd: libc::c_int);
 }
 
@@ -58,7 +59,7 @@ unsafe extern "C" fn signal_handler(signum: libc::c_int, info: *const siginfo_t,
         // Prevents allocation within the signal handler.
         static mut STACK_TRACE: [*mut libc::c_void; MAX_FRAMES] = [std::ptr::null_mut(); MAX_FRAMES];
 
-        let depth = libc::backtrace((&raw mut STACK_TRACE).cast(), MAX_FRAMES as i32);
+        let depth = backtrace((&raw mut STACK_TRACE).cast(), MAX_FRAMES as i32);
         if depth <= 0 {
             return;
         }
