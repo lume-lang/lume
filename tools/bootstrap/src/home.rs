@@ -199,10 +199,11 @@ fn current_shell() -> Option<Shell> {
 
 /// Gets the path to the shell configuration file.
 fn shellrc() -> &'static str {
-    match current_shell().unwrap_or_default() {
-        Shell::Bash => "~/.bashrc",
-        Shell::Zsh => "~/.zshrc",
-        Shell::Fish => "~/.config/fish/config.fish",
+    match current_shell() {
+        Some(Shell::Bash) => "~/.bashrc",
+        Some(Shell::Zsh) => "~/.zshrc",
+        Some(Shell::Fish) => "~/.config/fish/config.fish",
+        None => "~/.profile",
     }
 }
 
@@ -240,6 +241,7 @@ source "{}"
     let mut shell_file = std::fs::OpenOptions::new()
         .read(true) // to read whether it's already added
         .append(true)
+        .create(true)
         .open(&shell_config)
         .map_cause(format!(
             "failed to open shell configuration file: {}",
