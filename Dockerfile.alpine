@@ -1,29 +1,26 @@
-FROM rust:1.91-alpine3.23 AS base
+# Stage 1: build the compiler from source
+FROM rust:1.91-alpine3.23 AS builder
 
 RUN apk add --no-cache \
     ca-certificates git bash
 
+RUN ln -sf /bin/bash /bin/sh
 SHELL ["/bin/bash", "-c"]
 
-RUN ln -sf /bin/bash /bin/sh
-
-# Stage 1: build the `lume-bootstrap` binary from the source tree
-FROM base AS bootstrap
+WORKDIR /src
 
 COPY --exclude=samples . .
 RUN cargo build --release --bin lume-bootstrap
 
-# Stage 2: build the compiler from source
-FROM base AS builder
+RUN ./target/release/lume-bootstrap link default . --use-as-default --profile release
 
-COPY --from=bootstrap ./target/release/lume-bootstrap /usr/local/bin/lume-bootstrap
-RUN lume-bootstrap install --latest --use-as-default --allow-source-build
-
-# Stage 3: only runtime-specific artifacts
+# Stage 2: only runtime-specific artifacts
 FROM alpine:3.23
 
+RUN apk add --no-cache ca-certificates bash gcc musl-dev
+
 RUN echo "source /root/.lume/env" >> /root/.bashrc
-COPY --from=builder /usr/local/bin/lume-bootstrap /usr/local/bin/lume-bootstrap
+COPY --from=builder /src/target/release/lume-bootstrap /usr/local/bin/lume-bootstrap
 COPY --from=builder /root/.lume /root/.lume
 
 CMD ["/bin/bash"]
