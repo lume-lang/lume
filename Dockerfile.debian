@@ -1,0 +1,42 @@
+# Stage 1: build the compiler from source
+FROM rust:1.91-slim-bookworm AS builder
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        dnsutils \
+        git \
+        bash \
+    ; \
+    rm -rf /var/lib/apt/lists/*
+
+RUN ln -sf /bin/bash /bin/sh
+SHELL ["/bin/bash", "-c"]
+
+WORKDIR /src
+
+COPY --exclude=samples . .
+RUN cargo build --release --bin lume-bootstrap
+
+RUN ./target/release/lume-bootstrap link default . --use-as-default --profile release
+
+# Stage 2: only runtime-specific artifacts
+FROM debian:bookworm-slim
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        dnsutils \
+        gcc \
+        libc-dev \
+        bash \
+    ; \
+    rm -rf /var/lib/apt/lists/*
+
+RUN echo "source /root/.lume/env" >> /root/.bashrc
+COPY --from=builder /src/target/release/lume-bootstrap /usr/local/bin/lume-bootstrap
+COPY --from=builder /root/.lume /root/.lume
+
+CMD ["/bin/bash"]
