@@ -1,9 +1,10 @@
 use std::io::{Read, Write as _};
 use std::path::PathBuf;
 
+use lume_cli_tools::*;
 use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 
-use crate::{colorized, fs};
+use crate::fs;
 
 pub const LUME_ENV: &str = r#"#!/bin/sh
 ## Shell environment setup for Lume
@@ -52,12 +53,9 @@ Afterwards, you can verify that Lume is installed correctly by running:
     {version_cmd}
 
 ",
-                header = colorized!(
-                    "Lume has been installed successfully!",
-                    owo_colors::Style::new().bright_yellow().bold()
-                ),
-                version_cmd = colorized!("lume --version", owo_colors::Style::new().dimmed()),
-                shellrc = colorized!(shellrc(), owo_colors::Style::new().dimmed())
+                header = "Lume has been installed successfully!".stylize("bold.bright.yellow"),
+                version_cmd = "lume --version".stylize("dim"),
+                shellrc = shellrc().stylize("dim")
             )
         }
     };
@@ -82,22 +80,14 @@ configuration file (e.g., ~/.bashrc, ~/.zshrc):
     {persistent_cmd}
 
 ",
-                header = colorized!(
-                    "Lume has been installed successfully!",
-                    owo_colors::Style::new().bright_yellow().bold()
-                ),
-                temporary_cmd = colorized!(
-                    format!(r#"export PATH="{path}:$PATH""#, path = $path),
-                    owo_colors::Style::new().dimmed()
-                ),
-                persistent_cmd = colorized!(
-                    format!(
-                        r#"echo 'export PATH="{path}:$PATH"' >> {shellrc}"#,
-                        path = $path,
-                        shellrc = shellrc()
-                    ),
-                    owo_colors::Style::new().dimmed()
+                header = "Lume has been installed successfully!".stylize("bold.bright.yellow"),
+                temporary_cmd = format!(r#"export PATH="{path}:$PATH""#, path = $path).stylize("dim"),
+                persistent_cmd = format!(
+                    r#"echo 'export PATH="{path}:$PATH"' >> {shellrc}"#,
+                    path = $path,
+                    shellrc = shellrc()
                 )
+                .stylize("dim")
             )
         }
     };

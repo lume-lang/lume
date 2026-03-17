@@ -5,17 +5,20 @@ pub mod task;
 
 pub use spinner::Spinner;
 
-/// Colorizes the given text with the given style.
-///
-/// If colors aren't supported, the text is returned as-is.
-#[macro_export]
-macro_rules! colorized {
-    ($this:expr, $style:expr) => {
-        $crate::owo_colors::OwoColorize::if_supports_color(&$this, $crate::owo_colors::Stream::Stdout, |text| {
-            $style.style(text)
-        })
-    };
+pub trait Stylable: Sized {
+    /// Styles the given value from a dotted style string.
+    ///
+    /// Effectively the string is split at each dot and then the
+    /// terms in between are applied.  For instance `red.on_blue` will
+    /// create a string that is red on blue background. `9.on_12` is
+    /// the same, but using 256 color numbers. Unknown terms are
+    /// ignored.
+    fn stylize(self, fmt: &str) -> console::StyledObject<Self> {
+        console::Style::from_dotted_str(fmt).for_stdout().apply_to(self)
+    }
 }
+
+impl<D> Stylable for D {}
 
 /// Prints an error message to the standard output.
 #[macro_export]
@@ -23,7 +26,7 @@ macro_rules! error {
     ($($arg:tt)*) => {
         #[allow(clippy::disallowed_macros, reason = "used for CLI logging")]
         {
-            print!("{} ", colorized!("×", $crate::owo_colors::Style::new().red().bold()));
+            print!("{} ", $crate::Stylable::stylize("×", "red.bold"));
             println!($($arg)*);
         }
     };
@@ -35,7 +38,7 @@ macro_rules! warn {
     ($($arg:tt)*) => {
         #[allow(clippy::disallowed_macros, reason = "used for CLI logging")]
         {
-            print!("{} ", colorized!("⚠", $crate::owo_colors::Style::new().yellow().bold()));
+            print!("{} ", $crate::Stylable::stylize("⚠", "yellow.bold"));
             println!($($arg)*);
         }
     };
@@ -47,7 +50,7 @@ macro_rules! info {
     ($($arg:tt)*) => {
         #[allow(clippy::disallowed_macros, reason = "used for CLI logging")]
         {
-            print!("{} ", colorized!("ℹ", $crate::owo_colors::Style::new().bright_blue().bold()));
+            print!("{} ", $crate::Stylable::stylize("ℹ", "bright.blue.bold"));
             println!($($arg)*);
         }
     };
@@ -59,7 +62,7 @@ macro_rules! success {
     ($($arg:tt)*) => {
         #[allow(clippy::disallowed_macros, reason = "used for CLI logging")]
         {
-            print!("{} ", colorized!("✓", $crate::owo_colors::Style::new().green().bold()));
+            print!("{} ", $crate::Stylable::stylize("✓", "green.bold"));
             println!($($arg)*);
         }
     };
