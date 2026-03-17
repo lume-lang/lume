@@ -17,6 +17,7 @@ mod commands {
     pub mod build;
     pub mod clean;
     pub mod install;
+    pub mod link;
     pub mod list;
     pub mod uninstall;
     pub mod use_;
@@ -111,6 +112,7 @@ enum Subcommands {
     Uninstall(commands::uninstall::UninstallCommand),
     Use(commands::use_::UseCommand),
     List(commands::list::ListCommand),
+    Link(commands::link::LinkCommand),
     Clean(commands::clean::CleanCommand),
 }
 
@@ -128,6 +130,7 @@ pub fn lbs_cli_entry() {
         Subcommands::Uninstall(cmd) => cmd.run(),
         Subcommands::Use(cmd) => cmd.run(),
         Subcommands::List(cmd) => cmd.run(),
+        Subcommands::Link(cmd) => cmd.run(),
         Subcommands::Clean(cmd) => cmd.run(),
     });
 
