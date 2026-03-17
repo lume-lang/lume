@@ -1,6 +1,5 @@
 use lume_cli_tools::*;
 use lume_errors::{Result, SimpleDiagnostic};
-use owo_colors::Style;
 
 use crate::fs;
 use crate::toolchain::{self, active_toolchain};
@@ -52,7 +51,7 @@ impl UninstallCommand {
                     format!(
                         "removed toolchain {} ({})",
                         self.version,
-                        colorized!(toolchain_directory.display(), Style::new().dimmed())
+                        toolchain_directory.display().stylize("dim")
                     )
                 } else {
                     format!("removed toolchain {}", self.version)

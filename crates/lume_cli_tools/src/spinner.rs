@@ -19,9 +19,7 @@ use std::sync::{Arc, LazyLock, RwLock};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use owo_colors::Style;
-
-use crate::colorized;
+use console::Style;
 
 /// A Struct that contains the data for a spinner.
 /// Frames is a Vec of &str, each &str is a frame of the spinner.
@@ -92,7 +90,7 @@ impl Spinner {
 
         let handle = std::thread::spawn({
             let spinning = spinning.clone();
-            let style = style.unwrap_or(Style::new().blue().bold());
+            let style = style.clone().unwrap_or(Style::new().blue().bold());
 
             move || spinner_thread(spinning, message, style, stream)
         });
@@ -109,7 +107,7 @@ impl Spinner {
     pub fn update_message<M: Into<String>>(&mut self, message: M) {
         self.stop();
 
-        let _replaced = std::mem::replace(self, Self::new_with_stream(message, self.style, self.stream));
+        let _replaced = std::mem::replace(self, Self::new_with_stream(message, self.style.clone(), self.stream));
     }
 
     /// Stops the spinner.
@@ -168,7 +166,7 @@ fn spinner_thread(spinning: Arc<AtomicBool>, message: Arc<RwLock<String>>, style
 
     for frame in frames {
         let message = message.read().unwrap();
-        let formatted_str = format!("{} {message}", colorized!(frame, style));
+        let formatted_str = format!("{} {message}", style.apply_to(frame));
 
         // Get us back to the start of the line.
         clear_line(last_length, &mut stream);

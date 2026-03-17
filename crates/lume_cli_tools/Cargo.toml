@@ -9,6 +9,7 @@ test = false
 doctest = false
 
 [dependencies]
+console = { version = "0.16.3" }
 owo-colors = { workspace = true }
 
 [lints]

@@ -1,7 +1,6 @@
 use std::sync::LazyLock;
 
 use clap::{ArgAction, Parser};
-use lume_cli_tools::*;
 use lume_errors::{DiagCtx, Result};
 use regex::Regex;
 
@@ -15,6 +14,7 @@ pub(crate) mod home;
 pub(crate) mod toolchain;
 
 mod commands {
+    pub mod build;
     pub mod clean;
     pub mod install;
     pub mod list;
@@ -106,6 +106,7 @@ impl TryFrom<&Version> for TargetVersion {
 
 #[derive(Parser)]
 enum Subcommands {
+    Build(commands::build::BuildCommand),
     Install(commands::install::InstallCommand),
     Uninstall(commands::uninstall::UninstallCommand),
     Use(commands::use_::UseCommand),
@@ -122,6 +123,7 @@ pub fn lbs_cli_entry() {
     set_quiet(matches.quiet);
 
     let _ = dcx.with_opt(|_handle| match matches.subcommand {
+        Subcommands::Build(cmd) => cmd.run(),
         Subcommands::Install(cmd) => cmd.run(),
         Subcommands::Uninstall(cmd) => cmd.run(),
         Subcommands::Use(cmd) => cmd.run(),
