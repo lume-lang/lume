@@ -20,7 +20,7 @@ COPY --from=bootstrap ./target/release/lume-bootstrap /usr/local/bin/lume-bootst
 RUN lume-bootstrap install --latest --use-as-default --allow-source-build
 
 # Stage 3: only runtime-specific artifacts
-FROM base AS runner
+FROM alpine:3.23
 
 RUN echo "source /root/.lume/env" >> /root/.bashrc
 COPY --from=builder /usr/local/bin/lume-bootstrap /usr/local/bin/lume-bootstrap
