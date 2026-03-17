@@ -34,20 +34,18 @@ impl UninstallCommand {
 
         let toolchain_source_dir = toolchain::download_directory_for(&self.version)?;
 
-        task! {
-            format!("removing toolchain {}", self.version) => {
-                crate::run_dry(|| {
-                    fs::remove_dir(&toolchain_directory)?;
+        let task_remove_toolchain = new_task(format!("removing toolchain {}", self.version));
+        match crate::run_dry(|| {
+            fs::remove_dir(&toolchain_directory)?;
 
-                    if toolchain_source_dir.exists() {
-                        fs::remove_dir(&toolchain_source_dir)?;
-                    }
+            if toolchain_source_dir.exists() {
+                fs::remove_dir(&toolchain_source_dir)?;
+            }
 
-                    Ok(())
-                })
-            },
+            Ok(())
+        }) {
             Ok(()) => {
-                if crate::verbose() > 0 {
+                let message = if crate::verbose() > 0 {
                     format!(
                         "removed toolchain {} ({})",
                         self.version,
@@ -55,12 +53,15 @@ impl UninstallCommand {
                     )
                 } else {
                     format!("removed toolchain {}", self.version)
-                }
-            },
-            Err(err) => {
-                format!("failed to remove toolchain ({})", err.message())
+                };
+
+                task_remove_toolchain.success(message);
             }
-        }?;
+            Err(err) => {
+                task_remove_toolchain.fail(format!("failed to remove toolchain ({})", err.message()));
+                return Err(err);
+            }
+        }
 
         if active_toolchain().is_none() {
             warn!("currently no active toolchain, since it was just uninstalled");

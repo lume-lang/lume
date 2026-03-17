@@ -49,34 +49,34 @@ impl InstallCommand {
         fs::create_dir(&toolchain_base)?;
 
         if let Some(binbuild_tag) = crate::fetch::binbuild_version_of(&version)? {
-            let download_root = task! {
-                "downloading binaries..." => {
-                    crate::run_dry(|| crate::fetch::fetch(&binbuild_tag))
-                },
+            let task_download_binaries = new_task("downloading binaries...");
+            let download_root = match crate::run_dry(|| crate::fetch::fetch(&binbuild_tag)) {
                 Ok(path) => {
-                    if crate::verbose() > 0 {
-                        format!(
-                            "fetched lume binaries ({})",
-                            path.display().stylize("dim")
-                        )
+                    let message = if crate::verbose() > 0 {
+                        format!("fetched lume binaries ({})", path.display().stylize("dim"))
                     } else {
                         String::from("fetched lume binaries")
-                    }
-                },
-                Err(err) => {
-                    format!("failed to download binaries: {}", err.message())
-                }
-            }?;
+                    };
 
-            task! {
-                "copying compiler artifacts..." => {
-                    crate::run_dry(|| crate::fetch::copy_artifacts(&download_root, &toolchain_base))
-                },
-                Ok(()) => "copied all compiler artifacts",
-                Err(err) => {
-                    format!("failed to copy artifact: {}", err.message())
+                    task_download_binaries.success(message);
+                    path
                 }
-            }?;
+                Err(err) => {
+                    task_download_binaries.fail(format!("failed to download binaries: {}", err.message()));
+                    return Err(err);
+                }
+            };
+
+            let task_copy_binaries = new_task("copying compiler artifacts...");
+            match crate::run_dry(|| crate::fetch::copy_artifacts(&download_root, &toolchain_base)) {
+                Ok(()) => {
+                    task_copy_binaries.success("copied all compiler artifacts");
+                }
+                Err(err) => {
+                    task_copy_binaries.fail(format!("failed to copy artifact: {}", err.message()));
+                    return Err(err);
+                }
+            }
         } else {
             return Err(SimpleDiagnostic::new(format!(
                 "no binary version available for {version}; source-build disabled"

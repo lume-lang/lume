@@ -1,4 +1,4 @@
-use lume_cli_tools::task;
+use lume_cli_tools::*;
 use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 
 use crate::{fs, toolchain};
@@ -38,19 +38,22 @@ impl CleanCommand {
                 return Err(SimpleDiagnostic::new(format!("toolchain could not be found: {toolchain}")).into());
             }
 
-            task! {
-                format!("deleting toolchain {}", toolchain) => {
-                    crate::run_dry(|| if toolchain_root.is_dir() {
-                        fs::remove_dir(&toolchain_root)
-                    } else {
-                        std::fs::remove_file(&toolchain_root).map_diagnostic()
-                    })
-                },
-                Ok(()) => format!("deleted toolchain {toolchain}"),
-                Err(err) => {
-                    format!("failed to delete toolchain {toolchain} ({})", err.message())
+            let delete_compiler = new_task(format!("deleting toolchain {toolchain}"));
+            match crate::run_dry(|| {
+                if toolchain_root.is_dir() {
+                    fs::remove_dir(&toolchain_root)
+                } else {
+                    std::fs::remove_file(&toolchain_root).map_diagnostic()
                 }
-            }?;
+            }) {
+                Ok(()) => {
+                    delete_compiler.success(format!("deleted toolchain {toolchain}"));
+                }
+                Err(err) => {
+                    delete_compiler.fail(format!("failed to delete toolchain {toolchain} ({})", err.message()));
+                    return Err(err);
+                }
+            }
         }
 
         Ok(())
