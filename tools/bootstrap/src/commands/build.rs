@@ -48,46 +48,48 @@ impl BuildCommand {
         let toolchain_base = crate::toolchain::artifact_directory_for(&version)?;
         fs::create_dir(&toolchain_base)?;
 
-        let compiler_root = task! {
-            "cloning 'lume-lang/lume' compiler..." => {
-                crate::run_dry(|| crate::git::clone(&version))
-            },
+        let clone_compiler = new_task("cloning 'lume-lang/lume' compiler...");
+        let compiler_root = match crate::run_dry(|| crate::git::clone(&version)) {
             Ok(path) => {
-                if crate::verbose() > 0 {
-                    format!(
-                        "cloned 'lume-lang/lume' ({})",
-                        path.display().stylize("dim")
-                    )
+                let message = if crate::verbose() > 0 {
+                    format!("cloned 'lume-lang/lume' ({})", path.display().stylize("dim"))
                 } else {
                     String::from("cloned 'lume-lang/lume'")
-                }
-            },
-            Err(err) => {
-                format!("failed to clone 'lume-lang/lume' ({})", err.message())
+                };
+
+                clone_compiler.success(message);
+
+                path
             }
-        }?;
+            Err(err) => {
+                clone_compiler.fail(format!("failed to clone 'lume-lang/lume' ({})", err.message()));
+                return Err(err);
+            }
+        };
 
         let opts = crate::toolchain::BuildOptions { profile: self.profile };
 
-        task! {
-            "building Lume compiler..." => {
-                crate::run_dry(|| crate::toolchain::compile_compiler(&compiler_root, &opts))
-            },
-            Ok(()) => "finished building Lume compiler",
-            Err(err) => {
-                format!("failed to build Lume compiler ({})", err.message())
+        let build_compiler = new_task("building Lume compiler...");
+        match crate::run_dry(|| crate::toolchain::compile_compiler(&compiler_root, &opts)) {
+            Ok(()) => {
+                build_compiler.success("finished building Lume compiler");
             }
-        }?;
+            Err(err) => {
+                build_compiler.fail(format!("failed to build Lume compiler ({})", err.message()));
+                return Err(err);
+            }
+        }
 
-        task! {
-            "copying compiler artifacts..." => {
-                crate::run_dry(|| crate::toolchain::copy_artifacts(&compiler_root, &toolchain_base, &opts))
-            },
-            Ok(()) => "copied all compiler artifacts",
-            Err(err) => {
-                format!("failed to copy artifact: {}", err.message())
+        let copy_artifacts = new_task("copying compiler artifacts...");
+        match crate::run_dry(|| crate::toolchain::copy_artifacts(&compiler_root, &toolchain_base, &opts)) {
+            Ok(()) => {
+                copy_artifacts.success("copied all compiler artifacts");
             }
-        }?;
+            Err(err) => {
+                copy_artifacts.fail(format!("failed to copy artifact: {}", err.message()));
+                return Err(err);
+            }
+        }
 
         if self.use_as_default {
             match crate::run_dry(|| crate::toolchain::link_toolchain(&toolchain_base, self.skip_shellrc)) {

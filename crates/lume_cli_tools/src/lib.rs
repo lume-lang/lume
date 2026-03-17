@@ -4,6 +4,7 @@ pub mod spinner;
 pub mod task;
 
 pub use spinner::Spinner;
+pub use task::*;
 
 pub trait Stylable: Sized {
     /// Styles the given value from a dotted style string.
@@ -13,6 +14,16 @@ pub trait Stylable: Sized {
     /// create a string that is red on blue background. `9.on_12` is
     /// the same, but using 256 color numbers. Unknown terms are
     /// ignored.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use lume_cli_tools::Stylable;
+    ///
+    /// println!("Hello {}!", "world".stylize("bright.yellow.bold"));
+    /// ```
+    ///
+    /// For more information, see [`console::Style::from_dotted_str`].
     fn stylize(self, fmt: &str) -> console::StyledObject<Self> {
         console::Style::from_dotted_str(fmt).for_stdout().apply_to(self)
     }
