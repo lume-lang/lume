@@ -10,7 +10,9 @@ impl Parser {
         self.start_node(SyntaxKind::PATH);
 
         loop {
+            self.start_node(SyntaxKind::PATH_SEGMENT);
             prev_kind = Some(self.parse_path_segment(prev_kind));
+            self.finish_node();
 
             if !self.check(Token![::]) {
                 break;

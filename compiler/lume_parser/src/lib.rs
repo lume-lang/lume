@@ -105,8 +105,8 @@ impl<'src, 'ast> Parser<'src, 'ast> {
         dcx: DiagCtxHandle,
         arena: &'ast lume_data_structures::UntypedArena,
     ) -> Self {
-        // Filter away any comment tokens, if present.
-        tokens.retain(|t| t.as_type() != TokenType::Comment);
+        // Filter away any trivia tokens, if present.
+        tokens.retain(|t| !matches!(t.as_type(), TokenType::Comment | TokenType::Whitespace));
 
         Parser {
             source,

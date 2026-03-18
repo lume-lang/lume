@@ -92,14 +92,20 @@ impl Parser {
     /// Peeks the token at the current index, plus some offset.
     #[inline]
     fn token_at(&self, offset: usize) -> SyntaxKind {
+        let non_trivia = self.non_trivia_pos();
+
         self.tokens
-            .get(self.tokens.len().saturating_sub(offset + 1))
+            .get(non_trivia.saturating_sub(offset))
             .map_or(SyntaxKind::EOF, |(kind, _range)| *kind)
     }
 
     /// Gets the span of the current token.
     fn span(&self) -> TextSpan {
-        self.tokens.last().map_or(TextSpan(0, 0), |(_kind, range)| *range)
+        let non_trivia = self.non_trivia_pos();
+
+        self.tokens
+            .get(non_trivia)
+            .map_or(TextSpan(0, 0), |(_kind, range)| *range)
     }
 
     /// Gets the span at the current index, plus some offset.
@@ -148,6 +154,8 @@ impl Parser {
 
     /// Advances the cursor position forward by a single token.
     fn skip(&mut self) {
+        self.consume_trivia();
+
         let _ = self.tokens.pop();
     }
 
@@ -180,6 +188,21 @@ impl Parser {
         false
     }
 
+    fn non_trivia_pos(&self) -> usize {
+        let mut i = self.tokens.len() - 1;
+        while i > 0 && self.tokens[i].0.is_trivia() {
+            i -= 1;
+        }
+
+        i
+    }
+
+    fn consume_trivia(&mut self) {
+        while let Some(trivia) = self.tokens.pop_if(|(kind, _range)| kind.is_trivia()) {
+            self.node_token(trivia.0, trivia.1);
+        }
+    }
+
     /// Checks the next token from the lexer and returns [`true`] if it
     /// matches the expected kind. Additionally, it advances the cursor
     /// position by a single token.
@@ -187,6 +210,8 @@ impl Parser {
     /// If the token does not match the expected kind, returns [`false`] without
     /// advancing the cursor.
     fn check(&mut self, kind: SyntaxKind) -> bool {
+        self.consume_trivia();
+
         if let Some((kind, span)) = self.tokens.pop_if(|(tok, _span)| *tok == kind) {
             self.node_token(kind, span);
             return true;
@@ -225,6 +250,8 @@ impl Parser {
 
     /// Consumes the current token, no matter it's kind.
     fn consume_any(&mut self) -> SyntaxKind {
+        self.consume_trivia();
+
         if let Some((kind, span)) = self.tokens.pop() {
             self.node_token(kind, span);
             return kind;
@@ -362,6 +389,11 @@ impl Parser {
         }
     }
 
+    /// Creates a new checkout for the current position.
+    fn checkpoint(&self) -> Checkpoint {
+        self.builder.inner.checkpoint()
+    }
+
     /// Adds a new token node to the tree.
     fn node_token(&mut self, kind: SyntaxKind, span: TextSpan) {
         let text = self.source.content.get(span.0..span.1).unwrap_or("");
@@ -371,17 +403,36 @@ impl Parser {
 
     /// Starts a new node.
     fn start_node(&mut self, kind: SyntaxKind) {
-        self.builder.inner.start_node(kind.into());
-    }
+        // Depending on whether we're at the first token or not, we might not
+        // be able to consume any trivia tokens.
+        //
+        // If this is the first token, consume the trivia *after* starting the node.
+        let is_at_root = self.tokens.last().is_none_or(|(_, span)| span.0 == 0);
 
-    /// Creates a new checkout for the current position.
-    fn checkpoint(&self) -> Checkpoint {
-        self.builder.inner.checkpoint()
+        if !is_at_root {
+            self.consume_trivia();
+        }
+
+        self.builder.inner.start_node(kind.into());
+
+        if is_at_root {
+            self.consume_trivia();
+        }
     }
 
     /// Starts a new node at the given checkpoint.
     fn start_node_at(&mut self, kind: SyntaxKind, c: Checkpoint) {
+        let is_at_root = self.tokens.last().is_none_or(|(_, span)| span.0 == 0);
+
+        if !is_at_root {
+            self.consume_trivia();
+        }
+
         self.builder.inner.start_node_at(c, kind.into());
+
+        if is_at_root {
+            self.consume_trivia();
+        }
     }
 
     /// Finish the current node.
@@ -508,6 +559,7 @@ fn as_parser_token(token: Token<'_>) -> (SyntaxKind, TextSpan) {
         TokenKind::RightParen => SyntaxKind::RIGHT_PAREN,
         TokenKind::Semicolon => SyntaxKind::SEMICOLON,
         TokenKind::SelfRef => SyntaxKind::SELF_EXPR,
+        TokenKind::SelfType => SyntaxKind::SELF_TYPE,
         TokenKind::String(_) => SyntaxKind::STRING_LIT,
         TokenKind::Struct => SyntaxKind::STRUCT_KW,
         TokenKind::Sub => SyntaxKind::SUB,
@@ -517,6 +569,7 @@ fn as_parser_token(token: Token<'_>) -> (SyntaxKind, TextSpan) {
         TokenKind::True => SyntaxKind::TRUE_KW,
         TokenKind::Use => SyntaxKind::USE_KW,
         TokenKind::While => SyntaxKind::WHILE_KW,
+        TokenKind::Whitespace(_) => SyntaxKind::WHITESPACE,
     };
 
     (kind, TextSpan(token.index.start, token.index.end))
