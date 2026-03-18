@@ -95,6 +95,7 @@ pub enum SyntaxKind {
     VALUE,
     SWITCH_ARM,
     ATTR,
+    ATTR_ARG_LIST,
     ATTR_ARG,
 
     // Items
@@ -116,6 +117,7 @@ pub enum SyntaxKind {
     DOC_COMMENT,
 
     // Statements
+    STMT,
     LET_STMT,
     BREAK_STMT,
     CONTINUE_STMT,
@@ -127,6 +129,7 @@ pub enum SyntaxKind {
     EXPR_STMT,
 
     // Expressions
+    EXPR,
     ARRAY_EXPR,
     ASSIGNMENT_EXPR,
     INSTANCE_CALL_EXPR,
@@ -145,7 +148,6 @@ pub enum SyntaxKind {
     PAREN_EXPR,
 
     BIN_EXPR,
-    INFIX_EXPR,
     POSTFIX_EXPR,
     UNARY_EXPR,
 
@@ -157,6 +159,7 @@ pub enum SyntaxKind {
     STRING_LIT,
 
     // Types
+    NAMED_TYPE,
     ARRAY_TYPE,
     SELF_TYPE,
 
@@ -196,6 +199,7 @@ pub enum SyntaxKind {
 
     // Path
     PATH,
+    PATH_SEGMENT,
     PATH_NAMESPACE,
     PATH_VARIANT,
     PATH_CALLABLE,
@@ -253,6 +257,11 @@ pub enum SyntaxKind {
 }
 
 impl SyntaxKind {
+    #[inline]
+    pub fn is_trivia(self) -> bool {
+        matches!(self, Self::WHITESPACE)
+    }
+
     #[inline]
     pub fn is_keyword(self) -> bool {
         matches!(

@@ -114,7 +114,6 @@ impl LexerError {
 }
 
 #[derive(Logos, Debug, Clone, Copy, PartialEq, Eq)]
-#[logos(skip(r"\s+"))]
 #[logos(error(LexerError, callback = LexerError::from_lexer))]
 #[logos(subpattern int_binary = r"0[bB][0-1][_0-1]*")]
 #[logos(subpattern int_octal = r"0[oO][0-8][_0-8]*")]
@@ -329,6 +328,9 @@ pub enum TokenKind<'source> {
     #[token("self")]
     SelfRef,
 
+    #[token("Self")]
+    SelfType,
+
     #[token("\"", lex_string)]
     String(&'source str),
 
@@ -355,6 +357,9 @@ pub enum TokenKind<'source> {
 
     #[token("while")]
     While,
+
+    #[regex(r"\s+")]
+    Whitespace(&'source str),
 }
 
 impl TokenKind<'_> {
@@ -425,6 +430,7 @@ impl TokenKind<'_> {
             TokenKind::RightParen => TokenType::RightParen,
             TokenKind::Semicolon => TokenType::Semicolon,
             TokenKind::SelfRef => TokenType::SelfRef,
+            TokenKind::SelfType => TokenType::SelfType,
             TokenKind::String(_) => TokenType::String,
             TokenKind::Struct => TokenType::Struct,
             TokenKind::Sub => TokenType::Sub,
@@ -434,6 +440,7 @@ impl TokenKind<'_> {
             TokenKind::True => TokenType::True,
             TokenKind::Use => TokenType::Use,
             TokenKind::While => TokenType::While,
+            TokenKind::Whitespace(_) => TokenType::Whitespace,
         }
     }
 
@@ -604,6 +611,7 @@ pub enum TokenType {
     RightParen,
     Semicolon,
     SelfRef,
+    SelfType,
     String,
     Struct,
     Sub,
@@ -613,6 +621,7 @@ pub enum TokenType {
     True,
     Use,
     While,
+    Whitespace,
 }
 
 impl Display for TokenType {
@@ -682,6 +691,7 @@ impl Display for TokenType {
             TokenType::RightCurly => f.write_str("}"),
             TokenType::RightParen => f.write_str(")"),
             TokenType::SelfRef => f.write_str("self"),
+            TokenType::SelfType => f.write_str("Self"),
             TokenType::Semicolon => f.write_str(";"),
             TokenType::String => f.write_str("string"),
             TokenType::Struct => f.write_str("struct"),
@@ -692,6 +702,7 @@ impl Display for TokenType {
             TokenType::True => f.write_str("true"),
             TokenType::Use => f.write_str("use"),
             TokenType::While => f.write_str("while"),
+            TokenType::Whitespace => f.write_str("whitespace"),
         }
     }
 }

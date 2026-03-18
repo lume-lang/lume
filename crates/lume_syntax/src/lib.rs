@@ -23,6 +23,8 @@ impl rowan::Language for LumeLang {
 }
 
 pub type SyntaxNode = rowan::SyntaxNode<LumeLang>;
+pub type SyntaxToken = rowan::SyntaxToken<LumeLang>;
+pub type SyntaxNodeChildren = rowan::SyntaxNodeChildren<LumeLang>;
 
 #[derive(Default, Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TextSpan(pub usize, pub usize);
