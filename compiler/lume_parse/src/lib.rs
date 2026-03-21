@@ -189,7 +189,8 @@ impl Parser {
     }
 
     fn non_trivia_pos(&self) -> usize {
-        let mut i = self.tokens.len() - 1;
+        let mut i = self.tokens.len().saturating_sub(1);
+
         while i > 0 && self.tokens[i].0.is_trivia() {
             i -= 1;
         }
@@ -398,7 +399,7 @@ impl Parser {
     fn node_token(&mut self, kind: SyntaxKind, span: TextSpan) {
         let text = self.source.content.get(span.0..span.1).unwrap_or("");
 
-        self.builder.inner.token(kind.into(), text);
+        self.builder.inner.token(kind, text);
     }
 
     /// Starts a new node.
@@ -413,7 +414,7 @@ impl Parser {
             self.consume_trivia();
         }
 
-        self.builder.inner.start_node(kind.into());
+        self.builder.inner.start_node(kind);
 
         if is_at_root {
             self.consume_trivia();
@@ -428,7 +429,7 @@ impl Parser {
             self.consume_trivia();
         }
 
-        self.builder.inner.start_node_at(c, kind.into());
+        self.builder.inner.start_node_at(c, kind);
 
         if is_at_root {
             self.consume_trivia();

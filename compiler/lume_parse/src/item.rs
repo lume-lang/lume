@@ -64,9 +64,7 @@ impl Parser {
 
         self.consume(Token![import]);
 
-        self.start_node(SyntaxKind::IMPORT_PATH);
         self.parse_import_path();
-        self.finish_node();
 
         if !self.peek(SyntaxKind::LEFT_PAREN) {
             self.error_and_recover("invalid import path", ITEM_RECOVERY_SET);
@@ -74,7 +72,7 @@ impl Parser {
         }
 
         self.start_node(SyntaxKind::IMPORT_LIST);
-        self.consume_paren_seq(Parser::parse_identifier);
+        self.consume_paren_seq(Parser::parse_name);
         self.finish_node();
 
         self.finish_node();
@@ -90,6 +88,8 @@ impl Parser {
     }
 
     fn parse_signature(&mut self) {
+        self.start_node(SyntaxKind::SIG);
+
         self.consume(Token![fn]);
         let is_external = self.check(Token![external]);
 
@@ -103,6 +103,8 @@ impl Parser {
             self.error("external items cannot have bodies");
             self.recover_statement();
         }
+
+        self.finish_node();
     }
 
     fn parse_parameters(&mut self) {
@@ -122,10 +124,7 @@ impl Parser {
 
         self.parse_name();
         self.check(Token![:]);
-
-        self.start_node(SyntaxKind::PARAM_TYPE);
         self.parse_type();
-        self.finish_node();
 
         self.finish_node();
     }
@@ -159,7 +158,7 @@ impl Parser {
         self.start_node_at(SyntaxKind::STRUCT, c);
 
         self.consume(Token![struct]);
-        self.parse_identifier();
+        self.parse_name();
         self.parse_type_parameters();
 
         self.consume_curly_seq(Parser::parse_struct_field);
@@ -174,7 +173,7 @@ impl Parser {
         self.parse_attributes();
 
         self.parse_visibility();
-        self.parse_identifier();
+        self.parse_name();
 
         // Report a special error if we found an identifier, such as
         // a method declaration, which isn't allowed within a `struct` block.
@@ -228,7 +227,7 @@ impl Parser {
         self.start_node_at(SyntaxKind::TRAIT, c);
 
         self.consume(Token![trait]);
-        self.parse_identifier();
+        self.parse_name();
 
         self.parse_type_parameters();
         self.consume_curly_seq(Parser::parse_trait_method);
@@ -309,10 +308,10 @@ impl Parser {
         self.parse_doc_comment();
         self.parse_attributes();
 
-        self.parse_identifier();
+        self.parse_name();
 
         if self.peek(SyntaxKind::LEFT_PAREN) {
-            self.start_node(SyntaxKind::PARAM_LIST);
+            self.start_node(SyntaxKind::CASE_PARAM_LIST);
             self.consume_paren_seq(Parser::parse_type);
             self.finish_node();
         }

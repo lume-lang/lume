@@ -159,16 +159,9 @@ impl Parser {
 
     /// Parses a scope expression on the current cursor position.
     fn parse_scope_expression(&mut self) -> SyntaxKind {
-        self.consume(SyntaxKind::LEFT_BRACE);
-        self.start_node(SyntaxKind::STMT_LIST);
-
-        while !self.peek(SyntaxKind::RIGHT_BRACE) {
-            self.parse_statement();
-        }
-
+        self.start_node(SyntaxKind::SCOPE_EXPR);
+        self.parse_block();
         self.finish_node();
-
-        self.consume(SyntaxKind::RIGHT_BRACE);
 
         SyntaxKind::SCOPE_EXPR
     }
@@ -341,7 +334,7 @@ impl Parser {
     fn parse_member(&mut self, c: Checkpoint) -> SyntaxKind {
         self.parse_identifier();
         self.consume(Token![.]);
-        self.parse_name();
+        self.parse_identifier();
 
         let is_method_call = self.peek(SyntaxKind::LEFT_PAREN);
 
@@ -454,9 +447,7 @@ impl Parser {
             parser.parse_name();
 
             if parser.check(Token![:]) {
-                parser.start_node(SyntaxKind::VALUE);
                 parser.parse_expression(None);
-                parser.finish_node();
             }
 
             parser.finish_node();
@@ -473,6 +464,7 @@ impl Parser {
 
     /// Parses a literal value expression on the current cursor position.
     pub(crate) fn parse_literal(&mut self) -> SyntaxKind {
+        self.start_node(SyntaxKind::LIT_EXPR);
         self.start_node(SyntaxKind::LITERAL);
 
         match self.token() {
@@ -494,6 +486,7 @@ impl Parser {
         }
 
         self.skip();
+        self.finish_node();
         self.finish_node();
 
         SyntaxKind::LITERAL

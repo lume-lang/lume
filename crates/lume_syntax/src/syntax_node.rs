@@ -70,7 +70,7 @@ macro_rules! Token {
 
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
-#[repr(u16)]
+#[repr(u32)]
 pub enum SyntaxKind {
     WHITESPACE = 0,
     NEWLINE,
@@ -79,24 +79,23 @@ pub enum SyntaxKind {
     IDENT,
     VISIBILITY,
     NAME,
+    SIG,
     PARAM_LIST,
-    PARAM_TYPE,
     PARAM,
-    SELF_PARAM,
-    BOUND_TYPES,
-    BOUND_TYPE,
-    CONSTRAINTS,
     RETURN_TYPE,
     ARG_LIST,
     IMPORT_PATH,
     IMPORT_LIST,
-    STMT_LIST,
-    CALLEE,
-    VALUE,
-    SWITCH_ARM,
     ATTR,
     ATTR_ARG_LIST,
     ATTR_ARG,
+
+    CONSTRUCTOR_FIELD,
+    CONDITION,
+    SWITCH_ARM,
+
+    CASE,
+    CASE_PARAM_LIST,
 
     // Items
     FN,
@@ -107,7 +106,6 @@ pub enum SyntaxKind {
     TRAIT,
     ENUM,
     TRAIT_IMPL,
-    CASE,
     METHOD,
     FIELD,
     BLOCK,
@@ -117,7 +115,6 @@ pub enum SyntaxKind {
     DOC_COMMENT,
 
     // Statements
-    STMT,
     LET_STMT,
     BREAK_STMT,
     CONTINUE_STMT,
@@ -129,7 +126,6 @@ pub enum SyntaxKind {
     EXPR_STMT,
 
     // Expressions
-    EXPR,
     ARRAY_EXPR,
     ASSIGNMENT_EXPR,
     INSTANCE_CALL_EXPR,
@@ -138,6 +134,7 @@ pub enum SyntaxKind {
     CONSTRUCT_EXPR,
     IF_EXPR,
     IS_EXPR,
+    LIT_EXPR,
     MEMBER_EXPR,
     RANGE_EXPR,
     SCOPE_EXPR,
@@ -223,6 +220,14 @@ pub enum SyntaxKind {
     BIG_ARROW,
     PATH_SEP,
     QUESTION,
+
+    // Generics
+    BOUND_TYPES,
+    BOUND_TYPE,
+    CONSTRAINTS,
+
+    GENERIC_ARGS,
+    GENERIC_ARG,
 
     // Keywords
     AS_KW,
@@ -398,8 +403,8 @@ pub const BOOLEAN_OPERATORS: &[SyntaxKind] = &[Token![&&], Token![||]];
 /// Defines all the operators which are used in comparison contexts.
 pub const COMPARISON_OPERATORS: &[SyntaxKind] = &[Token![==], Token![!=], Token![<], Token![<=], Token![>], Token![>=]];
 
-impl From<SyntaxKind> for rowan::SyntaxKind {
+impl From<SyntaxKind> for cstree::RawSyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
-        Self(kind as u16)
+        Self(kind as u32)
     }
 }
