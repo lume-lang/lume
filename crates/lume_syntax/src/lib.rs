@@ -1,31 +1,31 @@
 use std::fmt::Debug;
 
-pub use cstree::build::Checkpoint;
-use cstree::prelude::*;
-pub use cstree::text::{TextRange, TextSize};
+pub use rowan::{Checkpoint, TextRange, TextSize};
+use rowan::{GreenNode, GreenNodeBuilder};
 
 pub mod syntax_node;
 pub use syntax_node::*;
 
-impl cstree::Syntax for SyntaxKind {
-    fn from_raw(raw: cstree::RawSyntaxKind) -> Self {
-        assert!(raw.0 <= SyntaxKind::EOF as u32);
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum LumeLang {}
 
-        unsafe { std::mem::transmute::<u32, SyntaxKind>(raw.0) }
+impl rowan::Language for LumeLang {
+    type Kind = SyntaxKind;
+
+    fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
+        assert!(raw.0 <= SyntaxKind::EOF as u16);
+
+        unsafe { std::mem::transmute::<u16, SyntaxKind>(raw.0) }
     }
 
-    fn into_raw(self) -> cstree::RawSyntaxKind {
-        self.into()
-    }
-
-    fn static_text(self) -> Option<&'static str> {
-        None
+    fn kind_to_raw(kind: Self::Kind) -> rowan::SyntaxKind {
+        kind.into()
     }
 }
 
-pub type SyntaxNode = cstree::syntax::SyntaxNode<SyntaxKind>;
-pub type SyntaxToken = cstree::syntax::SyntaxToken<SyntaxKind>;
-pub type SyntaxNodeChildren<'n> = cstree::syntax::SyntaxNodeChildren<'n, SyntaxKind>;
+pub type SyntaxNode = rowan::SyntaxNode<LumeLang>;
+pub type SyntaxToken = rowan::SyntaxToken<LumeLang>;
+pub type SyntaxNodeChildren = rowan::SyntaxNodeChildren<LumeLang>;
 
 #[derive(Default, Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TextSpan(pub usize, pub usize);
@@ -76,16 +76,29 @@ impl Debug for SyntaxTree {
     }
 }
 
-#[derive(Default)]
 pub struct SyntaxTreeBuilder {
     pub errors: Vec<SyntaxError>,
-    pub inner: GreenNodeBuilder<'static, 'static, SyntaxKind>,
+    pub inner: GreenNodeBuilder<'static>,
 }
 
 impl SyntaxTreeBuilder {
     #[inline]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    #[inline]
     pub fn finish(self) -> SyntaxTree {
-        SyntaxTree::new(self.inner.finish().0, self.errors)
+        SyntaxTree::new(self.inner.finish(), self.errors)
+    }
+}
+
+impl Default for SyntaxTreeBuilder {
+    fn default() -> Self {
+        Self {
+            errors: Vec::new(),
+            inner: GreenNodeBuilder::new(),
+        }
     }
 }
 

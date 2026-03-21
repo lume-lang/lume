@@ -1,13 +1,17 @@
 ---
 source: compiler/lume_parse/src/tests.rs
-expression: "parse(\"import std (Int)\")"
+expression: "parse(Target :: Item, \"import std (Int)\")"
 ---
-SOURCE_FILE@0..14
-  IMPORT@0..14
+SOURCE_FILE@0..16
+  IMPORT@0..16
     IMPORT_KW@0..6 "import"
-    IMPORT_PATH@6..9
-      IDENT@6..9 "std"
-    IMPORT_LIST@9..14
-      LEFT_PAREN@9..10 "("
-      IDENT@10..13 "Int"
-      RIGHT_PAREN@13..14 ")"
+    WHITESPACE@6..7 " "
+    IMPORT_PATH@7..11
+      NAME@7..10
+        IDENT@7..10 "std"
+      WHITESPACE@10..11 " "
+    IMPORT_LIST@11..16
+      LEFT_PAREN@11..12 "("
+      NAME@12..15
+        IDENT@12..15 "Int"
+      RIGHT_PAREN@15..16 ")"

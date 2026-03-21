@@ -4,6 +4,7 @@ expression: "parse(Target :: Statement, \"55;\")"
 ---
 SOURCE_FILE@0..3
   EXPR_STMT@0..3
-    LITERAL@0..2
-      INTEGER_LIT@0..2 "55"
+    LIT_EXPR@0..2
+      LITERAL@0..2
+        INTEGER_LIT@0..2 "55"
     SEMICOLON@2..3 ";"

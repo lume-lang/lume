@@ -2,25 +2,31 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"fn test<T>() -> void {}\")"
 ---
-SOURCE_FILE@0..19
-  FN@0..19
-    FN_KW@0..2 "fn"
-    NAME@2..6
-      IDENT@2..6 "test"
-    BOUND_TYPES@6..9
-      LESS@6..7 "<"
-      BOUND_TYPE@7..8
-        IDENT@7..8 "T"
-      GREATER@8..9 ">"
-    PARAM_LIST@9..11
-      LEFT_PAREN@9..10 "("
-      RIGHT_PAREN@10..11 ")"
-    RETURN_TYPE@11..17
-      ARROW@11..13 "->"
-      PATH@13..17
-        PATH_TYPE@13..17
-          IDENT@13..17 "void"
-    BLOCK@17..19
-      LEFT_BRACE@17..18 "{"
-      STMT_LIST@18..18
-      RIGHT_BRACE@18..19 "}"
+SOURCE_FILE@0..23
+  FN@0..23
+    SIG@0..21
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "test"
+      BOUND_TYPES@7..10
+        LESS@7..8 "<"
+        BOUND_TYPE@8..9
+          IDENT@8..9 "T"
+        GREATER@9..10 ">"
+      PARAM_LIST@10..12
+        LEFT_PAREN@10..11 "("
+        RIGHT_PAREN@11..12 ")"
+      WHITESPACE@12..13 " "
+      RETURN_TYPE@13..21
+        ARROW@13..15 "->"
+        WHITESPACE@15..16 " "
+        NAMED_TYPE@16..21
+          PATH@16..21
+            PATH_SEGMENT@16..21
+              PATH_TYPE@16..21
+                IDENT@16..20 "void"
+                WHITESPACE@20..21 " "
+    BLOCK@21..23
+      LEFT_BRACE@21..22 "{"
+      RIGHT_BRACE@22..23 "}"

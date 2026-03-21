@@ -2,17 +2,22 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"for pattern in collection { continue; }\")"
 ---
-SOURCE_FILE@0..33
-  FOR_STMT@0..33
+SOURCE_FILE@0..39
+  FOR_STMT@0..39
     FOR_KW@0..3 "for"
     IDENT@3..10 "pattern"
-    IN_KW@10..12 "in"
-    VARIABLE_EXPR@12..22
-      IDENT@12..22 "collection"
-    BLOCK@22..33
-      LEFT_BRACE@22..23 "{"
-      STMT_LIST@23..32
-        CONTINUE_STMT@23..32
-          CONTINUE_KW@23..31 "continue"
-          SEMICOLON@31..32 ";"
-      RIGHT_BRACE@32..33 "}"
+    WHITESPACE@10..11 " "
+    WHITESPACE@11..12 " "
+    IN_KW@12..14 "in"
+    VARIABLE_EXPR@14..25
+      WHITESPACE@14..15 " "
+      IDENT@15..25 "collection"
+    WHITESPACE@25..26 " "
+    BLOCK@26..39
+      LEFT_BRACE@26..27 "{"
+      WHITESPACE@27..28 " "
+      CONTINUE_STMT@28..37
+        CONTINUE_KW@28..36 "continue"
+        SEMICOLON@36..37 ";"
+      WHITESPACE@37..38 " "
+      RIGHT_BRACE@38..39 "}"

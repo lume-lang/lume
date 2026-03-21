@@ -2,38 +2,51 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
 ---
-SOURCE_FILE@0..39
-  FN@0..39
-    FN_KW@0..2 "fn"
-    NAME@2..6
-      IDENT@2..6 "test"
-    BOUND_TYPES@6..29
-      LESS@6..7 "<"
-      BOUND_TYPE@7..17
-        IDENT@7..9 "T1"
-        CONSTRAINTS@9..17
-          COLON@9..10 ":"
-          PATH@10..17
-            PATH_TYPE@10..17
-              IDENT@10..17 "Numeric"
-      COMMA@17..18 ","
-      BOUND_TYPE@18..28
-        IDENT@18..20 "T2"
-        CONSTRAINTS@20..28
-          COLON@20..21 ":"
-          PATH@21..28
-            PATH_TYPE@21..28
-              IDENT@21..28 "Numeric"
-      GREATER@28..29 ">"
-    PARAM_LIST@29..31
-      LEFT_PAREN@29..30 "("
-      RIGHT_PAREN@30..31 ")"
-    RETURN_TYPE@31..37
-      ARROW@31..33 "->"
-      PATH@33..37
-        PATH_TYPE@33..37
-          IDENT@33..37 "void"
-    BLOCK@37..39
-      LEFT_BRACE@37..38 "{"
-      STMT_LIST@38..38
-      RIGHT_BRACE@38..39 "}"
+SOURCE_FILE@0..46
+  FN@0..46
+    SIG@0..44
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "test"
+      BOUND_TYPES@7..33
+        LESS@7..8 "<"
+        BOUND_TYPE@8..19
+          IDENT@8..10 "T1"
+          CONSTRAINTS@10..19
+            COLON@10..11 ":"
+            WHITESPACE@11..12 " "
+            NAMED_TYPE@12..19
+              PATH@12..19
+                PATH_SEGMENT@12..19
+                  PATH_TYPE@12..19
+                    IDENT@12..19 "Numeric"
+        COMMA@19..20 ","
+        WHITESPACE@20..21 " "
+        BOUND_TYPE@21..32
+          IDENT@21..23 "T2"
+          CONSTRAINTS@23..32
+            COLON@23..24 ":"
+            WHITESPACE@24..25 " "
+            NAMED_TYPE@25..32
+              PATH@25..32
+                PATH_SEGMENT@25..32
+                  PATH_TYPE@25..32
+                    IDENT@25..32 "Numeric"
+        GREATER@32..33 ">"
+      PARAM_LIST@33..35
+        LEFT_PAREN@33..34 "("
+        RIGHT_PAREN@34..35 ")"
+      WHITESPACE@35..36 " "
+      RETURN_TYPE@36..44
+        ARROW@36..38 "->"
+        WHITESPACE@38..39 " "
+        NAMED_TYPE@39..44
+          PATH@39..44
+            PATH_SEGMENT@39..44
+              PATH_TYPE@39..44
+                IDENT@39..43 "void"
+                WHITESPACE@43..44 " "
+    BLOCK@44..46
+      LEFT_BRACE@44..45 "{"
+      RIGHT_BRACE@45..46 "}"

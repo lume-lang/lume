@@ -2,12 +2,14 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"a <= b;\")"
 ---
-SOURCE_FILE@0..5
-  EXPR_STMT@0..5
-    BIN_EXPR@0..4
+SOURCE_FILE@0..7
+  EXPR_STMT@0..7
+    BIN_EXPR@0..6
       VARIABLE_EXPR@0..1
         IDENT@0..1 "a"
-      LEQUAL@1..3 "<="
-      VARIABLE_EXPR@3..4
-        IDENT@3..4 "b"
-    SEMICOLON@4..5 ";"
+      WHITESPACE@1..2 " "
+      LEQUAL@2..4 "<="
+      WHITESPACE@4..5 " "
+      VARIABLE_EXPR@5..6
+        IDENT@5..6 "b"
+    SEMICOLON@6..7 ";"

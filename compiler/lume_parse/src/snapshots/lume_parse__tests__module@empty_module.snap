@@ -1,0 +1,5 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"\")"
+---
+SOURCE_FILE@0..0

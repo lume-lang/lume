@@ -2,27 +2,34 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"Foo { bar: 0, baz: 1 };\")"
 ---
-SOURCE_FILE@0..17
-  EXPR_STMT@0..17
-    CONSTRUCT_EXPR@0..16
-      PATH@0..3
-        PATH_TYPE@0..3
-          IDENT@0..3 "Foo"
-      LEFT_BRACE@3..4 "{"
-      FIELD@4..9
-        NAME@4..7
-          IDENT@4..7 "bar"
-        COLON@7..8 ":"
-        VALUE@8..9
-          LITERAL@8..9
-            INTEGER_LIT@8..9 "0"
-      COMMA@9..10 ","
-      FIELD@10..15
-        NAME@10..13
-          IDENT@10..13 "baz"
-        COLON@13..14 ":"
-        VALUE@14..15
-          LITERAL@14..15
-            INTEGER_LIT@14..15 "1"
-      RIGHT_BRACE@15..16 "}"
-    SEMICOLON@16..17 ";"
+SOURCE_FILE@0..23
+  EXPR_STMT@0..23
+    CONSTRUCT_EXPR@0..22
+      PATH@0..4
+        PATH_SEGMENT@0..4
+          PATH_TYPE@0..4
+            IDENT@0..3 "Foo"
+            WHITESPACE@3..4 " "
+      LEFT_BRACE@4..5 "{"
+      WHITESPACE@5..6 " "
+      FIELD@6..12
+        NAME@6..9
+          IDENT@6..9 "bar"
+        COLON@9..10 ":"
+        WHITESPACE@10..11 " "
+        LIT_EXPR@11..12
+          LITERAL@11..12
+            INTEGER_LIT@11..12 "0"
+      COMMA@12..13 ","
+      WHITESPACE@13..14 " "
+      FIELD@14..20
+        NAME@14..17
+          IDENT@14..17 "baz"
+        COLON@17..18 ":"
+        WHITESPACE@18..19 " "
+        LIT_EXPR@19..20
+          LITERAL@19..20
+            INTEGER_LIT@19..20 "1"
+      WHITESPACE@20..21 " "
+      RIGHT_BRACE@21..22 "}"
+    SEMICOLON@22..23 ";"

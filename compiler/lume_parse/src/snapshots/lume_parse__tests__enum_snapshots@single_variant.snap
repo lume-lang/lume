@@ -2,12 +2,17 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"enum Foo { Bar }\")"
 ---
-SOURCE_FILE@0..12
-  ENUM@0..12
+SOURCE_FILE@0..16
+  ENUM@0..16
     ENUM_KW@0..4 "enum"
-    NAME@4..7
-      IDENT@4..7 "Foo"
-    LEFT_BRACE@7..8 "{"
-    CASE@8..11
-      IDENT@8..11 "Bar"
-    RIGHT_BRACE@11..12 "}"
+    WHITESPACE@4..5 " "
+    NAME@5..8
+      IDENT@5..8 "Foo"
+    WHITESPACE@8..9 " "
+    LEFT_BRACE@9..10 "{"
+    WHITESPACE@10..11 " "
+    CASE@11..14
+      NAME@11..14
+        IDENT@11..14 "Bar"
+    WHITESPACE@14..15 " "
+    RIGHT_BRACE@15..16 "}"

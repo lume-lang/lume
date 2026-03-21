@@ -2,34 +2,43 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"let _ = std::Buffer::call<T>(a, b);\")"
 ---
-SOURCE_FILE@0..31
-  LET_STMT@0..31
+SOURCE_FILE@0..35
+  LET_STMT@0..35
     LET_KW@0..3 "let"
-    NAME@3..4
-      IDENT@3..4 "_"
-    ASSIGN@4..5 "="
-    STATIC_CALL_EXPR@5..30
-      PATH@5..25
-        PATH_NAMESPACE@5..8
-          IDENT@5..8 "std"
-        PATH_SEP@8..10 "::"
-        PATH_TYPE@10..16
-          IDENT@10..16 "Buffer"
-        PATH_SEP@16..18 "::"
-        PATH_CALLABLE@18..25
-          IDENT@18..22 "call"
-          BOUND_TYPES@22..25
-            LESS@22..23 "<"
-            PATH@23..24
-              PATH_TYPE@23..24
-                IDENT@23..24 "T"
-            GREATER@24..25 ">"
-      ARG_LIST@25..30
-        LEFT_PAREN@25..26 "("
-        VARIABLE_EXPR@26..27
-          IDENT@26..27 "a"
-        COMMA@27..28 ","
-        VARIABLE_EXPR@28..29
-          IDENT@28..29 "b"
-        RIGHT_PAREN@29..30 ")"
-    SEMICOLON@30..31 ";"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    STATIC_CALL_EXPR@7..34
+      WHITESPACE@7..8 " "
+      PATH@8..28
+        PATH_SEGMENT@8..11
+          PATH_NAMESPACE@8..11
+            IDENT@8..11 "std"
+        PATH_SEP@11..13 "::"
+        PATH_SEGMENT@13..19
+          PATH_TYPE@13..19
+            IDENT@13..19 "Buffer"
+        PATH_SEP@19..21 "::"
+        PATH_SEGMENT@21..28
+          PATH_CALLABLE@21..28
+            IDENT@21..25 "call"
+            GENERIC_ARGS@25..28
+              LESS@25..26 "<"
+              NAMED_TYPE@26..27
+                PATH@26..27
+                  PATH_SEGMENT@26..27
+                    PATH_TYPE@26..27
+                      IDENT@26..27 "T"
+              GREATER@27..28 ">"
+      ARG_LIST@28..34
+        LEFT_PAREN@28..29 "("
+        VARIABLE_EXPR@29..30
+          IDENT@29..30 "a"
+        COMMA@30..31 ","
+        WHITESPACE@31..32 " "
+        VARIABLE_EXPR@32..33
+          IDENT@32..33 "b"
+        RIGHT_PAREN@33..34 ")"
+    SEMICOLON@34..35 ";"

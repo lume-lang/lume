@@ -2,21 +2,29 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"if true { let a = 0; }\")"
 ---
-SOURCE_FILE@0..15
-  EXPR_STMT@0..15
-    IF_EXPR@0..15
+SOURCE_FILE@0..22
+  EXPR_STMT@0..22
+    IF_EXPR@0..22
       IF_KW@0..2 "if"
-      LITERAL@2..6
-        BOOLEAN_LIT@2..6 "true"
-      BLOCK@6..15
-        LEFT_BRACE@6..7 "{"
-        STMT_LIST@7..14
-          LET_STMT@7..14
-            LET_KW@7..10 "let"
-            NAME@10..11
-              IDENT@10..11 "a"
-            ASSIGN@11..12 "="
-            LITERAL@12..13
-              INTEGER_LIT@12..13 "0"
-            SEMICOLON@13..14 ";"
-        RIGHT_BRACE@14..15 "}"
+      WHITESPACE@2..3 " "
+      LIT_EXPR@3..7
+        LITERAL@3..7
+          BOOLEAN_LIT@3..7 "true"
+      WHITESPACE@7..8 " "
+      BLOCK@8..22
+        LEFT_BRACE@8..9 "{"
+        WHITESPACE@9..10 " "
+        LET_STMT@10..20
+          LET_KW@10..13 "let"
+          WHITESPACE@13..14 " "
+          NAME@14..15
+            IDENT@14..15 "a"
+          WHITESPACE@15..16 " "
+          ASSIGN@16..17 "="
+          WHITESPACE@17..18 " "
+          LIT_EXPR@18..19
+            LITERAL@18..19
+              INTEGER_LIT@18..19 "0"
+          SEMICOLON@19..20 ";"
+        WHITESPACE@20..21 " "
+        RIGHT_BRACE@21..22 "}"

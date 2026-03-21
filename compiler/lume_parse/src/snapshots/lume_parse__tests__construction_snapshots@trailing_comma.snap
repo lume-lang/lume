@@ -2,20 +2,25 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"Foo { bar: 0, };\")"
 ---
-SOURCE_FILE@0..12
-  EXPR_STMT@0..12
-    CONSTRUCT_EXPR@0..11
-      PATH@0..3
-        PATH_TYPE@0..3
-          IDENT@0..3 "Foo"
-      LEFT_BRACE@3..4 "{"
-      FIELD@4..9
-        NAME@4..7
-          IDENT@4..7 "bar"
-        COLON@7..8 ":"
-        VALUE@8..9
-          LITERAL@8..9
-            INTEGER_LIT@8..9 "0"
-      COMMA@9..10 ","
-      RIGHT_BRACE@10..11 "}"
-    SEMICOLON@11..12 ";"
+SOURCE_FILE@0..16
+  EXPR_STMT@0..16
+    CONSTRUCT_EXPR@0..15
+      PATH@0..4
+        PATH_SEGMENT@0..4
+          PATH_TYPE@0..4
+            IDENT@0..3 "Foo"
+            WHITESPACE@3..4 " "
+      LEFT_BRACE@4..5 "{"
+      WHITESPACE@5..6 " "
+      FIELD@6..12
+        NAME@6..9
+          IDENT@6..9 "bar"
+        COLON@9..10 ":"
+        WHITESPACE@10..11 " "
+        LIT_EXPR@11..12
+          LITERAL@11..12
+            INTEGER_LIT@11..12 "0"
+      COMMA@12..13 ","
+      WHITESPACE@13..14 " "
+      RIGHT_BRACE@14..15 "}"
+    SEMICOLON@15..16 ";"

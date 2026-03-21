@@ -2,22 +2,32 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"\n        impl Foo {\n            fn bar() { }\n        }\")"
 ---
-SOURCE_FILE@0..18
-  IMPL@0..18
-    IMPL_KW@0..4 "impl"
-    PATH@4..7
-      PATH_TYPE@4..7
-        IDENT@4..7 "Foo"
-    LEFT_BRACE@7..8 "{"
-    METHOD@8..17
-      FN_KW@8..10 "fn"
-      NAME@10..13
-        IDENT@10..13 "bar"
-      PARAM_LIST@13..15
-        LEFT_PAREN@13..14 "("
-        RIGHT_PAREN@14..15 ")"
-      BLOCK@15..17
-        LEFT_BRACE@15..16 "{"
-        STMT_LIST@16..16
-        RIGHT_BRACE@16..17 "}"
-    RIGHT_BRACE@17..18 "}"
+SOURCE_FILE@0..54
+  WHITESPACE@0..9 "\n        "
+  IMPL@9..54
+    IMPL_KW@9..13 "impl"
+    WHITESPACE@13..14 " "
+    NAMED_TYPE@14..18
+      PATH@14..18
+        PATH_SEGMENT@14..18
+          PATH_TYPE@14..18
+            IDENT@14..17 "Foo"
+            WHITESPACE@17..18 " "
+    LEFT_BRACE@18..19 "{"
+    WHITESPACE@19..32 "\n            "
+    METHOD@32..44
+      SIG@32..40
+        FN_KW@32..34 "fn"
+        WHITESPACE@34..35 " "
+        NAME@35..38
+          IDENT@35..38 "bar"
+        PARAM_LIST@38..40
+          LEFT_PAREN@38..39 "("
+          RIGHT_PAREN@39..40 ")"
+      WHITESPACE@40..41 " "
+      BLOCK@41..44
+        LEFT_BRACE@41..42 "{"
+        WHITESPACE@42..43 " "
+        RIGHT_BRACE@43..44 "}"
+    WHITESPACE@44..53 "\n        "
+    RIGHT_BRACE@53..54 "}"

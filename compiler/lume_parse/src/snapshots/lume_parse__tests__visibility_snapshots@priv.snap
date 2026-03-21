@@ -2,17 +2,20 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"priv fn foo() {}\")"
 ---
-SOURCE_FILE@0..13
-  FN@0..13
+SOURCE_FILE@0..16
+  FN@0..16
     VISIBILITY@0..4
       PRIV_KW@0..4 "priv"
-    FN_KW@4..6 "fn"
-    NAME@6..9
-      IDENT@6..9 "foo"
-    PARAM_LIST@9..11
-      LEFT_PAREN@9..10 "("
-      RIGHT_PAREN@10..11 ")"
-    BLOCK@11..13
-      LEFT_BRACE@11..12 "{"
-      STMT_LIST@12..12
-      RIGHT_BRACE@12..13 "}"
+    WHITESPACE@4..5 " "
+    SIG@5..13
+      FN_KW@5..7 "fn"
+      WHITESPACE@7..8 " "
+      NAME@8..11
+        IDENT@8..11 "foo"
+      PARAM_LIST@11..13
+        LEFT_PAREN@11..12 "("
+        RIGHT_PAREN@12..13 ")"
+    WHITESPACE@13..14 " "
+    BLOCK@14..16
+      LEFT_BRACE@14..15 "{"
+      RIGHT_BRACE@15..16 "}"

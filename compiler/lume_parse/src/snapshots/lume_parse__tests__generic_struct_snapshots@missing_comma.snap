@@ -2,17 +2,21 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"struct Test<T1 T2> {}\")"
 ---
-SOURCE_FILE@0..18
-  STRUCT@0..18
+SOURCE_FILE@0..21
+  STRUCT@0..21
     STRUCT_KW@0..6 "struct"
-    IDENT@6..10 "Test"
-    BOUND_TYPES@10..16
-      LESS@10..11 "<"
-      BOUND_TYPE@11..13
-        IDENT@11..13 "T1"
-      IDENT@13..15 "T2"
-      GREATER@15..16 ">"
-    LEFT_BRACE@16..17 "{"
-    RIGHT_BRACE@17..18 "}"
+    WHITESPACE@6..7 " "
+    NAME@7..11
+      IDENT@7..11 "Test"
+    BOUND_TYPES@11..18
+      LESS@11..12 "<"
+      BOUND_TYPE@12..14
+        IDENT@12..14 "T1"
+      WHITESPACE@14..15 " "
+      IDENT@15..17 "T2"
+      GREATER@17..18 ">"
+    WHITESPACE@18..19 " "
+    LEFT_BRACE@19..20 "{"
+    RIGHT_BRACE@20..21 "}"
 
 expected COMMA@15..17

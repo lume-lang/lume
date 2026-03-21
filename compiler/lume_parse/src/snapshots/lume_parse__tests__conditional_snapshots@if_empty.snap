@@ -2,13 +2,16 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"if true { }\")"
 ---
-SOURCE_FILE@0..8
-  EXPR_STMT@0..8
-    IF_EXPR@0..8
+SOURCE_FILE@0..11
+  EXPR_STMT@0..11
+    IF_EXPR@0..11
       IF_KW@0..2 "if"
-      LITERAL@2..6
-        BOOLEAN_LIT@2..6 "true"
-      BLOCK@6..8
-        LEFT_BRACE@6..7 "{"
-        STMT_LIST@7..7
-        RIGHT_BRACE@7..8 "}"
+      WHITESPACE@2..3 " "
+      LIT_EXPR@3..7
+        LITERAL@3..7
+          BOOLEAN_LIT@3..7 "true"
+      WHITESPACE@7..8 " "
+      BLOCK@8..11
+        LEFT_BRACE@8..9 "{"
+        WHITESPACE@9..10 " "
+        RIGHT_BRACE@10..11 "}"

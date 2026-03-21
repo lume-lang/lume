@@ -2,13 +2,17 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"import std::io::\")"
 ---
-IMPORT@0..15
+IMPORT@0..16
   IMPORT_KW@0..6 "import"
-  IMPORT_PATH@6..15
-    IDENT@6..9 "std"
-    PATH_SEP@9..11 "::"
-    IDENT@11..13 "io"
-    PATH_SEP@13..15 "::"
+  WHITESPACE@6..7 " "
+  IMPORT_PATH@7..16
+    NAME@7..10
+      IDENT@7..10 "std"
+    PATH_SEP@10..12 "::"
+    NAME@12..14
+      IDENT@12..14 "io"
+    PATH_SEP@14..16 "::"
+    NAME@16..16
 
 expected identifier@14..15
 invalid import path@0..0

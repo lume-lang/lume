@@ -2,20 +2,25 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"enum Test<T: Numeric> {}\")"
 ---
-SOURCE_FILE@0..21
-  ENUM@0..21
+SOURCE_FILE@0..24
+  ENUM@0..24
     ENUM_KW@0..4 "enum"
-    NAME@4..8
-      IDENT@4..8 "Test"
-    BOUND_TYPES@8..19
-      LESS@8..9 "<"
-      BOUND_TYPE@9..18
-        IDENT@9..10 "T"
-        CONSTRAINTS@10..18
-          COLON@10..11 ":"
-          PATH@11..18
-            PATH_TYPE@11..18
-              IDENT@11..18 "Numeric"
-      GREATER@18..19 ">"
-    LEFT_BRACE@19..20 "{"
-    RIGHT_BRACE@20..21 "}"
+    WHITESPACE@4..5 " "
+    NAME@5..9
+      IDENT@5..9 "Test"
+    BOUND_TYPES@9..21
+      LESS@9..10 "<"
+      BOUND_TYPE@10..20
+        IDENT@10..11 "T"
+        CONSTRAINTS@11..20
+          COLON@11..12 ":"
+          WHITESPACE@12..13 " "
+          NAMED_TYPE@13..20
+            PATH@13..20
+              PATH_SEGMENT@13..20
+                PATH_TYPE@13..20
+                  IDENT@13..20 "Numeric"
+      GREATER@20..21 ">"
+    WHITESPACE@21..22 " "
+    LEFT_BRACE@22..23 "{"
+    RIGHT_BRACE@23..24 "}"

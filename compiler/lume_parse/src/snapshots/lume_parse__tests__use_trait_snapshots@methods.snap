@@ -2,57 +2,86 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"\n        use Cast: Int32 {\n            fn to_string() -> String {\n                return self;\n            }\n\n            fn to_int() -> Int32 {\n                return self;\n            }\n        }\")"
 ---
-SOURCE_FILE@0..79
-  TRAIT_IMPL@0..79
-    USE_KW@0..3 "use"
-    PATH@3..7
-      PATH_TYPE@3..7
-        IDENT@3..7 "Cast"
-    COLON@7..8 ":"
-    PATH@8..13
-      PATH_TYPE@8..13
-        IDENT@8..13 "Int32"
-    LEFT_BRACE@13..14 "{"
-    METHOD@14..48
-      FN_KW@14..16 "fn"
-      NAME@16..25
-        IDENT@16..25 "to_string"
-      PARAM_LIST@25..27
-        LEFT_PAREN@25..26 "("
-        RIGHT_PAREN@26..27 ")"
-      RETURN_TYPE@27..35
-        ARROW@27..29 "->"
-        PATH@29..35
-          PATH_TYPE@29..35
-            IDENT@29..35 "String"
-      BLOCK@35..48
-        LEFT_BRACE@35..36 "{"
-        STMT_LIST@36..47
-          RETURN_STMT@36..47
-            RETURN_KW@36..42 "return"
-            VARIABLE_EXPR@42..46
-              IDENT@42..46 "self"
-            SEMICOLON@46..47 ";"
-        RIGHT_BRACE@47..48 "}"
-    METHOD@48..78
-      FN_KW@48..50 "fn"
-      NAME@50..56
-        IDENT@50..56 "to_int"
-      PARAM_LIST@56..58
-        LEFT_PAREN@56..57 "("
-        RIGHT_PAREN@57..58 ")"
-      RETURN_TYPE@58..65
-        ARROW@58..60 "->"
-        PATH@60..65
-          PATH_TYPE@60..65
-            IDENT@60..65 "Int32"
-      BLOCK@65..78
-        LEFT_BRACE@65..66 "{"
-        STMT_LIST@66..77
-          RETURN_STMT@66..77
-            RETURN_KW@66..72 "return"
-            VARIABLE_EXPR@72..76
-              IDENT@72..76 "self"
-            SEMICOLON@76..77 ";"
-        RIGHT_BRACE@77..78 "}"
-    RIGHT_BRACE@78..79 "}"
+SOURCE_FILE@0..197
+  WHITESPACE@0..9 "\n        "
+  TRAIT_IMPL@9..197
+    USE_KW@9..12 "use"
+    WHITESPACE@12..13 " "
+    NAMED_TYPE@13..17
+      PATH@13..17
+        PATH_SEGMENT@13..17
+          PATH_TYPE@13..17
+            IDENT@13..17 "Cast"
+    COLON@17..18 ":"
+    WHITESPACE@18..19 " "
+    NAMED_TYPE@19..25
+      PATH@19..25
+        PATH_SEGMENT@19..25
+          PATH_TYPE@19..25
+            IDENT@19..24 "Int32"
+            WHITESPACE@24..25 " "
+    LEFT_BRACE@25..26 "{"
+    WHITESPACE@26..39 "\n            "
+    METHOD@39..108
+      SIG@39..64
+        FN_KW@39..41 "fn"
+        WHITESPACE@41..42 " "
+        NAME@42..51
+          IDENT@42..51 "to_string"
+        PARAM_LIST@51..53
+          LEFT_PAREN@51..52 "("
+          RIGHT_PAREN@52..53 ")"
+        WHITESPACE@53..54 " "
+        RETURN_TYPE@54..64
+          ARROW@54..56 "->"
+          WHITESPACE@56..57 " "
+          NAMED_TYPE@57..64
+            PATH@57..64
+              PATH_SEGMENT@57..64
+                PATH_TYPE@57..64
+                  IDENT@57..63 "String"
+                  WHITESPACE@63..64 " "
+      BLOCK@64..108
+        LEFT_BRACE@64..65 "{"
+        WHITESPACE@65..82 "\n                "
+        RETURN_STMT@82..94
+          RETURN_KW@82..88 "return"
+          VARIABLE_EXPR@88..93
+            WHITESPACE@88..89 " "
+            IDENT@89..93 "self"
+          SEMICOLON@93..94 ";"
+        WHITESPACE@94..107 "\n            "
+        RIGHT_BRACE@107..108 "}"
+    WHITESPACE@108..122 "\n\n            "
+    METHOD@122..187
+      SIG@122..143
+        FN_KW@122..124 "fn"
+        WHITESPACE@124..125 " "
+        NAME@125..131
+          IDENT@125..131 "to_int"
+        PARAM_LIST@131..133
+          LEFT_PAREN@131..132 "("
+          RIGHT_PAREN@132..133 ")"
+        WHITESPACE@133..134 " "
+        RETURN_TYPE@134..143
+          ARROW@134..136 "->"
+          WHITESPACE@136..137 " "
+          NAMED_TYPE@137..143
+            PATH@137..143
+              PATH_SEGMENT@137..143
+                PATH_TYPE@137..143
+                  IDENT@137..142 "Int32"
+                  WHITESPACE@142..143 " "
+      BLOCK@143..187
+        LEFT_BRACE@143..144 "{"
+        WHITESPACE@144..161 "\n                "
+        RETURN_STMT@161..173
+          RETURN_KW@161..167 "return"
+          VARIABLE_EXPR@167..172
+            WHITESPACE@167..168 " "
+            IDENT@168..172 "self"
+          SEMICOLON@172..173 ";"
+        WHITESPACE@173..186 "\n            "
+        RIGHT_BRACE@186..187 "}"
+    WHITESPACE@187..196 "\n        "
+    RIGHT_BRACE@196..197 "}"

@@ -2,23 +2,29 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"fn test<>() -> void {}\")"
 ---
-SOURCE_FILE@0..18
-  FN@0..18
-    FN_KW@0..2 "fn"
-    NAME@2..6
-      IDENT@2..6 "test"
-    BOUND_TYPES@6..8
-      LESS@6..7 "<"
-      GREATER@7..8 ">"
-    PARAM_LIST@8..10
-      LEFT_PAREN@8..9 "("
-      RIGHT_PAREN@9..10 ")"
-    RETURN_TYPE@10..16
-      ARROW@10..12 "->"
-      PATH@12..16
-        PATH_TYPE@12..16
-          IDENT@12..16 "void"
-    BLOCK@16..18
-      LEFT_BRACE@16..17 "{"
-      STMT_LIST@17..17
-      RIGHT_BRACE@17..18 "}"
+SOURCE_FILE@0..22
+  FN@0..22
+    SIG@0..20
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "test"
+      BOUND_TYPES@7..9
+        LESS@7..8 "<"
+        GREATER@8..9 ">"
+      PARAM_LIST@9..11
+        LEFT_PAREN@9..10 "("
+        RIGHT_PAREN@10..11 ")"
+      WHITESPACE@11..12 " "
+      RETURN_TYPE@12..20
+        ARROW@12..14 "->"
+        WHITESPACE@14..15 " "
+        NAMED_TYPE@15..20
+          PATH@15..20
+            PATH_SEGMENT@15..20
+              PATH_TYPE@15..20
+                IDENT@15..19 "void"
+                WHITESPACE@19..20 " "
+    BLOCK@20..22
+      LEFT_BRACE@20..21 "{"
+      RIGHT_BRACE@21..22 "}"

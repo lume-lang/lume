@@ -60,6 +60,7 @@ macro_rules! Token {
     [pub] => { $crate::SyntaxKind::PUB_KW };
     [return] => { $crate::SyntaxKind::RETURN_KW };
     [self] => { $crate::SyntaxKind::SELF_EXPR };
+    [Self] => { $crate::SyntaxKind::SELF_TYPE };
     [struct] => { $crate::SyntaxKind::STRUCT_KW };
     [switch] => { $crate::SyntaxKind::SWITCH_KW };
     [trait] => { $crate::SyntaxKind::TRAIT_KW };
@@ -70,7 +71,7 @@ macro_rules! Token {
 
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
-#[repr(u32)]
+#[repr(u16)]
 pub enum SyntaxKind {
     WHITESPACE = 0,
     NEWLINE,
@@ -291,6 +292,7 @@ impl SyntaxKind {
                 | SyntaxKind::PUB_KW
                 | SyntaxKind::RETURN_KW
                 | SyntaxKind::SELF_EXPR
+                | SyntaxKind::SELF_TYPE
                 | SyntaxKind::STRUCT_KW
                 | SyntaxKind::SWITCH_KW
                 | SyntaxKind::TRAIT_KW
@@ -403,8 +405,8 @@ pub const BOOLEAN_OPERATORS: &[SyntaxKind] = &[Token![&&], Token![||]];
 /// Defines all the operators which are used in comparison contexts.
 pub const COMPARISON_OPERATORS: &[SyntaxKind] = &[Token![==], Token![!=], Token![<], Token![<=], Token![>], Token![>=]];
 
-impl From<SyntaxKind> for cstree::RawSyntaxKind {
+impl From<SyntaxKind> for rowan::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
-        Self(kind as u32)
+        Self(kind as u16)
     }
 }

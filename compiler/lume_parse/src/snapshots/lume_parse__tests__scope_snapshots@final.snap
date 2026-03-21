@@ -2,16 +2,23 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"let _ = { 5 };\")"
 ---
-SOURCE_FILE@0..9
-  LET_STMT@0..9
+SOURCE_FILE@0..14
+  LET_STMT@0..14
     LET_KW@0..3 "let"
-    NAME@3..4
-      IDENT@3..4 "_"
-    ASSIGN@4..5 "="
-    LEFT_BRACE@5..6 "{"
-    STMT_LIST@6..7
-      FINAL_STMT@6..7
-        LITERAL@6..7
-          INTEGER_LIT@6..7 "5"
-    RIGHT_BRACE@7..8 "}"
-    SEMICOLON@8..9 ";"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    WHITESPACE@7..8 " "
+    SCOPE_EXPR@8..13
+      BLOCK@8..13
+        LEFT_BRACE@8..9 "{"
+        FINAL_STMT@9..12
+          WHITESPACE@9..10 " "
+          LIT_EXPR@10..11
+            LITERAL@10..11
+              INTEGER_LIT@10..11 "5"
+          WHITESPACE@11..12 " "
+        RIGHT_BRACE@12..13 "}"
+    SEMICOLON@13..14 ";"

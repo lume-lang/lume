@@ -2,35 +2,53 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"\n        enum Foo {\n            Bar(Int32, Int32),\n            Baz(Int32, Int32)\n        }\")"
 ---
-SOURCE_FILE@0..42
-  ENUM@0..42
-    ENUM_KW@0..4 "enum"
-    NAME@4..7
-      IDENT@4..7 "Foo"
-    LEFT_BRACE@7..8 "{"
-    CASE@8..24
-      IDENT@8..11 "Bar"
-      PARAM_LIST@11..24
-        LEFT_PAREN@11..12 "("
-        PATH@12..17
-          PATH_TYPE@12..17
-            IDENT@12..17 "Int32"
-        COMMA@17..18 ","
-        PATH@18..23
-          PATH_TYPE@18..23
-            IDENT@18..23 "Int32"
-        RIGHT_PAREN@23..24 ")"
-    COMMA@24..25 ","
-    CASE@25..41
-      IDENT@25..28 "Baz"
-      PARAM_LIST@28..41
-        LEFT_PAREN@28..29 "("
-        PATH@29..34
-          PATH_TYPE@29..34
-            IDENT@29..34 "Int32"
-        COMMA@34..35 ","
-        PATH@35..40
-          PATH_TYPE@35..40
-            IDENT@35..40 "Int32"
-        RIGHT_PAREN@40..41 ")"
-    RIGHT_BRACE@41..42 "}"
+SOURCE_FILE@0..90
+  WHITESPACE@0..9 "\n        "
+  ENUM@9..90
+    ENUM_KW@9..13 "enum"
+    WHITESPACE@13..14 " "
+    NAME@14..17
+      IDENT@14..17 "Foo"
+    WHITESPACE@17..18 " "
+    LEFT_BRACE@18..19 "{"
+    WHITESPACE@19..32 "\n            "
+    CASE@32..49
+      NAME@32..35
+        IDENT@32..35 "Bar"
+      CASE_PARAM_LIST@35..49
+        LEFT_PAREN@35..36 "("
+        NAMED_TYPE@36..41
+          PATH@36..41
+            PATH_SEGMENT@36..41
+              PATH_TYPE@36..41
+                IDENT@36..41 "Int32"
+        COMMA@41..42 ","
+        WHITESPACE@42..43 " "
+        NAMED_TYPE@43..48
+          PATH@43..48
+            PATH_SEGMENT@43..48
+              PATH_TYPE@43..48
+                IDENT@43..48 "Int32"
+        RIGHT_PAREN@48..49 ")"
+    COMMA@49..50 ","
+    WHITESPACE@50..63 "\n            "
+    CASE@63..80
+      NAME@63..66
+        IDENT@63..66 "Baz"
+      CASE_PARAM_LIST@66..80
+        LEFT_PAREN@66..67 "("
+        NAMED_TYPE@67..72
+          PATH@67..72
+            PATH_SEGMENT@67..72
+              PATH_TYPE@67..72
+                IDENT@67..72 "Int32"
+        COMMA@72..73 ","
+        WHITESPACE@73..74 " "
+        NAMED_TYPE@74..79
+          PATH@74..79
+            PATH_SEGMENT@74..79
+              PATH_TYPE@74..79
+                IDENT@74..79 "Int32"
+        RIGHT_PAREN@79..80 ")"
+    WHITESPACE@80..89 "\n        "
+    RIGHT_BRACE@89..90 "}"

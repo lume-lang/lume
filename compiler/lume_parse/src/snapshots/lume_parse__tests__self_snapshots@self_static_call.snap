@@ -6,11 +6,13 @@ SOURCE_FILE@0..15
   EXPR_STMT@0..15
     STATIC_CALL_EXPR@0..14
       PATH@0..12
-        PATH_TYPE@0..4
-          IDENT@0..4 "self"
+        PATH_SEGMENT@0..4
+          PATH_TYPE@0..4
+            IDENT@0..4 "self"
         PATH_SEP@4..6 "::"
-        PATH_CALLABLE@6..12
-          IDENT@6..12 "invoke"
+        PATH_SEGMENT@6..12
+          PATH_CALLABLE@6..12
+            IDENT@6..12 "invoke"
       ARG_LIST@12..14
         LEFT_PAREN@12..13 "("
         RIGHT_PAREN@13..14 ")"

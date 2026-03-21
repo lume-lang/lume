@@ -2,23 +2,37 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"struct Foo {\n            /// This is a doc comment\n            pub bar: Int32 = 0;\n        }\")"
 ---
-SOURCE_FILE@0..51
-  STRUCT@0..51
+SOURCE_FILE@0..92
+  STRUCT@0..92
     STRUCT_KW@0..6 "struct"
-    IDENT@6..9 "Foo"
-    LEFT_BRACE@9..10 "{"
-    FIELD@10..50
-      DOC_COMMENT@10..35
-        DOC_COMMENT@10..35 "/// This is a doc com ..."
-      VISIBILITY@35..38
-        PUB_KW@35..38 "pub"
-      IDENT@38..41 "bar"
-      COLON@41..42 ":"
-      PATH@42..47
-        PATH_TYPE@42..47
-          IDENT@42..47 "Int32"
-      ASSIGN@47..48 "="
-      LITERAL@48..49
-        INTEGER_LIT@48..49 "0"
-      SEMICOLON@49..50 ";"
-    RIGHT_BRACE@50..51 "}"
+    WHITESPACE@6..7 " "
+    NAME@7..10
+      IDENT@7..10 "Foo"
+    WHITESPACE@10..11 " "
+    LEFT_BRACE@11..12 "{"
+    WHITESPACE@12..25 "\n            "
+    FIELD@25..82
+      DOC_COMMENT@25..63
+        DOC_COMMENT@25..50 "/// This is a doc com ..."
+        WHITESPACE@50..63 "\n            "
+      VISIBILITY@63..67
+        PUB_KW@63..66 "pub"
+        WHITESPACE@66..67 " "
+      NAME@67..70
+        IDENT@67..70 "bar"
+      COLON@70..71 ":"
+      WHITESPACE@71..72 " "
+      NAMED_TYPE@72..78
+        PATH@72..78
+          PATH_SEGMENT@72..78
+            PATH_TYPE@72..78
+              IDENT@72..77 "Int32"
+              WHITESPACE@77..78 " "
+      ASSIGN@78..79 "="
+      WHITESPACE@79..80 " "
+      LIT_EXPR@80..81
+        LITERAL@80..81
+          INTEGER_LIT@80..81 "0"
+      SEMICOLON@81..82 ";"
+    WHITESPACE@82..91 "\n        "
+    RIGHT_BRACE@91..92 "}"

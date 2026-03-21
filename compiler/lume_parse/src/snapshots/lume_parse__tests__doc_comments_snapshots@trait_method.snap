@@ -2,27 +2,40 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"trait Foo {\n            /// This is a doc comment\n            fn bar() -> void { }\n        }\")"
 ---
-SOURCE_FILE@0..50
-  TRAIT@0..50
+SOURCE_FILE@0..92
+  TRAIT@0..92
     TRAIT_KW@0..5 "trait"
-    IDENT@5..8 "Foo"
-    LEFT_BRACE@8..9 "{"
-    METHOD@9..49
-      DOC_COMMENT@9..34
-        DOC_COMMENT@9..34 "/// This is a doc com ..."
-      FN_KW@34..36 "fn"
-      NAME@36..39
-        IDENT@36..39 "bar"
-      PARAM_LIST@39..41
-        LEFT_PAREN@39..40 "("
-        RIGHT_PAREN@40..41 ")"
-      RETURN_TYPE@41..47
-        ARROW@41..43 "->"
-        PATH@43..47
-          PATH_TYPE@43..47
-            IDENT@43..47 "void"
-      BLOCK@47..49
-        LEFT_BRACE@47..48 "{"
-        STMT_LIST@48..48
-        RIGHT_BRACE@48..49 "}"
-    RIGHT_BRACE@49..50 "}"
+    WHITESPACE@5..6 " "
+    NAME@6..9
+      IDENT@6..9 "Foo"
+    WHITESPACE@9..10 " "
+    LEFT_BRACE@10..11 "{"
+    WHITESPACE@11..24 "\n            "
+    METHOD@24..82
+      DOC_COMMENT@24..62
+        DOC_COMMENT@24..49 "/// This is a doc com ..."
+        WHITESPACE@49..62 "\n            "
+      SIG@62..79
+        FN_KW@62..64 "fn"
+        WHITESPACE@64..65 " "
+        NAME@65..68
+          IDENT@65..68 "bar"
+        PARAM_LIST@68..70
+          LEFT_PAREN@68..69 "("
+          RIGHT_PAREN@69..70 ")"
+        WHITESPACE@70..71 " "
+        RETURN_TYPE@71..79
+          ARROW@71..73 "->"
+          WHITESPACE@73..74 " "
+          NAMED_TYPE@74..79
+            PATH@74..79
+              PATH_SEGMENT@74..79
+                PATH_TYPE@74..79
+                  IDENT@74..78 "void"
+                  WHITESPACE@78..79 " "
+      BLOCK@79..82
+        LEFT_BRACE@79..80 "{"
+        WHITESPACE@80..81 " "
+        RIGHT_BRACE@81..82 "}"
+    WHITESPACE@82..91 "\n        "
+    RIGHT_BRACE@91..92 "}"

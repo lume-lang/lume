@@ -2,34 +2,47 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"fn test<T: Numeric + Floating>() -> void {}\")"
 ---
-SOURCE_FILE@0..36
-  FN@0..36
-    FN_KW@0..2 "fn"
-    NAME@2..6
-      IDENT@2..6 "test"
-    BOUND_TYPES@6..26
-      LESS@6..7 "<"
-      BOUND_TYPE@7..25
-        IDENT@7..8 "T"
-        CONSTRAINTS@8..25
-          COLON@8..9 ":"
-          PATH@9..16
-            PATH_TYPE@9..16
-              IDENT@9..16 "Numeric"
-          ADD@16..17 "+"
-          PATH@17..25
-            PATH_TYPE@17..25
-              IDENT@17..25 "Floating"
-      GREATER@25..26 ">"
-    PARAM_LIST@26..28
-      LEFT_PAREN@26..27 "("
-      RIGHT_PAREN@27..28 ")"
-    RETURN_TYPE@28..34
-      ARROW@28..30 "->"
-      PATH@30..34
-        PATH_TYPE@30..34
-          IDENT@30..34 "void"
-    BLOCK@34..36
-      LEFT_BRACE@34..35 "{"
-      STMT_LIST@35..35
-      RIGHT_BRACE@35..36 "}"
+SOURCE_FILE@0..43
+  FN@0..43
+    SIG@0..41
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "test"
+      BOUND_TYPES@7..30
+        LESS@7..8 "<"
+        BOUND_TYPE@8..29
+          IDENT@8..9 "T"
+          CONSTRAINTS@9..29
+            COLON@9..10 ":"
+            WHITESPACE@10..11 " "
+            NAMED_TYPE@11..19
+              PATH@11..19
+                PATH_SEGMENT@11..19
+                  PATH_TYPE@11..19
+                    IDENT@11..18 "Numeric"
+                    WHITESPACE@18..19 " "
+            ADD@19..20 "+"
+            WHITESPACE@20..21 " "
+            NAMED_TYPE@21..29
+              PATH@21..29
+                PATH_SEGMENT@21..29
+                  PATH_TYPE@21..29
+                    IDENT@21..29 "Floating"
+        GREATER@29..30 ">"
+      PARAM_LIST@30..32
+        LEFT_PAREN@30..31 "("
+        RIGHT_PAREN@31..32 ")"
+      WHITESPACE@32..33 " "
+      RETURN_TYPE@33..41
+        ARROW@33..35 "->"
+        WHITESPACE@35..36 " "
+        NAMED_TYPE@36..41
+          PATH@36..41
+            PATH_SEGMENT@36..41
+              PATH_TYPE@36..41
+                IDENT@36..40 "void"
+                WHITESPACE@40..41 " "
+    BLOCK@41..43
+      LEFT_BRACE@41..42 "{"
+      RIGHT_BRACE@42..43 "}"

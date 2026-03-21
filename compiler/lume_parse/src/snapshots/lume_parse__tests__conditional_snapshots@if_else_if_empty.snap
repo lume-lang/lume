@@ -2,22 +2,30 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"if true { } else if false { }\")"
 ---
-SOURCE_FILE@0..21
-  EXPR_STMT@0..21
-    IF_EXPR@0..21
+SOURCE_FILE@0..29
+  EXPR_STMT@0..29
+    IF_EXPR@0..29
       IF_KW@0..2 "if"
-      LITERAL@2..6
-        BOOLEAN_LIT@2..6 "true"
-      BLOCK@6..8
-        LEFT_BRACE@6..7 "{"
-        STMT_LIST@7..7
-        RIGHT_BRACE@7..8 "}"
-      ELSE_KW@8..12 "else"
-      IF_EXPR@12..21
-        IF_KW@12..14 "if"
-        LITERAL@14..19
-          BOOLEAN_LIT@14..19 "false"
-        BLOCK@19..21
-          LEFT_BRACE@19..20 "{"
-          STMT_LIST@20..20
-          RIGHT_BRACE@20..21 "}"
+      WHITESPACE@2..3 " "
+      LIT_EXPR@3..7
+        LITERAL@3..7
+          BOOLEAN_LIT@3..7 "true"
+      WHITESPACE@7..8 " "
+      BLOCK@8..11
+        LEFT_BRACE@8..9 "{"
+        WHITESPACE@9..10 " "
+        RIGHT_BRACE@10..11 "}"
+      WHITESPACE@11..12 " "
+      ELSE_KW@12..16 "else"
+      WHITESPACE@16..17 " "
+      IF_EXPR@17..29
+        IF_KW@17..19 "if"
+        WHITESPACE@19..20 " "
+        LIT_EXPR@20..25
+          LITERAL@20..25
+            BOOLEAN_LIT@20..25 "false"
+        WHITESPACE@25..26 " "
+        BLOCK@26..29
+          LEFT_BRACE@26..27 "{"
+          WHITESPACE@27..28 " "
+          RIGHT_BRACE@28..29 "}"

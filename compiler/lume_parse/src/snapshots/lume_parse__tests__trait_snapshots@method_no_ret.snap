@@ -2,28 +2,38 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"trait Add { fn add(other: Int32) { } }\")"
 ---
-SOURCE_FILE@0..30
-  TRAIT@0..30
+SOURCE_FILE@0..38
+  TRAIT@0..38
     TRAIT_KW@0..5 "trait"
-    IDENT@5..8 "Add"
-    LEFT_BRACE@8..9 "{"
-    METHOD@9..29
-      FN_KW@9..11 "fn"
-      NAME@11..14
-        IDENT@11..14 "add"
-      PARAM_LIST@14..27
-        LEFT_PAREN@14..15 "("
-        PARAM@15..26
-          NAME@15..20
-            IDENT@15..20 "other"
-          COLON@20..21 ":"
-          PARAM_TYPE@21..26
-            PATH@21..26
-              PATH_TYPE@21..26
-                IDENT@21..26 "Int32"
-        RIGHT_PAREN@26..27 ")"
-      BLOCK@27..29
-        LEFT_BRACE@27..28 "{"
-        STMT_LIST@28..28
-        RIGHT_BRACE@28..29 "}"
-    RIGHT_BRACE@29..30 "}"
+    WHITESPACE@5..6 " "
+    NAME@6..9
+      IDENT@6..9 "Add"
+    WHITESPACE@9..10 " "
+    LEFT_BRACE@10..11 "{"
+    WHITESPACE@11..12 " "
+    METHOD@12..36
+      SIG@12..32
+        FN_KW@12..14 "fn"
+        WHITESPACE@14..15 " "
+        NAME@15..18
+          IDENT@15..18 "add"
+        PARAM_LIST@18..32
+          LEFT_PAREN@18..19 "("
+          PARAM@19..31
+            NAME@19..24
+              IDENT@19..24 "other"
+            COLON@24..25 ":"
+            WHITESPACE@25..26 " "
+            NAMED_TYPE@26..31
+              PATH@26..31
+                PATH_SEGMENT@26..31
+                  PATH_TYPE@26..31
+                    IDENT@26..31 "Int32"
+          RIGHT_PAREN@31..32 ")"
+      WHITESPACE@32..33 " "
+      BLOCK@33..36
+        LEFT_BRACE@33..34 "{"
+        WHITESPACE@34..35 " "
+        RIGHT_BRACE@35..36 "}"
+    WHITESPACE@36..37 " "
+    RIGHT_BRACE@37..38 "}"

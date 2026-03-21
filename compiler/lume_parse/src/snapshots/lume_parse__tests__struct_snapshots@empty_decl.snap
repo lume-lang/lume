@@ -2,9 +2,12 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"struct Int32 {}\")"
 ---
-SOURCE_FILE@0..13
-  STRUCT@0..13
+SOURCE_FILE@0..15
+  STRUCT@0..15
     STRUCT_KW@0..6 "struct"
-    IDENT@6..11 "Int32"
-    LEFT_BRACE@11..12 "{"
-    RIGHT_BRACE@12..13 "}"
+    WHITESPACE@6..7 " "
+    NAME@7..12
+      IDENT@7..12 "Int32"
+    WHITESPACE@12..13 " "
+    LEFT_BRACE@13..14 "{"
+    RIGHT_BRACE@14..15 "}"

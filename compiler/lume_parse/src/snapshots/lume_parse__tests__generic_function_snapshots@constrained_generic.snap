@@ -2,30 +2,39 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"fn test<T: Numeric>() -> void {}\")"
 ---
-SOURCE_FILE@0..27
-  FN@0..27
-    FN_KW@0..2 "fn"
-    NAME@2..6
-      IDENT@2..6 "test"
-    BOUND_TYPES@6..17
-      LESS@6..7 "<"
-      BOUND_TYPE@7..16
-        IDENT@7..8 "T"
-        CONSTRAINTS@8..16
-          COLON@8..9 ":"
-          PATH@9..16
-            PATH_TYPE@9..16
-              IDENT@9..16 "Numeric"
-      GREATER@16..17 ">"
-    PARAM_LIST@17..19
-      LEFT_PAREN@17..18 "("
-      RIGHT_PAREN@18..19 ")"
-    RETURN_TYPE@19..25
-      ARROW@19..21 "->"
-      PATH@21..25
-        PATH_TYPE@21..25
-          IDENT@21..25 "void"
-    BLOCK@25..27
-      LEFT_BRACE@25..26 "{"
-      STMT_LIST@26..26
-      RIGHT_BRACE@26..27 "}"
+SOURCE_FILE@0..32
+  FN@0..32
+    SIG@0..30
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "test"
+      BOUND_TYPES@7..19
+        LESS@7..8 "<"
+        BOUND_TYPE@8..18
+          IDENT@8..9 "T"
+          CONSTRAINTS@9..18
+            COLON@9..10 ":"
+            WHITESPACE@10..11 " "
+            NAMED_TYPE@11..18
+              PATH@11..18
+                PATH_SEGMENT@11..18
+                  PATH_TYPE@11..18
+                    IDENT@11..18 "Numeric"
+        GREATER@18..19 ">"
+      PARAM_LIST@19..21
+        LEFT_PAREN@19..20 "("
+        RIGHT_PAREN@20..21 ")"
+      WHITESPACE@21..22 " "
+      RETURN_TYPE@22..30
+        ARROW@22..24 "->"
+        WHITESPACE@24..25 " "
+        NAMED_TYPE@25..30
+          PATH@25..30
+            PATH_SEGMENT@25..30
+              PATH_TYPE@25..30
+                IDENT@25..29 "void"
+                WHITESPACE@29..30 " "
+    BLOCK@30..32
+      LEFT_BRACE@30..31 "{"
+      RIGHT_BRACE@31..32 "}"
