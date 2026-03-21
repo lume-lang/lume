@@ -6,13 +6,9 @@ impl Parser {
         self.start_node(SyntaxKind::BLOCK);
         self.consume(SyntaxKind::LEFT_BRACE);
 
-        self.start_node(SyntaxKind::STMT_LIST);
-
         while !self.peek(SyntaxKind::RIGHT_BRACE) {
             self.parse_statement();
         }
-
-        self.finish_node();
 
         self.consume(SyntaxKind::RIGHT_BRACE);
         self.finish_node();
@@ -104,10 +100,9 @@ impl Parser {
 
         let kind = self.parse_expression(None);
 
+        // If we match the end of the current body, assume it's a final.
         if self.peek(SyntaxKind::RIGHT_BRACE) {
-            self.start_node_at(SyntaxKind::FINAL_STMT, c);
-            self.finish_node();
-
+            self.complete_node(SyntaxKind::FINAL_STMT, c);
             return;
         }
 

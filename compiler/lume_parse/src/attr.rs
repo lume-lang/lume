@@ -20,6 +20,10 @@ impl Parser {
     }
 
     fn parse_attribute_arguments(&mut self) {
+        if !self.peek(SyntaxKind::LEFT_PAREN) {
+            return;
+        }
+
         self.start_node(SyntaxKind::ATTR_ARG_LIST);
 
         self.consume_comma_seq(

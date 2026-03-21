@@ -71,7 +71,7 @@ impl Parser {
             return false;
         }
 
-        self.start_node(SyntaxKind::BOUND_TYPES);
+        self.start_node(SyntaxKind::GENERIC_ARGS);
         self.consume_comma_seq(Token![<], Token![>], Parser::parse_type);
         self.finish_node();
 

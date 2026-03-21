@@ -6,6 +6,7 @@ impl Parser {
         match self.token() {
             SyntaxKind::IDENT => self.parse_named_type(),
             SyntaxKind::LEFT_BRACKET => self.parse_array_type(),
+            SyntaxKind::SELF_TYPE => self.parse_self_type(),
             _ => {
                 self.error_and_skip("expected type");
             }
@@ -14,7 +15,9 @@ impl Parser {
 
     /// Parses either a scalar- or generic-type at the current cursor position.
     fn parse_named_type(&mut self) {
+        self.start_node(SyntaxKind::NAMED_TYPE);
         self.parse_path();
+        self.finish_node();
     }
 
     /// Parses an array type at the current cursor position.
@@ -25,6 +28,13 @@ impl Parser {
         self.parse_type();
         self.consume(SyntaxKind::RIGHT_BRACKET);
 
+        self.finish_node();
+    }
+
+    /// Parses a `Self` type at the current cursor position.
+    fn parse_self_type(&mut self) {
+        self.start_node(SyntaxKind::SELF_TYPE);
+        self.consume(SyntaxKind::SELF_TYPE);
         self.finish_node();
     }
 

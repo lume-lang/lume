@@ -51,20 +51,14 @@ impl Parser {
             }
 
             // Otherwise, it must be a namespace.
-            self.start_node_at(SyntaxKind::PATH_NAMESPACE, c);
-            self.finish_node();
-
-            SyntaxKind::PATH_NAMESPACE
+            self.complete_node(SyntaxKind::PATH_NAMESPACE, c)
         }
         // If the name starts with an upper case, it refers to a type.
         else {
             // If we spot a `(` token, we know it's the start of an argument list,
             // which can only be defined on variant expressions.
             if self.peek(SyntaxKind::LEFT_PAREN) || prev_kind == Some(SyntaxKind::PATH_TYPE) {
-                self.start_node_at(SyntaxKind::PATH_VARIANT, c);
-                self.finish_node();
-
-                return SyntaxKind::PATH_VARIANT;
+                return self.complete_node(SyntaxKind::PATH_VARIANT, c);
             }
 
             self.start_node_at(SyntaxKind::PATH_TYPE, c);
@@ -82,6 +76,8 @@ impl Parser {
     /// short as a single link, such as `std`, but they can also be longer,
     /// such as `std::fmt::error`.
     pub(crate) fn parse_import_path(&mut self) {
-        self.consume_delim(Token![::], Parser::parse_identifier);
+        self.start_node(SyntaxKind::IMPORT_PATH);
+        self.consume_delim(Token![::], Parser::parse_name);
+        self.finish_node();
     }
 }

@@ -52,9 +52,9 @@ macro_rules! assert_expr_snap_eq {
 
 #[test]
 fn test_module() {
-    assert_snap_eq!("", @"SOURCE_FILE@0..0");
-    assert_snap_eq!("    ", @"SOURCE_FILE@0..0");
-    assert_snap_eq!("\n\n    \n", @"SOURCE_FILE@0..0");
+    assert_snap_eq!("", "empty_module");
+    assert_snap_eq!("    ", "spacecs");
+    assert_snap_eq!("\n\n    \n", "mixed_whitespace");
 }
 
 #[test]

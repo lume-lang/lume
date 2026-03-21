@@ -28,6 +28,7 @@ impl Parser {
     fn parse_named_pattern(&mut self) {
         let c = self.checkpoint();
 
+        // Only a single ident found - likely not a variant.
         if self.peek(SyntaxKind::IDENT) && !self.peek_at(1, Token![::]) {
             self.start_node_at(SyntaxKind::PAT_IDENT, c);
             self.parse_path();
@@ -40,9 +41,7 @@ impl Parser {
         self.parse_path();
 
         if self.peek(SyntaxKind::LEFT_PAREN) {
-            self.start_node(SyntaxKind::ARG_LIST);
             self.consume_paren_seq(Parser::parse_pattern);
-            self.finish_node();
         }
 
         self.finish_node();
