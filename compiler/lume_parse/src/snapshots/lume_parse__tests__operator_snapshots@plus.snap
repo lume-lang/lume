@@ -2,12 +2,14 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"a + b;\")"
 ---
-SOURCE_FILE@0..4
-  EXPR_STMT@0..4
-    BIN_EXPR@0..3
+SOURCE_FILE@0..6
+  EXPR_STMT@0..6
+    BIN_EXPR@0..5
       VARIABLE_EXPR@0..1
         IDENT@0..1 "a"
-      ADD@1..2 "+"
-      VARIABLE_EXPR@2..3
-        IDENT@2..3 "b"
-    SEMICOLON@3..4 ";"
+      WHITESPACE@1..2 " "
+      ADD@2..3 "+"
+      WHITESPACE@3..4 " "
+      VARIABLE_EXPR@4..5
+        IDENT@4..5 "b"
+    SEMICOLON@5..6 ";"

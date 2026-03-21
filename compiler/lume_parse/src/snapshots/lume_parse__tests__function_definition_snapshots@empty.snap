@@ -1,16 +1,18 @@
 ---
 source: compiler/lume_parse/src/tests.rs
-expression: "parse(\"fn main() {}\")"
+expression: "parse(Target :: Item, \"fn main() {}\")"
 ---
-SOURCE_FILE@0..10
-  FN@0..10
-    FN_KW@0..2 "fn"
-    NAME@2..6
-      IDENT@2..6 "main"
-    PARAM_LIST@6..8
-      LEFT_PAREN@6..7 "("
-      RIGHT_PAREN@7..8 ")"
-    BLOCK@8..10
-      LEFT_BRACE@8..9 "{"
-      STMT_LIST@9..9
-      RIGHT_BRACE@9..10 "}"
+SOURCE_FILE@0..12
+  FN@0..12
+    SIG@0..9
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "main"
+      PARAM_LIST@7..9
+        LEFT_PAREN@7..8 "("
+        RIGHT_PAREN@8..9 ")"
+    WHITESPACE@9..10 " "
+    BLOCK@10..12
+      LEFT_BRACE@10..11 "{"
+      RIGHT_BRACE@11..12 "}"

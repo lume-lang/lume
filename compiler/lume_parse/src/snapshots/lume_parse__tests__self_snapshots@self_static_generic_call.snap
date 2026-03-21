@@ -6,17 +6,21 @@ SOURCE_FILE@0..18
   EXPR_STMT@0..18
     STATIC_CALL_EXPR@0..17
       PATH@0..15
-        PATH_TYPE@0..4
-          IDENT@0..4 "self"
+        PATH_SEGMENT@0..4
+          PATH_TYPE@0..4
+            IDENT@0..4 "self"
         PATH_SEP@4..6 "::"
-        PATH_CALLABLE@6..15
-          IDENT@6..12 "invoke"
-          BOUND_TYPES@12..15
-            LESS@12..13 "<"
-            PATH@13..14
-              PATH_TYPE@13..14
-                IDENT@13..14 "T"
-            GREATER@14..15 ">"
+        PATH_SEGMENT@6..15
+          PATH_CALLABLE@6..15
+            IDENT@6..12 "invoke"
+            GENERIC_ARGS@12..15
+              LESS@12..13 "<"
+              NAMED_TYPE@13..14
+                PATH@13..14
+                  PATH_SEGMENT@13..14
+                    PATH_TYPE@13..14
+                      IDENT@13..14 "T"
+              GREATER@14..15 ">"
       ARG_LIST@15..17
         LEFT_PAREN@15..16 "("
         RIGHT_PAREN@16..17 ")"

@@ -2,17 +2,17 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"return a.b(c);\")"
 ---
-SOURCE_FILE@0..13
-  RETURN_STMT@0..13
+SOURCE_FILE@0..14
+  RETURN_STMT@0..14
     RETURN_KW@0..6 "return"
-    INSTANCE_CALL_EXPR@6..12
+    INSTANCE_CALL_EXPR@6..13
       IDENT@6..7 "a"
-      DOT@7..8 "."
-      NAME@8..9
-        IDENT@8..9 "b"
-      ARG_LIST@9..12
-        LEFT_PAREN@9..10 "("
-        VARIABLE_EXPR@10..11
-          IDENT@10..11 "c"
-        RIGHT_PAREN@11..12 ")"
-    SEMICOLON@12..13 ";"
+      WHITESPACE@7..8 " "
+      DOT@8..9 "."
+      IDENT@9..10 "b"
+      ARG_LIST@10..13
+        LEFT_PAREN@10..11 "("
+        VARIABLE_EXPR@11..12
+          IDENT@11..12 "c"
+        RIGHT_PAREN@12..13 ")"
+    SEMICOLON@13..14 ";"

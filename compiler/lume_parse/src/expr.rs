@@ -52,7 +52,7 @@ impl Parser {
             SyntaxKind::LEFT_BRACE => self.parse_scope_expression(),
             Token![if] => self.parse_if_conditional(),
             Token![switch] => self.parse_switch_expression(),
-            SyntaxKind::IDENT | Token![self] => self.parse_named_expression(),
+            SyntaxKind::IDENT | Token![self] | Token![Self] => self.parse_named_expression(),
 
             k if k.is_literal() => self.parse_literal(),
             k if k.is_unary() => self.parse_unary(c),
@@ -210,8 +210,11 @@ impl Parser {
     /// by some identifier.
     fn parse_named_expression(&mut self) -> SyntaxKind {
         assert!(
-            matches!(self.token(), SyntaxKind::IDENT | SyntaxKind::SELF_EXPR),
-            "found {:?}",
+            matches!(
+                self.token(),
+                SyntaxKind::IDENT | SyntaxKind::SELF_EXPR | SyntaxKind::SELF_TYPE
+            ),
+            "expected named expression, found {:?}",
             self.token()
         );
 
@@ -249,7 +252,7 @@ impl Parser {
 
                 match (has_type_args, next_token) {
                     (_, SyntaxKind::LEFT_PAREN) => {
-                        self.parse_name();
+                        self.parse_identifier();
                         self.parse_instance_call(c)
                     }
                     (_, SyntaxKind::LEFT_BRACE) => {
@@ -289,9 +292,7 @@ impl Parser {
     fn parse_static_call(&mut self, c: Checkpoint) -> SyntaxKind {
         self.start_node_at(SyntaxKind::STATIC_CALL_EXPR, c);
 
-        self.parse_name();
-
-        self.parse_type_arguments();
+        self.parse_path();
         self.parse_call_arguments();
 
         self.finish_node();

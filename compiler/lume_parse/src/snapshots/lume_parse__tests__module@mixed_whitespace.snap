@@ -1,0 +1,6 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"\\n\\n    \\n\")"
+---
+SOURCE_FILE@0..7
+  WHITESPACE@0..7 "\n\n    \n"

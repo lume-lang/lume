@@ -11,8 +11,7 @@ doctest = false
 [dependencies]
 lume_data_structures = { path = "../../crates/lume_data_structures" }
 
-cstree = { version = "0.13.0" }
-# rowan = { version = "0.16.1" }
+rowan = { version = "0.16.1" }
 
 [lints]
 workspace = true

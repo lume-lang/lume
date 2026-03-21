@@ -2,15 +2,17 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"enum Test<T> {}\")"
 ---
-SOURCE_FILE@0..13
-  ENUM@0..13
+SOURCE_FILE@0..15
+  ENUM@0..15
     ENUM_KW@0..4 "enum"
-    NAME@4..8
-      IDENT@4..8 "Test"
-    BOUND_TYPES@8..11
-      LESS@8..9 "<"
-      BOUND_TYPE@9..10
-        IDENT@9..10 "T"
-      GREATER@10..11 ">"
-    LEFT_BRACE@11..12 "{"
-    RIGHT_BRACE@12..13 "}"
+    WHITESPACE@4..5 " "
+    NAME@5..9
+      IDENT@5..9 "Test"
+    BOUND_TYPES@9..12
+      LESS@9..10 "<"
+      BOUND_TYPE@10..11
+        IDENT@10..11 "T"
+      GREATER@11..12 ">"
+    WHITESPACE@12..13 " "
+    LEFT_BRACE@13..14 "{"
+    RIGHT_BRACE@14..15 "}"

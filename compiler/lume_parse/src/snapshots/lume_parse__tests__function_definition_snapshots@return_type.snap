@@ -1,21 +1,27 @@
 ---
 source: compiler/lume_parse/src/tests.rs
-expression: "parse(\"fn main() -> Void {}\")"
+expression: "parse(Target :: Item, \"fn main() -> Void {}\")"
 ---
-SOURCE_FILE@0..16
-  FN@0..16
-    FN_KW@0..2 "fn"
-    NAME@2..6
-      IDENT@2..6 "main"
-    PARAM_LIST@6..8
-      LEFT_PAREN@6..7 "("
-      RIGHT_PAREN@7..8 ")"
-    RETURN_TYPE@8..14
-      ARROW@8..10 "->"
-      PATH@10..14
-        PATH_TYPE@10..14
-          IDENT@10..14 "Void"
-    BLOCK@14..16
-      LEFT_BRACE@14..15 "{"
-      STMT_LIST@15..15
-      RIGHT_BRACE@15..16 "}"
+SOURCE_FILE@0..20
+  FN@0..20
+    SIG@0..18
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "main"
+      PARAM_LIST@7..9
+        LEFT_PAREN@7..8 "("
+        RIGHT_PAREN@8..9 ")"
+      WHITESPACE@9..10 " "
+      RETURN_TYPE@10..18
+        ARROW@10..12 "->"
+        WHITESPACE@12..13 " "
+        NAMED_TYPE@13..18
+          PATH@13..18
+            PATH_SEGMENT@13..18
+              PATH_TYPE@13..18
+                IDENT@13..17 "Void"
+                WHITESPACE@17..18 " "
+    BLOCK@18..20
+      LEFT_BRACE@18..19 "{"
+      RIGHT_BRACE@19..20 "}"

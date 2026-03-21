@@ -5,13 +5,16 @@ edition.workspace = true
 rust-version.workspace = true
 
 [lib]
-test = false
 doctest = false
 
 [dependencies]
 lume_data_structures = { path = "../../crates/lume_data_structures" }
+lume_span = { path = "../../crates/lume_span" }
+lume_syntax = { path = "../../crates/lume_syntax" }
 
 [dev-dependencies]
+lume_parse = { path = "../lume_parse" }
+
 insta = { version = "1.42.2", features = ["yaml"] }
 
 [lints]

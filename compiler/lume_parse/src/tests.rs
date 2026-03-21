@@ -271,7 +271,6 @@ fn test_call_snapshots() {
     assert_expr_snap_eq!("let _ = call();", "function_empty");
     assert_expr_snap_eq!("let _ = call(a);", "function_param_1");
     assert_expr_snap_eq!("let _ = call(a, b);", "function_param_2");
-    // assert_expr_snap_eq!("let _ = call?();", "function_boolean");
     assert_expr_snap_eq!("let _ = call<T>(a, b);", "function_generic");
 
     assert_expr_snap_eq!("let _ = a.call();", "method_empty");

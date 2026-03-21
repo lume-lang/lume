@@ -1,29 +1,38 @@
 ---
 source: compiler/lume_parse/src/tests.rs
-expression: "parse(\"fn main(argc: UInt8) -> Void { }\")"
+expression: "parse(Target :: Item, \"fn main(argc: UInt8) -> Void { }\")"
 ---
-SOURCE_FILE@0..26
-  FN@0..26
-    FN_KW@0..2 "fn"
-    NAME@2..6
-      IDENT@2..6 "main"
-    PARAM_LIST@6..18
-      LEFT_PAREN@6..7 "("
-      PARAM@7..17
-        NAME@7..11
-          IDENT@7..11 "argc"
-        COLON@11..12 ":"
-        PARAM_TYPE@12..17
-          PATH@12..17
-            PATH_TYPE@12..17
-              IDENT@12..17 "UInt8"
-      RIGHT_PAREN@17..18 ")"
-    RETURN_TYPE@18..24
-      ARROW@18..20 "->"
-      PATH@20..24
-        PATH_TYPE@20..24
-          IDENT@20..24 "Void"
-    BLOCK@24..26
-      LEFT_BRACE@24..25 "{"
-      STMT_LIST@25..25
-      RIGHT_BRACE@25..26 "}"
+SOURCE_FILE@0..32
+  FN@0..32
+    SIG@0..29
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "main"
+      PARAM_LIST@7..20
+        LEFT_PAREN@7..8 "("
+        PARAM@8..19
+          NAME@8..12
+            IDENT@8..12 "argc"
+          COLON@12..13 ":"
+          WHITESPACE@13..14 " "
+          NAMED_TYPE@14..19
+            PATH@14..19
+              PATH_SEGMENT@14..19
+                PATH_TYPE@14..19
+                  IDENT@14..19 "UInt8"
+        RIGHT_PAREN@19..20 ")"
+      WHITESPACE@20..21 " "
+      RETURN_TYPE@21..29
+        ARROW@21..23 "->"
+        WHITESPACE@23..24 " "
+        NAMED_TYPE@24..29
+          PATH@24..29
+            PATH_SEGMENT@24..29
+              PATH_TYPE@24..29
+                IDENT@24..28 "Void"
+                WHITESPACE@28..29 " "
+    BLOCK@29..32
+      LEFT_BRACE@29..30 "{"
+      WHITESPACE@30..31 " "
+      RIGHT_BRACE@31..32 "}"

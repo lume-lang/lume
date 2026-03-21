@@ -2,7 +2,10 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"namespace std\")"
 ---
-SOURCE_FILE@0..12
-  NAMESPACE@0..12
+SOURCE_FILE@0..13
+  NAMESPACE@0..13
     NAMESPACE_KW@0..9 "namespace"
-    IDENT@9..12 "std"
+    WHITESPACE@9..10 " "
+    IMPORT_PATH@10..13
+      NAME@10..13
+        IDENT@10..13 "std"

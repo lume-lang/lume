@@ -2,27 +2,39 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"impl Test { fn test() -> void {} }\")"
 ---
-SOURCE_FILE@0..26
-  IMPL@0..26
+SOURCE_FILE@0..34
+  IMPL@0..34
     IMPL_KW@0..4 "impl"
-    PATH@4..8
-      PATH_TYPE@4..8
-        IDENT@4..8 "Test"
-    LEFT_BRACE@8..9 "{"
-    METHOD@9..25
-      FN_KW@9..11 "fn"
-      NAME@11..15
-        IDENT@11..15 "test"
-      PARAM_LIST@15..17
-        LEFT_PAREN@15..16 "("
-        RIGHT_PAREN@16..17 ")"
-      RETURN_TYPE@17..23
-        ARROW@17..19 "->"
-        PATH@19..23
-          PATH_TYPE@19..23
-            IDENT@19..23 "void"
-      BLOCK@23..25
-        LEFT_BRACE@23..24 "{"
-        STMT_LIST@24..24
-        RIGHT_BRACE@24..25 "}"
-    RIGHT_BRACE@25..26 "}"
+    WHITESPACE@4..5 " "
+    NAMED_TYPE@5..10
+      PATH@5..10
+        PATH_SEGMENT@5..10
+          PATH_TYPE@5..10
+            IDENT@5..9 "Test"
+            WHITESPACE@9..10 " "
+    LEFT_BRACE@10..11 "{"
+    WHITESPACE@11..12 " "
+    METHOD@12..32
+      SIG@12..30
+        FN_KW@12..14 "fn"
+        WHITESPACE@14..15 " "
+        NAME@15..19
+          IDENT@15..19 "test"
+        PARAM_LIST@19..21
+          LEFT_PAREN@19..20 "("
+          RIGHT_PAREN@20..21 ")"
+        WHITESPACE@21..22 " "
+        RETURN_TYPE@22..30
+          ARROW@22..24 "->"
+          WHITESPACE@24..25 " "
+          NAMED_TYPE@25..30
+            PATH@25..30
+              PATH_SEGMENT@25..30
+                PATH_TYPE@25..30
+                  IDENT@25..29 "void"
+                  WHITESPACE@29..30 " "
+      BLOCK@30..32
+        LEFT_BRACE@30..31 "{"
+        RIGHT_BRACE@31..32 "}"
+    WHITESPACE@32..33 " "
+    RIGHT_BRACE@33..34 "}"

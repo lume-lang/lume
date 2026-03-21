@@ -1,18 +1,25 @@
 ---
 source: compiler/lume_parse/src/tests.rs
-expression: "parse(\"fn external main() -> Void\")"
+expression: "parse(Target :: Item, \"fn external main() -> Void\")"
 ---
-SOURCE_FILE@0..22
-  FN@0..22
-    FN_KW@0..2 "fn"
-    EXTERN_KW@2..10 "external"
-    NAME@10..14
-      IDENT@10..14 "main"
-    PARAM_LIST@14..16
-      LEFT_PAREN@14..15 "("
-      RIGHT_PAREN@15..16 ")"
-    RETURN_TYPE@16..22
-      ARROW@16..18 "->"
-      PATH@18..22
-        PATH_TYPE@18..22
-          IDENT@18..22 "Void"
+SOURCE_FILE@0..26
+  FN@0..26
+    SIG@0..26
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      EXTERN_KW@3..11 "external"
+      WHITESPACE@11..12 " "
+      NAME@12..16
+        IDENT@12..16 "main"
+      PARAM_LIST@16..18
+        LEFT_PAREN@16..17 "("
+        RIGHT_PAREN@17..18 ")"
+      WHITESPACE@18..19 " "
+      RETURN_TYPE@19..26
+        ARROW@19..21 "->"
+        WHITESPACE@21..22 " "
+        NAMED_TYPE@22..26
+          PATH@22..26
+            PATH_SEGMENT@22..26
+              PATH_TYPE@22..26
+                IDENT@22..26 "Void"

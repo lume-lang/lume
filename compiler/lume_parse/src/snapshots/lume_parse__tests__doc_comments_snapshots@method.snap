@@ -2,31 +2,46 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"impl Foo {\n            /// This is a doc comment\n            pub fn bar() -> void { }\n        }\")"
 ---
-SOURCE_FILE@0..52
-  IMPL@0..52
+SOURCE_FILE@0..95
+  IMPL@0..95
     IMPL_KW@0..4 "impl"
-    PATH@4..7
-      PATH_TYPE@4..7
-        IDENT@4..7 "Foo"
-    LEFT_BRACE@7..8 "{"
-    METHOD@8..51
-      DOC_COMMENT@8..33
-        DOC_COMMENT@8..33 "/// This is a doc com ..."
-      VISIBILITY@33..36
-        PUB_KW@33..36 "pub"
-      FN_KW@36..38 "fn"
-      NAME@38..41
-        IDENT@38..41 "bar"
-      PARAM_LIST@41..43
-        LEFT_PAREN@41..42 "("
-        RIGHT_PAREN@42..43 ")"
-      RETURN_TYPE@43..49
-        ARROW@43..45 "->"
-        PATH@45..49
-          PATH_TYPE@45..49
-            IDENT@45..49 "void"
-      BLOCK@49..51
-        LEFT_BRACE@49..50 "{"
-        STMT_LIST@50..50
-        RIGHT_BRACE@50..51 "}"
-    RIGHT_BRACE@51..52 "}"
+    WHITESPACE@4..5 " "
+    NAMED_TYPE@5..9
+      PATH@5..9
+        PATH_SEGMENT@5..9
+          PATH_TYPE@5..9
+            IDENT@5..8 "Foo"
+            WHITESPACE@8..9 " "
+    LEFT_BRACE@9..10 "{"
+    WHITESPACE@10..23 "\n            "
+    METHOD@23..85
+      DOC_COMMENT@23..61
+        DOC_COMMENT@23..48 "/// This is a doc com ..."
+        WHITESPACE@48..61 "\n            "
+      VISIBILITY@61..65
+        PUB_KW@61..64 "pub"
+        WHITESPACE@64..65 " "
+      SIG@65..82
+        FN_KW@65..67 "fn"
+        WHITESPACE@67..68 " "
+        NAME@68..71
+          IDENT@68..71 "bar"
+        PARAM_LIST@71..73
+          LEFT_PAREN@71..72 "("
+          RIGHT_PAREN@72..73 ")"
+        WHITESPACE@73..74 " "
+        RETURN_TYPE@74..82
+          ARROW@74..76 "->"
+          WHITESPACE@76..77 " "
+          NAMED_TYPE@77..82
+            PATH@77..82
+              PATH_SEGMENT@77..82
+                PATH_TYPE@77..82
+                  IDENT@77..81 "void"
+                  WHITESPACE@81..82 " "
+      BLOCK@82..85
+        LEFT_BRACE@82..83 "{"
+        WHITESPACE@83..84 " "
+        RIGHT_BRACE@84..85 "}"
+    WHITESPACE@85..94 "\n        "
+    RIGHT_BRACE@94..95 "}"

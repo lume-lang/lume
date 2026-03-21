@@ -61,7 +61,7 @@ impl Parser {
         Self {
             source,
             tokens: tokens.into_iter().rev().map(as_parser_token).collect(),
-            builder: SyntaxTreeBuilder::default(),
+            builder: SyntaxTreeBuilder::new(),
         }
     }
 
@@ -92,16 +92,16 @@ impl Parser {
     /// Peeks the token at the current index, plus some offset.
     #[inline]
     fn token_at(&self, offset: usize) -> SyntaxKind {
-        let non_trivia = self.non_trivia_pos();
+        let non_trivia = self.non_trivia_pos(offset);
 
         self.tokens
-            .get(non_trivia.saturating_sub(offset))
+            .get(non_trivia)
             .map_or(SyntaxKind::EOF, |(kind, _range)| *kind)
     }
 
     /// Gets the span of the current token.
     fn span(&self) -> TextSpan {
-        let non_trivia = self.non_trivia_pos();
+        let non_trivia = self.non_trivia_pos(0);
 
         self.tokens
             .get(non_trivia)
@@ -111,8 +111,10 @@ impl Parser {
     /// Gets the span at the current index, plus some offset.
     #[inline]
     fn span_at(&self, offset: usize) -> TextSpan {
+        let non_trivia = self.non_trivia_pos(offset);
+
         self.tokens
-            .get(self.tokens.len().saturating_sub(offset + 1))
+            .get(non_trivia)
             .map_or(TextSpan(0, 0), |(_kind, range)| *range)
     }
 
@@ -188,14 +190,14 @@ impl Parser {
         false
     }
 
-    fn non_trivia_pos(&self) -> usize {
-        let mut i = self.tokens.len().saturating_sub(1);
-
-        while i > 0 && self.tokens[i].0.is_trivia() {
-            i -= 1;
-        }
-
-        i
+    /// Gets the zero-based index of the next non-trivia token in
+    /// the token queue.
+    fn non_trivia_pos(&self, from: usize) -> usize {
+        self.tokens
+            .iter()
+            .skip(from)
+            .rposition(|(tok, _range)| !tok.is_trivia())
+            .unwrap_or(0)
     }
 
     fn consume_trivia(&mut self) {
@@ -399,7 +401,7 @@ impl Parser {
     fn node_token(&mut self, kind: SyntaxKind, span: TextSpan) {
         let text = self.source.content.get(span.0..span.1).unwrap_or("");
 
-        self.builder.inner.token(kind, text);
+        self.builder.inner.token(kind.into(), text);
     }
 
     /// Starts a new node.
@@ -414,7 +416,7 @@ impl Parser {
             self.consume_trivia();
         }
 
-        self.builder.inner.start_node(kind);
+        self.builder.inner.start_node(kind.into());
 
         if is_at_root {
             self.consume_trivia();
@@ -429,7 +431,7 @@ impl Parser {
             self.consume_trivia();
         }
 
-        self.builder.inner.start_node_at(c, kind);
+        self.builder.inner.start_node_at(c, kind.into());
 
         if is_at_root {
             self.consume_trivia();

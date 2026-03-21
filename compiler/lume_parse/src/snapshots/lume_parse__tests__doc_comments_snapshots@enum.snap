@@ -2,14 +2,20 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"/// This is a doc comment\n        enum Foo {\n            Bar\n        }\")"
 ---
-SOURCE_FILE@0..37
-  ENUM@0..37
-    DOC_COMMENT@0..25
+SOURCE_FILE@0..70
+  ENUM@0..70
+    DOC_COMMENT@0..34
       DOC_COMMENT@0..25 "/// This is a doc com ..."
-    ENUM_KW@25..29 "enum"
-    NAME@29..32
-      IDENT@29..32 "Foo"
-    LEFT_BRACE@32..33 "{"
-    CASE@33..36
-      IDENT@33..36 "Bar"
-    RIGHT_BRACE@36..37 "}"
+      WHITESPACE@25..34 "\n        "
+    ENUM_KW@34..38 "enum"
+    WHITESPACE@38..39 " "
+    NAME@39..42
+      IDENT@39..42 "Foo"
+    WHITESPACE@42..43 " "
+    LEFT_BRACE@43..44 "{"
+    WHITESPACE@44..57 "\n            "
+    CASE@57..60
+      NAME@57..60
+        IDENT@57..60 "Bar"
+    WHITESPACE@60..69 "\n        "
+    RIGHT_BRACE@69..70 "}"

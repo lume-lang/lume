@@ -2,48 +2,69 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"\n        use<T> Enumerable<T>: Vector<T> {\n            fn next() -> T { }\n        }\")"
 ---
-SOURCE_FILE@0..44
-  TRAIT_IMPL@0..44
-    USE_KW@0..3 "use"
-    BOUND_TYPES@3..6
-      LESS@3..4 "<"
-      BOUND_TYPE@4..5
-        IDENT@4..5 "T"
-      GREATER@5..6 ">"
-    PATH@6..19
-      PATH_TYPE@6..19
-        IDENT@6..16 "Enumerable"
-        BOUND_TYPES@16..19
-          LESS@16..17 "<"
-          PATH@17..18
-            PATH_TYPE@17..18
-              IDENT@17..18 "T"
-          GREATER@18..19 ">"
-    COLON@19..20 ":"
-    PATH@20..29
-      PATH_TYPE@20..29
-        IDENT@20..26 "Vector"
-        BOUND_TYPES@26..29
-          LESS@26..27 "<"
-          PATH@27..28
-            PATH_TYPE@27..28
-              IDENT@27..28 "T"
-          GREATER@28..29 ">"
-    LEFT_BRACE@29..30 "{"
-    METHOD@30..43
-      FN_KW@30..32 "fn"
-      NAME@32..36
-        IDENT@32..36 "next"
-      PARAM_LIST@36..38
-        LEFT_PAREN@36..37 "("
-        RIGHT_PAREN@37..38 ")"
-      RETURN_TYPE@38..41
-        ARROW@38..40 "->"
-        PATH@40..41
-          PATH_TYPE@40..41
-            IDENT@40..41 "T"
-      BLOCK@41..43
-        LEFT_BRACE@41..42 "{"
-        STMT_LIST@42..42
-        RIGHT_BRACE@42..43 "}"
-    RIGHT_BRACE@43..44 "}"
+SOURCE_FILE@0..83
+  WHITESPACE@0..9 "\n        "
+  TRAIT_IMPL@9..83
+    USE_KW@9..12 "use"
+    BOUND_TYPES@12..15
+      LESS@12..13 "<"
+      BOUND_TYPE@13..14
+        IDENT@13..14 "T"
+      GREATER@14..15 ">"
+    WHITESPACE@15..16 " "
+    NAMED_TYPE@16..29
+      PATH@16..29
+        PATH_SEGMENT@16..29
+          PATH_TYPE@16..29
+            IDENT@16..26 "Enumerable"
+            GENERIC_ARGS@26..29
+              LESS@26..27 "<"
+              NAMED_TYPE@27..28
+                PATH@27..28
+                  PATH_SEGMENT@27..28
+                    PATH_TYPE@27..28
+                      IDENT@27..28 "T"
+              GREATER@28..29 ">"
+    COLON@29..30 ":"
+    WHITESPACE@30..31 " "
+    NAMED_TYPE@31..41
+      PATH@31..41
+        PATH_SEGMENT@31..40
+          PATH_TYPE@31..40
+            IDENT@31..37 "Vector"
+            GENERIC_ARGS@37..40
+              LESS@37..38 "<"
+              NAMED_TYPE@38..39
+                PATH@38..39
+                  PATH_SEGMENT@38..39
+                    PATH_TYPE@38..39
+                      IDENT@38..39 "T"
+              GREATER@39..40 ">"
+        WHITESPACE@40..41 " "
+    LEFT_BRACE@41..42 "{"
+    WHITESPACE@42..55 "\n            "
+    METHOD@55..73
+      SIG@55..70
+        FN_KW@55..57 "fn"
+        WHITESPACE@57..58 " "
+        NAME@58..62
+          IDENT@58..62 "next"
+        PARAM_LIST@62..64
+          LEFT_PAREN@62..63 "("
+          RIGHT_PAREN@63..64 ")"
+        WHITESPACE@64..65 " "
+        RETURN_TYPE@65..70
+          ARROW@65..67 "->"
+          WHITESPACE@67..68 " "
+          NAMED_TYPE@68..70
+            PATH@68..70
+              PATH_SEGMENT@68..70
+                PATH_TYPE@68..70
+                  IDENT@68..69 "T"
+                  WHITESPACE@69..70 " "
+      BLOCK@70..73
+        LEFT_BRACE@70..71 "{"
+        WHITESPACE@71..72 " "
+        RIGHT_BRACE@72..73 "}"
+    WHITESPACE@73..82 "\n        "
+    RIGHT_BRACE@82..83 "}"

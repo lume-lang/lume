@@ -4,6 +4,7 @@ expression: "parse(Target :: Statement, \"true;\")"
 ---
 SOURCE_FILE@0..5
   EXPR_STMT@0..5
-    LITERAL@0..4
-      BOOLEAN_LIT@0..4 "true"
+    LIT_EXPR@0..4
+      LITERAL@0..4
+        BOOLEAN_LIT@0..4 "true"
     SEMICOLON@4..5 ";"

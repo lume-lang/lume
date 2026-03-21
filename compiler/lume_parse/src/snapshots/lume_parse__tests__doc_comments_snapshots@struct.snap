@@ -2,11 +2,16 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"/// This is a doc comment\n        struct Foo { }\")"
 ---
-SOURCE_FILE@0..36
-  STRUCT@0..36
-    DOC_COMMENT@0..25
+SOURCE_FILE@0..48
+  STRUCT@0..48
+    DOC_COMMENT@0..34
       DOC_COMMENT@0..25 "/// This is a doc com ..."
-    STRUCT_KW@25..31 "struct"
-    IDENT@31..34 "Foo"
-    LEFT_BRACE@34..35 "{"
-    RIGHT_BRACE@35..36 "}"
+      WHITESPACE@25..34 "\n        "
+    STRUCT_KW@34..40 "struct"
+    WHITESPACE@40..41 " "
+    NAME@41..44
+      IDENT@41..44 "Foo"
+    WHITESPACE@44..45 " "
+    LEFT_BRACE@45..46 "{"
+    WHITESPACE@46..47 " "
+    RIGHT_BRACE@47..48 "}"

@@ -1,8 +1,74 @@
-#[macro_use]
-pub mod macros;
-
 use std::hash::Hash;
 
+#[macro_use]
+pub mod macros;
+pub mod support;
+
+pub mod generated {
+    pub mod ast;
+}
+
+pub use generated::ast;
+
+#[cfg(test)]
+mod tests;
+
+pub trait AstNode {
+    fn cast(syntax: lume_syntax::SyntaxNode) -> Option<Self>
+    where
+        Self: Sized;
+
+    fn syntax(&self) -> &lume_syntax::SyntaxNode;
+
+    /// Gets the source text which this node encapsulates.
+    fn as_text(&self) -> String {
+        self.syntax().text().to_string()
+    }
+
+    fn range(&self) -> std::ops::Range<usize> {
+        let text_range = self.syntax().text_range();
+
+        text_range.start().into()..text_range.end().into()
+    }
+
+    #[inline]
+    fn location(&self) -> Location {
+        Location(self.range())
+    }
+
+    fn clone_subtree(&self) -> Self
+    where
+        Self: Sized,
+    {
+        Self::cast(self.syntax().clone_subtree()).unwrap()
+    }
+}
+
+/// An iterator over `SyntaxNode` children of a particular AST type.
+#[derive(Debug, Clone)]
+pub struct AstChildren<N> {
+    inner: lume_syntax::SyntaxNodeChildren,
+    _data: std::marker::PhantomData<N>,
+}
+
+impl<N> AstChildren<N> {
+    fn new(parent: &lume_syntax::SyntaxNode) -> Self {
+        AstChildren {
+            inner: parent.children(),
+            _data: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<N: AstNode> Iterator for AstChildren<N> {
+    type Item = N;
+
+    fn next(&mut self) -> Option<N> {
+        self.inner.find_map(N::cast)
+    }
+}
+
+/*
 #[derive(Debug, Clone)]
 pub struct SyntaxTree<'ast> {
     pub items: Vec<Item<'ast>>,

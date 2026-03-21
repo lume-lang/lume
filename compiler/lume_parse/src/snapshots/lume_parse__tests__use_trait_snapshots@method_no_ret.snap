@@ -2,34 +2,48 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"\n        use Add: Int32 {\n            fn add(other: Int32) {}\n        }\")"
 ---
-SOURCE_FILE@0..34
-  TRAIT_IMPL@0..34
-    USE_KW@0..3 "use"
-    PATH@3..6
-      PATH_TYPE@3..6
-        IDENT@3..6 "Add"
-    COLON@6..7 ":"
-    PATH@7..12
-      PATH_TYPE@7..12
-        IDENT@7..12 "Int32"
-    LEFT_BRACE@12..13 "{"
-    METHOD@13..33
-      FN_KW@13..15 "fn"
-      NAME@15..18
-        IDENT@15..18 "add"
-      PARAM_LIST@18..31
-        LEFT_PAREN@18..19 "("
-        PARAM@19..30
-          NAME@19..24
-            IDENT@19..24 "other"
-          COLON@24..25 ":"
-          PARAM_TYPE@25..30
-            PATH@25..30
-              PATH_TYPE@25..30
-                IDENT@25..30 "Int32"
-        RIGHT_PAREN@30..31 ")"
-      BLOCK@31..33
-        LEFT_BRACE@31..32 "{"
-        STMT_LIST@32..32
-        RIGHT_BRACE@32..33 "}"
-    RIGHT_BRACE@33..34 "}"
+SOURCE_FILE@0..71
+  WHITESPACE@0..9 "\n        "
+  TRAIT_IMPL@9..71
+    USE_KW@9..12 "use"
+    WHITESPACE@12..13 " "
+    NAMED_TYPE@13..16
+      PATH@13..16
+        PATH_SEGMENT@13..16
+          PATH_TYPE@13..16
+            IDENT@13..16 "Add"
+    COLON@16..17 ":"
+    WHITESPACE@17..18 " "
+    NAMED_TYPE@18..24
+      PATH@18..24
+        PATH_SEGMENT@18..24
+          PATH_TYPE@18..24
+            IDENT@18..23 "Int32"
+            WHITESPACE@23..24 " "
+    LEFT_BRACE@24..25 "{"
+    WHITESPACE@25..38 "\n            "
+    METHOD@38..61
+      SIG@38..58
+        FN_KW@38..40 "fn"
+        WHITESPACE@40..41 " "
+        NAME@41..44
+          IDENT@41..44 "add"
+        PARAM_LIST@44..58
+          LEFT_PAREN@44..45 "("
+          PARAM@45..57
+            NAME@45..50
+              IDENT@45..50 "other"
+            COLON@50..51 ":"
+            WHITESPACE@51..52 " "
+            NAMED_TYPE@52..57
+              PATH@52..57
+                PATH_SEGMENT@52..57
+                  PATH_TYPE@52..57
+                    IDENT@52..57 "Int32"
+          RIGHT_PAREN@57..58 ")"
+      WHITESPACE@58..59 " "
+      BLOCK@59..61
+        LEFT_BRACE@59..60 "{"
+        RIGHT_BRACE@60..61 "}"
+    WHITESPACE@61..70 "\n        "
+    RIGHT_BRACE@70..71 "}"

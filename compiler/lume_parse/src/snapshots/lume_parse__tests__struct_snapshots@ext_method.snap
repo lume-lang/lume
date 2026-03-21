@@ -2,24 +2,38 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"\n        impl Foo {\n            fn external bar() -> Int32\n        }\")"
 ---
-SOURCE_FILE@0..31
-  IMPL@0..31
-    IMPL_KW@0..4 "impl"
-    PATH@4..7
-      PATH_TYPE@4..7
-        IDENT@4..7 "Foo"
-    LEFT_BRACE@7..8 "{"
-    METHOD@8..30
-      FN_KW@8..10 "fn"
-      EXTERN_KW@10..18 "external"
-      NAME@18..21
-        IDENT@18..21 "bar"
-      PARAM_LIST@21..23
-        LEFT_PAREN@21..22 "("
-        RIGHT_PAREN@22..23 ")"
-      RETURN_TYPE@23..30
-        ARROW@23..25 "->"
-        PATH@25..30
-          PATH_TYPE@25..30
-            IDENT@25..30 "Int32"
-    RIGHT_BRACE@30..31 "}"
+SOURCE_FILE@0..68
+  WHITESPACE@0..9 "\n        "
+  IMPL@9..68
+    IMPL_KW@9..13 "impl"
+    WHITESPACE@13..14 " "
+    NAMED_TYPE@14..18
+      PATH@14..18
+        PATH_SEGMENT@14..18
+          PATH_TYPE@14..18
+            IDENT@14..17 "Foo"
+            WHITESPACE@17..18 " "
+    LEFT_BRACE@18..19 "{"
+    WHITESPACE@19..32 "\n            "
+    METHOD@32..67
+      SIG@32..67
+        FN_KW@32..34 "fn"
+        WHITESPACE@34..35 " "
+        EXTERN_KW@35..43 "external"
+        WHITESPACE@43..44 " "
+        NAME@44..47
+          IDENT@44..47 "bar"
+        PARAM_LIST@47..49
+          LEFT_PAREN@47..48 "("
+          RIGHT_PAREN@48..49 ")"
+        WHITESPACE@49..50 " "
+        RETURN_TYPE@50..67
+          ARROW@50..52 "->"
+          WHITESPACE@52..53 " "
+          NAMED_TYPE@53..67
+            PATH@53..67
+              PATH_SEGMENT@53..67
+                PATH_TYPE@53..67
+                  IDENT@53..58 "Int32"
+                  WHITESPACE@58..67 "\n        "
+    RIGHT_BRACE@67..68 "}"

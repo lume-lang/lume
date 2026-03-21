@@ -5,5 +5,7 @@ expression: "parse(Target :: Item, \"namespace\")"
 SOURCE_FILE@0..9
   NAMESPACE@0..9
     NAMESPACE_KW@0..9 "namespace"
+    IMPORT_PATH@9..9
+      NAME@9..9
 
 expected identifier@7..8

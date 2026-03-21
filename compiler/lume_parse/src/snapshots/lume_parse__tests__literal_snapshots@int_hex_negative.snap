@@ -6,6 +6,7 @@ SOURCE_FILE@0..6
   EXPR_STMT@0..6
     UNARY_EXPR@0..5
       SUB@0..1 "-"
-      LITERAL@1..5
-        INTEGER_LIT@1..5 "0x55"
+      LIT_EXPR@1..5
+        LITERAL@1..5
+          INTEGER_LIT@1..5 "0x55"
     SEMICOLON@5..6 ";"

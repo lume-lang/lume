@@ -2,12 +2,15 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"struct 1A {}\")"
 ---
-SOURCE_FILE@0..9
-  STRUCT@0..6
+SOURCE_FILE@0..11
+  STRUCT@0..7
     STRUCT_KW@0..6 "struct"
-  IDENT@6..7 "A"
-  LEFT_BRACE@7..8 "{"
-  RIGHT_BRACE@8..9 "}"
+    WHITESPACE@6..7 " "
+    NAME@7..7
+  IDENT@7..8 "A"
+  WHITESPACE@8..9 " "
+  LEFT_BRACE@9..10 "{"
+  RIGHT_BRACE@10..11 "}"
 
 expected identifier@7..8
 expected kind LEFT_BRACE@8..9

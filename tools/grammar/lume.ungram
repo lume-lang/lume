@@ -1,0 +1,364 @@
+// Lume Un-Grammar.
+//
+// This grammar specifies the structure of Lume's concrete syntax tree.
+// It does not specify parsing rules (ambiguities, precedence, etc are out of scope).
+// Tokens are processed -- contextual keywords are recognised, compound operators glued.
+//
+// Legend:
+//
+//   //          -- comment
+//   Name =      -- non-terminal definition
+//   'ident'     -- keyword or punct token (terminal)
+//   A B         -- sequence
+//   A | B       -- alternation
+//   A*          -- zero or more repetition
+//   A?          -- zero or one repetition
+//   (A)         -- same as A
+
+Ident = '#ident'
+
+Name = Ident
+
+//
+//  Items
+//
+
+SourceFile =
+  Item*
+
+Item =
+  Import
+| Namespace
+| Fn
+| Struct
+| Trait
+| Enum
+| Impl
+| TraitImpl
+
+Visibility =
+  ('pub' 'internal'?) | 'priv'
+
+Import =
+  'import' ImportPath ImportList
+
+ImportPath =
+  path:Name*
+
+ImportList =
+  '(' items:Name* ')'
+
+Namespace =
+  'namespace' ImportPath
+
+Fn =
+  Attr*
+  Visibility? Sig Block?
+
+Method =
+  Attr*
+  Visibility? Sig Block?
+
+Sig =
+  'fn' 'external'?
+  Name BoundTypes? ParamList ReturnType?
+
+ParamList =
+  '(' Param* ')'
+
+Param =
+  (vararg:'...')?
+  (Name ':' Type)
+  | 'self'
+
+ReturnType =
+  '->' Type
+
+Struct =
+  Attr* Visibility?
+  'struct'
+  Name BoundTypes? '{' fields:Field* '}'
+
+Field =
+  Attr*
+  Visibility? Name ':' field_type:Type ('=' default_value:Expr)? ';'
+
+Trait =
+  Attr* Visibility?
+  'trait'
+  Name BoundTypes? '{' methods:Method* '}'
+
+Enum =
+  Attr* Visibility?
+  'enum'
+  Name BoundTypes? '{' cases:Case* '}'
+
+Case =
+  Name CaseParamList?
+
+CaseParamList =
+  '(' Type* ')'
+
+Impl =
+  Attr*
+  'impl' BoundTypes?
+  target:Type '{' methods:Method* '}'
+
+TraitImpl =
+  Attr*
+  'use' BoundTypes? trait_:Type ':' target:Type
+  '{' methods:Method* '}'
+
+//
+//  Attributes
+//
+
+Attr =
+  '!' '[' Name arg_list:AttrArgList ']'
+
+AttrArgList =
+  '(' args:AttrArg* ')'
+
+AttrArg =
+  Name '=' value:Literal
+
+//
+//  Statements
+//
+
+Block =
+  '{' Stmt* '}'
+
+Stmt =
+  LetStmt
+| BreakStmt
+| ContinueStmt
+| FinalStmt
+| ReturnStmt
+| LoopStmt
+| ForStmt
+| WhileStmt
+| ExprStmt
+
+LetStmt =
+  'let' Name (':' Type)? '=' Expr ';'
+
+BreakStmt =
+  'break' ';'
+
+ContinueStmt =
+  'continue' ';'
+
+FinalStmt =
+  Expr
+
+ReturnStmt =
+  'return' Expr? ';'
+
+LoopStmt =
+  'loop' Block
+
+ForStmt =
+  'for' pattern:Ident 'in' collection:Expr Block
+
+WhileStmt =
+  'while' condition:Expr Block
+
+ExprStmt =
+  Expr ';'
+
+//
+//  Expressions
+//
+
+Expr =
+  ArrayExpr
+| AssignmentExpr
+| InstanceCallExpr
+| StaticCallExpr
+| CastExpr
+| ConstructExpr
+| IfExpr
+| IsExpr
+| LitExpr
+| MemberExpr
+| RangeExpr
+| ScopeExpr
+| SwitchExpr
+| ParenExpr
+| VariableExpr
+| VariantExpr
+| BinExpr
+| UnaryExpr
+| PostfixExpr
+
+ArrayExpr =
+  '[' items:Expr* ']'
+
+AssignmentExpr =
+    target:Expr '=' value:Expr
+
+InstanceCallExpr =
+    callee:Expr '.' Ident GenericArgs? ArgList
+
+StaticCallExpr =
+    Path ArgList
+
+CastExpr =
+    Expr 'as' Type
+
+ConstructExpr =
+    type:Path '{' fields:ConstructorField* '}'
+
+IfExpr =
+    'if' condition:Expr then_branch:Block
+    ('else' (else_if:IfExpr | else_branch:Block))
+
+IsExpr =
+    Expr 'is' Pat
+
+LitExpr =
+    Literal
+
+MemberExpr =
+    Expr '.' Ident
+
+RangeExpr =
+    lower:Expr '..' '='? upper:Expr
+
+ScopeExpr =
+    Block
+
+SwitchExpr =
+    'switch' Expr '{' arms:SwitchArm* '}'
+
+ParenExpr =
+    '(' Expr ')'
+
+VariableExpr =
+    Ident
+
+VariantExpr =
+    Path ArgList
+
+BinExpr =
+   lhs:Expr
+   ('&' | '|' | '^' | '+' | '-' | '*' | '/' | '&&' | '||' | '==' | '!=' | '<' | '<=' | '>' | '>=')
+   rhs:Expr
+
+UnaryExpr =
+    ('!' | '-') Expr
+
+PostfixExpr =
+    Expr ('++' | '--')
+
+ArgList =
+    '(' Expr* ')'
+
+ConstructorField =
+    name:Ident ('=' value:Expr)? ';'
+
+Condition =
+    ('if' condition:Expr) | ('else') block:Block
+
+SwitchArm =
+    Pat '=>' Expr
+
+//
+// Literals
+//
+
+Literal =
+  IntegerLit
+| FloatLit
+| BooleanLit
+| StringLit
+
+IntegerLit = '@INTEGER_LIT'
+FloatLit = '@FLOAT_LIT'
+BooleanLit = '@BOOLEAN_LIT'
+StringLit = '@STRING_LIT'
+
+//
+// Patterns
+//
+
+Pat =
+  PatIdent
+| PatLiteral
+| PatVariant
+| PatWildcard
+
+PatIdent =
+  Ident
+
+PatLiteral =
+  Literal
+
+PatVariant =
+  Path ( Pat* )?
+
+PatWildcard =
+  '..'
+
+//
+// Generics
+//
+
+BoundTypes =
+  '<' types:BoundType* '>'
+
+BoundType =
+  name:Ident Constraints?
+
+Constraints =
+  ':' Type*
+
+GenericArgs =
+  '<' args:GenericArg* '>'
+
+GenericArg =
+  Type
+
+//
+// Types
+//
+
+Type =
+  NamedType
+| ArrayType
+| SelfType
+
+NamedType =
+  Path
+
+ArrayType =
+  '[' elemental:Type ']'
+
+SelfType =
+  'Self'
+
+//
+// Paths
+//
+
+Path =
+  PathSegment*
+
+PathSegment =
+  PathNamespace
+| PathVariant
+| PathCallable
+| PathType
+
+PathNamespace =
+  Ident
+
+PathVariant =
+  Ident
+
+PathCallable =
+  Ident GenericArgs?
+
+PathType =
+  Ident GenericArgs?

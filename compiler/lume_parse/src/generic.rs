@@ -2,9 +2,9 @@ use crate::*;
 
 impl Parser {
     /// Parses zero-or-more type parameters.
-    pub(super) fn parse_type_parameters(&mut self) {
+    pub(super) fn parse_type_parameters(&mut self) -> bool {
         if !self.peek(Token![<]) {
-            return;
+            return false;
         }
 
         self.start_node(SyntaxKind::BOUND_TYPES);
@@ -36,6 +36,8 @@ impl Parser {
         }
 
         self.finish_node();
+
+        finished
     }
 
     /// Attempts to determine whether the next token(s) are type arguments.
@@ -45,7 +47,7 @@ impl Parser {
         }
 
         let mut idx = offset;
-        let mut angles_count = 1_usize;
+        let mut angles_count = 0_usize;
 
         for (tok, _span) in self.tokens.iter().rev().skip(offset + 1) {
             idx += 1;
@@ -53,8 +55,16 @@ impl Parser {
             match tok {
                 Token![<] => angles_count += 1,
                 Token![>] => angles_count -= 1,
-                Token![,] | Token![::] | SyntaxKind::IDENT | SyntaxKind::LEFT_BRACKET | SyntaxKind::RIGHT_BRACKET => {}
-                _ => return (idx, false),
+                Token![,]
+                | Token![::]
+                | SyntaxKind::IDENT
+                | SyntaxKind::LEFT_BRACKET
+                | SyntaxKind::RIGHT_BRACKET
+                | SyntaxKind::WHITESPACE
+                | SyntaxKind::NEWLINE => {}
+                _ => {
+                    return (idx, false);
+                }
             }
 
             if angles_count == 0 {
@@ -72,9 +82,9 @@ impl Parser {
         }
 
         self.start_node(SyntaxKind::GENERIC_ARGS);
-        self.consume_comma_seq(Token![<], Token![>], Parser::parse_type);
+        let finished = self.consume_comma_seq(Token![<], Token![>], Parser::parse_type);
         self.finish_node();
 
-        true
+        finished
     }
 }

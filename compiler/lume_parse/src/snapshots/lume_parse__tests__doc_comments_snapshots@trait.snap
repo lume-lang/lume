@@ -2,11 +2,16 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"/// This is a doc comment\n        trait Foo { }\")"
 ---
-SOURCE_FILE@0..35
-  TRAIT@0..35
-    DOC_COMMENT@0..25
+SOURCE_FILE@0..47
+  TRAIT@0..47
+    DOC_COMMENT@0..34
       DOC_COMMENT@0..25 "/// This is a doc com ..."
-    TRAIT_KW@25..30 "trait"
-    IDENT@30..33 "Foo"
-    LEFT_BRACE@33..34 "{"
-    RIGHT_BRACE@34..35 "}"
+      WHITESPACE@25..34 "\n        "
+    TRAIT_KW@34..39 "trait"
+    WHITESPACE@39..40 " "
+    NAME@40..43
+      IDENT@40..43 "Foo"
+    WHITESPACE@43..44 " "
+    LEFT_BRACE@44..45 "{"
+    WHITESPACE@45..46 " "
+    RIGHT_BRACE@46..47 "}"

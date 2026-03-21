@@ -2,12 +2,15 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"false = b;\")"
 ---
-SOURCE_FILE@0..8
-  EXPR_STMT@0..8
-    ASSIGNMENT_EXPR@0..7
-      LITERAL@0..5
-        BOOLEAN_LIT@0..5 "false"
-      ASSIGN@5..6 "="
-      VARIABLE_EXPR@6..7
-        IDENT@6..7 "b"
-    SEMICOLON@7..8 ";"
+SOURCE_FILE@0..10
+  EXPR_STMT@0..10
+    ASSIGNMENT_EXPR@0..9
+      LIT_EXPR@0..5
+        LITERAL@0..5
+          BOOLEAN_LIT@0..5 "false"
+      WHITESPACE@5..6 " "
+      ASSIGN@6..7 "="
+      VARIABLE_EXPR@7..9
+        WHITESPACE@7..8 " "
+        IDENT@8..9 "b"
+    SEMICOLON@9..10 ";"

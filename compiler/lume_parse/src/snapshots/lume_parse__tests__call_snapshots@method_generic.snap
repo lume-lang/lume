@@ -2,29 +2,34 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"let _ = a.call<T>(a, b);\")"
 ---
-SOURCE_FILE@0..20
-  LET_STMT@0..20
+SOURCE_FILE@0..24
+  LET_STMT@0..24
     LET_KW@0..3 "let"
-    NAME@3..4
-      IDENT@3..4 "_"
-    ASSIGN@4..5 "="
-    INSTANCE_CALL_EXPR@5..19
-      IDENT@5..6 "a"
-      DOT@6..7 "."
-      NAME@7..11
-        IDENT@7..11 "call"
-      BOUND_TYPES@11..14
-        LESS@11..12 "<"
-        PATH@12..13
-          PATH_TYPE@12..13
-            IDENT@12..13 "T"
-        GREATER@13..14 ">"
-      ARG_LIST@14..19
-        LEFT_PAREN@14..15 "("
-        VARIABLE_EXPR@15..16
-          IDENT@15..16 "a"
-        COMMA@16..17 ","
-        VARIABLE_EXPR@17..18
-          IDENT@17..18 "b"
-        RIGHT_PAREN@18..19 ")"
-    SEMICOLON@19..20 ";"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    INSTANCE_CALL_EXPR@7..23
+      IDENT@7..8 "a"
+      WHITESPACE@8..9 " "
+      DOT@9..10 "."
+      IDENT@10..14 "call"
+      GENERIC_ARGS@14..17
+        LESS@14..15 "<"
+        NAMED_TYPE@15..16
+          PATH@15..16
+            PATH_SEGMENT@15..16
+              PATH_TYPE@15..16
+                IDENT@15..16 "T"
+        GREATER@16..17 ">"
+      ARG_LIST@17..23
+        LEFT_PAREN@17..18 "("
+        VARIABLE_EXPR@18..19
+          IDENT@18..19 "a"
+        COMMA@19..20 ","
+        WHITESPACE@20..21 " "
+        VARIABLE_EXPR@21..22
+          IDENT@21..22 "b"
+        RIGHT_PAREN@22..23 ")"
+    SEMICOLON@23..24 ";"

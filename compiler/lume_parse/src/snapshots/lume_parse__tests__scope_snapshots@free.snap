@@ -2,9 +2,11 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Statement, \"{ };\")"
 ---
-SOURCE_FILE@0..3
-  EXPR_STMT@0..3
-    LEFT_BRACE@0..1 "{"
-    STMT_LIST@1..1
-    RIGHT_BRACE@1..2 "}"
-    SEMICOLON@2..3 ";"
+SOURCE_FILE@0..4
+  EXPR_STMT@0..4
+    SCOPE_EXPR@0..3
+      BLOCK@0..3
+        LEFT_BRACE@0..1 "{"
+        WHITESPACE@1..2 " "
+        RIGHT_BRACE@2..3 "}"
+    SEMICOLON@3..4 ";"

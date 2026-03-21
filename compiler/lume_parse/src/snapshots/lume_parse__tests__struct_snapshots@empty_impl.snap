@@ -2,11 +2,15 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"impl Int32 {}\")"
 ---
-SOURCE_FILE@0..11
-  IMPL@0..11
+SOURCE_FILE@0..13
+  IMPL@0..13
     IMPL_KW@0..4 "impl"
-    PATH@4..9
-      PATH_TYPE@4..9
-        IDENT@4..9 "Int32"
-    LEFT_BRACE@9..10 "{"
-    RIGHT_BRACE@10..11 "}"
+    WHITESPACE@4..5 " "
+    NAMED_TYPE@5..11
+      PATH@5..11
+        PATH_SEGMENT@5..11
+          PATH_TYPE@5..11
+            IDENT@5..10 "Int32"
+            WHITESPACE@10..11 " "
+    LEFT_BRACE@11..12 "{"
+    RIGHT_BRACE@12..13 "}"

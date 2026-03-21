@@ -2,24 +2,34 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"/// This is a doc comment\n        ///\n        /// Another line in the doc comment\n        fn foo() -> void { }\")"
 ---
-SOURCE_FILE@0..78
-  FN@0..78
-    DOC_COMMENT@0..63
+SOURCE_FILE@0..110
+  FN@0..110
+    DOC_COMMENT@0..90
       DOC_COMMENT@0..25 "/// This is a doc com ..."
-      DOC_COMMENT@25..28 "///"
-      DOC_COMMENT@28..63 "/// Another line in t ..."
-    FN_KW@63..65 "fn"
-    NAME@65..68
-      IDENT@65..68 "foo"
-    PARAM_LIST@68..70
-      LEFT_PAREN@68..69 "("
-      RIGHT_PAREN@69..70 ")"
-    RETURN_TYPE@70..76
-      ARROW@70..72 "->"
-      PATH@72..76
-        PATH_TYPE@72..76
-          IDENT@72..76 "void"
-    BLOCK@76..78
-      LEFT_BRACE@76..77 "{"
-      STMT_LIST@77..77
-      RIGHT_BRACE@77..78 "}"
+      WHITESPACE@25..34 "\n        "
+      DOC_COMMENT@34..37 "///"
+      WHITESPACE@37..46 "\n        "
+      DOC_COMMENT@46..81 "/// Another line in t ..."
+      WHITESPACE@81..90 "\n        "
+    SIG@90..107
+      FN_KW@90..92 "fn"
+      WHITESPACE@92..93 " "
+      NAME@93..96
+        IDENT@93..96 "foo"
+      PARAM_LIST@96..98
+        LEFT_PAREN@96..97 "("
+        RIGHT_PAREN@97..98 ")"
+      WHITESPACE@98..99 " "
+      RETURN_TYPE@99..107
+        ARROW@99..101 "->"
+        WHITESPACE@101..102 " "
+        NAMED_TYPE@102..107
+          PATH@102..107
+            PATH_SEGMENT@102..107
+              PATH_TYPE@102..107
+                IDENT@102..106 "void"
+                WHITESPACE@106..107 " "
+    BLOCK@107..110
+      LEFT_BRACE@107..108 "{"
+      WHITESPACE@108..109 " "
+      RIGHT_BRACE@109..110 "}"

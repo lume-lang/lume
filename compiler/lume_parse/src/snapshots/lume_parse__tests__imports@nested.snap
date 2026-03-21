@@ -1,15 +1,20 @@
 ---
 source: compiler/lume_parse/src/tests.rs
-expression: "parse(\"import std::io (File)\")"
+expression: "parse(Target :: Item, \"import std::io (File)\")"
 ---
-SOURCE_FILE@0..19
-  IMPORT@0..19
+SOURCE_FILE@0..21
+  IMPORT@0..21
     IMPORT_KW@0..6 "import"
-    IMPORT_PATH@6..13
-      IDENT@6..9 "std"
-      PATH_SEP@9..11 "::"
-      IDENT@11..13 "io"
-    IMPORT_LIST@13..19
-      LEFT_PAREN@13..14 "("
-      IDENT@14..18 "File"
-      RIGHT_PAREN@18..19 ")"
+    WHITESPACE@6..7 " "
+    IMPORT_PATH@7..15
+      NAME@7..10
+        IDENT@7..10 "std"
+      PATH_SEP@10..12 "::"
+      NAME@12..14
+        IDENT@12..14 "io"
+      WHITESPACE@14..15 " "
+    IMPORT_LIST@15..21
+      LEFT_PAREN@15..16 "("
+      NAME@16..20
+        IDENT@16..20 "File"
+      RIGHT_PAREN@20..21 ")"

@@ -2,21 +2,35 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item,\n\"\n        struct Foo {\n            pub x: Int32 = 1;\n        }\")"
 ---
-SOURCE_FILE@0..24
-  STRUCT@0..24
-    STRUCT_KW@0..6 "struct"
-    IDENT@6..9 "Foo"
-    LEFT_BRACE@9..10 "{"
-    FIELD@10..23
-      VISIBILITY@10..13
-        PUB_KW@10..13 "pub"
-      IDENT@13..14 "x"
-      COLON@14..15 ":"
-      PATH@15..20
-        PATH_TYPE@15..20
-          IDENT@15..20 "Int32"
-      ASSIGN@20..21 "="
-      LITERAL@21..22
-        INTEGER_LIT@21..22 "1"
-      SEMICOLON@22..23 ";"
-    RIGHT_BRACE@23..24 "}"
+SOURCE_FILE@0..61
+  WHITESPACE@0..9 "\n        "
+  STRUCT@9..61
+    STRUCT_KW@9..15 "struct"
+    WHITESPACE@15..16 " "
+    NAME@16..19
+      IDENT@16..19 "Foo"
+    WHITESPACE@19..20 " "
+    LEFT_BRACE@20..21 "{"
+    WHITESPACE@21..34 "\n            "
+    FIELD@34..51
+      VISIBILITY@34..38
+        PUB_KW@34..37 "pub"
+        WHITESPACE@37..38 " "
+      NAME@38..39
+        IDENT@38..39 "x"
+      COLON@39..40 ":"
+      WHITESPACE@40..41 " "
+      NAMED_TYPE@41..47
+        PATH@41..47
+          PATH_SEGMENT@41..47
+            PATH_TYPE@41..47
+              IDENT@41..46 "Int32"
+              WHITESPACE@46..47 " "
+      ASSIGN@47..48 "="
+      WHITESPACE@48..49 " "
+      LIT_EXPR@49..50
+        LITERAL@49..50
+          INTEGER_LIT@49..50 "1"
+      SEMICOLON@50..51 ";"
+    WHITESPACE@51..60 "\n        "
+    RIGHT_BRACE@60..61 "}"

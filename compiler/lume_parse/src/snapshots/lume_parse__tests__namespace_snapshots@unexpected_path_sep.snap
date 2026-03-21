@@ -2,10 +2,13 @@
 source: compiler/lume_parse/src/tests.rs
 expression: "parse(Target :: Item, \"namespace ::std\")"
 ---
-SOURCE_FILE@0..12
-  NAMESPACE@0..9
+SOURCE_FILE@0..13
+  NAMESPACE@0..10
     NAMESPACE_KW@0..9 "namespace"
-  IDENT@9..12 "std"
+    WHITESPACE@9..10 " "
+    IMPORT_PATH@10..10
+      NAME@10..10
+  IDENT@10..13 "std"
 
 expected identifier@10..12
 invalid top-level item@12..15

@@ -1,14 +1,16 @@
 ---
 source: compiler/lume_parse/src/tests.rs
-assertion_line: 165
 expression: "parse(Target :: Statement, \"Self { };\")"
 ---
-SOURCE_FILE@0..7
-  EXPR_STMT@0..7
-    CONSTRUCT_EXPR@0..6
-      PATH@0..4
-        PATH_TYPE@0..4
-          IDENT@0..4 "Self"
-      LEFT_BRACE@4..5 "{"
-      RIGHT_BRACE@5..6 "}"
-    SEMICOLON@6..7 ";"
+SOURCE_FILE@0..9
+  EXPR_STMT@0..9
+    CONSTRUCT_EXPR@0..8
+      PATH@0..5
+        PATH_SEGMENT@0..5
+          PATH_TYPE@0..5
+            IDENT@0..4 "Self"
+            WHITESPACE@4..5 " "
+      LEFT_BRACE@5..6 "{"
+      WHITESPACE@6..7 " "
+      RIGHT_BRACE@7..8 "}"
+    SEMICOLON@8..9 ";"
