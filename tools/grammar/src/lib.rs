@@ -29,7 +29,7 @@ enum EntryFormat {
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Field {
     /// The field is a reference to a specific token within it's parent entry.
-    Token(String),
+    Token { name: Option<String>, token: String },
 
     /// The field is a reference to a specific node type within it's parent
     /// entry.
@@ -105,16 +105,32 @@ fn extract_enums(map: &mut Map) {
     }
 }
 
+const TOKEN_WRAPPERS: &[&str] = &["Ident"];
+
 fn lower_rule(fields: &mut Vec<Field>, label: Option<String>, grammar: &Grammar, rule: &ungrammar::Rule) {
     match rule {
         ungrammar::Rule::Node(node_field) => {
-            fields.push(Field::Node {
-                name: label.clone(),
-                ty: grammar[*node_field].name.clone(),
-            });
+            let name = &grammar[*node_field].name;
+
+            let field = if TOKEN_WRAPPERS.iter().any(|w| w == name) {
+                Field::Token {
+                    name: label.clone(),
+                    token: name.clone(),
+                }
+            } else {
+                Field::Node {
+                    name: label.clone(),
+                    ty: name.clone(),
+                }
+            };
+
+            fields.push(field);
         }
         ungrammar::Rule::Token(token_field) => {
-            fields.push(Field::Token(grammar[*token_field].name.clone()));
+            fields.push(Field::Token {
+                name: label.clone(),
+                token: grammar[*token_field].name.clone(),
+            });
         }
         ungrammar::Rule::Opt(rule) => lower_rule(fields, label, grammar, rule),
         ungrammar::Rule::Seq(rules) | ungrammar::Rule::Alt(rules) => {

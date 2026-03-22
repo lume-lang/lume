@@ -4,7 +4,7 @@ use lume_span::SourceFile;
 
 use super::*;
 
-impl crate::ast::SourceFile {
+impl crate::SourceFile {
     pub fn parse(text: &str) -> lume_syntax::SyntaxTree {
         lume_parse::Parser::from_source(Arc::new(SourceFile::internal(text)))
             .map(|parser| parser.parse(lume_parse::Target::Item))
@@ -12,7 +12,7 @@ impl crate::ast::SourceFile {
     }
 }
 
-impl crate::ast::Stmt {
+impl crate::Stmt {
     pub fn parse(text: &str) -> lume_syntax::SyntaxTree {
         lume_parse::Parser::from_source(Arc::new(SourceFile::internal(text)))
             .map(|parser| parser.parse(lume_parse::Target::Statement))
@@ -22,7 +22,7 @@ impl crate::ast::Stmt {
 
 #[test]
 fn visibility() {
-    let tree = crate::ast::SourceFile::parse(
+    let tree = crate::SourceFile::parse(
         r#"
         pub fn test() {}
         pub(internal) fn test() {}
@@ -30,7 +30,7 @@ fn visibility() {
         "#,
     );
 
-    let mut fn_iter = tree.syntax().descendants().filter_map(ast::Fn::cast);
+    let mut fn_iter = tree.syntax().descendants().filter_map(Fn::cast);
 
     let fn1 = fn_iter.next().unwrap();
     let fn2 = fn_iter.next().unwrap();
@@ -43,9 +43,9 @@ fn visibility() {
 
 #[test]
 fn imports() {
-    let tree = crate::ast::SourceFile::parse("import std::io (File, Buffer)");
+    let tree = crate::SourceFile::parse("import std::io (File, Buffer)");
 
-    let imp = tree.syntax().descendants().find_map(ast::Import::cast).unwrap();
+    let imp = tree.syntax().descendants().find_map(Import::cast).unwrap();
 
     let mut path_segs = imp.import_path().unwrap().path();
     assert_eq!(path_segs.next().unwrap().syntax().text(), "std");
@@ -58,9 +58,9 @@ fn imports() {
 
 #[test]
 fn namespace() {
-    let tree = crate::ast::SourceFile::parse("namespace std::io");
+    let tree = crate::SourceFile::parse("namespace std::io");
 
-    let ns = tree.syntax().descendants().find_map(ast::Namespace::cast).unwrap();
+    let ns = tree.syntax().descendants().find_map(Namespace::cast).unwrap();
 
     let mut segments = ns.import_path().unwrap().path();
     assert_eq!(segments.next().unwrap().syntax().text(), "std");
@@ -69,16 +69,16 @@ fn namespace() {
 
 #[test]
 fn attributes() {
-    let tree = crate::ast::SourceFile::parse("![unused()] fn foo() {}");
+    let tree = crate::SourceFile::parse("![unused()] fn foo() {}");
 
-    let ns = tree.syntax().descendants().find_map(ast::Fn::cast).unwrap();
+    let ns = tree.syntax().descendants().find_map(Fn::cast).unwrap();
     let attr = ns.attr().next().unwrap();
     assert_eq!(attr.name().unwrap().syntax().text(), "unused");
 }
 
 #[test]
 fn if_block_condition() {
-    let tree = crate::ast::SourceFile::parse(
+    let tree = crate::SourceFile::parse(
         r#"
         fn test() {
             if true { "if" }
@@ -90,7 +90,7 @@ fn if_block_condition() {
         "#,
     );
 
-    let if_ = tree.syntax().descendants().find_map(ast::IfExpr::cast).unwrap();
+    let if_ = tree.syntax().descendants().find_map(IfExpr::cast).unwrap();
     assert_eq!(if_.condition().unwrap().syntax().text(), r#"true"#);
     assert_eq!(if_.then_branch().unwrap().syntax().text(), r#"{ "if" }"#);
 

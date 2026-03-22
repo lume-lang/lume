@@ -26,7 +26,8 @@ SOURCE_FILE@0..34
           PATH@27..32
             PATH_SEGMENT@27..32
               PATH_TYPE@27..32
-                IDENT@27..31 "Void"
+                NAME@27..31
+                  IDENT@27..31 "Void"
                 WHITESPACE@31..32 " "
     BLOCK@32..34
       LEFT_BRACE@32..33 "{"

@@ -8,16 +8,20 @@ pub mod generated {
     pub mod ast;
 }
 
-pub use generated::ast;
+pub use generated::ast::*;
 
 #[cfg(test)]
 mod tests;
 
 pub trait AstNode {
+    /// Attempts to cast the given syntax node into the current node type.
+    ///
+    /// If the conversion fails, [`None`] is returned.
     fn cast(syntax: lume_syntax::SyntaxNode) -> Option<Self>
     where
         Self: Sized;
 
+    /// Gets the underlying [`lume_syntax::SyntaxNode`] for this AST node.
     fn syntax(&self) -> &lume_syntax::SyntaxNode;
 
     /// Gets the source text which this node encapsulates.
@@ -25,17 +29,23 @@ pub trait AstNode {
         self.syntax().text().to_string()
     }
 
+    /// Gets the text range of this node in the source file.
     fn range(&self) -> std::ops::Range<usize> {
         let text_range = self.syntax().text_range();
 
         text_range.start().into()..text_range.end().into()
     }
 
+    /// Gets the location of this node in the source file.
     #[inline]
     fn location(&self) -> Location {
         Location(self.range())
     }
 
+    /// Returns an independent copy of the subtree rooted at this node.
+    ///
+    /// The parent of the returned node will be [`None`], the start offset will
+    /// be zero, but, otherwise, it'll be equivalent to the source node.
     fn clone_subtree(&self) -> Self
     where
         Self: Sized,

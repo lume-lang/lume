@@ -12,7 +12,7 @@ impl Parser {
         let finished = self.consume_comma_seq(Token![<], Token![>], |p| {
             p.start_node(SyntaxKind::BOUND_TYPE);
 
-            p.parse_identifier();
+            p.parse_ident();
 
             if p.peek(Token![:]) {
                 p.start_node(SyntaxKind::CONSTRAINTS);

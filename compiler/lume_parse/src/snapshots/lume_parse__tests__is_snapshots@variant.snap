@@ -16,9 +16,11 @@ SOURCE_FILE@0..12
           PATH@5..11
             PATH_SEGMENT@5..8
               PATH_TYPE@5..8
-                IDENT@5..8 "Foo"
+                NAME@5..8
+                  IDENT@5..8 "Foo"
             PATH_SEP@8..10 "::"
             PATH_SEGMENT@10..11
               PATH_VARIANT@10..11
-                IDENT@10..11 "A"
+                NAME@10..11
+                  IDENT@10..11 "A"
     SEMICOLON@11..12 ";"

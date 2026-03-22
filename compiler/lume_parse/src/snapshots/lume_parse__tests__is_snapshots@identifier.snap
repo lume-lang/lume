@@ -16,5 +16,6 @@ SOURCE_FILE@0..10
           PATH@5..9
             PATH_SEGMENT@5..9
               PATH_NAMESPACE@5..9
-                IDENT@5..9 "test"
+                NAME@5..9
+                  IDENT@5..9 "test"
     SEMICOLON@9..10 ";"

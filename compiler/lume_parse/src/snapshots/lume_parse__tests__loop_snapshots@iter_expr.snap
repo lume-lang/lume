@@ -5,8 +5,9 @@ expression: "parse(Target :: Statement, \"for pattern in [1, 2, 3] { }\")"
 SOURCE_FILE@0..28
   FOR_STMT@0..28
     FOR_KW@0..3 "for"
-    IDENT@3..10 "pattern"
-    WHITESPACE@10..11 " "
+    WHITESPACE@3..4 " "
+    NAME@4..11
+      IDENT@4..11 "pattern"
     WHITESPACE@11..12 " "
     IN_KW@12..14 "in"
     WHITESPACE@14..15 " "

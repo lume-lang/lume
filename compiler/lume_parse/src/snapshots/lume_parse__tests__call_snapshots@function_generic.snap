@@ -15,22 +15,26 @@ SOURCE_FILE@0..22
       PATH@8..15
         PATH_SEGMENT@8..15
           PATH_CALLABLE@8..15
-            IDENT@8..12 "call"
+            NAME@8..12
+              IDENT@8..12 "call"
             GENERIC_ARGS@12..15
               LESS@12..13 "<"
               NAMED_TYPE@13..14
                 PATH@13..14
                   PATH_SEGMENT@13..14
                     PATH_TYPE@13..14
-                      IDENT@13..14 "T"
+                      NAME@13..14
+                        IDENT@13..14 "T"
               GREATER@14..15 ">"
       ARG_LIST@15..21
         LEFT_PAREN@15..16 "("
         VARIABLE_EXPR@16..17
-          IDENT@16..17 "a"
+          NAME@16..17
+            IDENT@16..17 "a"
         COMMA@17..18 ","
         WHITESPACE@18..19 " "
         VARIABLE_EXPR@19..20
-          IDENT@19..20 "b"
+          NAME@19..20
+            IDENT@19..20 "b"
         RIGHT_PAREN@20..21 ")"
     SEMICOLON@21..22 ";"

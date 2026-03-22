@@ -7,7 +7,7 @@
 // Legend:
 //
 //   //          -- comment
-//   Name =      -- non-terminal definition
+//   Ident =      -- non-terminal definition
 //   'ident'     -- keyword or punct token (terminal)
 //   A B         -- sequence
 //   A | B       -- alternation
@@ -15,9 +15,9 @@
 //   A?          -- zero or one repetition
 //   (A)         -- same as A
 
-Ident = '#ident'
+Name = '#ident'
 
-Name = Ident
+DocComment = '@DOC_COMMENT'
 
 //
 //  Items
@@ -52,60 +52,60 @@ Namespace =
   'namespace' ImportPath
 
 Fn =
-  Attr*
+  doc_comments:DocComment* Attr*
   Visibility? Sig Block?
 
 Method =
-  Attr*
+  doc_comments:DocComment* Attr*
   Visibility? Sig Block?
 
 Sig =
   'fn' 'external'?
-  Name BoundTypes? ParamList ReturnType?
+  name:Name BoundTypes? ParamList ReturnType?
 
 ParamList =
   '(' Param* ')'
 
 Param =
   (vararg:'...')?
-  (Name ':' Type)
+  (name:Name ':' Type)
   | 'self'
 
 ReturnType =
   '->' Type
 
 Struct =
-  Attr* Visibility?
-  'struct'
-  Name BoundTypes? '{' fields:Field* '}'
+  doc_comments:DocComment* Attr*
+  Visibility? 'struct'
+  name:Name BoundTypes? '{' fields:Field* '}'
 
 Field =
-  Attr*
-  Visibility? Name ':' field_type:Type ('=' default_value:Expr)? ';'
+  doc_comments:DocComment* Attr*
+  Visibility? name:Name ':' field_type:Type ('=' default_value:Expr)? ';'
 
 Trait =
-  Attr* Visibility?
-  'trait'
-  Name BoundTypes? '{' methods:Method* '}'
+  doc_comments:DocComment* Attr*
+  Visibility? 'trait'
+  name:Name BoundTypes? '{' methods:Method* '}'
 
 Enum =
-  Attr* Visibility?
-  'enum'
-  Name BoundTypes? '{' cases:Case* '}'
+  doc_comments:DocComment* Attr*
+  Visibility? 'enum'
+  name:Name BoundTypes? '{' cases:Case* '}'
 
 Case =
-  Name CaseParamList?
+  doc_comments:DocComment* name:Name CaseParamList?
 
 CaseParamList =
   '(' Type* ')'
 
 Impl =
-  Attr*
+  doc_comments:DocComment* Attr*
   'impl' BoundTypes?
   target:Type '{' methods:Method* '}'
 
 TraitImpl =
-  Attr*
+  doc_comments:DocComment* Attr*
   'use' BoundTypes? trait_:Type ':' target:Type
   '{' methods:Method* '}'
 
@@ -120,7 +120,7 @@ AttrArgList =
   '(' args:AttrArg* ')'
 
 AttrArg =
-  Name '=' value:Literal
+  name:Name '=' value:Literal
 
 //
 //  Statements
@@ -141,7 +141,7 @@ Stmt =
 | ExprStmt
 
 LetStmt =
-  'let' Name (':' Type)? '=' Expr ';'
+  'let' name:Name (':' Type)? '=' Expr ';'
 
 BreakStmt =
   'break' ';'
@@ -159,7 +159,7 @@ LoopStmt =
   'loop' Block
 
 ForStmt =
-  'for' pattern:Ident 'in' collection:Expr Block
+  'for' pattern:Name 'in' collection:Expr Block
 
 WhileStmt =
   'while' condition:Expr Block
@@ -199,7 +199,7 @@ AssignmentExpr =
     target:Expr '=' value:Expr
 
 InstanceCallExpr =
-    callee:Expr '.' Ident GenericArgs? ArgList
+    callee:Expr '.' name:Name GenericArgs? ArgList
 
 StaticCallExpr =
     Path ArgList
@@ -221,7 +221,7 @@ LitExpr =
     Literal
 
 MemberExpr =
-    Expr '.' Ident
+    Expr '.' name:Name
 
 RangeExpr =
     lower:Expr '..' '='? upper:Expr
@@ -236,7 +236,7 @@ ParenExpr =
     '(' Expr ')'
 
 VariableExpr =
-    Ident
+    Name
 
 VariantExpr =
     Path ArgList
@@ -256,7 +256,7 @@ ArgList =
     '(' Expr* ')'
 
 ConstructorField =
-    name:Ident ('=' value:Expr)? ';'
+    name:Name ('=' value:Expr)? ';'
 
 Condition =
     ('if' condition:Expr) | ('else') block:Block
@@ -290,7 +290,7 @@ Pat =
 | PatWildcard
 
 PatIdent =
-  Ident
+  name:Name
 
 PatLiteral =
   Literal
@@ -309,7 +309,7 @@ BoundTypes =
   '<' types:BoundType* '>'
 
 BoundType =
-  name:Ident Constraints?
+  name:Name Constraints?
 
 Constraints =
   ':' Type*
@@ -352,13 +352,13 @@ PathSegment =
 | PathType
 
 PathNamespace =
-  Ident
+  name:Name
 
 PathVariant =
-  Ident
+  name:Name
 
 PathCallable =
-  Ident GenericArgs?
+  name:Name GenericArgs?
 
 PathType =
-  Ident GenericArgs?
+  name:Name GenericArgs?

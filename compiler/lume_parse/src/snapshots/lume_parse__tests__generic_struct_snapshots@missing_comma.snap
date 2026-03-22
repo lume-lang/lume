@@ -11,7 +11,8 @@ SOURCE_FILE@0..21
     BOUND_TYPES@11..18
       LESS@11..12 "<"
       BOUND_TYPE@12..14
-        IDENT@12..14 "T1"
+        NAME@12..14
+          IDENT@12..14 "T1"
       WHITESPACE@14..15 " "
       IDENT@15..17 "T2"
       GREATER@17..18 ">"

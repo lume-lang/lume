@@ -12,9 +12,8 @@ SOURCE_FILE@0..92
     LEFT_BRACE@10..11 "{"
     WHITESPACE@11..24 "\n            "
     METHOD@24..82
-      DOC_COMMENT@24..62
-        DOC_COMMENT@24..49 "/// This is a doc com ..."
-        WHITESPACE@49..62 "\n            "
+      DOC_COMMENT@24..49 "/// This is a doc com ..."
+      WHITESPACE@49..62 "\n            "
       SIG@62..79
         FN_KW@62..64 "fn"
         WHITESPACE@64..65 " "
@@ -31,7 +30,8 @@ SOURCE_FILE@0..92
             PATH@74..79
               PATH_SEGMENT@74..79
                 PATH_TYPE@74..79
-                  IDENT@74..78 "void"
+                  NAME@74..78
+                    IDENT@74..78 "void"
                   WHITESPACE@78..79 " "
       BLOCK@79..82
         LEFT_BRACE@79..80 "{"

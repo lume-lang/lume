@@ -10,7 +10,8 @@ SOURCE_FILE@0..46
       PATH@5..10
         PATH_SEGMENT@5..10
           PATH_TYPE@5..10
-            IDENT@5..9 "Test"
+            NAME@5..9
+              IDENT@5..9 "Test"
             WHITESPACE@9..10 " "
     LEFT_BRACE@10..11 "{"
     WHITESPACE@11..12 " "
@@ -23,7 +24,8 @@ SOURCE_FILE@0..46
         BOUND_TYPES@19..31
           LESS@19..20 "<"
           BOUND_TYPE@20..30
-            IDENT@20..21 "T"
+            NAME@20..21
+              IDENT@20..21 "T"
             CONSTRAINTS@21..30
               COLON@21..22 ":"
               WHITESPACE@22..23 " "
@@ -31,7 +33,8 @@ SOURCE_FILE@0..46
                 PATH@23..30
                   PATH_SEGMENT@23..30
                     PATH_TYPE@23..30
-                      IDENT@23..30 "Numeric"
+                      NAME@23..30
+                        IDENT@23..30 "Numeric"
           GREATER@30..31 ">"
         PARAM_LIST@31..33
           LEFT_PAREN@31..32 "("
@@ -44,7 +47,8 @@ SOURCE_FILE@0..46
             PATH@37..42
               PATH_SEGMENT@37..42
                 PATH_TYPE@37..42
-                  IDENT@37..41 "void"
+                  NAME@37..41
+                    IDENT@37..41 "void"
                   WHITESPACE@41..42 " "
       BLOCK@42..44
         LEFT_BRACE@42..43 "{"

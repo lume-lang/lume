@@ -28,7 +28,8 @@ SOURCE_FILE@0..44
               PATH@26..31
                 PATH_SEGMENT@26..31
                   PATH_TYPE@26..31
-                    IDENT@26..31 "Int32"
+                    NAME@26..31
+                      IDENT@26..31 "Int32"
           RIGHT_PAREN@31..32 ")"
         WHITESPACE@32..33 " "
         RETURN_TYPE@33..41
@@ -38,7 +39,8 @@ SOURCE_FILE@0..44
             PATH@36..41
               PATH_SEGMENT@36..41
                 PATH_TYPE@36..41
-                  IDENT@36..41 "Int32"
+                  NAME@36..41
+                    IDENT@36..41 "Int32"
       SEMICOLON@41..42 ";"
     WHITESPACE@42..43 " "
     RIGHT_BRACE@43..44 "}"

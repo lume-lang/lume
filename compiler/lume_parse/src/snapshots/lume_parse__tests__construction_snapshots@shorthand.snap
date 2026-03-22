@@ -8,7 +8,8 @@ SOURCE_FILE@0..12
       PATH@0..4
         PATH_SEGMENT@0..4
           PATH_TYPE@0..4
-            IDENT@0..3 "Foo"
+            NAME@0..3
+              IDENT@0..3 "Foo"
             WHITESPACE@3..4 " "
       LEFT_BRACE@4..5 "{"
       WHITESPACE@5..6 " "

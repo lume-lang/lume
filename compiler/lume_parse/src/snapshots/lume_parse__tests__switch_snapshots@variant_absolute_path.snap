@@ -8,7 +8,8 @@ SOURCE_FILE@0..57
       SWITCH_KW@0..6 "switch"
       VARIABLE_EXPR@6..8
         WHITESPACE@6..7 " "
-        IDENT@7..8 "a"
+        NAME@7..8
+          IDENT@7..8 "a"
       WHITESPACE@8..9 " "
       LEFT_BRACE@9..10 "{"
       WHITESPACE@10..11 " "
@@ -18,15 +19,18 @@ SOURCE_FILE@0..57
             PATH@11..28
               PATH_SEGMENT@11..14
                 PATH_NAMESPACE@11..14
-                  IDENT@11..14 "std"
+                  NAME@11..14
+                    IDENT@11..14 "std"
               PATH_SEP@14..16 "::"
               PATH_SEGMENT@16..23
                 PATH_TYPE@16..23
-                  IDENT@16..23 "Address"
+                  NAME@16..23
+                    IDENT@16..23 "Address"
               PATH_SEP@23..25 "::"
               PATH_SEGMENT@25..28
                 PATH_VARIANT@25..28
-                  IDENT@25..27 "V4"
+                  NAME@25..27
+                    IDENT@25..27 "V4"
                   WHITESPACE@27..28 " "
         BIG_ARROW@28..30 "=>"
         WHITESPACE@30..31 " "
@@ -41,15 +45,18 @@ SOURCE_FILE@0..57
             PATH@34..51
               PATH_SEGMENT@34..37
                 PATH_NAMESPACE@34..37
-                  IDENT@34..37 "std"
+                  NAME@34..37
+                    IDENT@34..37 "std"
               PATH_SEP@37..39 "::"
               PATH_SEGMENT@39..46
                 PATH_TYPE@39..46
-                  IDENT@39..46 "Address"
+                  NAME@39..46
+                    IDENT@39..46 "Address"
               PATH_SEP@46..48 "::"
               PATH_SEGMENT@48..51
                 PATH_VARIANT@48..51
-                  IDENT@48..50 "V6"
+                  NAME@48..50
+                    IDENT@48..50 "V6"
                   WHITESPACE@50..51 " "
         BIG_ARROW@51..53 "=>"
         WHITESPACE@53..54 " "

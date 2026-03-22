@@ -4,9 +4,8 @@ expression: "parse(Target :: Item, \"/// This is a doc comment\n        trait Fo
 ---
 SOURCE_FILE@0..47
   TRAIT@0..47
-    DOC_COMMENT@0..34
-      DOC_COMMENT@0..25 "/// This is a doc com ..."
-      WHITESPACE@25..34 "\n        "
+    DOC_COMMENT@0..25 "/// This is a doc com ..."
+    WHITESPACE@25..34 "\n        "
     TRAIT_KW@34..39 "trait"
     WHITESPACE@39..40 " "
     NAME@40..43

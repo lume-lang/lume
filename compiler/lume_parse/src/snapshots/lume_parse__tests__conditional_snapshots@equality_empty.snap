@@ -9,7 +9,8 @@ SOURCE_FILE@0..13
       BIN_EXPR@2..9
         VARIABLE_EXPR@2..4
           WHITESPACE@2..3 " "
-          IDENT@3..4 "a"
+          NAME@3..4
+            IDENT@3..4 "a"
         WHITESPACE@4..5 " "
         EQUAL@5..7 "=="
         WHITESPACE@7..8 " "

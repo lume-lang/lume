@@ -5,7 +5,7 @@ impl Parser {
         self.start_node(SyntaxKind::PAT);
 
         match self.token() {
-            SyntaxKind::IDENT => self.parse_named_pattern(),
+            SyntaxKind::IDENT => self.parse_identd_pattern(),
             Token![..] => self.parse_wildcard_pattern(),
 
             k if k.is_literal() => self.parse_literal_pattern(),
@@ -25,7 +25,7 @@ impl Parser {
         self.finish_node();
     }
 
-    fn parse_named_pattern(&mut self) {
+    fn parse_identd_pattern(&mut self) {
         let c = self.checkpoint();
 
         // Only a single ident found - likely not a variant.

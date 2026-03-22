@@ -21,18 +21,12 @@ pub(crate) fn token(
         .find(|it| it.kind() == kind)
 }
 
-impl crate::ast::Ident {
+impl crate::Name {
     pub fn is_lower(&self) -> bool {
         self.syntax()
             .text()
             .char_at(lume_syntax::TextSize::new(0))
             .is_none_or(|c| c.is_ascii_lowercase())
-    }
-}
-
-impl crate::ast::Name {
-    pub fn is_lower(&self) -> bool {
-        self.ident().is_some_and(|ident| ident.is_lower())
     }
 }
 
@@ -45,7 +39,7 @@ pub enum Radix {
     Hexadecimal = 16,
 }
 
-impl crate::ast::IntegerLit {
+impl crate::IntegerLit {
     pub fn as_parts(&self) -> (Radix, String, Option<IntKind>) {
         let text = self.syntax().text().to_string();
 
@@ -87,7 +81,7 @@ impl crate::ast::IntegerLit {
     }
 }
 
-impl crate::ast::FloatLit {
+impl crate::FloatLit {
     pub fn as_parts(&self) -> (String, Option<FloatKind>) {
         let text = self.syntax().text().to_string();
         let len = text.len().saturating_sub(1);
@@ -103,38 +97,38 @@ impl crate::ast::FloatLit {
     }
 }
 
-impl crate::ast::Param {
+impl crate::Param {
     #[inline]
     pub fn is_self_type(&self) -> bool {
         self.ty().is_some_and(|ty| ty.is_self())
     }
 }
 
-impl crate::ast::Type {
+impl crate::Type {
     #[inline]
     pub fn is_self(&self) -> bool {
-        matches!(self, crate::ast::Type::SelfType(_))
+        matches!(self, crate::Type::SelfType(_))
     }
 }
 
-impl crate::ast::PathSegment {
+impl crate::PathSegment {
     #[inline]
     pub fn is_self_type(&self) -> bool {
-        if let crate::ast::PathSegment::PathType(seg) = self {
-            seg.ident().is_some_and(|ident| ident.syntax().text() == "Self")
+        if let crate::PathSegment::PathType(seg) = self {
+            seg.name().is_some_and(|ident| ident.syntax().text() == "Self")
         } else {
             false
         }
     }
 }
 
-impl crate::ast::Path {
+impl crate::Path {
     /// Returns whether the current path has any root segments.
     pub fn has_root(&self) -> bool {
         self.path_segment().count() > 1
     }
 
-    pub fn split_root(&self) -> Option<(Vec<crate::ast::PathSegment>, crate::ast::PathSegment)> {
+    pub fn split_root(&self) -> Option<(Vec<crate::PathSegment>, crate::PathSegment)> {
         let segments = self.path_segment().collect::<Vec<_>>();
         let (name, root) = segments.split_last()?;
 

@@ -451,15 +451,10 @@ impl Parser {
         kind
     }
 
-    /// Parses the next token as a name (identifier).
-    fn parse_name(&mut self) {
-        self.start_node(SyntaxKind::NAME);
-        self.parse_identifier();
-        self.finish_node();
-    }
-
     /// Parses the next token as an identifier.
-    fn parse_identifier(&mut self) {
+    fn parse_ident(&mut self) {
+        self.start_node(SyntaxKind::NAME);
+
         match self.token() {
             // Actual identifiers are obviously allowed, so they pass through.
             SyntaxKind::IDENT => {
@@ -477,6 +472,8 @@ impl Parser {
                 self.error_and_skip("expected identifier");
             }
         }
+
+        self.finish_node();
     }
 
     /// Reads the current documentation comment into the parser's state, if any
@@ -487,11 +484,7 @@ impl Parser {
             return;
         }
 
-        self.start_node(SyntaxKind::DOC_COMMENT);
-
         while self.check(SyntaxKind::DOC_COMMENT) {}
-
-        self.finish_node();
     }
 }
 

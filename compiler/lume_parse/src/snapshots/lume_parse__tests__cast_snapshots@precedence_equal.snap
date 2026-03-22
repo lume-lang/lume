@@ -16,7 +16,8 @@ SOURCE_FILE@0..14
           PATH@5..9
             PATH_SEGMENT@5..9
               PATH_NAMESPACE@5..9
-                IDENT@5..8 "u64"
+                NAME@5..8
+                  IDENT@5..8 "u64"
                 WHITESPACE@8..9 " "
       EQUAL@9..11 "=="
       WHITESPACE@11..12 " "

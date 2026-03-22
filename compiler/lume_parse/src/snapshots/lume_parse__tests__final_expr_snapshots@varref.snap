@@ -17,7 +17,8 @@ SOURCE_FILE@0..14
         FINAL_STMT@9..12
           VARIABLE_EXPR@9..11
             WHITESPACE@9..10 " "
-            IDENT@10..11 "a"
+            NAME@10..11
+              IDENT@10..11 "a"
           WHITESPACE@11..12 " "
         RIGHT_BRACE@12..13 "}"
     SEMICOLON@13..14 ";"

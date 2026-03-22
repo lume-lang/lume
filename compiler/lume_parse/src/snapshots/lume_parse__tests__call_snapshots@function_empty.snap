@@ -15,7 +15,8 @@ SOURCE_FILE@0..15
       PATH@8..12
         PATH_SEGMENT@8..12
           PATH_CALLABLE@8..12
-            IDENT@8..12 "call"
+            NAME@8..12
+              IDENT@8..12 "call"
       ARG_LIST@12..14
         LEFT_PAREN@12..13 "("
         RIGHT_PAREN@13..14 ")"

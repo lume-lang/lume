@@ -10,14 +10,16 @@ SOURCE_FILE@0..17
       PATH@4..7
         PATH_SEGMENT@4..7
           PATH_TYPE@4..7
-            IDENT@4..7 "Add"
+            NAME@4..7
+              IDENT@4..7 "Add"
     COLON@7..8 ":"
     WHITESPACE@8..9 " "
     NAMED_TYPE@9..15
       PATH@9..15
         PATH_SEGMENT@9..15
           PATH_TYPE@9..15
-            IDENT@9..14 "Int32"
+            NAME@9..14
+              IDENT@9..14 "Int32"
             WHITESPACE@14..15 " "
     LEFT_BRACE@15..16 "{"
     RIGHT_BRACE@16..17 "}"

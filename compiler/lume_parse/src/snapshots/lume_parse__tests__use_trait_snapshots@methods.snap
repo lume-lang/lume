@@ -11,14 +11,16 @@ SOURCE_FILE@0..197
       PATH@13..17
         PATH_SEGMENT@13..17
           PATH_TYPE@13..17
-            IDENT@13..17 "Cast"
+            NAME@13..17
+              IDENT@13..17 "Cast"
     COLON@17..18 ":"
     WHITESPACE@18..19 " "
     NAMED_TYPE@19..25
       PATH@19..25
         PATH_SEGMENT@19..25
           PATH_TYPE@19..25
-            IDENT@19..24 "Int32"
+            NAME@19..24
+              IDENT@19..24 "Int32"
             WHITESPACE@24..25 " "
     LEFT_BRACE@25..26 "{"
     WHITESPACE@26..39 "\n            "
@@ -39,7 +41,8 @@ SOURCE_FILE@0..197
             PATH@57..64
               PATH_SEGMENT@57..64
                 PATH_TYPE@57..64
-                  IDENT@57..63 "String"
+                  NAME@57..63
+                    IDENT@57..63 "String"
                   WHITESPACE@63..64 " "
       BLOCK@64..108
         LEFT_BRACE@64..65 "{"
@@ -48,7 +51,8 @@ SOURCE_FILE@0..197
           RETURN_KW@82..88 "return"
           VARIABLE_EXPR@88..93
             WHITESPACE@88..89 " "
-            IDENT@89..93 "self"
+            NAME@89..93
+              IDENT@89..93 "self"
           SEMICOLON@93..94 ";"
         WHITESPACE@94..107 "\n            "
         RIGHT_BRACE@107..108 "}"
@@ -70,7 +74,8 @@ SOURCE_FILE@0..197
             PATH@137..143
               PATH_SEGMENT@137..143
                 PATH_TYPE@137..143
-                  IDENT@137..142 "Int32"
+                  NAME@137..142
+                    IDENT@137..142 "Int32"
                   WHITESPACE@142..143 " "
       BLOCK@143..187
         LEFT_BRACE@143..144 "{"
@@ -79,7 +84,8 @@ SOURCE_FILE@0..197
           RETURN_KW@161..167 "return"
           VARIABLE_EXPR@167..172
             WHITESPACE@167..168 " "
-            IDENT@168..172 "self"
+            NAME@168..172
+              IDENT@168..172 "self"
           SEMICOLON@172..173 ";"
         WHITESPACE@173..186 "\n            "
         RIGHT_BRACE@186..187 "}"

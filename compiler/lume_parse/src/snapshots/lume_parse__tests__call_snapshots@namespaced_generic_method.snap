@@ -15,30 +15,36 @@ SOURCE_FILE@0..35
       PATH@8..28
         PATH_SEGMENT@8..11
           PATH_NAMESPACE@8..11
-            IDENT@8..11 "std"
+            NAME@8..11
+              IDENT@8..11 "std"
         PATH_SEP@11..13 "::"
         PATH_SEGMENT@13..19
           PATH_TYPE@13..19
-            IDENT@13..19 "Buffer"
+            NAME@13..19
+              IDENT@13..19 "Buffer"
         PATH_SEP@19..21 "::"
         PATH_SEGMENT@21..28
           PATH_CALLABLE@21..28
-            IDENT@21..25 "call"
+            NAME@21..25
+              IDENT@21..25 "call"
             GENERIC_ARGS@25..28
               LESS@25..26 "<"
               NAMED_TYPE@26..27
                 PATH@26..27
                   PATH_SEGMENT@26..27
                     PATH_TYPE@26..27
-                      IDENT@26..27 "T"
+                      NAME@26..27
+                        IDENT@26..27 "T"
               GREATER@27..28 ">"
       ARG_LIST@28..34
         LEFT_PAREN@28..29 "("
         VARIABLE_EXPR@29..30
-          IDENT@29..30 "a"
+          NAME@29..30
+            IDENT@29..30 "a"
         COMMA@30..31 ","
         WHITESPACE@31..32 " "
         VARIABLE_EXPR@32..33
-          IDENT@32..33 "b"
+          NAME@32..33
+            IDENT@32..33 "b"
         RIGHT_PAREN@33..34 ")"
     SEMICOLON@34..35 ";"

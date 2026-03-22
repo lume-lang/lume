@@ -11,7 +11,7 @@ impl Parser {
         self.consume(Token![!]);
         self.consume(SyntaxKind::LEFT_BRACKET);
 
-        self.parse_name();
+        self.parse_ident();
         self.parse_attribute_arguments();
 
         self.consume(SyntaxKind::RIGHT_BRACKET);
@@ -38,7 +38,7 @@ impl Parser {
     fn parse_attribute_argument(&mut self) {
         self.start_node(SyntaxKind::ATTR_ARG);
 
-        self.parse_name();
+        self.parse_ident();
         self.consume(Token![=]);
         self.parse_literal();
 

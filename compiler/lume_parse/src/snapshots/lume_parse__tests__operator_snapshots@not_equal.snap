@@ -6,10 +6,12 @@ SOURCE_FILE@0..7
   EXPR_STMT@0..7
     BIN_EXPR@0..6
       VARIABLE_EXPR@0..1
-        IDENT@0..1 "a"
+        NAME@0..1
+          IDENT@0..1 "a"
       WHITESPACE@1..2 " "
       NEQUAL@2..4 "!="
       WHITESPACE@4..5 " "
       VARIABLE_EXPR@5..6
-        IDENT@5..6 "b"
+        NAME@5..6
+          IDENT@5..6 "b"
     SEMICOLON@6..7 ";"

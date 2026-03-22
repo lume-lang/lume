@@ -14,17 +14,20 @@ SOURCE_FILE@0..20
     ARRAY_EXPR@8..19
       LEFT_BRACKET@8..9 "["
       VARIABLE_EXPR@9..10
-        IDENT@9..10 "a"
+        NAME@9..10
+          IDENT@9..10 "a"
       COMMA@10..11 ","
       WHITESPACE@11..12 " "
       ARRAY_EXPR@12..18
         LEFT_BRACKET@12..13 "["
         VARIABLE_EXPR@13..14
-          IDENT@13..14 "a"
+          NAME@13..14
+            IDENT@13..14 "a"
         COMMA@14..15 ","
         WHITESPACE@15..16 " "
         VARIABLE_EXPR@16..17
-          IDENT@16..17 "b"
+          NAME@16..17
+            IDENT@16..17 "b"
         RIGHT_BRACKET@17..18 "]"
       RIGHT_BRACKET@18..19 "]"
     SEMICOLON@19..20 ";"
