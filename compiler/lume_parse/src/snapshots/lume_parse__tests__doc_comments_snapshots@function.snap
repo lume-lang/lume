@@ -4,9 +4,8 @@ expression: "parse(Target :: Item,\n\"/// This is a doc comment\n        fn foo(
 ---
 SOURCE_FILE@0..54
   FN@0..54
-    DOC_COMMENT@0..34
-      DOC_COMMENT@0..25 "/// This is a doc com ..."
-      WHITESPACE@25..34 "\n        "
+    DOC_COMMENT@0..25 "/// This is a doc com ..."
+    WHITESPACE@25..34 "\n        "
     SIG@34..51
       FN_KW@34..36 "fn"
       WHITESPACE@36..37 " "
@@ -23,7 +22,8 @@ SOURCE_FILE@0..54
           PATH@46..51
             PATH_SEGMENT@46..51
               PATH_TYPE@46..51
-                IDENT@46..50 "void"
+                NAME@46..50
+                  IDENT@46..50 "void"
                 WHITESPACE@50..51 " "
     BLOCK@51..54
       LEFT_BRACE@51..52 "{"

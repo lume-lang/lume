@@ -29,7 +29,7 @@ impl Parser {
         let c = self.checkpoint();
         let ident_slice = self.content_at(self.span()).to_string();
 
-        self.parse_identifier();
+        self.parse_ident();
 
         // If the name starts with a lower case, it can refer to either
         // a namespace or a function call.
@@ -77,7 +77,7 @@ impl Parser {
     /// such as `std::fmt::error`.
     pub(crate) fn parse_import_path(&mut self) {
         self.start_node(SyntaxKind::IMPORT_PATH);
-        self.consume_delim(Token![::], Parser::parse_name);
+        self.consume_delim(Token![::], Parser::parse_ident);
         self.finish_node();
     }
 }

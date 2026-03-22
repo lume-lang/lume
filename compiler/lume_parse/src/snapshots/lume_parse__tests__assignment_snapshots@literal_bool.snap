@@ -12,5 +12,6 @@ SOURCE_FILE@0..10
       ASSIGN@6..7 "="
       VARIABLE_EXPR@7..9
         WHITESPACE@7..8 " "
-        IDENT@8..9 "b"
+        NAME@8..9
+          IDENT@8..9 "b"
     SEMICOLON@9..10 ";"

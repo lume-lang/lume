@@ -15,9 +15,11 @@ SOURCE_FILE@0..15
       LEFT_PAREN@8..9 "("
       RANGE_EXPR@9..13
         VARIABLE_EXPR@9..10
-          IDENT@9..10 "a"
+          NAME@9..10
+            IDENT@9..10 "a"
         DOT_DOT@10..12 ".."
         VARIABLE_EXPR@12..13
-          IDENT@12..13 "b"
+          NAME@12..13
+            IDENT@12..13 "b"
       RIGHT_PAREN@13..14 ")"
     SEMICOLON@14..15 ";"

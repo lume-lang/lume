@@ -11,14 +11,16 @@ SOURCE_FILE@0..137
       PATH@13..23
         PATH_SEGMENT@13..23
           PATH_TYPE@13..23
-            IDENT@13..16 "Add"
+            NAME@13..16
+              IDENT@13..16 "Add"
             GENERIC_ARGS@16..23
               LESS@16..17 "<"
               NAMED_TYPE@17..22
                 PATH@17..22
                   PATH_SEGMENT@17..22
                     PATH_TYPE@17..22
-                      IDENT@17..22 "Int32"
+                      NAME@17..22
+                        IDENT@17..22 "Int32"
               GREATER@22..23 ">"
     COLON@23..24 ":"
     WHITESPACE@24..25 " "
@@ -26,7 +28,8 @@ SOURCE_FILE@0..137
       PATH@25..31
         PATH_SEGMENT@25..31
           PATH_TYPE@25..31
-            IDENT@25..30 "Int32"
+            NAME@25..30
+              IDENT@25..30 "Int32"
             WHITESPACE@30..31 " "
     LEFT_BRACE@31..32 "{"
     WHITESPACE@32..45 "\n            "
@@ -47,7 +50,8 @@ SOURCE_FILE@0..137
               PATH@59..64
                 PATH_SEGMENT@59..64
                   PATH_TYPE@59..64
-                    IDENT@59..64 "Int32"
+                    NAME@59..64
+                      IDENT@59..64 "Int32"
           RIGHT_PAREN@64..65 ")"
         WHITESPACE@65..66 " "
         RETURN_TYPE@66..75
@@ -57,7 +61,8 @@ SOURCE_FILE@0..137
             PATH@69..75
               PATH_SEGMENT@69..75
                 PATH_TYPE@69..75
-                  IDENT@69..74 "Int32"
+                  NAME@69..74
+                    IDENT@69..74 "Int32"
                   WHITESPACE@74..75 " "
       BLOCK@75..127
         LEFT_BRACE@75..76 "{"
@@ -67,12 +72,14 @@ SOURCE_FILE@0..137
           BIN_EXPR@99..112
             VARIABLE_EXPR@99..104
               WHITESPACE@99..100 " "
-              IDENT@100..104 "self"
+              NAME@100..104
+                IDENT@100..104 "self"
             WHITESPACE@104..105 " "
             ADD@105..106 "+"
             WHITESPACE@106..107 " "
             VARIABLE_EXPR@107..112
-              IDENT@107..112 "other"
+              NAME@107..112
+                IDENT@107..112 "other"
           SEMICOLON@112..113 ";"
         WHITESPACE@113..126 "\n            "
         RIGHT_BRACE@126..127 "}"

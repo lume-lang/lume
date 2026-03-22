@@ -5,13 +5,15 @@ expression: "parse(Target :: Statement, \"for pattern in collection { break; }\"
 SOURCE_FILE@0..36
   FOR_STMT@0..36
     FOR_KW@0..3 "for"
-    IDENT@3..10 "pattern"
-    WHITESPACE@10..11 " "
+    WHITESPACE@3..4 " "
+    NAME@4..11
+      IDENT@4..11 "pattern"
     WHITESPACE@11..12 " "
     IN_KW@12..14 "in"
     VARIABLE_EXPR@14..25
       WHITESPACE@14..15 " "
-      IDENT@15..25 "collection"
+      NAME@15..25
+        IDENT@15..25 "collection"
     WHITESPACE@25..26 " "
     BLOCK@26..36
       LEFT_BRACE@26..27 "{"

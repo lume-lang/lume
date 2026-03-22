@@ -21,7 +21,8 @@ SOURCE_FILE@0..53
         PATH@37..42
           PATH_SEGMENT@37..42
             PATH_TYPE@37..42
-              IDENT@37..42 "Int32"
+              NAME@37..42
+                IDENT@37..42 "Int32"
       SEMICOLON@42..43 ";"
     WHITESPACE@43..52 "\n        "
     RIGHT_BRACE@52..53 "}"

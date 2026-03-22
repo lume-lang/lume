@@ -11,14 +11,16 @@ SOURCE_FILE@0..80
       PATH@13..26
         PATH_SEGMENT@13..26
           PATH_TYPE@13..26
-            IDENT@13..23 "Enumerable"
+            NAME@13..23
+              IDENT@13..23 "Enumerable"
             GENERIC_ARGS@23..26
               LESS@23..24 "<"
               NAMED_TYPE@24..25
                 PATH@24..25
                   PATH_SEGMENT@24..25
                     PATH_TYPE@24..25
-                      IDENT@24..25 "T"
+                      NAME@24..25
+                        IDENT@24..25 "T"
               GREATER@25..26 ">"
     COLON@26..27 ":"
     WHITESPACE@27..28 " "
@@ -26,14 +28,16 @@ SOURCE_FILE@0..80
       PATH@28..38
         PATH_SEGMENT@28..37
           PATH_TYPE@28..37
-            IDENT@28..34 "Vector"
+            NAME@28..34
+              IDENT@28..34 "Vector"
             GENERIC_ARGS@34..37
               LESS@34..35 "<"
               NAMED_TYPE@35..36
                 PATH@35..36
                   PATH_SEGMENT@35..36
                     PATH_TYPE@35..36
-                      IDENT@35..36 "T"
+                      NAME@35..36
+                        IDENT@35..36 "T"
               GREATER@36..37 ">"
         WHITESPACE@37..38 " "
     LEFT_BRACE@38..39 "{"
@@ -55,7 +59,8 @@ SOURCE_FILE@0..80
             PATH@65..67
               PATH_SEGMENT@65..67
                 PATH_TYPE@65..67
-                  IDENT@65..66 "T"
+                  NAME@65..66
+                    IDENT@65..66 "T"
                   WHITESPACE@66..67 " "
       BLOCK@67..70
         LEFT_BRACE@67..68 "{"

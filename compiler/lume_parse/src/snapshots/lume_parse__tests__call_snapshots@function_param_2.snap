@@ -15,14 +15,17 @@ SOURCE_FILE@0..19
       PATH@8..12
         PATH_SEGMENT@8..12
           PATH_CALLABLE@8..12
-            IDENT@8..12 "call"
+            NAME@8..12
+              IDENT@8..12 "call"
       ARG_LIST@12..18
         LEFT_PAREN@12..13 "("
         VARIABLE_EXPR@13..14
-          IDENT@13..14 "a"
+          NAME@13..14
+            IDENT@13..14 "a"
         COMMA@14..15 ","
         WHITESPACE@15..16 " "
         VARIABLE_EXPR@16..17
-          IDENT@16..17 "b"
+          NAME@16..17
+            IDENT@16..17 "b"
         RIGHT_PAREN@17..18 ")"
     SEMICOLON@18..19 ";"

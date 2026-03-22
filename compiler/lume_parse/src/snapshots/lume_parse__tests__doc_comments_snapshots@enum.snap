@@ -4,9 +4,8 @@ expression: "parse(Target :: Item,\n\"/// This is a doc comment\n        enum Fo
 ---
 SOURCE_FILE@0..70
   ENUM@0..70
-    DOC_COMMENT@0..34
-      DOC_COMMENT@0..25 "/// This is a doc com ..."
-      WHITESPACE@25..34 "\n        "
+    DOC_COMMENT@0..25 "/// This is a doc com ..."
+    WHITESPACE@25..34 "\n        "
     ENUM_KW@34..38 "enum"
     WHITESPACE@38..39 " "
     NAME@39..42

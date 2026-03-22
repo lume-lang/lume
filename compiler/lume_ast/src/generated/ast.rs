@@ -10,14 +10,14 @@
 use crate::*;
 use lume_syntax::*;
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Ident {
+pub struct Name {
     syntax: SyntaxNode,
 }
-impl Ident {}
-impl AstNode for Ident {
+impl Name {}
+impl AstNode for Name {
     fn cast(syntax: SyntaxNode) -> Option<Self> {
         match syntax.kind() {
-            SyntaxKind::IDENT => Some(Ident { syntax }),
+            SyntaxKind::NAME => Some(Name { syntax }),
             _ => None,
         }
     }
@@ -26,18 +26,14 @@ impl AstNode for Ident {
     }
 }
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Name {
+pub struct DocComment {
     syntax: SyntaxNode,
 }
-impl Name {
-    pub fn ident(&self) -> Option<Ident> {
-        crate::support::child(self.syntax())
-    }
-}
-impl AstNode for Name {
+impl DocComment {}
+impl AstNode for DocComment {
     fn cast(syntax: SyntaxNode) -> Option<Self> {
         match syntax.kind() {
-            SyntaxKind::NAME => Some(Name { syntax }),
+            SyntaxKind::DOC_COMMENT => Some(DocComment { syntax }),
             _ => None,
         }
     }
@@ -170,6 +166,9 @@ impl Fn {
     pub fn block(&self) -> Option<Block> {
         crate::support::child(self.syntax())
     }
+    pub fn doc_comments(&self) -> AstChildren<DocComment> {
+        crate::support::children(self.syntax())
+    }
     pub fn attr(&self) -> AstChildren<Attr> {
         crate::support::children(self.syntax())
     }
@@ -207,6 +206,9 @@ impl Struct {
     }
     pub fn bound_types(&self) -> Option<BoundTypes> {
         crate::support::child(self.syntax())
+    }
+    pub fn doc_comments(&self) -> AstChildren<DocComment> {
+        crate::support::children(self.syntax())
     }
     pub fn attr(&self) -> AstChildren<Attr> {
         crate::support::children(self.syntax())
@@ -249,6 +251,9 @@ impl Trait {
     pub fn bound_types(&self) -> Option<BoundTypes> {
         crate::support::child(self.syntax())
     }
+    pub fn doc_comments(&self) -> AstChildren<DocComment> {
+        crate::support::children(self.syntax())
+    }
     pub fn attr(&self) -> AstChildren<Attr> {
         crate::support::children(self.syntax())
     }
@@ -290,6 +295,9 @@ impl Enum {
     pub fn bound_types(&self) -> Option<BoundTypes> {
         crate::support::child(self.syntax())
     }
+    pub fn doc_comments(&self) -> AstChildren<DocComment> {
+        crate::support::children(self.syntax())
+    }
     pub fn attr(&self) -> AstChildren<Attr> {
         crate::support::children(self.syntax())
     }
@@ -327,6 +335,9 @@ impl Impl {
     }
     pub fn target(&self) -> Option<Type> {
         crate::support::child(self.syntax())
+    }
+    pub fn doc_comments(&self) -> AstChildren<DocComment> {
+        crate::support::children(self.syntax())
     }
     pub fn attr(&self) -> AstChildren<Attr> {
         crate::support::children(self.syntax())
@@ -371,6 +382,9 @@ impl TraitImpl {
     }
     pub fn target(&self) -> Option<Type> {
         crate::support::child(self.syntax())
+    }
+    pub fn doc_comments(&self) -> AstChildren<DocComment> {
+        crate::support::children(self.syntax())
     }
     pub fn attr(&self) -> AstChildren<Attr> {
         crate::support::children(self.syntax())
@@ -569,6 +583,9 @@ impl Method {
     pub fn block(&self) -> Option<Block> {
         crate::support::child(self.syntax())
     }
+    pub fn doc_comments(&self) -> AstChildren<DocComment> {
+        crate::support::children(self.syntax())
+    }
     pub fn attr(&self) -> AstChildren<Attr> {
         crate::support::children(self.syntax())
     }
@@ -664,7 +681,7 @@ pub struct Param {
     syntax: SyntaxNode,
 }
 impl Param {
-    pub fn dot_dot_dot(&self) -> Option<SyntaxToken> {
+    pub fn vararg(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::DOT_DOT_DOT)
     }
     pub fn colon(&self) -> Option<SyntaxToken> {
@@ -745,6 +762,9 @@ impl Field {
     }
     pub fn default_value(&self) -> Option<Expr> {
         crate::support::child(self.syntax())
+    }
+    pub fn doc_comments(&self) -> AstChildren<DocComment> {
+        crate::support::children(self.syntax())
     }
     pub fn attr(&self) -> AstChildren<Attr> {
         crate::support::children(self.syntax())
@@ -872,6 +892,9 @@ impl Case {
     }
     pub fn case_param_list(&self) -> Option<CaseParamList> {
         crate::support::child(self.syntax())
+    }
+    pub fn doc_comments(&self) -> AstChildren<DocComment> {
+        crate::support::children(self.syntax())
     }
 }
 impl AstNode for Case {
@@ -1216,7 +1239,7 @@ impl ForStmt {
     pub fn in_kw(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::IN_KW)
     }
-    pub fn pattern(&self) -> Option<Ident> {
+    pub fn pattern(&self) -> Option<Name> {
         crate::support::child(self.syntax())
     }
     pub fn collection(&self) -> Option<Expr> {
@@ -1349,7 +1372,7 @@ impl InstanceCallExpr {
     pub fn callee(&self) -> Option<Expr> {
         crate::support::child(self.syntax())
     }
-    pub fn ident(&self) -> Option<Ident> {
+    pub fn name(&self) -> Option<Name> {
         crate::support::child(self.syntax())
     }
     pub fn generic_args(&self) -> Option<GenericArgs> {
@@ -1540,7 +1563,7 @@ impl MemberExpr {
     pub fn expr(&self) -> Option<Expr> {
         crate::support::child(self.syntax())
     }
-    pub fn ident(&self) -> Option<Ident> {
+    pub fn name(&self) -> Option<Name> {
         crate::support::child(self.syntax())
     }
 }
@@ -1667,7 +1690,7 @@ pub struct VariableExpr {
     syntax: SyntaxNode,
 }
 impl VariableExpr {
-    pub fn ident(&self) -> Option<Ident> {
+    pub fn name(&self) -> Option<Name> {
         crate::support::child(self.syntax())
     }
 }
@@ -1908,7 +1931,7 @@ impl ConstructorField {
     pub fn semicolon(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::SEMICOLON)
     }
-    pub fn name(&self) -> Option<Ident> {
+    pub fn name(&self) -> Option<Name> {
         crate::support::child(self.syntax())
     }
     pub fn value(&self) -> Option<Expr> {
@@ -2084,7 +2107,7 @@ pub struct PatIdent {
     syntax: SyntaxNode,
 }
 impl PatIdent {
-    pub fn ident(&self) -> Option<Ident> {
+    pub fn name(&self) -> Option<Name> {
         crate::support::child(self.syntax())
     }
 }
@@ -2167,7 +2190,7 @@ pub struct BoundType {
     syntax: SyntaxNode,
 }
 impl BoundType {
-    pub fn name(&self) -> Option<Ident> {
+    pub fn name(&self) -> Option<Name> {
         crate::support::child(self.syntax())
     }
     pub fn constraints(&self) -> Option<Constraints> {
@@ -2333,7 +2356,7 @@ pub struct PathNamespace {
     syntax: SyntaxNode,
 }
 impl PathNamespace {
-    pub fn ident(&self) -> Option<Ident> {
+    pub fn name(&self) -> Option<Name> {
         crate::support::child(self.syntax())
     }
 }
@@ -2353,7 +2376,7 @@ pub struct PathVariant {
     syntax: SyntaxNode,
 }
 impl PathVariant {
-    pub fn ident(&self) -> Option<Ident> {
+    pub fn name(&self) -> Option<Name> {
         crate::support::child(self.syntax())
     }
 }
@@ -2373,7 +2396,7 @@ pub struct PathCallable {
     syntax: SyntaxNode,
 }
 impl PathCallable {
-    pub fn ident(&self) -> Option<Ident> {
+    pub fn name(&self) -> Option<Name> {
         crate::support::child(self.syntax())
     }
     pub fn generic_args(&self) -> Option<GenericArgs> {
@@ -2396,7 +2419,7 @@ pub struct PathType {
     syntax: SyntaxNode,
 }
 impl PathType {
-    pub fn ident(&self) -> Option<Ident> {
+    pub fn name(&self) -> Option<Name> {
         crate::support::child(self.syntax())
     }
     pub fn generic_args(&self) -> Option<GenericArgs> {

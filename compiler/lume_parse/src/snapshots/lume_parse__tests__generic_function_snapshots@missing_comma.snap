@@ -12,7 +12,8 @@ SOURCE_FILE@0..27
       BOUND_TYPES@7..14
         LESS@7..8 "<"
         BOUND_TYPE@8..10
-          IDENT@8..10 "T1"
+          NAME@8..10
+            IDENT@8..10 "T1"
         WHITESPACE@10..11 " "
         IDENT@11..13 "T2"
         GREATER@13..14 ">"
@@ -27,7 +28,8 @@ SOURCE_FILE@0..27
           PATH@20..25
             PATH_SEGMENT@20..25
               PATH_TYPE@20..25
-                IDENT@20..24 "void"
+                NAME@20..24
+                  IDENT@20..24 "void"
                 WHITESPACE@24..25 " "
     BLOCK@25..27
       LEFT_BRACE@25..26 "{"

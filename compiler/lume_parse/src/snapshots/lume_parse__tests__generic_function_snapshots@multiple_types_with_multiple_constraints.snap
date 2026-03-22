@@ -12,7 +12,8 @@ SOURCE_FILE@0..68
       BOUND_TYPES@7..55
         LESS@7..8 "<"
         BOUND_TYPE@8..30
-          IDENT@8..10 "T1"
+          NAME@8..10
+            IDENT@8..10 "T1"
           CONSTRAINTS@10..30
             COLON@10..11 ":"
             WHITESPACE@11..12 " "
@@ -20,7 +21,8 @@ SOURCE_FILE@0..68
               PATH@12..20
                 PATH_SEGMENT@12..20
                   PATH_TYPE@12..20
-                    IDENT@12..19 "Numeric"
+                    NAME@12..19
+                      IDENT@12..19 "Numeric"
                     WHITESPACE@19..20 " "
             ADD@20..21 "+"
             WHITESPACE@21..22 " "
@@ -28,11 +30,13 @@ SOURCE_FILE@0..68
               PATH@22..30
                 PATH_SEGMENT@22..30
                   PATH_TYPE@22..30
-                    IDENT@22..30 "Floating"
+                    NAME@22..30
+                      IDENT@22..30 "Floating"
         COMMA@30..31 ","
         WHITESPACE@31..32 " "
         BOUND_TYPE@32..54
-          IDENT@32..34 "T2"
+          NAME@32..34
+            IDENT@32..34 "T2"
           CONSTRAINTS@34..54
             COLON@34..35 ":"
             WHITESPACE@35..36 " "
@@ -40,7 +44,8 @@ SOURCE_FILE@0..68
               PATH@36..44
                 PATH_SEGMENT@36..44
                   PATH_TYPE@36..44
-                    IDENT@36..43 "Numeric"
+                    NAME@36..43
+                      IDENT@36..43 "Numeric"
                     WHITESPACE@43..44 " "
             ADD@44..45 "+"
             WHITESPACE@45..46 " "
@@ -48,7 +53,8 @@ SOURCE_FILE@0..68
               PATH@46..54
                 PATH_SEGMENT@46..54
                   PATH_TYPE@46..54
-                    IDENT@46..54 "Floating"
+                    NAME@46..54
+                      IDENT@46..54 "Floating"
         GREATER@54..55 ">"
       PARAM_LIST@55..57
         LEFT_PAREN@55..56 "("
@@ -61,7 +67,8 @@ SOURCE_FILE@0..68
           PATH@61..66
             PATH_SEGMENT@61..66
               PATH_TYPE@61..66
-                IDENT@61..65 "void"
+                NAME@61..65
+                  IDENT@61..65 "void"
                 WHITESPACE@65..66 " "
     BLOCK@66..68
       LEFT_BRACE@66..67 "{"

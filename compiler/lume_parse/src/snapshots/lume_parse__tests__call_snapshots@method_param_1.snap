@@ -11,13 +11,16 @@ SOURCE_FILE@0..18
     WHITESPACE@5..6 " "
     ASSIGN@6..7 "="
     INSTANCE_CALL_EXPR@7..17
-      IDENT@7..8 "a"
-      WHITESPACE@8..9 " "
+      WHITESPACE@7..8 " "
+      NAME@8..9
+        IDENT@8..9 "a"
       DOT@9..10 "."
-      IDENT@10..14 "call"
+      NAME@10..14
+        IDENT@10..14 "call"
       ARG_LIST@14..17
         LEFT_PAREN@14..15 "("
         VARIABLE_EXPR@15..16
-          IDENT@15..16 "a"
+          NAME@15..16
+            IDENT@15..16 "a"
         RIGHT_PAREN@16..17 ")"
     SEMICOLON@17..18 ";"

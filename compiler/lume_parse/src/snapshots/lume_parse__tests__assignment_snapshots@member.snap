@@ -6,12 +6,15 @@ SOURCE_FILE@0..12
   EXPR_STMT@0..12
     ASSIGNMENT_EXPR@0..11
       MEMBER_EXPR@0..8
-        IDENT@0..3 "foo"
+        NAME@0..3
+          IDENT@0..3 "foo"
         DOT@3..4 "."
-        IDENT@4..7 "bar"
+        NAME@4..7
+          IDENT@4..7 "bar"
         WHITESPACE@7..8 " "
       ASSIGN@8..9 "="
       VARIABLE_EXPR@9..11
         WHITESPACE@9..10 " "
-        IDENT@10..11 "a"
+        NAME@10..11
+          IDENT@10..11 "a"
     SEMICOLON@11..12 ";"

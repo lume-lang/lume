@@ -21,14 +21,16 @@ SOURCE_FILE@0..90
           PATH@36..41
             PATH_SEGMENT@36..41
               PATH_TYPE@36..41
-                IDENT@36..41 "Int32"
+                NAME@36..41
+                  IDENT@36..41 "Int32"
         COMMA@41..42 ","
         WHITESPACE@42..43 " "
         NAMED_TYPE@43..48
           PATH@43..48
             PATH_SEGMENT@43..48
               PATH_TYPE@43..48
-                IDENT@43..48 "Int32"
+                NAME@43..48
+                  IDENT@43..48 "Int32"
         RIGHT_PAREN@48..49 ")"
     COMMA@49..50 ","
     WHITESPACE@50..63 "\n            "
@@ -41,14 +43,16 @@ SOURCE_FILE@0..90
           PATH@67..72
             PATH_SEGMENT@67..72
               PATH_TYPE@67..72
-                IDENT@67..72 "Int32"
+                NAME@67..72
+                  IDENT@67..72 "Int32"
         COMMA@72..73 ","
         WHITESPACE@73..74 " "
         NAMED_TYPE@74..79
           PATH@74..79
             PATH_SEGMENT@74..79
               PATH_TYPE@74..79
-                IDENT@74..79 "Int32"
+                NAME@74..79
+                  IDENT@74..79 "Int32"
         RIGHT_PAREN@79..80 ")"
     WHITESPACE@80..89 "\n        "
     RIGHT_BRACE@89..90 "}"

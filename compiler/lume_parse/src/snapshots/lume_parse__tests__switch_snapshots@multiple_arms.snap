@@ -8,7 +8,8 @@ SOURCE_FILE@0..27
       SWITCH_KW@0..6 "switch"
       VARIABLE_EXPR@6..8
         WHITESPACE@6..7 " "
-        IDENT@7..8 "a"
+        NAME@7..8
+          IDENT@7..8 "a"
       WHITESPACE@8..9 " "
       LEFT_BRACE@9..10 "{"
       WHITESPACE@10..11 " "
@@ -18,12 +19,14 @@ SOURCE_FILE@0..27
             PATH@11..13
               PATH_SEGMENT@11..13
                 PATH_NAMESPACE@11..13
-                  IDENT@11..12 "b"
+                  NAME@11..12
+                    IDENT@11..12 "b"
                   WHITESPACE@12..13 " "
         BIG_ARROW@13..15 "=>"
         VARIABLE_EXPR@15..17
           WHITESPACE@15..16 " "
-          IDENT@16..17 "c"
+          NAME@16..17
+            IDENT@16..17 "c"
       COMMA@17..18 ","
       WHITESPACE@18..19 " "
       SWITCH_ARM@19..25
@@ -32,11 +35,13 @@ SOURCE_FILE@0..27
             PATH@19..21
               PATH_SEGMENT@19..21
                 PATH_NAMESPACE@19..21
-                  IDENT@19..20 "d"
+                  NAME@19..20
+                    IDENT@19..20 "d"
                   WHITESPACE@20..21 " "
         BIG_ARROW@21..23 "=>"
         VARIABLE_EXPR@23..25
           WHITESPACE@23..24 " "
-          IDENT@24..25 "e"
+          NAME@24..25
+            IDENT@24..25 "e"
       WHITESPACE@25..26 " "
       RIGHT_BRACE@26..27 "}"

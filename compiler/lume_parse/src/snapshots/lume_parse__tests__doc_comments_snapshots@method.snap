@@ -10,14 +10,14 @@ SOURCE_FILE@0..95
       PATH@5..9
         PATH_SEGMENT@5..9
           PATH_TYPE@5..9
-            IDENT@5..8 "Foo"
+            NAME@5..8
+              IDENT@5..8 "Foo"
             WHITESPACE@8..9 " "
     LEFT_BRACE@9..10 "{"
     WHITESPACE@10..23 "\n            "
     METHOD@23..85
-      DOC_COMMENT@23..61
-        DOC_COMMENT@23..48 "/// This is a doc com ..."
-        WHITESPACE@48..61 "\n            "
+      DOC_COMMENT@23..48 "/// This is a doc com ..."
+      WHITESPACE@48..61 "\n            "
       VISIBILITY@61..65
         PUB_KW@61..64 "pub"
         WHITESPACE@64..65 " "
@@ -37,7 +37,8 @@ SOURCE_FILE@0..95
             PATH@77..82
               PATH_SEGMENT@77..82
                 PATH_TYPE@77..82
-                  IDENT@77..81 "void"
+                  NAME@77..81
+                    IDENT@77..81 "void"
                   WHITESPACE@81..82 " "
       BLOCK@82..85
         LEFT_BRACE@82..83 "{"

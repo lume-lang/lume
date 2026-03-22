@@ -10,7 +10,8 @@ SOURCE_FILE@0..34
       PATH@5..10
         PATH_SEGMENT@5..10
           PATH_TYPE@5..10
-            IDENT@5..9 "Test"
+            NAME@5..9
+              IDENT@5..9 "Test"
             WHITESPACE@9..10 " "
     LEFT_BRACE@10..11 "{"
     WHITESPACE@11..12 " "
@@ -31,7 +32,8 @@ SOURCE_FILE@0..34
             PATH@25..30
               PATH_SEGMENT@25..30
                 PATH_TYPE@25..30
-                  IDENT@25..29 "void"
+                  NAME@25..29
+                    IDENT@25..29 "void"
                   WHITESPACE@29..30 " "
       BLOCK@30..32
         LEFT_BRACE@30..31 "{"

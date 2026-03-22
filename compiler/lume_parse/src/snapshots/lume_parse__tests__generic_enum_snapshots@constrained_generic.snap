@@ -11,7 +11,8 @@ SOURCE_FILE@0..24
     BOUND_TYPES@9..21
       LESS@9..10 "<"
       BOUND_TYPE@10..20
-        IDENT@10..11 "T"
+        NAME@10..11
+          IDENT@10..11 "T"
         CONSTRAINTS@11..20
           COLON@11..12 ":"
           WHITESPACE@12..13 " "
@@ -19,7 +20,8 @@ SOURCE_FILE@0..24
             PATH@13..20
               PATH_SEGMENT@13..20
                 PATH_TYPE@13..20
-                  IDENT@13..20 "Numeric"
+                  NAME@13..20
+                    IDENT@13..20 "Numeric"
       GREATER@20..21 ">"
     WHITESPACE@21..22 " "
     LEFT_BRACE@22..23 "{"

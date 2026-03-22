@@ -24,7 +24,7 @@ impl Parser {
 
         match self.token() {
             Token![import] => self.parse_import(),
-            Token![namespace] => self.parse_namespace(),
+            Token![namespace] => self.parse_identspace(),
             Token![impl] => self.parse_implementation(c),
             Token![fn] => self.parse_function(c),
             Token![struct] => self.parse_struct_definition(c),
@@ -72,13 +72,13 @@ impl Parser {
         }
 
         self.start_node(SyntaxKind::IMPORT_LIST);
-        self.consume_paren_seq(Parser::parse_name);
+        self.consume_paren_seq(Parser::parse_ident);
         self.finish_node();
 
         self.finish_node();
     }
 
-    fn parse_namespace(&mut self) {
+    fn parse_identspace(&mut self) {
         self.start_node(SyntaxKind::NAMESPACE);
 
         self.consume(Token![namespace]);
@@ -93,7 +93,7 @@ impl Parser {
         self.consume(Token![fn]);
         let is_external = self.check(Token![external]);
 
-        self.parse_name();
+        self.parse_ident();
 
         self.parse_type_parameters();
         self.parse_parameters();
@@ -122,7 +122,7 @@ impl Parser {
 
         self.check(Token![...]);
 
-        self.parse_name();
+        self.parse_ident();
         self.check(Token![:]);
         self.parse_type();
 
@@ -158,7 +158,7 @@ impl Parser {
         self.start_node_at(SyntaxKind::STRUCT, c);
 
         self.consume(Token![struct]);
-        self.parse_name();
+        self.parse_ident();
         self.parse_type_parameters();
 
         self.consume_curly_seq(Parser::parse_struct_field);
@@ -173,7 +173,7 @@ impl Parser {
         self.parse_attributes();
 
         self.parse_visibility();
-        self.parse_name();
+        self.parse_ident();
 
         // Report a special error if we found an identifier, such as
         // a method declaration, which isn't allowed within a `struct` block.
@@ -227,7 +227,7 @@ impl Parser {
         self.start_node_at(SyntaxKind::TRAIT, c);
 
         self.consume(Token![trait]);
-        self.parse_name();
+        self.parse_ident();
 
         self.parse_type_parameters();
         self.consume_curly_seq(Parser::parse_trait_method);
@@ -294,7 +294,7 @@ impl Parser {
 
         self.consume(Token![enum]);
 
-        self.parse_name();
+        self.parse_ident();
         self.parse_type_parameters();
         self.consume_comma_seq(SyntaxKind::LEFT_BRACE, SyntaxKind::RIGHT_BRACE, Parser::parse_enum_case);
 
@@ -308,7 +308,7 @@ impl Parser {
         self.parse_doc_comment();
         self.parse_attributes();
 
-        self.parse_name();
+        self.parse_ident();
 
         if self.peek(SyntaxKind::LEFT_PAREN) {
             self.start_node(SyntaxKind::CASE_PARAM_LIST);

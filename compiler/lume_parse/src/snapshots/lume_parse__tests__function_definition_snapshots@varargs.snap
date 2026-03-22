@@ -21,7 +21,8 @@ SOURCE_FILE@0..25
             PATH@16..21
               PATH_SEGMENT@16..21
                 PATH_TYPE@16..21
-                  IDENT@16..21 "Int32"
+                  NAME@16..21
+                    IDENT@16..21 "Int32"
         RIGHT_PAREN@21..22 ")"
     WHITESPACE@22..23 " "
     BLOCK@23..25

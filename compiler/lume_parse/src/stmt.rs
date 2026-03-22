@@ -48,7 +48,7 @@ impl Parser {
         self.start_node(SyntaxKind::LET_STMT);
         self.consume(Token![let]);
 
-        self.parse_name();
+        self.parse_ident();
         self.parse_opt_type();
 
         self.consume(Token![=]);
@@ -73,7 +73,7 @@ impl Parser {
         self.start_node(SyntaxKind::FOR_STMT);
         self.consume(Token![for]);
 
-        self.parse_identifier();
+        self.parse_ident();
 
         self.consume(Token![in]);
 

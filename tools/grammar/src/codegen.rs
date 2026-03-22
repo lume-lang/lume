@@ -64,13 +64,13 @@ const TOKEN_NAMES: &[(&str, &str)] = &[
     ("...", "dot_dot_dot"),
     ("->", "arrow"),
     ("=>", "big_arrow"),
+    ("///", "triple_slash"),
 ];
 
-fn name_of_token(tok: &str) -> &'static str {
+fn name_of_token(tok: &str) -> Option<&'static str> {
     TOKEN_NAMES
         .iter()
-        .find_map(|(key, name)| (*key == tok).then_some(name))
-        .unwrap_or_else(|| panic!("could not find name of token: {tok:?}"))
+        .find_map(|(key, name)| (*key == tok).then_some(*name))
 }
 
 pub(crate) fn codegen<I>(entries: I) -> proc_macro2::TokenStream
@@ -154,15 +154,17 @@ pub(crate) fn codegen_entry(Entry { name, format }: Entry) -> proc_macro2::Token
 
             for field in fields {
                 match field {
-                    Field::Token(token) => {
+                    Field::Token { name, token } => {
                         if token.starts_with(['#', '@']) {
                             continue;
                         }
 
-                        let token_name = name_of_token(&token);
-                        let syntax_name = as_syntax_name(token_name);
+                        let token_kind = name_of_token(&token).unwrap_or(&token);
+                        let syntax_name = as_syntax_name(token_kind);
 
-                        let token_ident = format_ident!("{token_name}");
+                        let token_name = as_node_name(token_kind);
+
+                        let token_ident = format_ident!("{}", name.as_ref().unwrap_or(&token_name));
                         let syntax_ident = format_ident!("{syntax_name}");
 
                         tokens.push(quote! {

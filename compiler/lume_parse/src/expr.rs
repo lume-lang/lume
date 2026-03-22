@@ -52,7 +52,7 @@ impl Parser {
             SyntaxKind::LEFT_BRACE => self.parse_scope_expression(),
             Token![if] => self.parse_if_conditional(),
             Token![switch] => self.parse_switch_expression(),
-            SyntaxKind::IDENT | Token![self] | Token![Self] => self.parse_named_expression(),
+            SyntaxKind::IDENT | Token![self] | Token![Self] => self.parse_identd_expression(),
 
             k if k.is_literal() => self.parse_literal(),
             k if k.is_unary() => self.parse_unary(c),
@@ -208,7 +208,7 @@ impl Parser {
 
     /// Parses an expression on the current cursor position, which is preceded
     /// by some identifier.
-    fn parse_named_expression(&mut self) -> SyntaxKind {
+    fn parse_identd_expression(&mut self) -> SyntaxKind {
         assert!(
             matches!(
                 self.token(),
@@ -230,7 +230,7 @@ impl Parser {
 
             // If the next token is an equal sign, it's an assignment expression
             Token![=] => {
-                self.parse_identifier();
+                self.parse_ident();
                 self.parse_assignment(c)
             }
 
@@ -252,7 +252,7 @@ impl Parser {
 
                 match (has_type_args, next_token) {
                     (_, SyntaxKind::LEFT_PAREN) => {
-                        self.parse_identifier();
+                        self.parse_ident();
                         self.parse_instance_call(c)
                     }
                     (_, SyntaxKind::LEFT_BRACE) => {
@@ -333,9 +333,9 @@ impl Parser {
     /// Parses a member expression on the current cursor position, which is
     /// preceded by some identifier.
     fn parse_member(&mut self, c: Checkpoint) -> SyntaxKind {
-        self.parse_identifier();
+        self.parse_ident();
         self.consume(Token![.]);
-        self.parse_identifier();
+        self.parse_ident();
 
         let is_method_call = self.peek(SyntaxKind::LEFT_PAREN);
 
@@ -445,7 +445,7 @@ impl Parser {
 
         let finished = self.consume_comma_seq(SyntaxKind::LEFT_BRACE, SyntaxKind::RIGHT_BRACE, |parser| {
             parser.start_node(SyntaxKind::FIELD);
-            parser.parse_name();
+            parser.parse_ident();
 
             if parser.check(Token![:]) {
                 parser.parse_expression(None);
@@ -510,7 +510,7 @@ impl Parser {
     /// Parses a variable reference expression on the current cursor position.
     fn parse_variable_reference(&mut self, c: Checkpoint) -> SyntaxKind {
         self.start_node_at(SyntaxKind::VARIABLE_EXPR, c);
-        self.parse_identifier();
+        self.parse_ident();
         self.finish_node();
 
         SyntaxKind::VARIABLE_EXPR

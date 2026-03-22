@@ -12,9 +12,8 @@ SOURCE_FILE@0..74
     LEFT_BRACE@9..10 "{"
     WHITESPACE@10..23 "\n            "
     CASE@23..64
-      DOC_COMMENT@23..61
-        DOC_COMMENT@23..48 "/// This is a doc com ..."
-        WHITESPACE@48..61 "\n            "
+      DOC_COMMENT@23..48 "/// This is a doc com ..."
+      WHITESPACE@48..61 "\n            "
       NAME@61..64
         IDENT@61..64 "Bar"
     WHITESPACE@64..73 "\n        "

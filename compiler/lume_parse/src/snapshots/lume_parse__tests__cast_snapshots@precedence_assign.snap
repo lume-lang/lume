@@ -22,5 +22,6 @@ SOURCE_FILE@0..17
         PATH@13..16
           PATH_SEGMENT@13..16
             PATH_NAMESPACE@13..16
-              IDENT@13..16 "u64"
+              NAME@13..16
+                IDENT@13..16 "u64"
     SEMICOLON@16..17 ";"

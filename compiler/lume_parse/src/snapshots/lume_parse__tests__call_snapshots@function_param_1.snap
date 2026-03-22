@@ -15,10 +15,12 @@ SOURCE_FILE@0..16
       PATH@8..12
         PATH_SEGMENT@8..12
           PATH_CALLABLE@8..12
-            IDENT@8..12 "call"
+            NAME@8..12
+              IDENT@8..12 "call"
       ARG_LIST@12..15
         LEFT_PAREN@12..13 "("
         VARIABLE_EXPR@13..14
-          IDENT@13..14 "a"
+          NAME@13..14
+            IDENT@13..14 "a"
         RIGHT_PAREN@14..15 ")"
     SEMICOLON@15..16 ";"

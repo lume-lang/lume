@@ -14,10 +14,12 @@ SOURCE_FILE@0..15
     ARRAY_EXPR@8..14
       LEFT_BRACKET@8..9 "["
       VARIABLE_EXPR@9..10
-        IDENT@9..10 "a"
+        NAME@9..10
+          IDENT@9..10 "a"
       COMMA@10..11 ","
       WHITESPACE@11..12 " "
       VARIABLE_EXPR@12..13
-        IDENT@12..13 "b"
+        NAME@12..13
+          IDENT@12..13 "b"
       RIGHT_BRACKET@13..14 "]"
     SEMICOLON@14..15 ";"

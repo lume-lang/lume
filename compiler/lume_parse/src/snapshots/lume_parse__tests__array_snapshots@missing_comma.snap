@@ -14,7 +14,8 @@ SOURCE_FILE@0..14
     ARRAY_EXPR@8..13
       LEFT_BRACKET@8..9 "["
       VARIABLE_EXPR@9..10
-        IDENT@9..10 "a"
+        NAME@9..10
+          IDENT@9..10 "a"
       WHITESPACE@10..11 " "
       IDENT@11..12 "b"
       RIGHT_BRACKET@12..13 "]"

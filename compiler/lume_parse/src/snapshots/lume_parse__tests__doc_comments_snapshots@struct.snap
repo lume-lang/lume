@@ -4,9 +4,8 @@ expression: "parse(Target :: Item, \"/// This is a doc comment\n        struct F
 ---
 SOURCE_FILE@0..48
   STRUCT@0..48
-    DOC_COMMENT@0..34
-      DOC_COMMENT@0..25 "/// This is a doc com ..."
-      WHITESPACE@25..34 "\n        "
+    DOC_COMMENT@0..25 "/// This is a doc com ..."
+    WHITESPACE@25..34 "\n        "
     STRUCT_KW@34..40 "struct"
     WHITESPACE@40..41 " "
     NAME@41..44
