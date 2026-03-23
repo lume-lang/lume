@@ -127,10 +127,10 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
             traverse_type_params(hir, visitor, trait_impl.type_parameters.iter().copied())?;
 
             for method in &trait_impl.methods {
-                visitor.visit_identifier(&method.name)?;
-                traverse_type_params(hir, visitor, method.type_parameters.iter().copied())?;
+                traverse_path(hir, visitor, &method.signature.name)?;
+                traverse_type_params(hir, visitor, method.signature.type_parameters.iter().copied())?;
 
-                for param in &method.parameters {
+                for param in &method.signature.parameters {
                     visitor.visit_identifier(&param.name)?;
 
                     traverse_type(hir, visitor, &param.param_type)?;
@@ -142,7 +142,7 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
                     }
                 }
 
-                traverse_type(hir, visitor, &method.return_type)?;
+                traverse_type(hir, visitor, &method.signature.return_type)?;
             }
         }
         Node::Impl(type_impl) => {
@@ -310,7 +310,7 @@ fn traverse_expr<V: Visitor>(hir: &Map, visitor: &mut V, expr: &Expression) -> R
                 traverse_expr(hir, visitor, hir.expect_expression(*argument)?)?;
             }
         }
-        ExpressionKind::Literal(_) | ExpressionKind::Variable(_) => {}
+        ExpressionKind::Literal(_) | ExpressionKind::Variable(_) | ExpressionKind::Missing => {}
     }
 
     Ok(())
@@ -333,7 +333,7 @@ fn traverse_pattern<V: Visitor>(hir: &Map, visitor: &mut V, pattern: &Pattern) -
                 traverse_pattern(hir, visitor, hir.expect_pattern(field)?)?;
             }
         }
-        PatternKind::Wildcard(_) => {}
+        PatternKind::Wildcard(_) | PatternKind::Missing => {}
     }
 
     Ok(())
@@ -367,6 +367,7 @@ fn traverse_path_segment<V: Visitor>(hir: &Map, visitor: &mut V, path: &PathSegm
                 traverse_type(hir, visitor, type_arg)?;
             }
         }
+        PathSegment::Missing => {}
     }
 
     Ok(())

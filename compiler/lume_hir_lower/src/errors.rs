@@ -5,6 +5,18 @@ use error_snippet_derive::Diagnostic;
 use lume_span::{Location, SourceFile};
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "invalid literal value", code = "LM1078")]
+pub struct InvalidLiteral {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("failed to parse literal value {value} as literal")]
+    pub range: Range<usize>,
+
+    pub value: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "invalid namespace path", code = "LM3005")]
 pub struct InvalidNamespacePath {
     #[span]
@@ -43,18 +55,6 @@ pub struct SelfNotFirstParameter {
     pub source: Arc<SourceFile>,
 
     #[label("instance methods must have `{ty}` as the first parameter")]
-    pub range: Range<usize>,
-
-    pub ty: String,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "`{ty}` cannot be used in functions", code = "LM3015")]
-pub struct SelfOutsideObjectContext {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("`{ty}` is only available inside traits and implementations")]
     pub range: Range<usize>,
 
     pub ty: String,

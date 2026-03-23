@@ -2,13 +2,16 @@ use crate::*;
 
 impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn pattern(&mut self, pattern: lume_ast::Pattern) -> Result<NodeId> {
+    pub(super) fn pattern(&mut self, pattern: lume_ast::Pat) -> NodeId {
         let id = self.next_node_id();
 
         let pat = match pattern {
-            lume_ast::Pattern::Literal(pat) => {
-                let literal = self.literal(pat);
-                let location = literal.location;
+            lume_ast::Pat::PatLiteral(pat) => {
+                let literal = pat
+                    .literal()
+                    .map_or(lume_hir::Literal::missing(), |lit| self.literal(lit));
+
+                let location = self.location(pat.location());
 
                 lume_hir::Pattern {
                     id,
@@ -16,9 +19,9 @@ impl LoweringContext<'_> {
                     location,
                 }
             }
-            lume_ast::Pattern::Identifier(pat) => {
-                let name = self.identifier(pat);
-                let location = name.location;
+            lume_ast::Pat::PatIdent(pat) => {
+                let name = self.ident_opt(pat.name());
+                let location = self.location(pat.location());
 
                 let pattern = lume_hir::Pattern {
                     id,
@@ -34,15 +37,10 @@ impl LoweringContext<'_> {
 
                 pattern
             }
-            lume_ast::Pattern::Variant(pat) => {
-                let name = self.resolve_symbol_name(&pat.name)?;
-                let location = self.location(pat.location);
-
-                let fields = pat
-                    .fields
-                    .into_iter()
-                    .map(|arg| self.subpattern(arg))
-                    .collect::<Result<Vec<_>>>()?;
+            lume_ast::Pat::PatVariant(pat) => {
+                let name = self.resolve_symbol_name_opt(pat.path());
+                let fields = pat.pat().map(|arg| self.subpattern(arg)).collect::<Vec<_>>();
+                let location = self.location(pat.location());
 
                 lume_hir::Pattern {
                     id,
@@ -50,8 +48,8 @@ impl LoweringContext<'_> {
                     location,
                 }
             }
-            lume_ast::Pattern::Wildcard(pat) => {
-                let location = self.location(pat.location);
+            lume_ast::Pat::PatWildcard(pat) => {
+                let location = self.location(pat.location());
 
                 lume_hir::Pattern {
                     id,
@@ -63,19 +61,40 @@ impl LoweringContext<'_> {
 
         self.map.nodes.insert(id, lume_hir::Node::Pattern(pat));
 
-        Ok(id)
+        id
+    }
+
+    pub(crate) fn missing_pat(&mut self, id: Option<NodeId>) -> lume_hir::Pattern {
+        lume_hir::Pattern {
+            id: id.unwrap_or_else(|| self.next_node_id()),
+            kind: lume_hir::PatternKind::Missing,
+            location: Location::empty(),
+        }
+    }
+
+    pub(super) fn pattern_opt(&mut self, pattern: Option<lume_ast::Pat>) -> NodeId {
+        if let Some(pat) = pattern {
+            self.pattern(pat)
+        } else {
+            let id = self.next_node_id();
+            let pat = self.missing_pat(Some(id));
+
+            self.map.nodes.insert(id, lume_hir::Node::Pattern(pat));
+
+            id
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn subpattern(&mut self, pattern: lume_ast::Pattern) -> Result<NodeId> {
+    fn subpattern(&mut self, pattern: lume_ast::Pat) -> NodeId {
         match pattern {
-            lume_ast::Pattern::Literal(_) | lume_ast::Pattern::Wildcard(_) | lume_ast::Pattern::Variant(_) => {
+            lume_ast::Pat::PatLiteral(_) | lume_ast::Pat::PatWildcard(_) | lume_ast::Pat::PatVariant(_) => {
                 self.pattern(pattern)
             }
-            lume_ast::Pattern::Identifier(pat) => {
+            lume_ast::Pat::PatIdent(pat) => {
                 let id = self.next_node_id();
-                let name = self.identifier(pat);
-                let location = name.location;
+                let name = self.ident_opt(pat.name());
+                let location = self.location(pat.location());
 
                 let pattern = lume_hir::Pattern {
                     id,
@@ -91,7 +110,7 @@ impl LoweringContext<'_> {
                 self.current_locals
                     .define(name.to_string(), lume_hir::VariableSource::Pattern(id));
 
-                Ok(id)
+                id
             }
         }
     }

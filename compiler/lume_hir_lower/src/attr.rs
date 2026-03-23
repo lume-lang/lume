@@ -5,40 +5,66 @@ impl LoweringContext<'_> {
     ///
     /// Since this methods uses the current node, ensure that this method is
     /// called before any other node IDs are assigned.
-    pub(crate) fn handle_attributes(&mut self, attrs: &[lume_ast::Attribute]) -> Result<()> {
+    pub(crate) fn handle_attributes<I>(&mut self, attrs: I)
+    where
+        I: IntoIterator<Item = lume_ast::Attr>,
+    {
         let current_node = self.current_node;
 
         for attr in attrs {
-            match attr.name.as_str() {
+            let Some(name) = attr.name() else { continue };
+
+            match name.as_text().as_ref() {
                 "lang_item" => {
-                    let Some(name_arg) = attr.arguments.iter().find(|arg| arg.key.as_str() == "name") else {
-                        return Err(errors::LangItemMissingName {
-                            source: self.current_file().clone(),
-                            range: attr.location.0.clone(),
-                        }
-                        .into());
+                    let Some(argument_list) = attr.arg_list() else {
+                        continue;
                     };
 
-                    let lume_ast::Literal::String(lang_name) = &name_arg.value else {
-                        return Err(errors::LangItemInvalidNameType {
-                            source: self.current_file().clone(),
-                            range: attr.location.0.clone(),
-                        }
-                        .into());
+                    let Some(name_arg) = argument_list
+                        .args()
+                        .find(|arg| arg.name().is_some_and(|n| n.syntax().text() == "name"))
+                    else {
+                        self.dcx.emit_and_push(
+                            errors::LangItemMissingName {
+                                source: self.current_file().clone(),
+                                range: attr.range(),
+                            }
+                            .into(),
+                        );
+
+                        continue;
                     };
 
-                    self.map.lang_items.add_name(lang_name.value, current_node)?;
+                    let Some(lang_name) = name_arg.syntax().descendants().find_map(lume_ast::StringLit::cast) else {
+                        self.dcx.emit_and_push(
+                            errors::LangItemInvalidNameType {
+                                source: self.current_file().clone(),
+                                range: attr.range(),
+                            }
+                            .into(),
+                        );
+
+                        continue;
+                    };
+
+                    if let Err(err) = self
+                        .map
+                        .lang_items
+                        .add_name(lang_name.as_text().trim_matches('"'), current_node)
+                    {
+                        self.dcx.emit_and_push(err);
+                    }
                 }
                 _ => {
-                    return Err(errors::UnknownAttribute {
-                        source: self.current_file().clone(),
-                        range: attr.location.0.clone(),
-                    }
-                    .into());
+                    self.dcx.emit_and_push(
+                        errors::UnknownAttribute {
+                            source: self.current_file().clone(),
+                            range: attr.range(),
+                        }
+                        .into(),
+                    );
                 }
             }
         }
-
-        Ok(())
     }
 }

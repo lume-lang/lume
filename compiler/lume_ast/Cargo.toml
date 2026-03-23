@@ -13,7 +13,7 @@ lume_span = { path = "../../crates/lume_span" }
 lume_syntax = { path = "../../crates/lume_syntax" }
 
 [dev-dependencies]
-lume_parse = { path = "../lume_parse" }
+lume_parser = { path = "../lume_parser" }
 
 insta = { version = "1.42.2", features = ["yaml"] }
 

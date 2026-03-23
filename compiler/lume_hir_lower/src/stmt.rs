@@ -1,7 +1,6 @@
-use std::sync::LazyLock;
-
 use crate::*;
 
+/*
 static AS_ITERATOR_PATH: LazyLock<lume_ast::Path> = LazyLock::new(|| {
     lume_ast::Path::with_root(
         lume_ast::ast_type_path!(std::iter::AsIterator),
@@ -29,6 +28,7 @@ static OPTIONAL_NONE_PATH: LazyLock<lume_ast::Path> = LazyLock::new(|| {
         lume_ast::PathSegment::variant("None"),
     )
 });
+ */
 
 impl LoweringContext<'_> {
     /// Lowers the given AST block into a HIR block, within an nested scope.
@@ -36,8 +36,8 @@ impl LoweringContext<'_> {
     pub(super) fn block(&mut self, expr: lume_ast::Block) -> lume_hir::Block {
         lume_hir::with_frame!(self.current_locals, || {
             let id = self.next_node_id();
-            let statements = self.statements(expr.statements);
-            let location = self.location(expr.location);
+            let statements = self.statements(expr.stmt());
+            let location = self.location(expr.location());
 
             lume_hir::Block {
                 id,
@@ -45,6 +45,15 @@ impl LoweringContext<'_> {
                 location,
             }
         })
+    }
+
+    /// Lowers the given AST block into a HIR block, within an nested scope.
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    pub(super) fn block_opt(&mut self, block: Option<lume_ast::Block>) -> lume_hir::Block {
+        match block {
+            Some(block) => self.block(block),
+            None => lume_hir::Block::missing(),
+        }
     }
 
     /// Lowers the given AST block into a HIR block, within an isolated scope.
@@ -61,8 +70,8 @@ impl LoweringContext<'_> {
             }
 
             let id = self.next_node_id();
-            let statements = self.statements(expr.statements);
-            let location = self.location(expr.location);
+            let statements = self.statements(expr.stmt());
+            let location = self.location(expr.location());
 
             lume_hir::Block {
                 id,
@@ -73,7 +82,10 @@ impl LoweringContext<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn statements(&mut self, statements: Vec<lume_ast::Statement>) -> Vec<lume_span::NodeId> {
+    pub(super) fn statements<I>(&mut self, statements: I) -> Vec<lume_span::NodeId>
+    where
+        I: IntoIterator<Item = lume_ast::Stmt>,
+    {
         statements
             .into_iter()
             .filter_map(|expr| match self.statement(expr) {
@@ -87,17 +99,17 @@ impl LoweringContext<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn statement(&mut self, expr: lume_ast::Statement) -> Result<lume_span::NodeId> {
+    fn statement(&mut self, expr: lume_ast::Stmt) -> Result<lume_span::NodeId> {
         let stmt = match expr {
-            lume_ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s)?,
-            lume_ast::Statement::Break(s) => self.stmt_break(*s),
-            lume_ast::Statement::Continue(s) => self.stmt_continue(*s),
-            lume_ast::Statement::Final(s) => self.stmt_final(*s)?,
-            lume_ast::Statement::Return(s) => self.stmt_return(*s)?,
-            lume_ast::Statement::InfiniteLoop(e) => self.stmt_infinite_loop(*e),
-            lume_ast::Statement::IteratorLoop(e) => self.stmt_iterator_loop(*e)?,
-            lume_ast::Statement::PredicateLoop(e) => self.stmt_predicate_loop(*e),
-            lume_ast::Statement::Expression(s) => self.stmt_expression(*s)?,
+            lume_ast::Stmt::LetStmt(s) => self.stmt_variable(s),
+            lume_ast::Stmt::BreakStmt(s) => self.stmt_break(s),
+            lume_ast::Stmt::ContinueStmt(s) => self.stmt_continue(s),
+            lume_ast::Stmt::FinalStmt(s) => self.stmt_final(s),
+            lume_ast::Stmt::ReturnStmt(s) => self.stmt_return(s),
+            lume_ast::Stmt::LoopStmt(e) => self.stmt_infinite_loop(e),
+            lume_ast::Stmt::ForStmt(e) => self.stmt_iterator_loop(e),
+            lume_ast::Stmt::WhileStmt(e) => self.stmt_predicate_loop(e),
+            lume_ast::Stmt::ExprStmt(s) => self.stmt_expression(s),
         };
 
         let id = stmt.id;
@@ -108,16 +120,12 @@ impl LoweringContext<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_variable(&mut self, statement: lume_ast::VariableDeclaration) -> Result<lume_hir::Statement> {
+    fn stmt_variable(&mut self, statement: lume_ast::LetStmt) -> lume_hir::Statement {
         let id = self.next_node_id();
-        let name = self.identifier(statement.name);
-        let value = self.expression(statement.value)?;
-        let location = self.location(statement.location);
-
-        let declared_type = match statement.variable_type {
-            Some(t) => Some(self.hir_type(t)?),
-            None => None,
-        };
+        let name = self.ident_opt(statement.name());
+        let declared_type = statement.ty().map(|t| self.hir_type(t));
+        let value = self.opt_expression(statement.expr());
+        let location = self.location(statement.location());
 
         let decl = lume_hir::VariableDeclaration {
             id,
@@ -130,19 +138,17 @@ impl LoweringContext<'_> {
         self.current_locals
             .define(name.to_string(), lume_hir::VariableSource::Variable(decl.id));
 
-        let statement = lume_hir::Statement {
+        lume_hir::Statement {
             id,
             location,
             kind: lume_hir::StatementKind::Variable(decl),
-        };
-
-        Ok(statement)
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_break(&mut self, statement: lume_ast::Break) -> lume_hir::Statement {
+    fn stmt_break(&mut self, statement: lume_ast::BreakStmt) -> lume_hir::Statement {
         let id = self.next_node_id();
-        let location = self.location(statement.location);
+        let location = self.location(statement.location());
 
         lume_hir::Statement {
             id,
@@ -152,9 +158,9 @@ impl LoweringContext<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_continue(&mut self, statement: lume_ast::Continue) -> lume_hir::Statement {
+    fn stmt_continue(&mut self, statement: lume_ast::ContinueStmt) -> lume_hir::Statement {
         let id = self.next_node_id();
-        let location = self.location(statement.location);
+        let location = self.location(statement.location());
 
         lume_hir::Statement {
             id,
@@ -164,36 +170,36 @@ impl LoweringContext<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_final(&mut self, statement: lume_ast::Final) -> Result<lume_hir::Statement> {
+    fn stmt_final(&mut self, statement: lume_ast::FinalStmt) -> lume_hir::Statement {
         let id = self.next_node_id();
-        let value = self.expression(statement.value)?;
-        let location = self.map.expression(value).unwrap().location;
+        let value = self.opt_expression(statement.expr());
+        let location = self.location(statement.location());
 
-        Ok(lume_hir::Statement {
+        lume_hir::Statement {
             id,
             location,
             kind: lume_hir::StatementKind::Final(lume_hir::Final { id, value, location }),
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_return(&mut self, statement: lume_ast::Return) -> Result<lume_hir::Statement> {
+    fn stmt_return(&mut self, statement: lume_ast::ReturnStmt) -> lume_hir::Statement {
         let id = self.next_node_id();
-        let value = self.opt_expression(statement.value)?;
-        let location = self.location(statement.location);
+        let value = statement.expr().map(|expr| self.expression(expr));
+        let location = self.location(statement.location());
 
-        Ok(lume_hir::Statement {
+        lume_hir::Statement {
             id,
             location,
             kind: lume_hir::StatementKind::Return(lume_hir::Return { id, value, location }),
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_infinite_loop(&mut self, expr: lume_ast::InfiniteLoop) -> lume_hir::Statement {
+    fn stmt_infinite_loop(&mut self, expr: lume_ast::LoopStmt) -> lume_hir::Statement {
         let id = self.next_node_id();
-        let location = self.location(expr.location);
-        let block = self.block(expr.block);
+        let location = self.location(expr.location());
+        let block = self.block_opt(expr.block());
 
         lume_hir::Statement {
             id,
@@ -203,10 +209,41 @@ impl LoweringContext<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_iterator_loop(&mut self, expr: lume_ast::IteratorLoop) -> Result<lume_hir::Statement> {
-        const VAR_COLLECTION_NAME: &str = "$collection";
-        const VAR_ITERATOR_NAME: &str = "$iter";
+    fn stmt_iterator_loop(&mut self, expr: lume_ast::ForStmt) -> lume_hir::Statement {
+        const VAR_COLLECTION_NAME: &str = "__collection";
+        const VAR_ITERATOR_NAME: &str = "__iter";
 
+        let stmt = crate::make::parse_from_text::<lume_ast::ExprStmt>(
+            &format!(
+                "{{
+                    let {collection_var} = {collection};
+                    let {iter_var} = std::iter::AsIterator::as_iter({collection_var});
+
+                    loop {{
+                        switch std::iter::Iterator::next({iter_var}) {{
+                            std::Optional::Some({pattern}) => {{
+                                {block}
+                            }},
+                            std::Optional::None => {{ break; }},
+                        }}
+                    }}
+                }}",
+                collection_var = VAR_COLLECTION_NAME,
+                iter_var = VAR_ITERATOR_NAME,
+                collection = expr
+                    .collection()
+                    .map_or_else(|| String::from("[]"), |condition| condition.as_text()),
+                pattern = expr
+                    .pattern()
+                    .map_or_else(|| String::from("[missing]"), |pat| pat.as_text()),
+                block = expr.block().map_or_else(|| String::from("{}"), |block| block.as_text()),
+            ),
+            lume_parser::Target::Statement,
+        );
+
+        self.stmt_expression(stmt)
+
+        /*
         // `let $collection = <collection>;`
         let collection_variable_decl = {
             lume_ast::Statement::VariableDeclaration(Box::new(lume_ast::VariableDeclaration {
@@ -325,59 +362,43 @@ impl LoweringContext<'_> {
 
         self.stmt_expression(lume_ast::Expression::Scope(Box::new(lume_ast::Scope {
             body: vec![collection_variable_decl, iter_variable_decl, loop_stmt],
-            location: expr.location.clone(),
+            location: expr.location(),
         })))
+         */
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_predicate_loop(&mut self, expr: lume_ast::PredicateLoop) -> lume_hir::Statement {
-        let id = self.next_node_id();
-        let location = self.location(expr.location);
+    fn stmt_predicate_loop(&mut self, expr: lume_ast::WhileStmt) -> lume_hir::Statement {
+        let stmt = crate::make::parse_from_text::<lume_ast::LoopStmt>(
+            &format!(
+                "loop {{
+                    if {condition} {{
+                        {block}
+                    }} else {{
+                        break;
+                    }}
+                }}",
+                condition = expr
+                    .condition()
+                    .map_or_else(|| String::from("false"), |condition| condition.as_text()),
+                block = expr.block().map_or_else(String::new, |block| block.as_text()),
+            ),
+            lume_parser::Target::Statement,
+        );
 
-        let block = self.block(lume_ast::Block {
-            statements: vec![lume_ast::Statement::Expression(Box::new(lume_ast::Expression::If(
-                Box::new(lume_ast::IfCondition {
-                    cases: vec![
-                        lume_ast::Condition {
-                            condition: Some(expr.condition),
-                            block: expr.block,
-                            location: lume_ast::Location(0..0),
-                        },
-                        lume_ast::Condition {
-                            condition: None,
-                            block: lume_ast::Block {
-                                statements: vec![lume_ast::Statement::Break(Box::new(lume_ast::Break {
-                                    location: lume_ast::Location(0..0),
-                                }))],
-                                location: lume_ast::Location(0..0),
-                            },
-                            location: lume_ast::Location(0..0),
-                        },
-                    ],
-                    location: lume_ast::Location(0..0),
-                }),
-            )))],
-            location: lume_ast::Location(0..0),
-        });
+        self.stmt_infinite_loop(stmt)
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn stmt_expression(&mut self, expr: lume_ast::ExprStmt) -> lume_hir::Statement {
+        let id = self.next_node_id();
+        let expr = self.opt_expression(expr.expr());
+        let location = self.map.expression(expr).unwrap().location;
 
         lume_hir::Statement {
             id,
             location,
-            kind: lume_hir::StatementKind::InfiniteLoop(lume_hir::InfiniteLoop { id, block, location }),
-        }
-    }
-
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn stmt_expression(&mut self, expr: lume_ast::Expression) -> Result<lume_hir::Statement> {
-        let id = self.next_node_id();
-        let expr = self.expression(expr)?;
-
-        let location = self.map.expression(expr).unwrap().location;
-
-        Ok(lume_hir::Statement {
-            id,
-            location,
             kind: lume_hir::StatementKind::Expression(expr),
-        })
+        }
     }
 }

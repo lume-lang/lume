@@ -4,81 +4,87 @@ use crate::*;
 
 impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(crate) fn hir_type(&mut self, ty: lume_ast::Type) -> Result<lume_hir::Type> {
+    pub(crate) fn hir_type(&mut self, ty: lume_ast::Type) -> lume_hir::Type {
         match ty {
-            lume_ast::Type::Named(t) => self.named_type(t),
-            lume_ast::Type::Array(t) => self.array_type(t),
-            lume_ast::Type::SelfType(t) => self.self_type(t),
+            lume_ast::Type::NamedType(t) => self.named_type(t),
+            lume_ast::Type::ArrayType(t) => self.array_type(t),
+            lume_ast::Type::SelfType(t) => self.self_type(self.location(t.location())),
         }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(crate) fn hir_type_opt(&mut self, ty: Option<lume_ast::Type>) -> Result<lume_hir::Type> {
+    pub(crate) fn type_or_void(&mut self, ty: Option<lume_ast::Type>) -> lume_hir::Type {
         match ty {
-            Some(e) => Ok(self.hir_type(e)?),
-            None => Ok(lume_hir::Type::void()),
+            Some(e) => self.hir_type(e),
+            None => lume_hir::Type::void(),
         }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn named_type(&mut self, expr: lume_ast::NamedType) -> Result<lume_hir::Type> {
+    fn named_type(&mut self, expr: lume_ast::NamedType) -> lume_hir::Type {
         // If there is currently a visible type parameter with the same name, attempt to
         // use it's ID...
-        let id = if expr.name.root.is_empty()
-            && let Some(id) = self.current_type_params.retrieve(expr.name.name.name().as_str())
+        let id = if let Some(path) = expr.path()
+            && !path.has_root()
         {
-            *id
+            self.existing_type_id_or_new(path.as_text())
         } else {
             // ...otherwise, just generate a new ID.
             lume_hir::TypeId::from(self.next_node_id())
         };
 
-        let name = self.resolve_symbol_name(&expr.name)?;
+        let name = if let Some(path) = expr.path() {
+            self.resolve_symbol_name(path)
+        } else {
+            lume_hir::Path::missing()
+        };
 
         let hir_type = lume_hir::Type {
             id,
             name,
             self_type: false,
-            location: self.location(expr.location().clone()),
+            location: self.location(expr.location()),
         };
 
         self.map.types.insert(hir_type.id, hir_type.clone());
-        Ok(hir_type)
+        hir_type
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn array_type(&mut self, ty: lume_ast::ArrayType) -> Result<lume_hir::Type> {
+    fn array_type(&mut self, ty: lume_ast::ArrayType) -> lume_hir::Type {
         let id = self.next_node_id();
 
         let mut name = lume_hir::hir_std_type_path!(Array);
-        let elemental_type = self.hir_type(*ty.element_type)?;
+        let elemental_type = self.type_or_void(ty.elemental());
         name.name.place_bound_types(vec![elemental_type]);
 
         let hir_type = lume_hir::Type {
             id: lume_hir::TypeId::from(id),
             name,
             self_type: false,
-            location: self.location(ty.location.clone()),
+            location: self.location(ty.location()),
         };
 
         self.map.types.insert(hir_type.id, hir_type.clone());
-        Ok(hir_type)
+        hir_type
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn self_type(&mut self, expr: lume_ast::SelfType) -> Result<lume_hir::Type> {
+    pub(crate) fn self_type(&mut self, location: Location) -> lume_hir::Type {
         let id = self.next_node_id();
-        let location = self.location(expr.location);
-        let name = match &self.self_type {
-            Some(ty) => ty.clone(),
-            None => {
-                return Err(crate::errors::SelfOutsideObjectContext {
+        let name = if let Some(ty) = &self.self_type {
+            ty.clone()
+        } else {
+            self.dcx.emit_and_push(
+                crate::errors::InvalidSelfParameter {
                     source: self.current_file().clone(),
                     range: location.index.clone(),
                     ty: String::from(SELF_TYPE_NAME),
                 }
-                .into());
-            }
+                .into(),
+            );
+
+            lume_hir::Path::missing()
         };
 
         let hir_type = lume_hir::Type {
@@ -89,6 +95,6 @@ impl LoweringContext<'_> {
         };
 
         self.map.types.insert(hir_type.id, hir_type.clone());
-        Ok(hir_type)
+        hir_type
     }
 }

@@ -1,7 +1,6 @@
 use std::sync::LazyLock;
 
-use error_snippet::Result;
-use lume_ast::Node;
+use lume_parser::Target;
 
 use crate::errors::*;
 use crate::*;
@@ -19,59 +18,80 @@ static ARRAY_PUSH_PATH: LazyLock<lume_hir::PathSegment> = LazyLock::new(|| lume_
 
 impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn expressions(&mut self, expressions: Vec<lume_ast::Expression>) -> Vec<lume_span::NodeId> {
+    pub(super) fn expressions<I>(&mut self, expressions: I) -> Vec<lume_span::NodeId>
+    where
+        I: IntoIterator<Item = lume_ast::Expr>,
+    {
         expressions
             .into_iter()
-            .filter_map(|expr| match self.expression(expr) {
-                Ok(e) => Some(e),
-                Err(err) => {
-                    self.dcx.emit(err);
-                    None
-                }
-            })
+            .map(|expr| self.expression(expr))
             .collect::<Vec<_>>()
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn expression(&mut self, statement: lume_ast::Expression) -> Result<lume_span::NodeId> {
-        let expr = match statement {
-            lume_ast::Expression::Array(e) => self.expr_array(*e)?,
-            lume_ast::Expression::Assignment(e) => self.expr_assignment(*e)?,
-            lume_ast::Expression::Call(e) => self.expr_call(*e)?,
-            lume_ast::Expression::Cast(e) => self.expr_cast(*e)?,
-            lume_ast::Expression::Construct(e) => self.expr_construct(*e)?,
-            lume_ast::Expression::If(e) => self.expr_if(*e)?,
-            lume_ast::Expression::IntrinsicCall(e) => self.expr_intrinsic_call(*e)?,
-            lume_ast::Expression::Is(e) => self.expr_is(*e)?,
-            lume_ast::Expression::Literal(e) => self.expr_literal(*e),
-            lume_ast::Expression::Member(e) => self.expr_member(*e)?,
-            lume_ast::Expression::Range(e) => self.expr_range(*e)?,
-            lume_ast::Expression::Scope(e) => self.expr_scope(*e),
-            lume_ast::Expression::Switch(e) => self.expr_switch(*e)?,
-            lume_ast::Expression::Variable(e) => self.expr_variable(*e)?,
-            lume_ast::Expression::Variant(e) => self.expr_variant(*e)?,
-        };
-
+    pub(super) fn expression(&mut self, expr: lume_ast::Expr) -> lume_span::NodeId {
+        let expr = self.lower_expression(expr);
         let id = expr.id;
-        self.map.nodes.insert(id, lume_hir::Node::Expression(expr));
 
-        Ok(id)
+        let existing = self.map.nodes.insert(id, lume_hir::Node::Expression(expr));
+        assert!(existing.is_none(), "bug!: overwrite HIR node {id:?}");
+
+        id
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn opt_expression(
-        &mut self,
-        statement: Option<lume_ast::Expression>,
-    ) -> Result<Option<lume_span::NodeId>> {
+    fn lower_expression(&mut self, statement: lume_ast::Expr) -> lume_hir::Expression {
         match statement {
-            Some(expr) => Ok(Some(self.expression(expr)?)),
-            None => Ok(None),
+            lume_ast::Expr::ArrayExpr(e) => self.expr_array(e),
+            lume_ast::Expr::AssignmentExpr(e) => self.expr_assignment(e),
+            lume_ast::Expr::InstanceCallExpr(e) => self.instance_expr_call(e),
+            lume_ast::Expr::StaticCallExpr(e) => self.static_expr_call(e),
+            lume_ast::Expr::CastExpr(e) => self.expr_cast(e),
+            lume_ast::Expr::ConstructExpr(e) => self.expr_construct(e),
+            lume_ast::Expr::IfExpr(e) => self.expr_if(e),
+            lume_ast::Expr::BinExpr(e) => self.expr_bin(e),
+            lume_ast::Expr::PostfixExpr(e) => self.expr_postfix(e),
+            lume_ast::Expr::UnaryExpr(e) => self.expr_unary(e),
+            lume_ast::Expr::IsExpr(e) => self.expr_is(e),
+            lume_ast::Expr::LitExpr(e) => self.expr_literal(e),
+            lume_ast::Expr::MemberExpr(e) => self.expr_member(e),
+            lume_ast::Expr::RangeExpr(e) => self.expr_range(e),
+            lume_ast::Expr::ScopeExpr(e) => self.expr_scope(e),
+            lume_ast::Expr::SwitchExpr(e) => self.expr_switch(e),
+            lume_ast::Expr::VariableExpr(e) => self.expr_variable(e),
+            lume_ast::Expr::VariantExpr(e) => self.expr_variant(e),
+            lume_ast::Expr::ParenExpr(e) => match e.expr() {
+                Some(inner) => self.lower_expression(inner),
+                None => self.missing_expr(None),
+            },
         }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_array(&mut self, expr: lume_ast::Array) -> Result<lume_hir::Expression> {
-        let location = self.location(expr.location);
+    pub(super) fn opt_expression(&mut self, expr: Option<lume_ast::Expr>) -> lume_span::NodeId {
+        if let Some(expr) = expr {
+            self.expression(expr)
+        } else {
+            let id = self.next_node_id();
+            let expr = lume_hir::Node::Expression(self.missing_expr(Some(id)));
+
+            assert!(self.map.nodes.insert(id, expr).is_none());
+
+            id
+        }
+    }
+
+    pub(crate) fn missing_expr(&mut self, id: Option<NodeId>) -> lume_hir::Expression {
+        lume_hir::Expression {
+            id: id.unwrap_or_else(|| self.next_node_id()),
+            kind: lume_hir::ExpressionKind::Missing,
+            location: Location::empty(),
+        }
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn expr_array(&mut self, expr: lume_ast::ArrayExpr) -> lume_hir::Expression {
+        let location = self.location(expr.location());
 
         let array_id = {
             let val_id = self.next_node_id();
@@ -87,8 +107,8 @@ impl LoweringContext<'_> {
 
         let mut body = vec![array_id];
 
-        for value in expr.values {
-            let value = self.expression(value)?;
+        for value in expr.items() {
+            let value = self.expression(value);
 
             let var_ref_id = self.next_node_id();
             let var_ref = lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), array_id, location);
@@ -115,7 +135,7 @@ impl LoweringContext<'_> {
 
         body.push(res_id);
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id: self.next_node_id(),
             location,
             kind: lume_hir::ExpressionKind::Scope(lume_hir::Scope {
@@ -123,17 +143,17 @@ impl LoweringContext<'_> {
                 body,
                 location,
             }),
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_assignment(&mut self, expr: lume_ast::Assignment) -> Result<lume_hir::Expression> {
+    fn expr_assignment(&mut self, expr: lume_ast::AssignmentExpr) -> lume_hir::Expression {
         let id = self.next_node_id();
-        let location = self.location(expr.location);
-        let target = self.expression(expr.target)?;
-        let value = self.expression(expr.value)?;
+        let location = self.location(expr.location());
+        let target = self.opt_expression(expr.lhs());
+        let value = self.opt_expression(expr.rhs());
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             location,
             kind: lume_hir::ExpressionKind::Assignment(lume_hir::Assignment {
@@ -142,47 +162,75 @@ impl LoweringContext<'_> {
                 value,
                 location,
             }),
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_call(&mut self, expr: lume_ast::Call) -> Result<lume_hir::Expression> {
+    fn instance_expr_call(&mut self, expr: lume_ast::InstanceCallExpr) -> lume_hir::Expression {
         let id = self.next_node_id();
-        let name = self.resolve_symbol_name(&expr.name)?;
-        let arguments = self.expressions(expr.arguments);
-        let location = self.location(expr.location);
+        let callee = self.opt_expression(expr.callee());
+        let location = self.location(expr.location());
 
-        let kind = if let Some(callee) = expr.callee {
-            let callee = self.expression(callee)?;
-
-            lume_hir::ExpressionKind::InstanceCall(lume_hir::InstanceCall {
-                id,
-                callee,
-                name: name.name,
-                arguments,
-                bound_types: Vec::new(),
-                location,
-            })
+        let bound_types = if let Some(bound_types) = expr.generic_args() {
+            bound_types.args().map(|arg| self.hir_type(arg)).collect::<Vec<_>>()
         } else {
-            lume_hir::ExpressionKind::StaticCall(lume_hir::StaticCall {
+            Vec::new()
+        };
+
+        let name = lume_hir::PathSegment::Callable {
+            name: self.ident_opt(expr.name()),
+            bound_types,
+            location,
+        };
+
+        let arguments = match expr.arg_list().map(|list| list.expr()) {
+            Some(args) => self.expressions(args),
+            None => Vec::new(),
+        };
+
+        let kind = lume_hir::ExpressionKind::InstanceCall(lume_hir::InstanceCall {
+            id,
+            callee,
+            name,
+            bound_types: Vec::new(),
+            arguments,
+            location,
+        });
+
+        lume_hir::Expression { id, location, kind }
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn static_expr_call(&mut self, expr: lume_ast::StaticCallExpr) -> lume_hir::Expression {
+        let id = self.next_node_id();
+        let name = self.resolve_symbol_name_opt(expr.path());
+        let location = self.location(expr.location());
+
+        let arguments = match expr.arg_list().map(|list| list.expr()) {
+            Some(args) => self.expressions(args),
+            None => Vec::new(),
+        };
+
+        lume_hir::Expression {
+            id,
+            location,
+            kind: lume_hir::ExpressionKind::StaticCall(lume_hir::StaticCall {
                 id,
                 name,
                 arguments,
                 location,
-            })
-        };
-
-        Ok(lume_hir::Expression { id, location, kind })
+            }),
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_cast(&mut self, expr: lume_ast::Cast) -> Result<lume_hir::Expression> {
+    fn expr_cast(&mut self, expr: lume_ast::CastExpr) -> lume_hir::Expression {
         let id = self.next_node_id();
-        let source = self.expression(expr.source)?;
-        let target = self.hir_type(expr.target_type)?;
-        let location = self.location(expr.location);
+        let source = self.opt_expression(expr.expr());
+        let target = self.type_or_void(expr.ty());
+        let location = self.location(expr.location());
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             location,
             kind: lume_hir::ExpressionKind::Cast(lume_hir::Cast {
@@ -191,22 +239,21 @@ impl LoweringContext<'_> {
                 target,
                 location,
             }),
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_construct(&mut self, expr: lume_ast::Construct) -> Result<lume_hir::Expression> {
+    fn expr_construct(&mut self, expr: lume_ast::ConstructExpr) -> lume_hir::Expression {
         let id = self.next_node_id();
-        let path = self.resolve_symbol_name(&expr.path)?;
+        let path = self.resolve_symbol_name_opt(expr.ty());
         let fields = expr
-            .fields
-            .into_iter()
+            .fields()
             .map(|field| self.expr_constructor_field(field))
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Vec<_>>();
 
-        let location = self.location(expr.location);
+        let location = self.location(expr.location());
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             location,
             kind: lume_hir::ExpressionKind::Construct(lume_hir::Construct {
@@ -215,100 +262,153 @@ impl LoweringContext<'_> {
                 fields,
                 location,
             }),
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_constructor_field(&mut self, expr: lume_ast::ConstructorField) -> Result<lume_hir::ConstructorField> {
-        let value = expr.value.unwrap_or_else(|| expr.name.clone().as_var());
+    fn expr_constructor_field(&mut self, expr: lume_ast::ConstructorField) -> lume_hir::ConstructorField {
+        let name = self.ident_opt(expr.name());
+        let value = match expr.value() {
+            Some(value) => self.expression(value),
+            None => {
+                let ast_expr: lume_ast::Expr = crate::make::parse_from_text(name.as_str(), Target::Statement);
+                self.expression(ast_expr)
+            }
+        };
 
-        let name = self.identifier(expr.name);
-        let value = self.expression(value)?;
-        let location = self.location(expr.location);
+        let location = self.location(expr.location());
 
-        Ok(lume_hir::ConstructorField {
+        lume_hir::ConstructorField {
             name,
             value,
             is_default: false,
             location,
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_if(&mut self, expr: lume_ast::IfCondition) -> Result<lume_hir::Expression> {
+    fn expr_if(&mut self, expr: lume_ast::IfExpr) -> lume_hir::Expression {
         let id = self.next_node_id();
-        let location = self.location(expr.location);
+        let location = self.location(expr.location());
 
-        let cases = expr
-            .cases
-            .into_iter()
-            .map(|c| self.expr_condition(c))
-            .collect::<Result<Vec<_>>>()?;
+        let cases = expr.cases().map(|c| self.expr_condition(c)).collect::<Vec<_>>();
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             location,
             kind: lume_hir::ExpressionKind::If(lume_hir::If { id, cases, location }),
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_condition(&mut self, expr: lume_ast::Condition) -> Result<lume_hir::Condition> {
-        let location = self.location(expr.location);
+    fn expr_condition(&mut self, expr: lume_ast::Condition) -> lume_hir::Condition {
+        let condition = expr.condition().map(|expr| self.expression(expr));
+        let block = self.block_opt(expr.block());
+        let location = self.location(expr.location());
 
-        let condition = if let Some(cond) = expr.condition {
-            Some(self.expression(cond)?)
-        } else {
-            None
-        };
-
-        let block = self.block(expr.block);
-
-        Ok(lume_hir::Condition {
+        lume_hir::Condition {
             condition,
             block,
             location,
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_intrinsic_call(&mut self, expr: lume_ast::IntrinsicCall) -> Result<lume_hir::Expression> {
+    fn expr_bin(&mut self, expr: lume_ast::BinExpr) -> lume_hir::Expression {
         let id = self.next_node_id();
-        let location = self.location(expr.location);
+        let location = self.location(expr.location());
 
-        let kind = match expr.kind {
+        let kind = match expr {
             // Arithmetic intrinsics
-            lume_ast::IntrinsicKind::Add { lhs, rhs } => lume_hir::IntrinsicKind::Add {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
+            _ if expr.add().is_some() => lume_hir::IntrinsicKind::Add {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
             },
-            lume_ast::IntrinsicKind::Sub { lhs, rhs } => lume_hir::IntrinsicKind::Sub {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
+            _ if expr.sub().is_some() => lume_hir::IntrinsicKind::Sub {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
             },
-            lume_ast::IntrinsicKind::Mul { lhs, rhs } => lume_hir::IntrinsicKind::Mul {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
+            _ if expr.mul().is_some() => lume_hir::IntrinsicKind::Mul {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
             },
-            lume_ast::IntrinsicKind::Div { lhs, rhs } => lume_hir::IntrinsicKind::Div {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
+            _ if expr.div().is_some() => lume_hir::IntrinsicKind::Div {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
             },
-            lume_ast::IntrinsicKind::And { lhs, rhs } => lume_hir::IntrinsicKind::And {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
+            _ if expr.and().is_some() => lume_hir::IntrinsicKind::And {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
             },
-            lume_ast::IntrinsicKind::Or { lhs, rhs } => lume_hir::IntrinsicKind::Or {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
-            },
-            lume_ast::IntrinsicKind::Negate { target } => lume_hir::IntrinsicKind::Negate {
-                target: self.expression(*target)?,
+            _ if expr.or().is_some() => lume_hir::IntrinsicKind::Or {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
             },
 
-            lume_ast::IntrinsicKind::Increment { target } => {
-                let dst = self.expression(*target.clone())?;
-                let src = self.expression(*target)?;
+            // Logical intrinsics
+            _ if expr.binary_and().is_some() => lume_hir::IntrinsicKind::BinaryAnd {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
+            },
+            _ if expr.binary_or().is_some() => lume_hir::IntrinsicKind::BinaryOr {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
+            },
+            _ if expr.binary_xor().is_some() => lume_hir::IntrinsicKind::BinaryXor {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
+            },
+
+            // Comparison intrinsics
+            _ if expr.equal().is_some() => lume_hir::IntrinsicKind::Equal {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
+            },
+            _ if expr.nequal().is_some() => lume_hir::IntrinsicKind::NotEqual {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
+            },
+            _ if expr.less().is_some() => lume_hir::IntrinsicKind::Less {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
+            },
+            _ if expr.lequal().is_some() => lume_hir::IntrinsicKind::LessEqual {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
+            },
+            _ if expr.greater().is_some() => lume_hir::IntrinsicKind::Greater {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
+            },
+            _ if expr.gequal().is_some() => lume_hir::IntrinsicKind::GreaterEqual {
+                lhs: self.opt_expression(expr.lhs()),
+                rhs: self.opt_expression(expr.rhs()),
+            },
+
+            _ => unreachable!(),
+        };
+
+        lume_hir::Expression {
+            id,
+            location,
+            kind: lume_hir::ExpressionKind::IntrinsicCall(lume_hir::IntrinsicCall {
+                id,
+                kind,
+                bound_types: Vec::new(),
+                location,
+            }),
+        }
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn expr_postfix(&mut self, expr: lume_ast::PostfixExpr) -> lume_hir::Expression {
+        let id = self.next_node_id();
+        let location = self.location(expr.location());
+
+        match expr {
+            _ if expr.increment().is_some() => {
+                let dst = self.opt_expression(expr.expr());
+                let src = self.opt_expression(expr.expr());
 
                 let rhs_id = self.next_node_id();
                 self.map.nodes.insert(
@@ -338,7 +438,7 @@ impl LoweringContext<'_> {
                     }),
                 );
 
-                return Ok(lume_hir::Expression {
+                lume_hir::Expression {
                     id,
                     kind: lume_hir::ExpressionKind::Assignment(lume_hir::Assignment {
                         id,
@@ -347,11 +447,11 @@ impl LoweringContext<'_> {
                         location,
                     }),
                     location,
-                });
+                }
             }
-            lume_ast::IntrinsicKind::Decrement { target } => {
-                let dst = self.expression(*target.clone())?;
-                let src = self.expression(*target)?;
+            _ if expr.decrement().is_some() => {
+                let dst = self.opt_expression(expr.expr());
+                let src = self.opt_expression(expr.expr());
 
                 let rhs_id = self.next_node_id();
                 self.map.nodes.insert(
@@ -381,7 +481,7 @@ impl LoweringContext<'_> {
                     }),
                 );
 
-                return Ok(lume_hir::Expression {
+                lume_hir::Expression {
                     id,
                     kind: lume_hir::ExpressionKind::Assignment(lume_hir::Assignment {
                         id,
@@ -390,54 +490,28 @@ impl LoweringContext<'_> {
                         location,
                     }),
                     location,
-                });
+                }
             }
+            _ => unreachable!(),
+        }
+    }
 
-            // Logical intrinsics
-            lume_ast::IntrinsicKind::BinaryAnd { lhs, rhs } => lume_hir::IntrinsicKind::BinaryAnd {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
-            },
-            lume_ast::IntrinsicKind::BinaryOr { lhs, rhs } => lume_hir::IntrinsicKind::BinaryOr {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
-            },
-            lume_ast::IntrinsicKind::BinaryXor { lhs, rhs } => lume_hir::IntrinsicKind::BinaryXor {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
-            },
-            lume_ast::IntrinsicKind::Not { target } => lume_hir::IntrinsicKind::Not {
-                target: self.expression(*target)?,
-            },
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn expr_unary(&mut self, expr: lume_ast::UnaryExpr) -> lume_hir::Expression {
+        let id = self.next_node_id();
+        let location = self.location(expr.location());
 
-            // Comparison intrinsics
-            lume_ast::IntrinsicKind::Equal { lhs, rhs } => lume_hir::IntrinsicKind::Equal {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
+        let kind = match expr {
+            _ if expr.sub().is_some() => lume_hir::IntrinsicKind::Negate {
+                target: self.opt_expression(expr.expr()),
             },
-            lume_ast::IntrinsicKind::NotEqual { lhs, rhs } => lume_hir::IntrinsicKind::NotEqual {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
+            _ if expr.not().is_some() => lume_hir::IntrinsicKind::Not {
+                target: self.opt_expression(expr.expr()),
             },
-            lume_ast::IntrinsicKind::Less { lhs, rhs } => lume_hir::IntrinsicKind::Less {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
-            },
-            lume_ast::IntrinsicKind::LessEqual { lhs, rhs } => lume_hir::IntrinsicKind::LessEqual {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
-            },
-            lume_ast::IntrinsicKind::Greater { lhs, rhs } => lume_hir::IntrinsicKind::Greater {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
-            },
-            lume_ast::IntrinsicKind::GreaterEqual { lhs, rhs } => lume_hir::IntrinsicKind::GreaterEqual {
-                lhs: self.expression(*lhs)?,
-                rhs: self.expression(*rhs)?,
-            },
+            _ => unreachable!(),
         };
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             location,
             kind: lume_hir::ExpressionKind::IntrinsicCall(lume_hir::IntrinsicCall {
@@ -446,17 +520,17 @@ impl LoweringContext<'_> {
                 bound_types: Vec::new(),
                 location,
             }),
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_is(&mut self, expr: lume_ast::Is) -> Result<lume_hir::Expression> {
+    fn expr_is(&mut self, expr: lume_ast::IsExpr) -> lume_hir::Expression {
         let id = self.next_node_id();
-        let target = self.expression(expr.target)?;
-        let pattern = self.pattern(expr.pattern)?;
-        let location = self.location(expr.location);
+        let target = self.opt_expression(expr.expr());
+        let pattern = self.pattern_opt(expr.pat());
+        let location = self.location(expr.location());
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             kind: lume_hir::ExpressionKind::Is(lume_hir::Is {
                 id,
@@ -465,12 +539,12 @@ impl LoweringContext<'_> {
                 location,
             }),
             location,
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_literal(&mut self, expr: lume_ast::Literal) -> lume_hir::Expression {
-        let literal = self.literal(expr);
+    fn expr_literal(&mut self, expr: lume_ast::LitExpr) -> lume_hir::Expression {
+        let literal = self.literal_opt(expr.literal());
 
         lume_hir::Expression {
             id: literal.id,
@@ -480,13 +554,13 @@ impl LoweringContext<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_member(&mut self, expr: lume_ast::Member) -> Result<lume_hir::Expression> {
+    fn expr_member(&mut self, expr: lume_ast::MemberExpr) -> lume_hir::Expression {
         let id = self.next_node_id();
-        let location = self.location(expr.location);
-        let callee = self.expression(expr.callee)?;
-        let name = self.identifier(expr.name);
+        let callee = self.opt_expression(expr.expr());
+        let name = self.ident_opt(expr.name());
+        let location = self.location(expr.location());
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             location,
             kind: lume_hir::ExpressionKind::Member(lume_hir::Member {
@@ -495,12 +569,12 @@ impl LoweringContext<'_> {
                 name,
                 location,
             }),
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_range(&mut self, expr: lume_ast::Range) -> Result<lume_hir::Expression> {
-        let range_new_name = if expr.inclusive {
+    fn expr_range(&mut self, expr: lume_ast::RangeExpr) -> lume_hir::Expression {
+        let range_new_name = if expr.assign().is_some() {
             lume_hir::Path::with_root(
                 lume_hir::hir_std_type_path!(RangeInclusive),
                 lume_hir::PathSegment::callable("new"),
@@ -513,11 +587,11 @@ impl LoweringContext<'_> {
         };
 
         let id = self.next_node_id();
-        let location = self.location(expr.location);
-        let lower = self.expression(expr.lower)?;
-        let upper = self.expression(expr.upper)?;
+        let lower = self.opt_expression(expr.lower());
+        let upper = self.opt_expression(expr.upper());
+        let location = self.location(expr.location());
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             location,
             kind: lume_hir::ExpressionKind::StaticCall(lume_hir::StaticCall {
@@ -526,16 +600,19 @@ impl LoweringContext<'_> {
                 arguments: vec![lower, upper],
                 location,
             }),
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_scope(&mut self, expr: lume_ast::Scope) -> lume_hir::Expression {
+    fn expr_scope(&mut self, expr: lume_ast::ScopeExpr) -> lume_hir::Expression {
         self.current_locals.push_frame();
 
         let id = self.next_node_id();
-        let body = self.statements(expr.body);
-        let location = self.location(expr.location);
+        let location = self.location(expr.location());
+
+        let body = expr
+            .block()
+            .map_or_else(Vec::new, |block| self.statements(block.stmt()));
 
         self.current_locals.pop_frame();
 
@@ -547,18 +624,13 @@ impl LoweringContext<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_switch(&mut self, expr: lume_ast::Switch) -> Result<lume_hir::Expression> {
+    fn expr_switch(&mut self, expr: lume_ast::SwitchExpr) -> lume_hir::Expression {
         let id = self.next_node_id();
-        let operand = self.expression(expr.operand)?;
-        let cases = expr
-            .cases
-            .into_iter()
-            .map(|field| self.expr_switch_case(field))
-            .collect::<Result<Vec<_>>>()?;
+        let operand = self.opt_expression(expr.expr());
+        let cases = expr.arms().map(|arm| self.expr_switch_case(arm)).collect::<Vec<_>>();
+        let location = self.location(expr.location());
 
-        let location = self.location(expr.location);
-
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             kind: lume_hir::ExpressionKind::Switch(lume_hir::Switch {
                 id,
@@ -567,60 +639,68 @@ impl LoweringContext<'_> {
                 location,
             }),
             location,
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_switch_case(&mut self, expr: lume_ast::SwitchCase) -> Result<lume_hir::SwitchCase> {
+    fn expr_switch_case(&mut self, expr: lume_ast::SwitchArm) -> lume_hir::SwitchCase {
         self.current_locals.push_frame();
 
-        let pattern = self.pattern(expr.pattern)?;
-        let branch = self.expression(expr.branch)?;
-        let location = self.location(expr.location);
+        let pattern = self.pattern_opt(expr.pat());
+        let branch = self.opt_expression(expr.expr());
+        let location = self.location(expr.location());
 
         self.current_locals.pop_frame();
 
-        Ok(lume_hir::SwitchCase {
+        lume_hir::SwitchCase {
             pattern,
             branch,
             location,
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_variable(&mut self, expr: lume_ast::Variable) -> Result<lume_hir::Expression> {
+    fn expr_variable(&mut self, expr: lume_ast::VariableExpr) -> lume_hir::Expression {
         let id = self.next_node_id();
+        let name = self.ident_opt(expr.name());
         let location = self.location(expr.location().clone());
 
-        let Some(var_source) = self.current_locals.retrieve(expr.name.name) else {
-            return Err(UndeclaredVariable {
-                source: self.current_file().clone(),
-                range: location.index.clone(),
-                name: expr.name.name.to_string(),
-            }
-            .into());
+        let Some(var_source) = self.current_locals.retrieve(&name.name).copied() else {
+            self.dcx.emit_and_push(
+                UndeclaredVariable {
+                    source: self.current_file().clone(),
+                    range: location.index.clone(),
+                    name: name.to_string(),
+                }
+                .into(),
+            );
+
+            return self.missing_expr(Some(id));
         };
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             location,
             kind: lume_hir::ExpressionKind::Variable(lume_hir::Variable {
                 id,
-                reference: var_source.clone(),
-                name: self.identifier(expr.name.clone()),
+                reference: var_source,
+                name,
                 location,
             }),
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_variant(&mut self, expr: lume_ast::Variant) -> Result<lume_hir::Expression> {
+    fn expr_variant(&mut self, expr: lume_ast::VariantExpr) -> lume_hir::Expression {
         let id = self.next_node_id();
-        let name = self.resolve_symbol_name(&expr.name)?;
+        let name = self.resolve_symbol_name_opt(expr.path());
         let location = self.location(expr.location().clone());
-        let arguments = self.expressions(expr.arguments);
+        let arguments = match expr.arg_list().map(|list| list.expr()) {
+            Some(args) => self.expressions(args),
+            None => Vec::new(),
+        };
 
-        Ok(lume_hir::Expression {
+        lume_hir::Expression {
             id,
             location,
             kind: lume_hir::ExpressionKind::Variant(lume_hir::Variant {
@@ -629,6 +709,6 @@ impl LoweringContext<'_> {
                 arguments,
                 location,
             }),
-        })
+        }
     }
 }

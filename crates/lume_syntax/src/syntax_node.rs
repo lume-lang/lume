@@ -113,6 +113,7 @@ pub enum SyntaxKind {
 
     // Comments
     LINE_COMMENT,
+    DOC_COMMENTS,
     DOC_COMMENT,
 
     // Statements
@@ -150,7 +151,6 @@ pub enum SyntaxKind {
     UNARY_EXPR,
 
     // Literals
-    LITERAL,
     BOOLEAN_LIT,
     INTEGER_LIT,
     FLOAT_LIT,
@@ -204,7 +204,6 @@ pub enum SyntaxKind {
     PATH_TYPE,
 
     // Pattern
-    PAT,
     PAT_IDENT,
     PAT_LITERAL,
     PAT_VARIANT,
@@ -228,7 +227,6 @@ pub enum SyntaxKind {
     CONSTRAINTS,
 
     GENERIC_ARGS,
-    GENERIC_ARG,
 
     // Keywords
     AS_KW,

@@ -1,17 +1,23 @@
 use crate::*;
 
 impl LoweringContext<'_> {
-    pub(crate) fn type_parameters(&mut self, ast_params: Vec<lume_ast::TypeParameter>) -> Result<Vec<NodeId>> {
-        let mut hir_params = Vec::with_capacity(ast_params.len());
+    pub(crate) fn type_parameters<I>(&mut self, bound_types: I) -> Vec<NodeId>
+    where
+        I: IntoIterator<Item = lume_ast::BoundType>,
+    {
+        let mut hir_params = Vec::new();
 
-        for ast_param in ast_params {
+        for ast_param in bound_types {
             let id = self.next_node_id();
-            let location = self.location(ast_param.name.location.clone());
-            let name = self.identifier(ast_param.name);
+            let location = self.location(ast_param.location());
+            let name = self.ident_opt(ast_param.name());
 
-            let mut constraints = Vec::with_capacity(ast_param.constraints.len());
-            for constraint in ast_param.constraints {
-                constraints.push(self.hir_type(constraint)?);
+            let mut constraints = Vec::new();
+
+            if let Some(constraint_list) = ast_param.constraints() {
+                for constraint in constraint_list.ty() {
+                    constraints.push(self.hir_type(constraint));
+                }
             }
 
             self.current_type_params
@@ -34,8 +40,14 @@ impl LoweringContext<'_> {
 
         let named_type_params = hir_params
             .iter()
-            .map(|&id| self.map.expect_type_parameter(id))
-            .collect::<Result<Vec<_>>>()?;
+            .filter_map(|&id| match self.map.expect_type_parameter(id) {
+                Ok(id) => Some(id),
+                Err(err) => {
+                    self.dcx.emit_and_push(err);
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
 
         self.ensure_unique_series(&named_type_params, |duplicate, existing| {
             crate::errors::DuplicateTypeParameter {
@@ -44,8 +56,8 @@ impl LoweringContext<'_> {
                 name: existing.name.to_string(),
             }
             .into()
-        })?;
+        });
 
-        Ok(hir_params)
+        hir_params
     }
 }

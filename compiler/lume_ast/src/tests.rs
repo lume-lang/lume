@@ -6,16 +6,16 @@ use super::*;
 
 impl crate::SourceFile {
     pub fn parse(text: &str) -> lume_syntax::SyntaxTree {
-        lume_parse::Parser::from_source(Arc::new(SourceFile::internal(text)))
-            .map(|parser| parser.parse(lume_parse::Target::Item))
+        lume_parser::Parser::from_source(Arc::new(SourceFile::internal(text)))
+            .map(|parser| parser.parse(lume_parser::Target::Item))
             .expect("failed to tokenize input")
     }
 }
 
 impl crate::Stmt {
     pub fn parse(text: &str) -> lume_syntax::SyntaxTree {
-        lume_parse::Parser::from_source(Arc::new(SourceFile::internal(text)))
-            .map(|parser| parser.parse(lume_parse::Target::Statement))
+        lume_parser::Parser::from_source(Arc::new(SourceFile::internal(text)))
+            .map(|parser| parser.parse(lume_parser::Target::Statement))
             .expect("failed to tokenize input")
     }
 }
@@ -91,18 +91,21 @@ fn if_block_condition() {
     );
 
     let if_ = tree.syntax().descendants().find_map(IfExpr::cast).unwrap();
-    assert_eq!(if_.condition().unwrap().syntax().text(), r#"true"#);
-    assert_eq!(if_.then_branch().unwrap().syntax().text(), r#"{ "if" }"#);
+    let mut cases = if_.cases();
 
-    let elif = if_.else_if().unwrap();
-    assert_eq!(elif.condition().unwrap().syntax().text(), r#"{ false }"#);
-    assert_eq!(elif.then_branch().unwrap().syntax().text(), r#"{ "first elif" }"#);
+    let case = cases.next().unwrap();
+    assert_eq!(case.condition().unwrap().syntax().text(), r#"true"#);
+    assert_eq!(case.block().unwrap().syntax().text(), r#"{ "if" }"#);
 
-    let elif = elif.else_if().unwrap();
-    assert_eq!(elif.condition().unwrap().syntax().text(), r#"true"#);
-    assert_eq!(elif.then_branch().unwrap().syntax().text(), r#"{ "second elif" }"#);
+    let case = cases.next().unwrap();
+    assert_eq!(case.condition().unwrap().syntax().text(), r#"{ false }"#);
+    assert_eq!(case.block().unwrap().syntax().text(), r#"{ "first elif" }"#);
 
-    let elif = elif.else_if().unwrap();
-    assert_eq!(elif.condition().unwrap().syntax().text(), r#"(true)"#);
-    assert_eq!(elif.then_branch().unwrap().syntax().text(), r#"{ "third elif" }"#);
+    let case = cases.next().unwrap();
+    assert_eq!(case.condition().unwrap().syntax().text(), r#"true"#);
+    assert_eq!(case.block().unwrap().syntax().text(), r#"{ "second elif" }"#);
+
+    let case = cases.next().unwrap();
+    assert_eq!(case.condition().unwrap().syntax().text(), r#"(true)"#);
+    assert_eq!(case.block().unwrap().syntax().text(), r#"{ "third elif" }"#);
 }

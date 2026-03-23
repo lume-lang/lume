@@ -195,8 +195,10 @@ impl Parser {
     fn non_trivia_pos(&self, from: usize) -> usize {
         self.tokens
             .iter()
+            .enumerate()
+            .rev()
             .skip(from)
-            .rposition(|(tok, _range)| !tok.is_trivia())
+            .find_map(|(idx, (tok, _range))| if !tok.is_trivia() { Some(idx) } else { None })
             .unwrap_or(0)
     }
 
@@ -393,7 +395,8 @@ impl Parser {
     }
 
     /// Creates a new checkout for the current position.
-    fn checkpoint(&self) -> Checkpoint {
+    fn checkpoint(&mut self) -> Checkpoint {
+        self.consume_trivia();
         self.builder.inner.checkpoint()
     }
 
@@ -406,36 +409,16 @@ impl Parser {
 
     /// Starts a new node.
     fn start_node(&mut self, kind: SyntaxKind) {
-        // Depending on whether we're at the first token or not, we might not
-        // be able to consume any trivia tokens.
-        //
-        // If this is the first token, consume the trivia *after* starting the node.
-        let is_at_root = self.tokens.last().is_none_or(|(_, span)| span.0 == 0);
-
-        if !is_at_root {
-            self.consume_trivia();
-        }
-
-        self.builder.inner.start_node(kind.into());
-
-        if is_at_root {
-            self.consume_trivia();
-        }
+        self.with_trivia(|parser| {
+            parser.builder.inner.start_node(kind.into());
+        });
     }
 
     /// Starts a new node at the given checkpoint.
     fn start_node_at(&mut self, kind: SyntaxKind, c: Checkpoint) {
-        let is_at_root = self.tokens.last().is_none_or(|(_, span)| span.0 == 0);
-
-        if !is_at_root {
-            self.consume_trivia();
-        }
-
-        self.builder.inner.start_node_at(c, kind.into());
-
-        if is_at_root {
-            self.consume_trivia();
-        }
+        self.with_trivia(|parser| {
+            parser.builder.inner.start_node_at(c, kind.into());
+        });
     }
 
     /// Finish the current node.
@@ -449,6 +432,23 @@ impl Parser {
         self.finish_node();
 
         kind
+    }
+
+    fn with_trivia<F: FnOnce(&mut Self)>(&mut self, f: F) {
+        // Depending on whether we're at the first token or not, we might not
+        // be able to consume any trivia tokens, since that would create multiple root
+        // nodes (which is invalid).
+        //
+        // If this is the first token, consume the trivia *after* starting the node.
+        let is_at_root = self.tokens.last().is_none_or(|(_, span)| span.0 == 0);
+
+        if !is_at_root {
+            self.consume_trivia();
+            f(self);
+        } else {
+            f(self);
+            self.consume_trivia();
+        }
     }
 
     /// Parses the next token as an identifier.

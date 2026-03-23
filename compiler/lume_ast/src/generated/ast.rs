@@ -377,10 +377,10 @@ impl TraitImpl {
     pub fn bound_types(&self) -> Option<BoundTypes> {
         crate::support::child(self.syntax())
     }
-    pub fn trait_(&self) -> Option<Type> {
+    pub fn __trait(&self) -> Option<Type> {
         crate::support::child(self.syntax())
     }
-    pub fn target(&self) -> Option<Type> {
+    pub fn __target(&self) -> Option<Type> {
         crate::support::child(self.syntax())
     }
     pub fn doc_comments(&self) -> AstChildren<DocComment> {
@@ -1343,10 +1343,10 @@ impl AssignmentExpr {
     pub fn assign(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::ASSIGN)
     }
-    pub fn target(&self) -> Option<Expr> {
+    pub fn __target(&self) -> Option<Expr> {
         crate::support::child(self.syntax())
     }
-    pub fn value(&self) -> Option<Expr> {
+    pub fn __value(&self) -> Option<Expr> {
         crate::support::child(self.syntax())
     }
 }
@@ -1476,23 +1476,8 @@ pub struct IfExpr {
     syntax: SyntaxNode,
 }
 impl IfExpr {
-    pub fn if_kw(&self) -> Option<SyntaxToken> {
-        crate::support::token(self.syntax(), SyntaxKind::IF_KW)
-    }
-    pub fn else_kw(&self) -> Option<SyntaxToken> {
-        crate::support::token(self.syntax(), SyntaxKind::ELSE_KW)
-    }
-    pub fn condition(&self) -> Option<Expr> {
-        crate::support::child(self.syntax())
-    }
-    pub fn then_branch(&self) -> Option<Block> {
-        crate::support::child(self.syntax())
-    }
-    pub fn else_if(&self) -> Option<IfExpr> {
-        crate::support::child(self.syntax())
-    }
-    pub fn else_branch(&self) -> Option<Block> {
-        crate::support::child(self.syntax())
+    pub fn cases(&self) -> AstChildren<Condition> {
+        crate::support::children(self.syntax())
     }
 }
 impl AstNode for IfExpr {
@@ -1589,10 +1574,10 @@ impl RangeExpr {
     pub fn assign(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::ASSIGN)
     }
-    pub fn lower(&self) -> Option<Expr> {
+    pub fn __lower(&self) -> Option<Expr> {
         crate::support::child(self.syntax())
     }
-    pub fn upper(&self) -> Option<Expr> {
+    pub fn __upper(&self) -> Option<Expr> {
         crate::support::child(self.syntax())
     }
 }
@@ -1778,10 +1763,10 @@ impl BinExpr {
     pub fn gequal(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::GEQUAL)
     }
-    pub fn lhs(&self) -> Option<Expr> {
+    pub fn __lhs(&self) -> Option<Expr> {
         crate::support::child(self.syntax())
     }
-    pub fn rhs(&self) -> Option<Expr> {
+    pub fn __rhs(&self) -> Option<Expr> {
         crate::support::child(self.syntax())
     }
 }
@@ -1859,7 +1844,7 @@ impl GenericArgs {
     pub fn greater(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::GREATER)
     }
-    pub fn args(&self) -> AstChildren<GenericArg> {
+    pub fn args(&self) -> AstChildren<Type> {
         crate::support::children(self.syntax())
     }
 }
@@ -1950,6 +1935,35 @@ impl AstNode for ConstructorField {
     }
 }
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct Condition {
+    syntax: SyntaxNode,
+}
+impl Condition {
+    pub fn if_kw(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::IF_KW)
+    }
+    pub fn else_kw(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::ELSE_KW)
+    }
+    pub fn condition(&self) -> Option<Expr> {
+        crate::support::child(self.syntax())
+    }
+    pub fn block(&self) -> Option<Block> {
+        crate::support::child(self.syntax())
+    }
+}
+impl AstNode for Condition {
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        match syntax.kind() {
+            SyntaxKind::CONDITION => Some(Condition { syntax }),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode {
+        &self.syntax
+    }
+}
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum Pat {
     PatIdent(PatIdent),
     PatLiteral(PatLiteral),
@@ -2002,35 +2016,6 @@ impl AstNode for SwitchArm {
     fn cast(syntax: SyntaxNode) -> Option<Self> {
         match syntax.kind() {
             SyntaxKind::SWITCH_ARM => Some(SwitchArm { syntax }),
-            _ => None,
-        }
-    }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
-}
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Condition {
-    syntax: SyntaxNode,
-}
-impl Condition {
-    pub fn if_kw(&self) -> Option<SyntaxToken> {
-        crate::support::token(self.syntax(), SyntaxKind::IF_KW)
-    }
-    pub fn else_kw(&self) -> Option<SyntaxToken> {
-        crate::support::token(self.syntax(), SyntaxKind::ELSE_KW)
-    }
-    pub fn condition(&self) -> Option<Expr> {
-        crate::support::child(self.syntax())
-    }
-    pub fn block(&self) -> Option<Block> {
-        crate::support::child(self.syntax())
-    }
-}
-impl AstNode for Condition {
-    fn cast(syntax: SyntaxNode) -> Option<Self> {
-        match syntax.kind() {
-            SyntaxKind::CONDITION => Some(Condition { syntax }),
             _ => None,
         }
     }
@@ -2224,26 +2209,6 @@ impl AstNode for Constraints {
     fn cast(syntax: SyntaxNode) -> Option<Self> {
         match syntax.kind() {
             SyntaxKind::CONSTRAINTS => Some(Constraints { syntax }),
-            _ => None,
-        }
-    }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
-}
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct GenericArg {
-    syntax: SyntaxNode,
-}
-impl GenericArg {
-    pub fn ty(&self) -> Option<Type> {
-        crate::support::child(self.syntax())
-    }
-}
-impl AstNode for GenericArg {
-    fn cast(syntax: SyntaxNode) -> Option<Self> {
-        match syntax.kind() {
-            SyntaxKind::GENERIC_ARG => Some(GenericArg { syntax }),
             _ => None,
         }
     }
