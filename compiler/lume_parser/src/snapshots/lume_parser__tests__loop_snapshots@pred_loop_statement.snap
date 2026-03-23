@@ -1,55 +1,29 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"while true { let a = 0; }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"while true { let a = 0; }\")"
 ---
-[
-    PredicateLoop(
-        PredicateLoop {
-            condition: Literal(
-                Boolean(
-                    BooleanLiteral {
-                        value: true,
-                        location: Location(
-                            6..10,
-                        ),
-                    },
-                ),
-            ),
-            block: Block {
-                statements: [
-                    VariableDeclaration(
-                        VariableDeclaration {
-                            name: Identifier {
-                                name: "a",
-                                location: Location(
-                                    17..18,
-                                ),
-                            },
-                            variable_type: None,
-                            value: Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 0,
-                                        location: Location(
-                                            21..22,
-                                        ),
-                                        kind: None,
-                                    },
-                                ),
-                            ),
-                            location: Location(
-                                13..23,
-                            ),
-                        },
-                    ),
-                ],
-                location: Location(
-                    11..25,
-                ),
-            },
-            location: Location(
-                0..25,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..25
+  WHILE_STMT@0..25
+    WHILE_KW@0..5 "while"
+    WHITESPACE@5..6 " "
+    LIT_EXPR@6..10
+      BOOLEAN_LIT@6..10
+        BOOLEAN_LIT@6..10 "true"
+    WHITESPACE@10..11 " "
+    BLOCK@11..25
+      LEFT_BRACE@11..12 "{"
+      WHITESPACE@12..13 " "
+      LET_STMT@13..23
+        LET_KW@13..16 "let"
+        WHITESPACE@16..17 " "
+        NAME@17..18
+          IDENT@17..18 "a"
+        WHITESPACE@18..19 " "
+        ASSIGN@19..20 "="
+        WHITESPACE@20..21 " "
+        LIT_EXPR@21..22
+          INTEGER_LIT@21..22
+            INTEGER_LIT@21..22 "0"
+        SEMICOLON@22..23 ";"
+      WHITESPACE@23..24 " "
+      RIGHT_BRACE@24..25 "}"

@@ -1,82 +1,34 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        enum Foo {\n            Bar(Int32, Int32)\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        enum Foo {\n            Bar(Int32, Int32)\n        }\")"
 ---
-[
-    EnumDefinition(
-        EnumDefinition {
-            visibility: None,
-            name: Identifier {
-                name: "Foo",
-                location: Location(
-                    14..17,
-                ),
-            },
-            type_parameters: [],
-            cases: [
-                EnumDefinitionCase {
-                    name: Identifier {
-                        name: "Bar",
-                        location: Location(
-                            32..35,
-                        ),
-                    },
-                    parameters: [
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Int32",
-                                            location: Location(
-                                                36..41,
-                                            ),
-                                        },
-                                        bound_types: [],
-                                        location: Location(
-                                            36..41,
-                                        ),
-                                    },
-                                    location: Location(
-                                        36..41,
-                                    ),
-                                },
-                            },
-                        ),
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Int32",
-                                            location: Location(
-                                                43..48,
-                                            ),
-                                        },
-                                        bound_types: [],
-                                        location: Location(
-                                            43..48,
-                                        ),
-                                    },
-                                    location: Location(
-                                        43..48,
-                                    ),
-                                },
-                            },
-                        ),
-                    ],
-                    location: Location(
-                        32..49,
-                    ),
-                    documentation: None,
-                },
-            ],
-            location: Location(
-                9..59,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..59
+  WHITESPACE@0..9 "\n        "
+  ENUM@9..59
+    ENUM_KW@9..13 "enum"
+    WHITESPACE@13..14 " "
+    NAME@14..17
+      IDENT@14..17 "Foo"
+    WHITESPACE@17..18 " "
+    LEFT_BRACE@18..19 "{"
+    WHITESPACE@19..32 "\n            "
+    CASE@32..49
+      NAME@32..35
+        IDENT@32..35 "Bar"
+      CASE_PARAM_LIST@35..49
+        LEFT_PAREN@35..36 "("
+        NAMED_TYPE@36..41
+          PATH@36..41
+            PATH_TYPE@36..41
+              NAME@36..41
+                IDENT@36..41 "Int32"
+        COMMA@41..42 ","
+        WHITESPACE@42..43 " "
+        NAMED_TYPE@43..48
+          PATH@43..48
+            PATH_TYPE@43..48
+              NAME@43..48
+                IDENT@43..48 "Int32"
+        RIGHT_PAREN@48..49 ")"
+    WHITESPACE@49..58 "\n        "
+    RIGHT_BRACE@58..59 "}"

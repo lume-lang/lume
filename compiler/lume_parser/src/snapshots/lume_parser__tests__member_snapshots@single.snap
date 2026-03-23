@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = a.b;\")"
+---
+SOURCE_FILE@0..12
+  LET_STMT@0..12
+    LET_KW@0..3 "let"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    MEMBER_EXPR@7..11
+      VARIABLE_EXPR@7..9
+        WHITESPACE@7..8 " "
+        NAME@8..9
+          IDENT@8..9 "a"
+      DOT@9..10 "."
+      NAME@10..11
+        IDENT@10..11 "b"
+    SEMICOLON@11..12 ";"

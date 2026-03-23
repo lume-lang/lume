@@ -1,18 +1,10 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"ident\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"ident;\")"
 ---
-[
-    Expression(
-        Variable(
-            Variable {
-                name: Identifier {
-                    name: "ident",
-                    location: Location(
-                        0..5,
-                    ),
-                },
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..6
+  EXPR_STMT@0..6
+    VARIABLE_EXPR@0..5
+      NAME@0..5
+        IDENT@0..5 "ident"
+    SEMICOLON@5..6 ";"

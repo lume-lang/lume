@@ -1,42 +1,25 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = { 1; };\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = { 1; };\")"
 ---
-[
-    VariableDeclaration(
-        VariableDeclaration {
-            name: Identifier {
-                name: "_",
-                location: Location(
-                    4..5,
-                ),
-            },
-            variable_type: None,
-            value: Scope(
-                Scope {
-                    body: [
-                        Expression(
-                            Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 1,
-                                        location: Location(
-                                            10..11,
-                                        ),
-                                        kind: None,
-                                    },
-                                ),
-                            ),
-                        ),
-                    ],
-                    location: Location(
-                        8..14,
-                    ),
-                },
-            ),
-            location: Location(
-                0..15,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..15
+  LET_STMT@0..15
+    LET_KW@0..3 "let"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    WHITESPACE@7..8 " "
+    SCOPE_EXPR@8..14
+      BLOCK@8..14
+        LEFT_BRACE@8..9 "{"
+        EXPR_STMT@9..12
+          WHITESPACE@9..10 " "
+          LIT_EXPR@10..11
+            INTEGER_LIT@10..11
+              INTEGER_LIT@10..11 "1"
+          SEMICOLON@11..12 ";"
+        WHITESPACE@12..13 " "
+        RIGHT_BRACE@13..14 "}"
+    SEMICOLON@14..15 ";"

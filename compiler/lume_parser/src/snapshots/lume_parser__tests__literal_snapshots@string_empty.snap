@@ -1,18 +1,10 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"\\\"\\\"\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"\\\"\\\";\")"
 ---
-[
-    Expression(
-        Literal(
-            String(
-                StringLiteral {
-                    value: "",
-                    location: Location(
-                        0..2,
-                    ),
-                },
-            ),
-        ),
-    ),
-]
+SOURCE_FILE@0..3
+  EXPR_STMT@0..3
+    LIT_EXPR@0..2
+      STRING_LIT@0..2
+        STRING_LIT@0..2 "\"\""
+    SEMICOLON@2..3 ";"

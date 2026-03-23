@@ -1,50 +1,25 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = (0..1);\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = (0..1);\")"
 ---
-[
-    VariableDeclaration(
-        VariableDeclaration {
-            name: Identifier {
-                name: "_",
-                location: Location(
-                    4..5,
-                ),
-            },
-            variable_type: None,
-            value: Range(
-                Range {
-                    lower: Literal(
-                        Int(
-                            IntLiteral {
-                                value: 0,
-                                location: Location(
-                                    9..10,
-                                ),
-                                kind: None,
-                            },
-                        ),
-                    ),
-                    upper: Literal(
-                        Int(
-                            IntLiteral {
-                                value: 1,
-                                location: Location(
-                                    12..13,
-                                ),
-                                kind: None,
-                            },
-                        ),
-                    ),
-                    inclusive: false,
-                    location: Location(
-                        9..13,
-                    ),
-                },
-            ),
-            location: Location(
-                0..15,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..15
+  LET_STMT@0..15
+    LET_KW@0..3 "let"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    WHITESPACE@7..8 " "
+    PAREN_EXPR@8..14
+      LEFT_PAREN@8..9 "("
+      RANGE_EXPR@9..13
+        LIT_EXPR@9..10
+          INTEGER_LIT@9..10
+            INTEGER_LIT@9..10 "0"
+        DOT_DOT@10..12 ".."
+        LIT_EXPR@12..13
+          INTEGER_LIT@12..13
+            INTEGER_LIT@12..13 "1"
+      RIGHT_PAREN@13..14 ")"
+    SEMICOLON@14..15 ";"

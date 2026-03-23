@@ -1,58 +1,25 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = call(a);\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = call(a);\")"
 ---
-[
-    VariableDeclaration(
-        VariableDeclaration {
-            name: Identifier {
-                name: "_",
-                location: Location(
-                    4..5,
-                ),
-            },
-            variable_type: None,
-            value: Call(
-                Call {
-                    callee: None,
-                    name: Path {
-                        root: [],
-                        name: Callable {
-                            name: Identifier {
-                                name: "call",
-                                location: Location(
-                                    8..12,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                8..12,
-                            ),
-                        },
-                        location: Location(
-                            8..12,
-                        ),
-                    },
-                    arguments: [
-                        Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "a",
-                                    location: Location(
-                                        13..14,
-                                    ),
-                                },
-                            },
-                        ),
-                    ],
-                    location: Location(
-                        8..15,
-                    ),
-                },
-            ),
-            location: Location(
-                0..16,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..16
+  LET_STMT@0..16
+    LET_KW@0..3 "let"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    STATIC_CALL_EXPR@7..15
+      WHITESPACE@7..8 " "
+      PATH@8..12
+        PATH_CALLABLE@8..12
+          NAME@8..12
+            IDENT@8..12 "call"
+      ARG_LIST@12..15
+        LEFT_PAREN@12..13 "("
+        VARIABLE_EXPR@13..14
+          NAME@13..14
+            IDENT@13..14 "a"
+        RIGHT_PAREN@14..15 ")"
+    SEMICOLON@15..16 ";"

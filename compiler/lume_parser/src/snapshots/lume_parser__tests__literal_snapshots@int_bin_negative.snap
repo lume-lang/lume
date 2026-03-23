@@ -1,28 +1,12 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"-0b01010101;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"-0b01010101;\")"
 ---
-[
-    Expression(
-        IntrinsicCall(
-            IntrinsicCall {
-                kind: Negate {
-                    target: Literal(
-                        Int(
-                            IntLiteral {
-                                value: 85,
-                                location: Location(
-                                    1..11,
-                                ),
-                                kind: None,
-                            },
-                        ),
-                    ),
-                },
-                location: Location(
-                    0..11,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..12
+  EXPR_STMT@0..12
+    UNARY_EXPR@0..11
+      SUB@0..1 "-"
+      LIT_EXPR@1..11
+        INTEGER_LIT@1..11
+          INTEGER_LIT@1..11 "0b01010101"
+    SEMICOLON@11..12 ";"

@@ -1,230 +1,89 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        use Add<Int32, Int64>: Int32 {\n            fn add(other: Int32) -> Int64 {\n                return self + other;\n            }\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        use Add<Int32, Int64>: Int32 {\n            fn add(other: Int32) -> Int64 {\n                return self + other;\n            }\n        }\")"
 ---
-[
-    TraitImplementation(
-        TraitImplementation {
-            name: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Add",
-                                location: Location(
-                                    13..16,
-                                ),
-                            },
-                            bound_types: [
-                                Named(
-                                    NamedType {
-                                        name: Path {
-                                            root: [],
-                                            name: Type {
-                                                name: Identifier {
-                                                    name: "Int32",
-                                                    location: Location(
-                                                        17..22,
-                                                    ),
-                                                },
-                                                bound_types: [],
-                                                location: Location(
-                                                    17..22,
-                                                ),
-                                            },
-                                            location: Location(
-                                                17..22,
-                                            ),
-                                        },
-                                    },
-                                ),
-                                Named(
-                                    NamedType {
-                                        name: Path {
-                                            root: [],
-                                            name: Type {
-                                                name: Identifier {
-                                                    name: "Int64",
-                                                    location: Location(
-                                                        24..29,
-                                                    ),
-                                                },
-                                                bound_types: [],
-                                                location: Location(
-                                                    24..29,
-                                                ),
-                                            },
-                                            location: Location(
-                                                24..29,
-                                            ),
-                                        },
-                                    },
-                                ),
-                            ],
-                            location: Location(
-                                13..30,
-                            ),
-                        },
-                        location: Location(
-                            13..30,
-                        ),
-                    },
-                },
-            ),
-            target: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Int32",
-                                location: Location(
-                                    32..37,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                32..37,
-                            ),
-                        },
-                        location: Location(
-                            32..37,
-                        ),
-                    },
-                },
-            ),
-            methods: [
-                TraitMethodImplementation {
-                    signature: Signature {
-                        external: false,
-                        name: Identifier {
-                            name: "add",
-                            location: Location(
-                                55..58,
-                            ),
-                        },
-                        type_parameters: [],
-                        parameters: [
-                            Parameter {
-                                name: Identifier {
-                                    name: "other",
-                                    location: Location(
-                                        59..64,
-                                    ),
-                                },
-                                param_type: Named(
-                                    NamedType {
-                                        name: Path {
-                                            root: [],
-                                            name: Type {
-                                                name: Identifier {
-                                                    name: "Int32",
-                                                    location: Location(
-                                                        66..71,
-                                                    ),
-                                                },
-                                                bound_types: [],
-                                                location: Location(
-                                                    66..71,
-                                                ),
-                                            },
-                                            location: Location(
-                                                66..71,
-                                            ),
-                                        },
-                                    },
-                                ),
-                                vararg: false,
-                                location: Location(
-                                    59..71,
-                                ),
-                            },
-                        ],
-                        return_type: Some(
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Int64",
-                                                location: Location(
-                                                    76..81,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                76..81,
-                                            ),
-                                        },
-                                        location: Location(
-                                            76..81,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            52..81,
-                        ),
-                    },
-                    block: Some(
-                        Block {
-                            statements: [
-                                Return(
-                                    Return {
-                                        value: Some(
-                                            IntrinsicCall(
-                                                IntrinsicCall {
-                                                    kind: Add {
-                                                        lhs: Variable(
-                                                            Variable {
-                                                                name: Identifier {
-                                                                    name: "self",
-                                                                    location: Location(
-                                                                        107..111,
-                                                                    ),
-                                                                },
-                                                            },
-                                                        ),
-                                                        rhs: Variable(
-                                                            Variable {
-                                                                name: Identifier {
-                                                                    name: "other",
-                                                                    location: Location(
-                                                                        114..119,
-                                                                    ),
-                                                                },
-                                                            },
-                                                        ),
-                                                    },
-                                                    location: Location(
-                                                        107..119,
-                                                    ),
-                                                },
-                                            ),
-                                        ),
-                                        location: Location(
-                                            100..120,
-                                        ),
-                                    },
-                                ),
-                            ],
-                            location: Location(
-                                82..134,
-                            ),
-                        },
-                    ),
-                    location: Location(
-                        52..134,
-                    ),
-                },
-            ],
-            type_parameters: [],
-            location: Location(
-                9..144,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..144
+  WHITESPACE@0..9 "\n        "
+  TRAIT_IMPL@9..144
+    USE_KW@9..12 "use"
+    WHITESPACE@12..13 " "
+    NAMED_TYPE@13..30
+      PATH@13..30
+        PATH_TYPE@13..30
+          NAME@13..16
+            IDENT@13..16 "Add"
+          GENERIC_ARGS@16..30
+            LESS@16..17 "<"
+            NAMED_TYPE@17..22
+              PATH@17..22
+                PATH_TYPE@17..22
+                  NAME@17..22
+                    IDENT@17..22 "Int32"
+            COMMA@22..23 ","
+            WHITESPACE@23..24 " "
+            NAMED_TYPE@24..29
+              PATH@24..29
+                PATH_TYPE@24..29
+                  NAME@24..29
+                    IDENT@24..29 "Int64"
+            GREATER@29..30 ">"
+    COLON@30..31 ":"
+    WHITESPACE@31..32 " "
+    NAMED_TYPE@32..38
+      PATH@32..38
+        PATH_TYPE@32..38
+          NAME@32..37
+            IDENT@32..37 "Int32"
+          WHITESPACE@37..38 " "
+    LEFT_BRACE@38..39 "{"
+    WHITESPACE@39..52 "\n            "
+    METHOD@52..134
+      SIG@52..82
+        FN_KW@52..54 "fn"
+        WHITESPACE@54..55 " "
+        NAME@55..58
+          IDENT@55..58 "add"
+        PARAM_LIST@58..72
+          LEFT_PAREN@58..59 "("
+          PARAM@59..71
+            NAME@59..64
+              IDENT@59..64 "other"
+            COLON@64..65 ":"
+            WHITESPACE@65..66 " "
+            NAMED_TYPE@66..71
+              PATH@66..71
+                PATH_TYPE@66..71
+                  NAME@66..71
+                    IDENT@66..71 "Int32"
+          RIGHT_PAREN@71..72 ")"
+        WHITESPACE@72..73 " "
+        RETURN_TYPE@73..82
+          ARROW@73..75 "->"
+          WHITESPACE@75..76 " "
+          NAMED_TYPE@76..82
+            PATH@76..82
+              PATH_TYPE@76..82
+                NAME@76..81
+                  IDENT@76..81 "Int64"
+                WHITESPACE@81..82 " "
+      BLOCK@82..134
+        LEFT_BRACE@82..83 "{"
+        WHITESPACE@83..100 "\n                "
+        RETURN_STMT@100..120
+          RETURN_KW@100..106 "return"
+          BIN_EXPR@106..119
+            VARIABLE_EXPR@106..111
+              WHITESPACE@106..107 " "
+              NAME@107..111
+                IDENT@107..111 "self"
+            WHITESPACE@111..112 " "
+            ADD@112..113 "+"
+            WHITESPACE@113..114 " "
+            VARIABLE_EXPR@114..119
+              NAME@114..119
+                IDENT@114..119 "other"
+          SEMICOLON@119..120 ";"
+        WHITESPACE@120..133 "\n            "
+        RIGHT_BRACE@133..134 "}"
+    WHITESPACE@134..143 "\n        "
+    RIGHT_BRACE@143..144 "}"

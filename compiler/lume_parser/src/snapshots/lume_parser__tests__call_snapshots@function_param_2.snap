@@ -1,68 +1,30 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = call(a, b);\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = call(a, b);\")"
 ---
-[
-    VariableDeclaration(
-        VariableDeclaration {
-            name: Identifier {
-                name: "_",
-                location: Location(
-                    4..5,
-                ),
-            },
-            variable_type: None,
-            value: Call(
-                Call {
-                    callee: None,
-                    name: Path {
-                        root: [],
-                        name: Callable {
-                            name: Identifier {
-                                name: "call",
-                                location: Location(
-                                    8..12,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                8..12,
-                            ),
-                        },
-                        location: Location(
-                            8..12,
-                        ),
-                    },
-                    arguments: [
-                        Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "a",
-                                    location: Location(
-                                        13..14,
-                                    ),
-                                },
-                            },
-                        ),
-                        Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "b",
-                                    location: Location(
-                                        16..17,
-                                    ),
-                                },
-                            },
-                        ),
-                    ],
-                    location: Location(
-                        8..18,
-                    ),
-                },
-            ),
-            location: Location(
-                0..19,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..19
+  LET_STMT@0..19
+    LET_KW@0..3 "let"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    STATIC_CALL_EXPR@7..18
+      WHITESPACE@7..8 " "
+      PATH@8..12
+        PATH_CALLABLE@8..12
+          NAME@8..12
+            IDENT@8..12 "call"
+      ARG_LIST@12..18
+        LEFT_PAREN@12..13 "("
+        VARIABLE_EXPR@13..14
+          NAME@13..14
+            IDENT@13..14 "a"
+        COMMA@14..15 ","
+        WHITESPACE@15..16 " "
+        VARIABLE_EXPR@16..17
+          NAME@16..17
+            IDENT@16..17 "b"
+        RIGHT_PAREN@17..18 ")"
+    SEMICOLON@18..19 ";"

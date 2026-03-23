@@ -1,0 +1,27 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"fn main() -> Void {}\")"
+---
+SOURCE_FILE@0..20
+  FN@0..20
+    SIG@0..18
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "main"
+      PARAM_LIST@7..9
+        LEFT_PAREN@7..8 "("
+        RIGHT_PAREN@8..9 ")"
+      WHITESPACE@9..10 " "
+      RETURN_TYPE@10..18
+        ARROW@10..12 "->"
+        WHITESPACE@12..13 " "
+        NAMED_TYPE@13..18
+          PATH@13..18
+            PATH_TYPE@13..18
+              NAME@13..17
+                IDENT@13..17 "Void"
+              WHITESPACE@17..18 " "
+    BLOCK@18..20
+      LEFT_BRACE@18..19 "{"
+      RIGHT_BRACE@19..20 "}"

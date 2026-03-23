@@ -1,202 +1,89 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        use Cast: Int32 {\n            fn to_string() -> String {\n                return self;\n            }\n\n            fn to_int() -> Int32 {\n                return self;\n            }\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        use Cast: Int32 {\n            fn to_string() -> String {\n                return self;\n            }\n\n            fn to_int() -> Int32 {\n                return self;\n            }\n        }\")"
 ---
-[
-    TraitImplementation(
-        TraitImplementation {
-            name: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Cast",
-                                location: Location(
-                                    13..17,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                13..17,
-                            ),
-                        },
-                        location: Location(
-                            13..17,
-                        ),
-                    },
-                },
-            ),
-            target: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Int32",
-                                location: Location(
-                                    19..24,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                19..24,
-                            ),
-                        },
-                        location: Location(
-                            19..24,
-                        ),
-                    },
-                },
-            ),
-            methods: [
-                TraitMethodImplementation {
-                    signature: Signature {
-                        external: false,
-                        name: Identifier {
-                            name: "to_string",
-                            location: Location(
-                                42..51,
-                            ),
-                        },
-                        type_parameters: [],
-                        parameters: [],
-                        return_type: Some(
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "String",
-                                                location: Location(
-                                                    57..63,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                57..63,
-                                            ),
-                                        },
-                                        location: Location(
-                                            57..63,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            39..63,
-                        ),
-                    },
-                    block: Some(
-                        Block {
-                            statements: [
-                                Return(
-                                    Return {
-                                        value: Some(
-                                            Variable(
-                                                Variable {
-                                                    name: Identifier {
-                                                        name: "self",
-                                                        location: Location(
-                                                            89..93,
-                                                        ),
-                                                    },
-                                                },
-                                            ),
-                                        ),
-                                        location: Location(
-                                            82..94,
-                                        ),
-                                    },
-                                ),
-                            ],
-                            location: Location(
-                                64..108,
-                            ),
-                        },
-                    ),
-                    location: Location(
-                        39..108,
-                    ),
-                },
-                TraitMethodImplementation {
-                    signature: Signature {
-                        external: false,
-                        name: Identifier {
-                            name: "to_int",
-                            location: Location(
-                                125..131,
-                            ),
-                        },
-                        type_parameters: [],
-                        parameters: [],
-                        return_type: Some(
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Int32",
-                                                location: Location(
-                                                    137..142,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                137..142,
-                                            ),
-                                        },
-                                        location: Location(
-                                            137..142,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            122..142,
-                        ),
-                    },
-                    block: Some(
-                        Block {
-                            statements: [
-                                Return(
-                                    Return {
-                                        value: Some(
-                                            Variable(
-                                                Variable {
-                                                    name: Identifier {
-                                                        name: "self",
-                                                        location: Location(
-                                                            168..172,
-                                                        ),
-                                                    },
-                                                },
-                                            ),
-                                        ),
-                                        location: Location(
-                                            161..173,
-                                        ),
-                                    },
-                                ),
-                            ],
-                            location: Location(
-                                143..187,
-                            ),
-                        },
-                    ),
-                    location: Location(
-                        122..187,
-                    ),
-                },
-            ],
-            type_parameters: [],
-            location: Location(
-                9..197,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..197
+  WHITESPACE@0..9 "\n        "
+  TRAIT_IMPL@9..197
+    USE_KW@9..12 "use"
+    WHITESPACE@12..13 " "
+    NAMED_TYPE@13..17
+      PATH@13..17
+        PATH_TYPE@13..17
+          NAME@13..17
+            IDENT@13..17 "Cast"
+    COLON@17..18 ":"
+    WHITESPACE@18..19 " "
+    NAMED_TYPE@19..25
+      PATH@19..25
+        PATH_TYPE@19..25
+          NAME@19..24
+            IDENT@19..24 "Int32"
+          WHITESPACE@24..25 " "
+    LEFT_BRACE@25..26 "{"
+    WHITESPACE@26..39 "\n            "
+    METHOD@39..108
+      SIG@39..64
+        FN_KW@39..41 "fn"
+        WHITESPACE@41..42 " "
+        NAME@42..51
+          IDENT@42..51 "to_string"
+        PARAM_LIST@51..53
+          LEFT_PAREN@51..52 "("
+          RIGHT_PAREN@52..53 ")"
+        WHITESPACE@53..54 " "
+        RETURN_TYPE@54..64
+          ARROW@54..56 "->"
+          WHITESPACE@56..57 " "
+          NAMED_TYPE@57..64
+            PATH@57..64
+              PATH_TYPE@57..64
+                NAME@57..63
+                  IDENT@57..63 "String"
+                WHITESPACE@63..64 " "
+      BLOCK@64..108
+        LEFT_BRACE@64..65 "{"
+        WHITESPACE@65..82 "\n                "
+        RETURN_STMT@82..94
+          RETURN_KW@82..88 "return"
+          VARIABLE_EXPR@88..93
+            WHITESPACE@88..89 " "
+            NAME@89..93
+              IDENT@89..93 "self"
+          SEMICOLON@93..94 ";"
+        WHITESPACE@94..107 "\n            "
+        RIGHT_BRACE@107..108 "}"
+    WHITESPACE@108..122 "\n\n            "
+    METHOD@122..187
+      SIG@122..143
+        FN_KW@122..124 "fn"
+        WHITESPACE@124..125 " "
+        NAME@125..131
+          IDENT@125..131 "to_int"
+        PARAM_LIST@131..133
+          LEFT_PAREN@131..132 "("
+          RIGHT_PAREN@132..133 ")"
+        WHITESPACE@133..134 " "
+        RETURN_TYPE@134..143
+          ARROW@134..136 "->"
+          WHITESPACE@136..137 " "
+          NAMED_TYPE@137..143
+            PATH@137..143
+              PATH_TYPE@137..143
+                NAME@137..142
+                  IDENT@137..142 "Int32"
+                WHITESPACE@142..143 " "
+      BLOCK@143..187
+        LEFT_BRACE@143..144 "{"
+        WHITESPACE@144..161 "\n                "
+        RETURN_STMT@161..173
+          RETURN_KW@161..167 "return"
+          VARIABLE_EXPR@167..172
+            WHITESPACE@167..168 " "
+            NAME@168..172
+              IDENT@168..172 "self"
+          SEMICOLON@172..173 ";"
+        WHITESPACE@173..186 "\n            "
+        RIGHT_BRACE@186..187 "}"
+    WHITESPACE@187..196 "\n        "
+    RIGHT_BRACE@196..197 "}"

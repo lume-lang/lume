@@ -1,79 +1,31 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"0 == 0 && 0 == 0;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"0 == 0 && 0 == 0;\")"
 ---
-[
-    Expression(
-        IntrinsicCall(
-            IntrinsicCall {
-                kind: And {
-                    lhs: IntrinsicCall(
-                        IntrinsicCall {
-                            kind: Equal {
-                                lhs: Literal(
-                                    Int(
-                                        IntLiteral {
-                                            value: 0,
-                                            location: Location(
-                                                0..1,
-                                            ),
-                                            kind: None,
-                                        },
-                                    ),
-                                ),
-                                rhs: Literal(
-                                    Int(
-                                        IntLiteral {
-                                            value: 0,
-                                            location: Location(
-                                                5..6,
-                                            ),
-                                            kind: None,
-                                        },
-                                    ),
-                                ),
-                            },
-                            location: Location(
-                                0..6,
-                            ),
-                        },
-                    ),
-                    rhs: IntrinsicCall(
-                        IntrinsicCall {
-                            kind: Equal {
-                                lhs: Literal(
-                                    Int(
-                                        IntLiteral {
-                                            value: 0,
-                                            location: Location(
-                                                10..11,
-                                            ),
-                                            kind: None,
-                                        },
-                                    ),
-                                ),
-                                rhs: Literal(
-                                    Int(
-                                        IntLiteral {
-                                            value: 0,
-                                            location: Location(
-                                                15..16,
-                                            ),
-                                            kind: None,
-                                        },
-                                    ),
-                                ),
-                            },
-                            location: Location(
-                                10..16,
-                            ),
-                        },
-                    ),
-                },
-                location: Location(
-                    0..16,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..17
+  EXPR_STMT@0..17
+    BIN_EXPR@0..16
+      BIN_EXPR@0..6
+        LIT_EXPR@0..1
+          INTEGER_LIT@0..1
+            INTEGER_LIT@0..1 "0"
+        WHITESPACE@1..2 " "
+        EQUAL@2..4 "=="
+        WHITESPACE@4..5 " "
+        LIT_EXPR@5..6
+          INTEGER_LIT@5..6
+            INTEGER_LIT@5..6 "0"
+      WHITESPACE@6..7 " "
+      AND@7..9 "&&"
+      WHITESPACE@9..10 " "
+      BIN_EXPR@10..16
+        LIT_EXPR@10..11
+          INTEGER_LIT@10..11
+            INTEGER_LIT@10..11 "0"
+        WHITESPACE@11..12 " "
+        EQUAL@12..14 "=="
+        WHITESPACE@14..15 " "
+        LIT_EXPR@15..16
+          INTEGER_LIT@15..16
+            INTEGER_LIT@15..16 "0"
+    SEMICOLON@16..17 ";"

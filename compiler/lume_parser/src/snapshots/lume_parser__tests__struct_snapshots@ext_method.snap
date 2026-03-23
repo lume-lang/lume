@@ -1,85 +1,39 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        impl Foo {\n            fn external bar() -> Int32\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        impl Foo {\n            fn external bar() -> Int32\n        }\")"
 ---
-[
-    Implementation(
-        Implementation {
-            name: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Foo",
-                                location: Location(
-                                    14..17,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                14..17,
-                            ),
-                        },
-                        location: Location(
-                            14..17,
-                        ),
-                    },
-                },
-            ),
-            methods: [
-                MethodDefinition {
-                    attributes: [],
-                    visibility: None,
-                    signature: Signature {
-                        external: true,
-                        name: Identifier {
-                            name: "bar",
-                            location: Location(
-                                44..47,
-                            ),
-                        },
-                        type_parameters: [],
-                        parameters: [],
-                        return_type: Some(
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Int32",
-                                                location: Location(
-                                                    53..58,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                53..58,
-                                            ),
-                                        },
-                                        location: Location(
-                                            53..58,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            32..58,
-                        ),
-                    },
-                    block: None,
-                    location: Location(
-                        32..58,
-                    ),
-                    documentation: None,
-                },
-            ],
-            type_parameters: [],
-            location: Location(
-                9..68,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..68
+  WHITESPACE@0..9 "\n        "
+  IMPL@9..68
+    IMPL_KW@9..13 "impl"
+    WHITESPACE@13..14 " "
+    NAMED_TYPE@14..18
+      PATH@14..18
+        PATH_TYPE@14..18
+          NAME@14..17
+            IDENT@14..17 "Foo"
+          WHITESPACE@17..18 " "
+    LEFT_BRACE@18..19 "{"
+    WHITESPACE@19..32 "\n            "
+    METHOD@32..67
+      SIG@32..67
+        FN_KW@32..34 "fn"
+        WHITESPACE@34..35 " "
+        EXTERN_KW@35..43 "external"
+        WHITESPACE@43..44 " "
+        NAME@44..47
+          IDENT@44..47 "bar"
+        PARAM_LIST@47..49
+          LEFT_PAREN@47..48 "("
+          RIGHT_PAREN@48..49 ")"
+        WHITESPACE@49..50 " "
+        RETURN_TYPE@50..67
+          ARROW@50..52 "->"
+          WHITESPACE@52..53 " "
+          NAMED_TYPE@53..67
+            PATH@53..67
+              PATH_TYPE@53..67
+                NAME@53..58
+                  IDENT@53..58 "Int32"
+                WHITESPACE@58..67 "\n        "
+    RIGHT_BRACE@67..68 "}"

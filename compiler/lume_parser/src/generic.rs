@@ -1,40 +1,90 @@
-use error_snippet::Result;
-use lume_ast::*;
-use lume_lexer::TokenType;
+use crate::*;
 
-use crate::Parser;
-
-impl<'ast> Parser<'_, 'ast> {
+impl Parser {
     /// Parses zero-or-more type parameters.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(super) fn parse_type_parameters(&mut self) -> Result<Vec<TypeParameter<'ast>>> {
-        if !self.peek(TokenType::Less) {
-            return Ok(Vec::new());
+    pub(super) fn parse_type_parameters(&mut self) -> bool {
+        if !self.peek(Token![<]) {
+            return false;
         }
 
-        self.consume_comma_seq(TokenType::Less, TokenType::Greater, |p| {
-            let name = p.parse_identifier()?;
-            let mut constraints = Vec::new();
+        self.start_node(SyntaxKind::BOUND_TYPES);
 
-            if p.check(TokenType::Colon) {
-                constraints.push(p.parse_type()?);
+        let finished = self.consume_comma_seq(Token![<], Token![>], |p| {
+            p.start_node(SyntaxKind::BOUND_TYPE);
 
-                while p.check(TokenType::Add) {
-                    constraints.push(p.parse_type()?);
+            p.parse_ident();
+
+            if p.peek(Token![:]) {
+                p.start_node(SyntaxKind::CONSTRAINTS);
+
+                p.consume(Token![:]);
+                p.parse_type();
+
+                while p.check(Token![+]) {
+                    p.parse_type();
+                }
+
+                p.finish_node();
+            }
+
+            p.finish_node();
+        });
+
+        if !finished {
+            self.recover_with_set(&[Token![>]]);
+            self.check(Token![>]);
+        }
+
+        self.finish_node();
+
+        finished
+    }
+
+    /// Attempts to determine whether the next token(s) are type arguments.
+    pub(super) fn is_type_arguments(&mut self, offset: usize) -> (usize, bool) {
+        if !self.peek_at(offset, Token![<]) {
+            return (0, false);
+        }
+
+        let mut idx = offset;
+        let mut angles_count = 0_usize;
+
+        for (tok, _span) in self.tokens.iter().rev().skip(offset + 1) {
+            idx += 1;
+
+            match tok {
+                Token![<] => angles_count += 1,
+                Token![>] => angles_count -= 1,
+                Token![,]
+                | Token![::]
+                | SyntaxKind::IDENT
+                | SyntaxKind::LEFT_BRACKET
+                | SyntaxKind::RIGHT_BRACKET
+                | SyntaxKind::WHITESPACE
+                | SyntaxKind::NEWLINE => {}
+                _ => {
+                    return (idx, false);
                 }
             }
 
-            Ok(TypeParameter { name, constraints })
-        })
+            if angles_count == 0 {
+                break;
+            }
+        }
+
+        (idx, true)
     }
 
     /// Parses zero-or-more type arguments, boxed as [`Box<Type>`].
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(super) fn parse_type_arguments(&mut self) -> Result<Vec<Type<'ast>>> {
-        if !self.peek(TokenType::Less) {
-            return Ok(Vec::new());
+    pub(super) fn parse_type_arguments(&mut self) -> bool {
+        if !self.peek(Token![<]) {
+            return false;
         }
 
-        self.consume_comma_seq(TokenType::Less, TokenType::Greater, Parser::parse_type)
+        self.start_node(SyntaxKind::GENERIC_ARGS);
+        let finished = self.consume_comma_seq(Token![<], Token![>], Parser::parse_type);
+        self.finish_node();
+
+        finished
     }
 }

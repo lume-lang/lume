@@ -1,64 +1,30 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"/// This is a doc comment\n        fn foo() -> void { }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"/// This is a doc comment\n        fn foo() -> void { }\")"
 ---
-[
-    FunctionDefinition(
-        FunctionDefinition {
-            attributes: [],
-            visibility: None,
-            signature: Signature {
-                external: false,
-                name: Identifier {
-                    name: "foo",
-                    location: Location(
-                        37..40,
-                    ),
-                },
-                type_parameters: [],
-                parameters: [],
-                return_type: Some(
-                    Named(
-                        NamedType {
-                            name: Path {
-                                root: [],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "void",
-                                        location: Location(
-                                            46..50,
-                                        ),
-                                    },
-                                    bound_types: [],
-                                    location: Location(
-                                        46..50,
-                                    ),
-                                },
-                                location: Location(
-                                    46..50,
-                                ),
-                            },
-                        },
-                    ),
-                ),
-                location: Location(
-                    34..50,
-                ),
-            },
-            block: Some(
-                Block {
-                    statements: [],
-                    location: Location(
-                        51..54,
-                    ),
-                },
-            ),
-            location: Location(
-                34..54,
-            ),
-            documentation: Some(
-                "This is a doc comment",
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..54
+  FN@0..54
+    DOC_COMMENT@0..25 "/// This is a doc com ..."
+    WHITESPACE@25..34 "\n        "
+    SIG@34..51
+      FN_KW@34..36 "fn"
+      WHITESPACE@36..37 " "
+      NAME@37..40
+        IDENT@37..40 "foo"
+      PARAM_LIST@40..42
+        LEFT_PAREN@40..41 "("
+        RIGHT_PAREN@41..42 ")"
+      WHITESPACE@42..43 " "
+      RETURN_TYPE@43..51
+        ARROW@43..45 "->"
+        WHITESPACE@45..46 " "
+        NAMED_TYPE@46..51
+          PATH@46..51
+            PATH_TYPE@46..51
+              NAME@46..50
+                IDENT@46..50 "void"
+              WHITESPACE@50..51 " "
+    BLOCK@51..54
+      LEFT_BRACE@51..52 "{"
+      WHITESPACE@52..53 " "
+      RIGHT_BRACE@53..54 "}"

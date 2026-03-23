@@ -1,26 +1,11 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"namespace std\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"namespace std\")"
 ---
-[
-    Namespace(
-        Namespace {
-            path: ImportPath {
-                path: [
-                    Identifier {
-                        name: "std",
-                        location: Location(
-                            10..13,
-                        ),
-                    },
-                ],
-                location: Location(
-                    10..13,
-                ),
-            },
-            location: Location(
-                0..13,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..13
+  NAMESPACE@0..13
+    NAMESPACE_KW@0..9 "namespace"
+    WHITESPACE@9..10 " "
+    IMPORT_PATH@10..13
+      NAME@10..13
+        IDENT@10..13 "std"

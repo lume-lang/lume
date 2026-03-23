@@ -1,48 +1,25 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = (a..b);\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = (a..b);\")"
 ---
-[
-    VariableDeclaration(
-        VariableDeclaration {
-            name: Identifier {
-                name: "_",
-                location: Location(
-                    4..5,
-                ),
-            },
-            variable_type: None,
-            value: Range(
-                Range {
-                    lower: Variable(
-                        Variable {
-                            name: Identifier {
-                                name: "a",
-                                location: Location(
-                                    9..10,
-                                ),
-                            },
-                        },
-                    ),
-                    upper: Variable(
-                        Variable {
-                            name: Identifier {
-                                name: "b",
-                                location: Location(
-                                    12..13,
-                                ),
-                            },
-                        },
-                    ),
-                    inclusive: false,
-                    location: Location(
-                        9..13,
-                    ),
-                },
-            ),
-            location: Location(
-                0..15,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..15
+  LET_STMT@0..15
+    LET_KW@0..3 "let"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    WHITESPACE@7..8 " "
+    PAREN_EXPR@8..14
+      LEFT_PAREN@8..9 "("
+      RANGE_EXPR@9..13
+        VARIABLE_EXPR@9..10
+          NAME@9..10
+            IDENT@9..10 "a"
+        DOT_DOT@10..12 ".."
+        VARIABLE_EXPR@12..13
+          NAME@12..13
+            IDENT@12..13 "b"
+      RIGHT_PAREN@13..14 ")"
+    SEMICOLON@14..15 ";"

@@ -1,59 +1,23 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"use Add: Int32 {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"use Add: Int32 {}\")"
 ---
-[
-    TraitImplementation(
-        TraitImplementation {
-            name: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Add",
-                                location: Location(
-                                    4..7,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                4..7,
-                            ),
-                        },
-                        location: Location(
-                            4..7,
-                        ),
-                    },
-                },
-            ),
-            target: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Int32",
-                                location: Location(
-                                    9..14,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                9..14,
-                            ),
-                        },
-                        location: Location(
-                            9..14,
-                        ),
-                    },
-                },
-            ),
-            methods: [],
-            type_parameters: [],
-            location: Location(
-                0..17,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..17
+  TRAIT_IMPL@0..17
+    USE_KW@0..3 "use"
+    WHITESPACE@3..4 " "
+    NAMED_TYPE@4..7
+      PATH@4..7
+        PATH_TYPE@4..7
+          NAME@4..7
+            IDENT@4..7 "Add"
+    COLON@7..8 ":"
+    WHITESPACE@8..9 " "
+    NAMED_TYPE@9..15
+      PATH@9..15
+        PATH_TYPE@9..15
+          NAME@9..14
+            IDENT@9..14 "Int32"
+          WHITESPACE@14..15 " "
+    LEFT_BRACE@15..16 "{"
+    RIGHT_BRACE@16..17 "}"

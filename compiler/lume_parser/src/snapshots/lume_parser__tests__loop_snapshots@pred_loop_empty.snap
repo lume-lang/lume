@@ -1,29 +1,16 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"while true { }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"while true { }\")"
 ---
-[
-    PredicateLoop(
-        PredicateLoop {
-            condition: Literal(
-                Boolean(
-                    BooleanLiteral {
-                        value: true,
-                        location: Location(
-                            6..10,
-                        ),
-                    },
-                ),
-            ),
-            block: Block {
-                statements: [],
-                location: Location(
-                    11..14,
-                ),
-            },
-            location: Location(
-                0..14,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..14
+  WHILE_STMT@0..14
+    WHILE_KW@0..5 "while"
+    WHITESPACE@5..6 " "
+    LIT_EXPR@6..10
+      BOOLEAN_LIT@6..10
+        BOOLEAN_LIT@6..10 "true"
+    WHITESPACE@10..11 " "
+    BLOCK@11..14
+      LEFT_BRACE@11..12 "{"
+      WHITESPACE@12..13 " "
+      RIGHT_BRACE@13..14 "}"

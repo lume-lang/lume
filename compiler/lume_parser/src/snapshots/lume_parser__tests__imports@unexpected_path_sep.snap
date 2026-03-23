@@ -1,0 +1,16 @@
+---
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"import ::std::io\")"
+---
+SOURCE_FILE@0..14
+  IMPORT@0..14
+    IMPORT_KW@0..6 "import"
+    WHITESPACE@6..7 " "
+    IMPORT_PATH@7..7
+      NAME@7..7
+    IDENT@7..10 "std"
+    PATH_SEP@10..12 "::"
+    IDENT@12..14 "io"
+
+expected identifier@7..9
+invalid import path@9..12

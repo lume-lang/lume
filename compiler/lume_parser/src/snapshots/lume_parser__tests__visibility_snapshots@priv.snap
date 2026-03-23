@@ -1,45 +1,21 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"priv fn foo {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"priv fn foo() {}\")"
 ---
-[
-    FunctionDefinition(
-        FunctionDefinition {
-            attributes: [],
-            visibility: Some(
-                Private {
-                    location: Location(
-                        0..4,
-                    ),
-                },
-            ),
-            signature: Signature {
-                external: false,
-                name: Identifier {
-                    name: "foo",
-                    location: Location(
-                        8..11,
-                    ),
-                },
-                type_parameters: [],
-                parameters: [],
-                return_type: None,
-                location: Location(
-                    5..11,
-                ),
-            },
-            block: Some(
-                Block {
-                    statements: [],
-                    location: Location(
-                        12..14,
-                    ),
-                },
-            ),
-            location: Location(
-                0..14,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..16
+  FN@0..16
+    VISIBILITY@0..4
+      PRIV_KW@0..4 "priv"
+    WHITESPACE@4..5 " "
+    SIG@5..13
+      FN_KW@5..7 "fn"
+      WHITESPACE@7..8 " "
+      NAME@8..11
+        IDENT@8..11 "foo"
+      PARAM_LIST@11..13
+        LEFT_PAREN@11..12 "("
+        RIGHT_PAREN@12..13 ")"
+    WHITESPACE@13..14 " "
+    BLOCK@14..16
+      LEFT_BRACE@14..15 "{"
+      RIGHT_BRACE@15..16 "}"

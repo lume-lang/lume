@@ -1,65 +1,51 @@
-use error_snippet::Result;
-use lume_ast::*;
-use lume_lexer::{TokenKind, TokenType};
+use crate::*;
 
-use crate::Parser;
-use crate::errors::*;
-
-impl<'ast> Parser<'_, 'ast> {
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(super) fn parse_pattern(&mut self) -> Result<Pattern<'ast>> {
-        match self.token().kind {
-            TokenKind::Identifier(_) => self.parse_named_pattern(),
-            TokenKind::DotDot => self.parse_wildcard_pattern(),
+impl Parser {
+    pub(super) fn parse_pattern(&mut self) {
+        match self.token() {
+            SyntaxKind::IDENT => self.parse_ident_pattern(),
+            Token![..] => self.parse_wildcard_pattern(),
 
             k if k.is_literal() => self.parse_literal_pattern(),
 
-            k => Err(InvalidPattern {
-                source: self.source.clone(),
-                range: self.token().index,
-                found: k.as_type(),
+            _ => {
+                self.error("invalid pattern");
+                self.skip();
             }
-            .into()),
         }
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn parse_literal_pattern(&mut self) -> Result<Pattern<'ast>> {
-        let literal_expr = self.parse_literal_inner()?;
-
-        Ok(Pattern::Literal(literal_expr))
+    fn parse_literal_pattern(&mut self) {
+        self.start_node(SyntaxKind::PAT_LITERAL);
+        self.parse_literal();
+        self.finish_node();
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn parse_named_pattern(&mut self) -> Result<Pattern<'ast>> {
-        let path = self.parse_path()?;
+    fn parse_ident_pattern(&mut self) {
+        let c = self.checkpoint();
 
-        if path.root.is_empty() && path.name.name().is_lower() {
-            Ok(Pattern::Identifier(path.name.name().clone()))
-        } else {
-            let fields = if self.peek(TokenType::LeftParen) {
-                self.consume_paren_seq(Parser::parse_pattern)?
-            } else {
-                Vec::new()
-            };
+        // Only a single ident found - likely not a variant.
+        if self.peek(SyntaxKind::IDENT) && !self.peek_at(1, Token![::]) && !self.peek_at(1, Token![<]) {
+            self.start_node_at(SyntaxKind::PAT_IDENT, c);
+            self.parse_ident();
+            self.finish_node();
 
-            let start = path.location.start();
-            let end = self.previous_token().end();
-
-            Ok(Pattern::Variant(VariantPattern {
-                name: path,
-                fields,
-                location: (start..end).into(),
-            }))
+            return;
         }
+
+        self.start_node_at(SyntaxKind::PAT_VARIANT, c);
+        self.parse_path();
+
+        if self.peek(SyntaxKind::LEFT_PAREN) {
+            self.consume_paren_seq(Parser::parse_pattern);
+        }
+
+        self.finish_node();
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn parse_wildcard_pattern(&mut self) -> Result<Pattern<'ast>> {
-        let location = self.consume(TokenType::DotDot)?.index;
-
-        Ok(Pattern::Wildcard(WildcardPattern {
-            location: location.into(),
-        }))
+    fn parse_wildcard_pattern(&mut self) {
+        self.start_node(SyntaxKind::PAT_WILDCARD);
+        self.consume(Token![..]);
+        self.finish_node();
     }
 }

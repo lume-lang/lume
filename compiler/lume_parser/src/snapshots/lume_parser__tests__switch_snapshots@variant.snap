@@ -1,135 +1,51 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"switch a { Address::V4 => 4, Address::V6 => 6 }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"switch a { Address::V4 => 4, Address::V6 => 6 }\")"
 ---
-[
-    Expression(
-        Switch(
-            Switch {
-                operand: Variable(
-                    Variable {
-                        name: Identifier {
-                            name: "a",
-                            location: Location(
-                                7..8,
-                            ),
-                        },
-                    },
-                ),
-                cases: [
-                    SwitchCase {
-                        pattern: Variant(
-                            VariantPattern {
-                                name: Path {
-                                    root: [
-                                        Type {
-                                            name: Identifier {
-                                                name: "Address",
-                                                location: Location(
-                                                    11..18,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                11..18,
-                                            ),
-                                        },
-                                    ],
-                                    name: Variant {
-                                        name: Identifier {
-                                            name: "V4",
-                                            location: Location(
-                                                20..22,
-                                            ),
-                                        },
-                                        location: Location(
-                                            20..22,
-                                        ),
-                                    },
-                                    location: Location(
-                                        20..22,
-                                    ),
-                                },
-                                fields: [],
-                                location: Location(
-                                    20..22,
-                                ),
-                            },
-                        ),
-                        branch: Literal(
-                            Int(
-                                IntLiteral {
-                                    value: 4,
-                                    location: Location(
-                                        26..27,
-                                    ),
-                                    kind: None,
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            20..27,
-                        ),
-                    },
-                    SwitchCase {
-                        pattern: Variant(
-                            VariantPattern {
-                                name: Path {
-                                    root: [
-                                        Type {
-                                            name: Identifier {
-                                                name: "Address",
-                                                location: Location(
-                                                    29..36,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                29..36,
-                                            ),
-                                        },
-                                    ],
-                                    name: Variant {
-                                        name: Identifier {
-                                            name: "V6",
-                                            location: Location(
-                                                38..40,
-                                            ),
-                                        },
-                                        location: Location(
-                                            38..40,
-                                        ),
-                                    },
-                                    location: Location(
-                                        38..40,
-                                    ),
-                                },
-                                fields: [],
-                                location: Location(
-                                    38..40,
-                                ),
-                            },
-                        ),
-                        branch: Literal(
-                            Int(
-                                IntLiteral {
-                                    value: 6,
-                                    location: Location(
-                                        44..45,
-                                    ),
-                                    kind: None,
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            38..45,
-                        ),
-                    },
-                ],
-                location: Location(
-                    0..47,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..47
+  EXPR_STMT@0..47
+    SWITCH_EXPR@0..47
+      SWITCH_KW@0..6 "switch"
+      VARIABLE_EXPR@6..8
+        WHITESPACE@6..7 " "
+        NAME@7..8
+          IDENT@7..8 "a"
+      WHITESPACE@8..9 " "
+      LEFT_BRACE@9..10 "{"
+      WHITESPACE@10..11 " "
+      SWITCH_ARM@11..27
+        PAT_VARIANT@11..23
+          PATH@11..23
+            PATH_TYPE@11..18
+              NAME@11..18
+                IDENT@11..18 "Address"
+            PATH_SEP@18..20 "::"
+            PATH_VARIANT@20..23
+              NAME@20..22
+                IDENT@20..22 "V4"
+              WHITESPACE@22..23 " "
+        BIG_ARROW@23..25 "=>"
+        WHITESPACE@25..26 " "
+        LIT_EXPR@26..27
+          INTEGER_LIT@26..27
+            INTEGER_LIT@26..27 "4"
+      COMMA@27..28 ","
+      WHITESPACE@28..29 " "
+      SWITCH_ARM@29..45
+        PAT_VARIANT@29..41
+          PATH@29..41
+            PATH_TYPE@29..36
+              NAME@29..36
+                IDENT@29..36 "Address"
+            PATH_SEP@36..38 "::"
+            PATH_VARIANT@38..41
+              NAME@38..40
+                IDENT@38..40 "V6"
+              WHITESPACE@40..41 " "
+        BIG_ARROW@41..43 "=>"
+        WHITESPACE@43..44 " "
+        LIT_EXPR@44..45
+          INTEGER_LIT@44..45
+            INTEGER_LIT@44..45 "6"
+      WHITESPACE@45..46 " "
+      RIGHT_BRACE@46..47 "}"

@@ -1,74 +1,29 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn foo(...args: Int32) {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"fn foo(...args: Int32) {}\")"
 ---
-[
-    FunctionDefinition(
-        FunctionDefinition {
-            attributes: [],
-            visibility: None,
-            signature: Signature {
-                external: false,
-                name: Identifier {
-                    name: "foo",
-                    location: Location(
-                        3..6,
-                    ),
-                },
-                type_parameters: [],
-                parameters: [
-                    Parameter {
-                        name: Identifier {
-                            name: "args",
-                            location: Location(
-                                10..14,
-                            ),
-                        },
-                        param_type: Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Int32",
-                                            location: Location(
-                                                16..21,
-                                            ),
-                                        },
-                                        bound_types: [],
-                                        location: Location(
-                                            16..21,
-                                        ),
-                                    },
-                                    location: Location(
-                                        16..21,
-                                    ),
-                                },
-                            },
-                        ),
-                        vararg: true,
-                        location: Location(
-                            10..21,
-                        ),
-                    },
-                ],
-                return_type: None,
-                location: Location(
-                    0..22,
-                ),
-            },
-            block: Some(
-                Block {
-                    statements: [],
-                    location: Location(
-                        23..25,
-                    ),
-                },
-            ),
-            location: Location(
-                0..25,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..25
+  FN@0..25
+    SIG@0..22
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..6
+        IDENT@3..6 "foo"
+      PARAM_LIST@6..22
+        LEFT_PAREN@6..7 "("
+        PARAM@7..21
+          DOT_DOT_DOT@7..10 "..."
+          NAME@10..14
+            IDENT@10..14 "args"
+          COLON@14..15 ":"
+          WHITESPACE@15..16 " "
+          NAMED_TYPE@16..21
+            PATH@16..21
+              PATH_TYPE@16..21
+                NAME@16..21
+                  IDENT@16..21 "Int32"
+        RIGHT_PAREN@21..22 ")"
+    WHITESPACE@22..23 " "
+    BLOCK@23..25
+      LEFT_BRACE@23..24 "{"
+      RIGHT_BRACE@24..25 "}"

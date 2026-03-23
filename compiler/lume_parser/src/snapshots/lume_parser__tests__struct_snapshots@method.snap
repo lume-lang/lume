@@ -1,113 +1,50 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        impl Foo {\n            fn bar() -> Int32 {\n                return 0;\n            }\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        impl Foo {\n            fn bar() -> Int32 {\n                return 0;\n            }\n        }\")"
 ---
-[
-    Implementation(
-        Implementation {
-            name: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Foo",
-                                location: Location(
-                                    14..17,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                14..17,
-                            ),
-                        },
-                        location: Location(
-                            14..17,
-                        ),
-                    },
-                },
-            ),
-            methods: [
-                MethodDefinition {
-                    attributes: [],
-                    visibility: None,
-                    signature: Signature {
-                        external: false,
-                        name: Identifier {
-                            name: "bar",
-                            location: Location(
-                                35..38,
-                            ),
-                        },
-                        type_parameters: [],
-                        parameters: [],
-                        return_type: Some(
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Int32",
-                                                location: Location(
-                                                    44..49,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                44..49,
-                                            ),
-                                        },
-                                        location: Location(
-                                            44..49,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            32..49,
-                        ),
-                    },
-                    block: Some(
-                        Block {
-                            statements: [
-                                Return(
-                                    Return {
-                                        value: Some(
-                                            Literal(
-                                                Int(
-                                                    IntLiteral {
-                                                        value: 0,
-                                                        location: Location(
-                                                            75..76,
-                                                        ),
-                                                        kind: None,
-                                                    },
-                                                ),
-                                            ),
-                                        ),
-                                        location: Location(
-                                            68..77,
-                                        ),
-                                    },
-                                ),
-                            ],
-                            location: Location(
-                                50..91,
-                            ),
-                        },
-                    ),
-                    location: Location(
-                        32..91,
-                    ),
-                    documentation: None,
-                },
-            ],
-            type_parameters: [],
-            location: Location(
-                9..101,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..101
+  WHITESPACE@0..9 "\n        "
+  IMPL@9..101
+    IMPL_KW@9..13 "impl"
+    WHITESPACE@13..14 " "
+    NAMED_TYPE@14..18
+      PATH@14..18
+        PATH_TYPE@14..18
+          NAME@14..17
+            IDENT@14..17 "Foo"
+          WHITESPACE@17..18 " "
+    LEFT_BRACE@18..19 "{"
+    WHITESPACE@19..32 "\n            "
+    METHOD@32..91
+      SIG@32..50
+        FN_KW@32..34 "fn"
+        WHITESPACE@34..35 " "
+        NAME@35..38
+          IDENT@35..38 "bar"
+        PARAM_LIST@38..40
+          LEFT_PAREN@38..39 "("
+          RIGHT_PAREN@39..40 ")"
+        WHITESPACE@40..41 " "
+        RETURN_TYPE@41..50
+          ARROW@41..43 "->"
+          WHITESPACE@43..44 " "
+          NAMED_TYPE@44..50
+            PATH@44..50
+              PATH_TYPE@44..50
+                NAME@44..49
+                  IDENT@44..49 "Int32"
+                WHITESPACE@49..50 " "
+      BLOCK@50..91
+        LEFT_BRACE@50..51 "{"
+        WHITESPACE@51..68 "\n                "
+        RETURN_STMT@68..77
+          RETURN_KW@68..74 "return"
+          WHITESPACE@74..75 " "
+          LIT_EXPR@75..76
+            INTEGER_LIT@75..76
+              INTEGER_LIT@75..76 "0"
+          SEMICOLON@76..77 ";"
+        WHITESPACE@77..90 "\n            "
+        RIGHT_BRACE@90..91 "}"
+    WHITESPACE@91..100 "\n        "
+    RIGHT_BRACE@100..101 "}"

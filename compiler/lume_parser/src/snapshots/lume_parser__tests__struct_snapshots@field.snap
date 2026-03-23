@@ -1,73 +1,33 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        struct Foo {\n            x: Int32 = 0;\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        struct Foo {\n            x: Int32 = 0;\n        }\")"
 ---
-[
-    StructDefinition(
-        StructDefinition {
-            attributes: [],
-            visibility: None,
-            name: Identifier {
-                name: "Foo",
-                location: Location(
-                    16..19,
-                ),
-            },
-            fields: [
-                Field {
-                    visibility: None,
-                    name: Identifier {
-                        name: "x",
-                        location: Location(
-                            34..35,
-                        ),
-                    },
-                    field_type: Named(
-                        NamedType {
-                            name: Path {
-                                root: [],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "Int32",
-                                        location: Location(
-                                            37..42,
-                                        ),
-                                    },
-                                    bound_types: [],
-                                    location: Location(
-                                        37..42,
-                                    ),
-                                },
-                                location: Location(
-                                    37..42,
-                                ),
-                            },
-                        },
-                    ),
-                    default_value: Some(
-                        Literal(
-                            Int(
-                                IntLiteral {
-                                    value: 0,
-                                    location: Location(
-                                        45..46,
-                                    ),
-                                    kind: None,
-                                },
-                            ),
-                        ),
-                    ),
-                    location: Location(
-                        34..47,
-                    ),
-                    documentation: None,
-                },
-            ],
-            type_parameters: [],
-            location: Location(
-                9..57,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..57
+  WHITESPACE@0..9 "\n        "
+  STRUCT@9..57
+    STRUCT_KW@9..15 "struct"
+    WHITESPACE@15..16 " "
+    NAME@16..19
+      IDENT@16..19 "Foo"
+    WHITESPACE@19..20 " "
+    LEFT_BRACE@20..21 "{"
+    WHITESPACE@21..34 "\n            "
+    FIELD@34..47
+      NAME@34..35
+        IDENT@34..35 "x"
+      COLON@35..36 ":"
+      WHITESPACE@36..37 " "
+      NAMED_TYPE@37..43
+        PATH@37..43
+          PATH_TYPE@37..43
+            NAME@37..42
+              IDENT@37..42 "Int32"
+            WHITESPACE@42..43 " "
+      ASSIGN@43..44 "="
+      WHITESPACE@44..45 " "
+      LIT_EXPR@45..46
+        INTEGER_LIT@45..46
+          INTEGER_LIT@45..46 "0"
+      SEMICOLON@46..47 ";"
+    WHITESPACE@47..56 "\n        "
+    RIGHT_BRACE@56..57 "}"

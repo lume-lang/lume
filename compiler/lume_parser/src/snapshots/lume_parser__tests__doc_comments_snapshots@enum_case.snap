@@ -1,39 +1,20 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"enum Foo {\n            /// This is a doc comment\n            Bar\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"enum Foo {\n            /// This is a doc comment\n            Bar\n        }\")"
 ---
-[
-    EnumDefinition(
-        EnumDefinition {
-            visibility: None,
-            name: Identifier {
-                name: "Foo",
-                location: Location(
-                    5..8,
-                ),
-            },
-            type_parameters: [],
-            cases: [
-                EnumDefinitionCase {
-                    name: Identifier {
-                        name: "Bar",
-                        location: Location(
-                            61..64,
-                        ),
-                    },
-                    parameters: [],
-                    location: Location(
-                        61..64,
-                    ),
-                    documentation: Some(
-                        "This is a doc comment",
-                    ),
-                },
-            ],
-            location: Location(
-                0..74,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..74
+  ENUM@0..74
+    ENUM_KW@0..4 "enum"
+    WHITESPACE@4..5 " "
+    NAME@5..8
+      IDENT@5..8 "Foo"
+    WHITESPACE@8..9 " "
+    LEFT_BRACE@9..10 "{"
+    WHITESPACE@10..23 "\n            "
+    CASE@23..64
+      DOC_COMMENT@23..48 "/// This is a doc com ..."
+      WHITESPACE@48..61 "\n            "
+      NAME@61..64
+        IDENT@61..64 "Bar"
+    WHITESPACE@64..73 "\n        "
+    RIGHT_BRACE@73..74 "}"

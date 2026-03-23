@@ -1,40 +1,18 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"if true { }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"if true { }\")"
 ---
-[
-    Expression(
-        If(
-            IfCondition {
-                cases: [
-                    Condition {
-                        condition: Some(
-                            Literal(
-                                Boolean(
-                                    BooleanLiteral {
-                                        value: true,
-                                        location: Location(
-                                            3..7,
-                                        ),
-                                    },
-                                ),
-                            ),
-                        ),
-                        block: Block {
-                            statements: [],
-                            location: Location(
-                                8..11,
-                            ),
-                        },
-                        location: Location(
-                            3..11,
-                        ),
-                    },
-                ],
-                location: Location(
-                    0..11,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..11
+  EXPR_STMT@0..11
+    IF_EXPR@0..11
+      CONDITION@0..11
+        IF_KW@0..2 "if"
+        WHITESPACE@2..3 " "
+        LIT_EXPR@3..7
+          BOOLEAN_LIT@3..7
+            BOOLEAN_LIT@3..7 "true"
+        WHITESPACE@7..8 " "
+        BLOCK@8..11
+          LEFT_BRACE@8..9 "{"
+          WHITESPACE@9..10 " "
+          RIGHT_BRACE@10..11 "}"

@@ -1,66 +1,31 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"if true { let a = 0; }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"if true { let a = 0; }\")"
 ---
-[
-    Expression(
-        If(
-            IfCondition {
-                cases: [
-                    Condition {
-                        condition: Some(
-                            Literal(
-                                Boolean(
-                                    BooleanLiteral {
-                                        value: true,
-                                        location: Location(
-                                            3..7,
-                                        ),
-                                    },
-                                ),
-                            ),
-                        ),
-                        block: Block {
-                            statements: [
-                                VariableDeclaration(
-                                    VariableDeclaration {
-                                        name: Identifier {
-                                            name: "a",
-                                            location: Location(
-                                                14..15,
-                                            ),
-                                        },
-                                        variable_type: None,
-                                        value: Literal(
-                                            Int(
-                                                IntLiteral {
-                                                    value: 0,
-                                                    location: Location(
-                                                        18..19,
-                                                    ),
-                                                    kind: None,
-                                                },
-                                            ),
-                                        ),
-                                        location: Location(
-                                            10..20,
-                                        ),
-                                    },
-                                ),
-                            ],
-                            location: Location(
-                                8..22,
-                            ),
-                        },
-                        location: Location(
-                            3..22,
-                        ),
-                    },
-                ],
-                location: Location(
-                    0..22,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..22
+  EXPR_STMT@0..22
+    IF_EXPR@0..22
+      CONDITION@0..22
+        IF_KW@0..2 "if"
+        WHITESPACE@2..3 " "
+        LIT_EXPR@3..7
+          BOOLEAN_LIT@3..7
+            BOOLEAN_LIT@3..7 "true"
+        WHITESPACE@7..8 " "
+        BLOCK@8..22
+          LEFT_BRACE@8..9 "{"
+          WHITESPACE@9..10 " "
+          LET_STMT@10..20
+            LET_KW@10..13 "let"
+            WHITESPACE@13..14 " "
+            NAME@14..15
+              IDENT@14..15 "a"
+            WHITESPACE@15..16 " "
+            ASSIGN@16..17 "="
+            WHITESPACE@17..18 " "
+            LIT_EXPR@18..19
+              INTEGER_LIT@18..19
+                INTEGER_LIT@18..19 "0"
+            SEMICOLON@19..20 ";"
+          WHITESPACE@20..21 " "
+          RIGHT_BRACE@21..22 "}"

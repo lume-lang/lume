@@ -1,83 +1,35 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"Foo { bar: 0, baz: 1 };\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"Foo { bar: 0, baz: 1 };\")"
 ---
-[
-    Expression(
-        Construct(
-            Construct {
-                path: Path {
-                    root: [],
-                    name: Type {
-                        name: Identifier {
-                            name: "Foo",
-                            location: Location(
-                                0..3,
-                            ),
-                        },
-                        bound_types: [],
-                        location: Location(
-                            0..3,
-                        ),
-                    },
-                    location: Location(
-                        0..3,
-                    ),
-                },
-                fields: [
-                    ConstructorField {
-                        name: Identifier {
-                            name: "bar",
-                            location: Location(
-                                6..9,
-                            ),
-                        },
-                        value: Some(
-                            Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 0,
-                                        location: Location(
-                                            11..12,
-                                        ),
-                                        kind: None,
-                                    },
-                                ),
-                            ),
-                        ),
-                        location: Location(
-                            6..12,
-                        ),
-                    },
-                    ConstructorField {
-                        name: Identifier {
-                            name: "baz",
-                            location: Location(
-                                14..17,
-                            ),
-                        },
-                        value: Some(
-                            Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 1,
-                                        location: Location(
-                                            19..20,
-                                        ),
-                                        kind: None,
-                                    },
-                                ),
-                            ),
-                        ),
-                        location: Location(
-                            14..20,
-                        ),
-                    },
-                ],
-                location: Location(
-                    0..23,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..23
+  EXPR_STMT@0..23
+    CONSTRUCT_EXPR@0..22
+      PATH@0..4
+        PATH_TYPE@0..4
+          NAME@0..3
+            IDENT@0..3 "Foo"
+          WHITESPACE@3..4 " "
+      LEFT_BRACE@4..5 "{"
+      WHITESPACE@5..6 " "
+      CONSTRUCTOR_FIELD@6..12
+        NAME@6..9
+          IDENT@6..9 "bar"
+        COLON@9..10 ":"
+        WHITESPACE@10..11 " "
+        LIT_EXPR@11..12
+          INTEGER_LIT@11..12
+            INTEGER_LIT@11..12 "0"
+      COMMA@12..13 ","
+      WHITESPACE@13..14 " "
+      CONSTRUCTOR_FIELD@14..20
+        NAME@14..17
+          IDENT@14..17 "baz"
+        COLON@17..18 ":"
+        WHITESPACE@18..19 " "
+        LIT_EXPR@19..20
+          INTEGER_LIT@19..20
+            INTEGER_LIT@19..20 "1"
+      WHITESPACE@20..21 " "
+      RIGHT_BRACE@21..22 "}"
+    SEMICOLON@22..23 ";"

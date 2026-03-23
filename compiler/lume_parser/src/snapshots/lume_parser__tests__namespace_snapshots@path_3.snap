@@ -1,38 +1,17 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"namespace std::io::path\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"namespace std::io::path\")"
 ---
-[
-    Namespace(
-        Namespace {
-            path: ImportPath {
-                path: [
-                    Identifier {
-                        name: "std",
-                        location: Location(
-                            10..13,
-                        ),
-                    },
-                    Identifier {
-                        name: "io",
-                        location: Location(
-                            15..17,
-                        ),
-                    },
-                    Identifier {
-                        name: "path",
-                        location: Location(
-                            19..23,
-                        ),
-                    },
-                ],
-                location: Location(
-                    10..23,
-                ),
-            },
-            location: Location(
-                0..23,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..23
+  NAMESPACE@0..23
+    NAMESPACE_KW@0..9 "namespace"
+    WHITESPACE@9..10 " "
+    IMPORT_PATH@10..23
+      NAME@10..13
+        IDENT@10..13 "std"
+      PATH_SEP@13..15 "::"
+      NAME@15..17
+        IDENT@15..17 "io"
+      PATH_SEP@17..19 "::"
+      NAME@19..23
+        IDENT@19..23 "path"

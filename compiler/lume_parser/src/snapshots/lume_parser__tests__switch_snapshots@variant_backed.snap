@@ -1,143 +1,56 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"switch a { Optional::Some(a) => a, Optional::None => 0 }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement,\n\"switch a { Optional::Some(a) => a, Optional::None => 0 }\")"
 ---
-[
-    Expression(
-        Switch(
-            Switch {
-                operand: Variable(
-                    Variable {
-                        name: Identifier {
-                            name: "a",
-                            location: Location(
-                                7..8,
-                            ),
-                        },
-                    },
-                ),
-                cases: [
-                    SwitchCase {
-                        pattern: Variant(
-                            VariantPattern {
-                                name: Path {
-                                    root: [
-                                        Type {
-                                            name: Identifier {
-                                                name: "Optional",
-                                                location: Location(
-                                                    11..19,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                11..19,
-                                            ),
-                                        },
-                                    ],
-                                    name: Variant {
-                                        name: Identifier {
-                                            name: "Some",
-                                            location: Location(
-                                                21..25,
-                                            ),
-                                        },
-                                        location: Location(
-                                            21..25,
-                                        ),
-                                    },
-                                    location: Location(
-                                        21..25,
-                                    ),
-                                },
-                                fields: [
-                                    Identifier(
-                                        Identifier {
-                                            name: "a",
-                                            location: Location(
-                                                26..27,
-                                            ),
-                                        },
-                                    ),
-                                ],
-                                location: Location(
-                                    21..28,
-                                ),
-                            },
-                        ),
-                        branch: Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "a",
-                                    location: Location(
-                                        32..33,
-                                    ),
-                                },
-                            },
-                        ),
-                        location: Location(
-                            21..33,
-                        ),
-                    },
-                    SwitchCase {
-                        pattern: Variant(
-                            VariantPattern {
-                                name: Path {
-                                    root: [
-                                        Type {
-                                            name: Identifier {
-                                                name: "Optional",
-                                                location: Location(
-                                                    35..43,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                35..43,
-                                            ),
-                                        },
-                                    ],
-                                    name: Variant {
-                                        name: Identifier {
-                                            name: "None",
-                                            location: Location(
-                                                45..49,
-                                            ),
-                                        },
-                                        location: Location(
-                                            45..49,
-                                        ),
-                                    },
-                                    location: Location(
-                                        45..49,
-                                    ),
-                                },
-                                fields: [],
-                                location: Location(
-                                    45..49,
-                                ),
-                            },
-                        ),
-                        branch: Literal(
-                            Int(
-                                IntLiteral {
-                                    value: 0,
-                                    location: Location(
-                                        53..54,
-                                    ),
-                                    kind: None,
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            45..54,
-                        ),
-                    },
-                ],
-                location: Location(
-                    0..56,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..56
+  EXPR_STMT@0..56
+    SWITCH_EXPR@0..56
+      SWITCH_KW@0..6 "switch"
+      VARIABLE_EXPR@6..8
+        WHITESPACE@6..7 " "
+        NAME@7..8
+          IDENT@7..8 "a"
+      WHITESPACE@8..9 " "
+      LEFT_BRACE@9..10 "{"
+      WHITESPACE@10..11 " "
+      SWITCH_ARM@11..33
+        PAT_VARIANT@11..28
+          PATH@11..25
+            PATH_TYPE@11..19
+              NAME@11..19
+                IDENT@11..19 "Optional"
+            PATH_SEP@19..21 "::"
+            PATH_VARIANT@21..25
+              NAME@21..25
+                IDENT@21..25 "Some"
+          LEFT_PAREN@25..26 "("
+          PAT_IDENT@26..27
+            NAME@26..27
+              IDENT@26..27 "a"
+          RIGHT_PAREN@27..28 ")"
+        WHITESPACE@28..29 " "
+        BIG_ARROW@29..31 "=>"
+        VARIABLE_EXPR@31..33
+          WHITESPACE@31..32 " "
+          NAME@32..33
+            IDENT@32..33 "a"
+      COMMA@33..34 ","
+      WHITESPACE@34..35 " "
+      SWITCH_ARM@35..54
+        PAT_VARIANT@35..50
+          PATH@35..50
+            PATH_TYPE@35..43
+              NAME@35..43
+                IDENT@35..43 "Optional"
+            PATH_SEP@43..45 "::"
+            PATH_VARIANT@45..50
+              NAME@45..49
+                IDENT@45..49 "None"
+              WHITESPACE@49..50 " "
+        BIG_ARROW@50..52 "=>"
+        WHITESPACE@52..53 " "
+        LIT_EXPR@53..54
+          INTEGER_LIT@53..54
+            INTEGER_LIT@53..54 "0"
+      WHITESPACE@54..55 " "
+      RIGHT_BRACE@55..56 "}"

@@ -1,21 +1,9 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr_err(\"return;;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"return;;\")"
 ---
-InvalidExpression {
-    source: SourceFile {
-        id: SourceFileId(
-            PackageId(
-                0,
-            ),
-            0,
-        ),
-        name: Internal,
-        content: "return;;",
-        package: PackageId(
-            0,
-        ),
-    },
-    range: 7..8,
-    actual: Semicolon,
-}
+SOURCE_FILE@0..8
+  RETURN_STMT@0..7
+    RETURN_KW@0..6 "return"
+    SEMICOLON@6..7 ";"
+  SEMICOLON@7..8 ";"

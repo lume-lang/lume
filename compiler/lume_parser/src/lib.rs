@@ -1,392 +1,296 @@
-use std::sync::Arc;
-
-use error_snippet::{Error, Result};
-use lume_ast::*;
-use lume_errors::DiagCtxHandle;
-use lume_lexer::{Token, TokenKind, TokenType};
-use lume_span::SourceFile;
-
-use crate::errors::*;
-
-pub mod attr;
-mod errors;
-pub mod expr;
-pub mod generic;
-pub mod item;
-pub mod path;
-pub mod pattern;
-pub mod stmt;
-pub mod ty;
+pub(crate) mod attr;
+pub(crate) mod expr;
+pub(crate) mod generic;
+pub(crate) mod item;
+pub(crate) mod path;
+pub(crate) mod pattern;
+pub(crate) mod recover;
+pub(crate) mod stmt;
+pub(crate) mod ty;
 
 #[cfg(test)]
 mod tests;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum ItemKind {
-    Import,
-    Namespace,
-    Struct,
-    Enum,
-    Trait,
-    Impl,
-    Function,
-    Method,
-    Field,
-    Variant,
-    TraitImpl,
-    TraitMethod,
+use std::sync::Arc;
+
+use lume_errors::Result;
+use lume_lexer::{Token, TokenKind};
+use lume_span::SourceFile;
+use lume_syntax::*;
+
+/// Declares what the parser should parse.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Target {
+    /// Parse top-level items, such as function definitions, structs, etc.
+    #[default]
+    Item,
+
+    /// Parse statements, as if the parser started within a block.
+    Statement,
 }
 
-impl ItemKind {
-    pub(crate) fn supports_attributes(self) -> bool {
-        matches!(
-            self,
-            ItemKind::Struct | ItemKind::Trait | ItemKind::Function | ItemKind::Method | ItemKind::TraitMethod
-        )
-    }
-}
-
-impl std::fmt::Display for ItemKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ItemKind::Import => write!(f, "import"),
-            ItemKind::Namespace => write!(f, "namespace"),
-            ItemKind::Struct => write!(f, "struct definition"),
-            ItemKind::Enum => write!(f, "enum definition"),
-            ItemKind::Trait => write!(f, "trait definition"),
-            ItemKind::Impl => write!(f, "implementation block"),
-            ItemKind::Function => write!(f, "function definition"),
-            ItemKind::Method => write!(f, "method definition"),
-            ItemKind::Field => write!(f, "field"),
-            ItemKind::Variant => write!(f, "enum variant"),
-            ItemKind::TraitImpl => write!(f, "trait implementation"),
-            ItemKind::TraitMethod => write!(f, "trait method"),
-        }
-    }
-}
-
-pub struct Parser<'src, 'ast> {
+pub struct Parser {
     /// Defines the source code which is being parsed.
     source: Arc<SourceFile>,
 
-    /// Handle to the diagnostics context which will handle parsing errors.
-    dcx: DiagCtxHandle,
-
-    /// Arena for storing the produced AST
-    arena: &'ast lume_data_structures::UntypedArena,
-
-    /// Defines the index of the current token being processed, given in a
-    /// zero-based index.
-    index: usize,
-
-    /// Defines the current position within the module source code, given in a
-    /// zero-based index.
-    position: usize,
-
     /// Defines all the tokens from the parsed source.
-    tokens: Vec<Token<'src>>,
+    tokens: Vec<(SyntaxKind, TextSpan)>,
 
-    /// Defines the documentation comment for the current item, if any.
-    doc_token: Option<String>,
-
-    /// Defines the attributes for the current item, if any.
-    attributes: Option<Vec<Attribute<'ast>>>,
-
-    /// Defines whether the parser should attempt to recover from errors.
-    attempt_recovery: bool,
+    builder: SyntaxTreeBuilder,
 }
 
-impl<'src, 'ast> Parser<'src, 'ast> {
-    /// Creates a new [`Parser`] instance with the given source file as
-    /// it's input to parse.
-    pub fn new(
-        source: Arc<SourceFile>,
-        mut tokens: Vec<Token<'src>>,
-        dcx: DiagCtxHandle,
-        arena: &'ast lume_data_structures::UntypedArena,
-    ) -> Self {
-        // Filter away any trivia tokens, if present.
-        tokens.retain(|t| !matches!(t.as_type(), TokenType::Comment | TokenType::Whitespace));
-
-        Parser {
-            source,
-            dcx,
-            arena,
-            index: 0,
-            position: 0,
-            tokens,
-            doc_token: None,
-            attributes: None,
-            attempt_recovery: true,
-        }
-    }
-
-    /// Disables the parser from attempting to recover from errors.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    pub fn disable_recovery(&mut self) {
-        self.attempt_recovery = false;
-    }
-
-    /// Prepares the parser to being parsing.
-    ///
-    /// This function iterates through the tokens of the module source code
-    /// from the lexer and moves them into the parser.
+impl Parser {
+    /// Creates a new parser instance from a source file.
     ///
     /// # Errors
     ///
-    /// Returns `Err` if some part of the input source is unsupported
-    /// or unexpected.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn prepare(&mut self) -> Result<()> {
-        // If we've already tokenized something, we shouldn't add any more.
-        if !self.tokens.is_empty() {
-            tracing::debug!("all tokens pre-lexed ({})", self.tokens.len());
-            return Ok(());
+    /// Returns `Err` if some part of the input source contains invalid or
+    /// unsupported tokens.
+    pub fn from_source(source: Arc<SourceFile>) -> Result<Self> {
+        let mut lexer = lume_lexer::Lexer::new(source.clone());
+        let tokens = lexer.lex()?;
+
+        Ok(Self::from_tokens(source, tokens.into_iter()))
+    }
+
+    /// Creates a new parser instance from a set of pre-lexed tokens.
+    pub fn from_tokens<'src, I>(source: Arc<SourceFile>, tokens: I) -> Self
+    where
+        I: DoubleEndedIterator<Item = Token<'src>>,
+    {
+        Self {
+            source,
+            tokens: tokens.into_iter().rev().map(as_parser_token).collect(),
+            builder: SyntaxTreeBuilder::new(),
         }
-
-        tracing::debug!("lexed {} tokens", self.tokens.len());
-
-        Ok(())
     }
 
     /// Parses the module within the parser state.
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if some part of the input is unexpected or if the
-    /// parser unexpectedly reaches end-of-file.
-    #[tracing::instrument(level = "INFO", skip_all, fields(file = %self.source.name), err)]
-    pub fn parse(&mut self) -> Result<SyntaxTree<'ast>> {
-        let mut items = Vec::new();
+    pub fn parse(mut self, target: Target) -> SyntaxTree {
+        let entrypoint = match target {
+            Target::Item => Self::parse_item,
+            Target::Statement => Self::parse_statement,
+        };
+
+        self.start_node(SyntaxKind::SOURCE_FILE);
 
         loop {
             if self.eof() {
                 break;
             }
 
-            items.push(self.parse_item()?);
+            entrypoint(&mut self);
         }
 
-        self.dcx.ensure_untainted()?;
+        self.finish_node();
+        self.builder.finish()
+    }
 
-        Ok(SyntaxTree {
-            arena: self.arena,
-            items,
-        })
+    /// Peeks the token at the current index, plus some offset.
+    #[inline]
+    fn token_at(&self, offset: usize) -> SyntaxKind {
+        let non_trivia = self.non_trivia_pos(offset);
+
+        self.tokens
+            .get(non_trivia)
+            .map_or(SyntaxKind::EOF, |(kind, _range)| *kind)
+    }
+
+    /// Gets the span of the current token.
+    fn span(&self) -> TextSpan {
+        let non_trivia = self.non_trivia_pos(0);
+
+        self.tokens
+            .get(non_trivia)
+            .map_or(TextSpan(0, 0), |(_kind, range)| *range)
+    }
+
+    /// Gets the span at the current index, plus some offset.
+    #[inline]
+    fn span_at(&self, offset: usize) -> TextSpan {
+        let non_trivia = self.non_trivia_pos(offset);
+
+        self.tokens
+            .get(non_trivia)
+            .map_or(TextSpan(0, 0), |(_kind, range)| *range)
+    }
+
+    /// Peeks the current token, which is not yet parsed.
+    ///
+    /// If parser has already reached the end of input, returns
+    /// [`SyntaxKind::EOF`].
+    fn token(&self) -> SyntaxKind {
+        self.token_at(0)
+    }
+
+    /// Gets a slice of the source code at the given span.
+    fn content_at(&self, span: TextSpan) -> &str {
+        self.source.content.get(span.0..span.1).unwrap_or("")
     }
 
     /// Determines whether the parser has reached the end-of-file.
-    #[inline]
     fn eof(&self) -> bool {
-        self.index + 1 > self.tokens.len() || self.token().kind == TokenKind::Eof
+        self.token() == SyntaxKind::EOF
     }
 
-    /// Parses a single token from the lexer at the given index.
-    ///
-    /// Returns the parsed token or a parsing error.
-    fn token_at(&self, index: usize) -> Token<'src> {
-        if let Some(token) = self.tokens.get(index) {
-            token.clone()
-        } else {
-            let index = match self.tokens.last() {
-                Some(t) => t.index.clone(),
-                None => 0..1,
-            };
-
-            Token {
-                kind: TokenKind::Eof,
-                index,
-            }
-        }
+    /// Reports an error at the current token location.
+    fn error<M: Into<String>>(&mut self, message: M) {
+        self.builder.errors.push(SyntaxError::new(message, self.span()));
     }
 
-    /// Parses a single token from the lexer.
-    ///
-    /// Returns the parsed token or a parsing error.
-    fn token(&self) -> Token<'src> {
-        self.token_at(self.index)
+    /// Reports an error at the current token location and skips to the next
+    /// token.
+    fn error_and_skip<M: Into<String>>(&mut self, message: M) {
+        self.error(message);
+        self.skip();
     }
 
-    /// Parses the previous token from the lexer.
-    ///
-    /// Returns the parsed token or a parsing error.
-    fn previous_token(&self) -> Token<'src> {
-        self.token_at(self.index - 1)
-    }
-
-    /// Parses the next token from the lexer.
-    ///
-    /// Returns the parsed token or a parsing error.
-    fn next_token(&self) -> Token<'src> {
-        self.token_at(self.index + 1)
-    }
-
-    /// Peeks the token from the lexer at some offset and returns it if it
-    /// matches the expected kind.
-    ///
-    /// Returns a boolean indicating whether the token matches the expected
-    /// kind.
-    fn peek_offset(&self, kind: TokenType, offset: isize) -> bool {
-        let token = self.token_at(self.index.saturating_add_signed(offset));
-
-        token.kind.as_type() == kind
-    }
-
-    /// Peeks the next token from the lexer and returns it if it matches the
-    /// expected kind.
-    ///
-    /// Returns a boolean indicating whether the token matches the expected
-    /// kind.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn peek_next(&self, kind: TokenType) -> bool {
-        self.peek_offset(kind, 1)
-    }
-
-    /// Peeks the next token from the lexer and returns it if it matches the
-    /// expected kind.
-    ///
-    /// Returns a boolean indicating whether the token matches the expected
-    /// kind.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn peek(&self, kind: TokenType) -> bool {
-        self.peek_offset(kind, 0)
-    }
-
-    /// Advances the cursor position backwards by a single token.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn rewind(&mut self) {
-        self.index -= 1;
-        self.position = self.token().start();
+    /// Reports an error at the current token location.
+    fn error_and_recover<M: Into<String>>(&mut self, message: M, set: &[SyntaxKind]) -> bool {
+        self.error(message);
+        self.recover_with_set(set)
     }
 
     /// Advances the cursor position forward by a single token.
-    #[tracing::instrument(level = "TRACE", skip_all)]
     fn skip(&mut self) {
-        self.index += 1;
-        self.position = self.token().start();
+        self.consume_trivia();
+
+        let _ = self.tokens.pop();
     }
 
-    /// Moves the current cursor position to the given index.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn move_to(&mut self, index: usize) {
-        self.index = index;
-        self.position = self.token().start();
+    /// Peeks the next token from the lexer and returns [`true`] if it
+    /// matches the expected kind.
+    ///
+    /// If the token does not match the expected kind, returns [`false`].
+    fn peek(&self, kind: SyntaxKind) -> bool {
+        self.token() == kind
     }
 
-    /// Moves the current cursor position to the given position.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn move_to_pos(&mut self, pos: usize) {
-        while self.position > pos {
-            self.rewind();
+    /// Peeks the next token from the lexer, plus some offset, and returns
+    /// [`true`] if it matches the expected kind.
+    ///
+    /// If the token does not match the expected kind, returns [`false`].
+    fn peek_at(&self, offset: usize, kind: SyntaxKind) -> bool {
+        self.token_at(offset) == kind
+    }
+
+    /// Peeks the next token from the lexer and returns [`true`] if it
+    /// matches any of the expected kinds.
+    ///
+    /// If the token does not match any of the given syntax kinds, returns
+    /// [`false`].
+    fn peek_any(&self, kind: &[SyntaxKind]) -> bool {
+        if kind.iter().any(|&k| self.peek(k)) {
+            return true;
+        }
+
+        false
+    }
+
+    /// Gets the zero-based index of the next non-trivia token in
+    /// the token queue.
+    fn non_trivia_pos(&self, from: usize) -> usize {
+        self.tokens
+            .iter()
+            .skip(from)
+            .rposition(|(tok, _range)| !tok.is_trivia())
+            .unwrap_or(0)
+    }
+
+    fn consume_trivia(&mut self) {
+        while let Some(trivia) = self.tokens.pop_if(|(kind, _range)| kind.is_trivia()) {
+            self.node_token(trivia.0, trivia.1);
         }
     }
 
-    /// Gets the item kind, deduced from the current token.
+    /// Checks the next token from the lexer and returns [`true`] if it
+    /// matches the expected kind. Additionally, it advances the cursor
+    /// position by a single token.
     ///
-    /// If the token does not match any item kind, returns [`None`]
-    fn item_kind(&self) -> Option<ItemKind> {
-        match self.token().kind {
-            TokenKind::Import => Some(ItemKind::Import),
-            TokenKind::Namespace => Some(ItemKind::Namespace),
-            TokenKind::Struct => Some(ItemKind::Struct),
-            TokenKind::Enum => Some(ItemKind::Enum),
-            TokenKind::Trait => Some(ItemKind::Trait),
-            TokenKind::Impl => Some(ItemKind::Impl),
-            TokenKind::Fn => Some(ItemKind::Function),
-            TokenKind::Use => Some(ItemKind::TraitImpl),
-            _ => None,
+    /// If the token does not match the expected kind, returns [`false`] without
+    /// advancing the cursor.
+    fn check(&mut self, kind: SyntaxKind) -> bool {
+        self.consume_trivia();
+
+        if let Some((kind, span)) = self.tokens.pop_if(|(tok, _span)| *tok == kind) {
+            self.node_token(kind, span);
+            return true;
         }
+
+        false
     }
 
-    /// Consumes the next token from the lexer and returns it if it matches the
-    /// expected kind.
+    /// Consume the next token from the lexer and returns [`true`] if it
+    /// matches any of the expected kinds. Additionally, it advances the cursor
+    /// position by a single token.
     ///
-    /// If the token does not match the expected kind, an error is returned.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn expect(&mut self, kind: TokenType) -> Result<Token<'src>> {
-        let current = self.token();
+    /// If the token does not match any of the given syntax kinds, returns
+    /// [`false`] without advancing the cursor.
+    fn check_any(&mut self, kind: &[SyntaxKind]) -> bool {
+        if kind.iter().any(|&k| self.check(k)) {
+            return true;
+        }
 
-        if current.kind.as_type() == kind {
-            Ok(current)
-        } else {
-            Err(UnexpectedToken {
-                source: self.source.clone(),
-                range: current.index,
-                expected: kind,
-                actual: current.kind.as_type(),
+        false
+    }
+
+    /// Consume the next token from the lexer and returns [`true`] if it
+    /// matches the expected kind. Additionally, it advances the cursor
+    /// position by a single token.
+    ///
+    /// If the token does not match the expected kind, an error is raised.
+    fn consume(&mut self, kind: SyntaxKind) -> bool {
+        if self.check(kind) {
+            return true;
+        }
+
+        self.error(format!("expected kind {kind:?}"));
+        false
+    }
+
+    /// Consumes the current token, no matter it's kind.
+    fn consume_any(&mut self) -> SyntaxKind {
+        self.consume_trivia();
+
+        if let Some((kind, span)) = self.tokens.pop() {
+            self.node_token(kind, span);
+            return kind;
+        }
+
+        SyntaxKind::EOF
+    }
+
+    /// Parses a sequence of delimited statements, where the closure `f`
+    /// is invoked between each delimiter, until no more delimiters are found.
+    ///
+    /// This is useful for any sequence of identifiers, such as namespace paths.
+    fn consume_delim(&mut self, delim: SyntaxKind, mut f: impl FnMut(&mut Parser)) {
+        loop {
+            f(self);
+
+            if !self.check(delim) {
+                break;
             }
-            .into())
         }
     }
 
-    /// Consumes the next token from the lexer and returns it if it matches the
-    /// expected kind. Additionally, it advances the cursor position by a
-    /// single token.
+    /// Parses a a sequence of zero-or-more items, where the closure
+    /// `f` is invoked, as long as the given `open` token is present.
     ///
-    /// If the token does not match the expected kind, an error is returned.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn consume(&mut self, kind: TokenType) -> Result<Token<'src>> {
-        match self.expect(kind) {
-            Ok(token) => {
-                self.skip();
+    /// This is useful for when you need zero-or-more items without consuming
+    /// any tokens, such as attributes.
+    fn consume_any_seq(&mut self, open: SyntaxKind, mut f: impl FnMut(&mut Parser)) -> bool {
+        let mut any = false;
 
-                Ok(token)
-            }
-            Err(err) => Err(err),
-        }
-    }
-
-    /// Consumes the next token from the lexer and returns it, not matter what
-    /// token it is.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn consume_any(&mut self) -> Token<'src> {
-        let token = self.token();
-
-        self.skip();
-
-        token
-    }
-
-    /// Consumes the next token from the lexer and returns it if it matches the
-    /// expected kind. Additionally, it advances the cursor position by a
-    /// single token.
-    ///
-    /// If the token does not match the expected kind, `None` is returned.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn consume_if(&mut self, kind: TokenType) -> Option<Token<'src>> {
-        if self.eof() {
-            return None;
+        while self.peek(open) {
+            any = true;
+            f(self);
         }
 
-        let current = self.token();
-
-        if current.kind.as_type() == kind {
-            self.skip();
-
-            Some(current)
-        } else {
-            None
-        }
-    }
-
-    /// Invokes the given closure `f`, while preserving the start- and end-index
-    /// of the consumed span. The span is returned as a `Location`, along with
-    /// the result of the closure.
-    fn consume_with_loc<T>(
-        &mut self,
-        mut f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
-    ) -> Result<(T, Location)> {
-        // Get the start-index of the current token, whatever it is.
-        let start = self.token().start();
-
-        let result = f(self)?;
-
-        let end = self.previous_token().end();
-
-        Ok((result, (start..end).into()))
+        any
     }
 
     /// Parses a sequence of statements, where the closure `f`
@@ -394,42 +298,10 @@ impl<'src, 'ast> Parser<'src, 'ast> {
     ///
     /// This is useful for any sequence of expressions or statements, such as
     /// blocks. Upon returning, the `close` token will have been consumed.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn consume_seq_to_end<T>(
-        &mut self,
-        close: TokenType,
-        mut f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
-    ) -> Result<Vec<T>> {
-        let mut v = Vec::new();
-
-        while !self.check(close) {
-            v.push(f(self)?);
+    fn consume_seq_to_end(&mut self, close: SyntaxKind, mut f: impl FnMut(&mut Parser)) {
+        while !self.check(close) && !self.eof() {
+            f(self);
         }
-
-        Ok(v)
-    }
-
-    /// Parses a sequence of delimited statements, where the closure `f`
-    /// is invoked between each delimiter, until no more delimiters are found.
-    ///
-    /// This is useful for any sequence of identifiers, such as namespace paths.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn consume_delim<T>(
-        &mut self,
-        delim: TokenType,
-        mut f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
-    ) -> Result<Vec<T>> {
-        let mut v = Vec::new();
-
-        loop {
-            v.push(f(self)?);
-
-            if self.consume_if(delim).is_none() {
-                break;
-            }
-        }
-
-        Ok(v)
     }
 
     /// Parses a sequence of delimited statements, where the closure `f`
@@ -439,37 +311,30 @@ impl<'src, 'ast> Parser<'src, 'ast> {
     /// This is useful for any sequence of expressions or statements, such as
     /// arrays, parameters, etc. Upon returning, the `close` token will have
     /// been consumed.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn consume_delim_seq_to_end<T>(
+    fn consume_delim_seq_to_end(
         &mut self,
-        close: TokenType,
-        delim: TokenType,
-        mut f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
-    ) -> Result<Vec<T>> {
-        let mut v = Vec::new();
-
+        close: SyntaxKind,
+        delim: SyntaxKind,
+        mut f: impl FnMut(&mut Parser),
+    ) -> bool {
         if self.check(close) {
-            return Ok(v);
+            return true;
         }
 
         while !self.check(close) {
-            v.push(f(self)?);
+            f(self);
 
             if !self.check(delim) {
                 if !self.check(close) {
-                    return Err(MissingDelimiterInSequence {
-                        source: self.source.clone(),
-                        range: self.token().index,
-                        delimiter: delim,
-                    }
-                    .into());
+                    self.error(format!("expected {delim:?}"));
+                    return false;
                 }
 
                 break;
             }
         }
 
-        Ok(v)
+        true
     }
 
     /// Parses an enclosed sequence of delimited statements, where the closure
@@ -479,16 +344,18 @@ impl<'src, 'ast> Parser<'src, 'ast> {
     /// This is useful for any sequence of expressions or statements, such as
     /// arrays, parameters, etc. Upon returning, the `close` token will have
     /// been consumed.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn consume_enclosed_delim_seq<T>(
+    fn consume_enclosed_delim_seq(
         &mut self,
-        open: TokenType,
-        close: TokenType,
-        delim: TokenType,
-        f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
-    ) -> Result<Vec<T>> {
-        self.consume(open)?;
-        self.consume_delim_seq_to_end(close, delim, f)
+        open: SyntaxKind,
+        close: SyntaxKind,
+        delim: SyntaxKind,
+        f: impl FnMut(&mut Parser),
+    ) -> bool {
+        if self.consume(open) {
+            self.consume_delim_seq_to_end(close, delim, f)
+        } else {
+            false
+        }
     }
 
     /// Parses an enclosed sequence of comma-delimited statements, where the
@@ -498,14 +365,8 @@ impl<'src, 'ast> Parser<'src, 'ast> {
     /// This is useful for any sequence of expressions or statements, such as
     /// arrays, parameters, etc. Upon returning, both the `open` and `close`
     /// tokens will have been consumed.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn consume_comma_seq<T>(
-        &mut self,
-        open: TokenType,
-        close: TokenType,
-        f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
-    ) -> Result<Vec<T>> {
-        self.consume_enclosed_delim_seq(open, close, TokenType::Comma, f)
+    fn consume_comma_seq(&mut self, open: SyntaxKind, close: SyntaxKind, f: impl FnMut(&mut Parser)) -> bool {
+        self.consume_enclosed_delim_seq(open, close, Token![,], f)
     }
 
     /// Parses a parenthesis-enclosed sequence of comma-delimited statements,
@@ -515,9 +376,8 @@ impl<'src, 'ast> Parser<'src, 'ast> {
     /// This is useful for any sequence of expressions or statements, such as
     /// arrays, parameters, etc. Upon returning, both the `open` and `close`
     /// tokens will have been consumed.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn consume_paren_seq<T>(&mut self, f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>) -> Result<Vec<T>> {
-        self.consume_comma_seq(TokenType::LeftParen, TokenType::RightParen, f)
+    fn consume_paren_seq(&mut self, f: impl FnMut(&mut Parser)) {
+        self.consume_comma_seq(SyntaxKind::LEFT_PAREN, SyntaxKind::RIGHT_PAREN, f);
     }
 
     /// Parses a curly-braced enclosed sequence of statements, where the closure
@@ -526,226 +386,187 @@ impl<'src, 'ast> Parser<'src, 'ast> {
     /// This is useful for any sequence of statements within a block.
     /// Upon returning, both the `open` and `close` tokens will have been
     /// consumed.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn consume_curly_seq<T>(&mut self, f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>) -> Result<Vec<T>> {
-        self.consume(TokenType::LeftCurly)?;
-        self.consume_seq_to_end(TokenType::RightCurly, f)
+    fn consume_curly_seq(&mut self, f: impl FnMut(&mut Parser)) {
+        if self.consume(SyntaxKind::LEFT_BRACE) {
+            self.consume_seq_to_end(SyntaxKind::RIGHT_BRACE, f);
+        }
     }
 
-    /// Parses a a sequence of zero-or-more items, where the closure
-    /// `f` is invoked, as long as the given `open` token is present.
-    ///
-    /// This is useful for when you need zero-or-more items without consuming
-    /// any tokens, such as attributes.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn consume_any_seq<T>(
-        &mut self,
-        open: TokenType,
-        mut f: impl FnMut(&mut Parser<'src, 'ast>) -> Result<T>,
-    ) -> Result<Vec<T>> {
-        let mut v = Vec::new();
+    /// Creates a new checkout for the current position.
+    fn checkpoint(&self) -> Checkpoint {
+        self.builder.inner.checkpoint()
+    }
 
-        if self.peek(open) {
-            v.push(f(self)?);
+    /// Adds a new token node to the tree.
+    fn node_token(&mut self, kind: SyntaxKind, span: TextSpan) {
+        let text = self.source.content.get(span.0..span.1).unwrap_or("");
+
+        self.builder.inner.token(kind.into(), text);
+    }
+
+    /// Starts a new node.
+    fn start_node(&mut self, kind: SyntaxKind) {
+        // Depending on whether we're at the first token or not, we might not
+        // be able to consume any trivia tokens.
+        //
+        // If this is the first token, consume the trivia *after* starting the node.
+        let is_at_root = self.tokens.last().is_none_or(|(_, span)| span.0 == 0);
+
+        if !is_at_root {
+            self.consume_trivia();
         }
 
-        Ok(v)
+        self.builder.inner.start_node(kind.into());
+
+        if is_at_root {
+            self.consume_trivia();
+        }
     }
 
-    /// Checks whether the current token is of the given type. If so, the token
-    /// is consumed.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn check(&mut self, kind: TokenType) -> bool {
-        self.consume_if(kind).is_some()
+    /// Starts a new node at the given checkpoint.
+    fn start_node_at(&mut self, kind: SyntaxKind, c: Checkpoint) {
+        let is_at_root = self.tokens.last().is_none_or(|(_, span)| span.0 == 0);
+
+        if !is_at_root {
+            self.consume_trivia();
+        }
+
+        self.builder.inner.start_node_at(c, kind.into());
+
+        if is_at_root {
+            self.consume_trivia();
+        }
     }
 
-    /// Checks whether the current token is an `External` token.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn check_external(&mut self) -> bool {
-        self.check(TokenType::External)
+    /// Finish the current node.
+    fn finish_node(&mut self) {
+        self.builder.inner.finish_node();
+    }
+
+    /// Starts the given checkout and immedietly finishes it.
+    fn complete_node(&mut self, kind: SyntaxKind, c: Checkpoint) -> SyntaxKind {
+        self.start_node_at(kind, c);
+        self.finish_node();
+
+        kind
+    }
+
+    /// Parses the next token as an identifier.
+    fn parse_ident(&mut self) {
+        self.start_node(SyntaxKind::NAME);
+
+        match self.token() {
+            // Actual identifiers are obviously allowed, so they pass through.
+            SyntaxKind::IDENT => {
+                self.node_token(SyntaxKind::IDENT, self.span());
+                self.skip();
+            }
+
+            // Keywords are also allowed, so reserved keywords can be used as identifiers.
+            ident if ident.is_keyword() => {
+                self.node_token(SyntaxKind::IDENT, self.span());
+                self.skip();
+            }
+
+            _ => {
+                self.error_and_skip("expected identifier");
+            }
+        }
+
+        self.finish_node();
     }
 
     /// Reads the current documentation comment into the parser's state, if any
     /// is present.
     #[tracing::instrument(level = "TRACE", skip_all)]
-    fn read_doc_comment(&mut self) {
-        let mut doc_comments = Vec::new();
-
-        while let Some(doc_token) = self.consume_if(TokenType::DocComment)
-            && let TokenKind::DocComment(value) = doc_token.kind
-        {
-            doc_comments.push(value);
-        }
-
-        if doc_comments.is_empty() {
-            tracing::trace!("no doc comment found");
+    fn parse_doc_comment(&mut self) {
+        if !self.peek(SyntaxKind::DOC_COMMENT) {
             return;
         }
 
-        self.doc_token = Some(
-            doc_comments
-                .into_iter()
-                .map(|c| c.trim_start_matches("/// ").trim_start_matches("///").to_string())
-                .collect::<Vec<String>>()
-                .join("\n"),
-        );
+        while self.check(SyntaxKind::DOC_COMMENT) {}
     }
+}
 
-    /// Asserts that the current token is an `fn` token.
-    fn expect_fn(&mut self) -> Result<Token<'src>> {
-        self.consume(TokenType::Fn)
-    }
+fn as_parser_token(token: Token<'_>) -> (SyntaxKind, TextSpan) {
+    let kind = match token.kind {
+        TokenKind::As => SyntaxKind::AS_KW,
+        TokenKind::Add => SyntaxKind::ADD,
+        TokenKind::AddAssign => SyntaxKind::ADDASSIGN,
+        TokenKind::And => SyntaxKind::AND,
+        TokenKind::Arrow => SyntaxKind::ARROW,
+        TokenKind::ArrowBig => SyntaxKind::BIG_ARROW,
+        TokenKind::Assign => SyntaxKind::ASSIGN,
+        TokenKind::DocComment(_) => SyntaxKind::DOC_COMMENT,
+        TokenKind::BinaryAnd => SyntaxKind::BINARY_AND,
+        TokenKind::BinaryOr => SyntaxKind::BINARY_OR,
+        TokenKind::BinaryXor => SyntaxKind::BINARY_XOR,
+        TokenKind::Break => SyntaxKind::BREAK_KW,
+        TokenKind::Colon => SyntaxKind::COLON,
+        TokenKind::Comma => SyntaxKind::COMMA,
+        TokenKind::Comment(_) => SyntaxKind::LINE_COMMENT,
+        TokenKind::Continue => SyntaxKind::CONTINUE_KW,
+        TokenKind::Decrement => SyntaxKind::DECREMENT,
+        TokenKind::Div => SyntaxKind::DIV,
+        TokenKind::DivAssign => SyntaxKind::DIVASSIGN,
+        TokenKind::Dot => SyntaxKind::DOT,
+        TokenKind::DotDot => SyntaxKind::DOT_DOT,
+        TokenKind::DotDotDot => SyntaxKind::DOT_DOT_DOT,
+        TokenKind::Else => SyntaxKind::ELSE_KW,
+        TokenKind::Enum => SyntaxKind::ENUM_KW,
+        TokenKind::Eof => SyntaxKind::EOF,
+        TokenKind::Equal => SyntaxKind::EQUAL,
+        TokenKind::Exclamation => SyntaxKind::NOT,
+        TokenKind::External => SyntaxKind::EXTERN_KW,
+        TokenKind::False => SyntaxKind::FALSE_KW,
+        TokenKind::Fn => SyntaxKind::FN_KW,
+        TokenKind::Float(_) => SyntaxKind::FLOAT_LIT,
+        TokenKind::For => SyntaxKind::FOR_KW,
+        TokenKind::Greater => SyntaxKind::GREATER,
+        TokenKind::GreaterEqual => SyntaxKind::GEQUAL,
+        TokenKind::Identifier(_) => SyntaxKind::IDENT,
+        TokenKind::If => SyntaxKind::IF_KW,
+        TokenKind::Impl => SyntaxKind::IMPL_KW,
+        TokenKind::Import => SyntaxKind::IMPORT_KW,
+        TokenKind::In => SyntaxKind::IN_KW,
+        TokenKind::Is => SyntaxKind::IS_KW,
+        TokenKind::Increment => SyntaxKind::INCREMENT,
+        TokenKind::Integer(_) => SyntaxKind::INTEGER_LIT,
+        TokenKind::Internal => SyntaxKind::INTERNAL_KW,
+        TokenKind::LeftBracket => SyntaxKind::LEFT_BRACKET,
+        TokenKind::LeftCurly => SyntaxKind::LEFT_BRACE,
+        TokenKind::LeftParen => SyntaxKind::LEFT_PAREN,
+        TokenKind::Less => SyntaxKind::LESS,
+        TokenKind::LessEqual => SyntaxKind::LEQUAL,
+        TokenKind::Let => SyntaxKind::LET_KW,
+        TokenKind::Loop => SyntaxKind::LOOP_KW,
+        TokenKind::Mul => SyntaxKind::MUL,
+        TokenKind::MulAssign => SyntaxKind::MULASSIGN,
+        TokenKind::Namespace => SyntaxKind::NAMESPACE_KW,
+        TokenKind::NotEqual => SyntaxKind::NEQUAL,
+        TokenKind::PathSeparator => SyntaxKind::PATH_SEP,
+        TokenKind::Priv => SyntaxKind::PRIV_KW,
+        TokenKind::Pub => SyntaxKind::PUB_KW,
+        TokenKind::Question => SyntaxKind::QUESTION,
+        TokenKind::Or => SyntaxKind::OR,
+        TokenKind::Return => SyntaxKind::RETURN_KW,
+        TokenKind::RightBracket => SyntaxKind::RIGHT_BRACKET,
+        TokenKind::RightCurly => SyntaxKind::RIGHT_BRACE,
+        TokenKind::RightParen => SyntaxKind::RIGHT_PAREN,
+        TokenKind::Semicolon => SyntaxKind::SEMICOLON,
+        TokenKind::SelfRef => SyntaxKind::SELF_EXPR,
+        TokenKind::SelfType => SyntaxKind::SELF_TYPE,
+        TokenKind::String(_) => SyntaxKind::STRING_LIT,
+        TokenKind::Struct => SyntaxKind::STRUCT_KW,
+        TokenKind::Sub => SyntaxKind::SUB,
+        TokenKind::SubAssign => SyntaxKind::SUBASSIGN,
+        TokenKind::Switch => SyntaxKind::SWITCH_KW,
+        TokenKind::Trait => SyntaxKind::TRAIT_KW,
+        TokenKind::True => SyntaxKind::TRUE_KW,
+        TokenKind::Use => SyntaxKind::USE_KW,
+        TokenKind::While => SyntaxKind::WHILE_KW,
+        TokenKind::Whitespace(_) => SyntaxKind::WHITESPACE,
+    };
 
-    /// Asserts that the current token is an `impl` token.
-    fn expect_impl(&mut self) -> Result<Token<'src>> {
-        self.consume(TokenType::Impl)
-    }
-
-    /// Asserts that the current token is a `;` token.
-    fn expect_semi(&mut self) -> Result<Token<'src>> {
-        self.consume(TokenType::Semicolon)
-    }
-
-    /// Parses the next token as an identifier.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn parse_identifier(&mut self) -> Result<Identifier<'ast>> {
-        let identifier = match self.consume_any() {
-            // Actual identifiers are obviously allowed, so they pass through.
-            ident if ident.kind.as_type() == TokenType::Identifier => ident,
-
-            // Keywords are also allowed, so reserved keywords can be used as identifiers.
-            ident if ident.kind.is_keyword() => ident,
-
-            ident => {
-                return Err(ExpectedIdentifier {
-                    source: self.source.clone(),
-                    range: ident.index.clone(),
-                    actual: ident.kind.as_type(),
-                }
-                .into());
-            }
-        };
-
-        let location = identifier.index.clone();
-        let slice = self.source.content.get(location.start..location.end).unwrap();
-
-        Ok(Identifier {
-            name: self.arena.alloc_str(slice),
-            location: location.into(),
-        })
-    }
-
-    /// Parses the next token as an identifier, optionally with an suffixed
-    /// question mark.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn parse_callable_name(&mut self) -> Result<Identifier<'ast>> {
-        let identifier = self.parse_identifier()?;
-
-        if self.check(TokenType::Question) {
-            let mut ident = identifier.name.to_string();
-            let mut location = identifier.location;
-
-            ident.push('?');
-            location.0.end += 1;
-
-            return Ok(Identifier {
-                name: self.arena.alloc_str(&ident),
-                location,
-            });
-        }
-
-        Ok(identifier)
-    }
-
-    /// Parses the next token as an identifier. If the parsing fails, return
-    /// `Err(err)`.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn parse_ident_or_err(&mut self, err: Error) -> Result<Identifier<'ast>> {
-        match self.parse_identifier() {
-            Ok(name) => Ok(name),
-            Err(_) => Err(err),
-        }
-    }
-
-    /// Parses the next token as an identifier, optionally with an suffixed
-    /// question mark.
-    ///
-    /// If the parsing fails, return `Err(err)`.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn parse_callable_name_or_err(&mut self, err: Error) -> Result<Identifier<'ast>> {
-        match self.parse_callable_name() {
-            Ok(name) => Ok(name),
-            Err(_) => Err(err),
-        }
-    }
-
-    /// Parses the next token(s) as a namespace path.
-    ///
-    /// Identifier paths are much like regular identifiers, but can be joined
-    /// together with periods, to form longer chains of them. They can be as
-    /// short as a single link, such as `std`, but they can also be longer,
-    /// such as `std::fmt::error`.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn parse_import_path(&mut self) -> Result<ImportPath<'ast>> {
-        let segments = self.consume_delim(TokenType::PathSeparator, Parser::parse_identifier)?;
-
-        let start = segments.first().unwrap().location.0.start;
-        let end = segments.last().unwrap().location.0.end;
-
-        Ok(ImportPath {
-            path: segments,
-            location: (start..end).into(),
-        })
-    }
-
-    /// Returns a block for functions or methods.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn parse_block(&mut self) -> Result<Block<'ast>> {
-        let (statements, location) = self.consume_with_loc(|p| {
-            let mut stmts = Vec::new();
-
-            p.consume(TokenType::LeftCurly)?;
-
-            while p.consume_if(TokenType::RightCurly).is_none() {
-                match p.parse_statement() {
-                    Ok(stmt) => stmts.push(stmt),
-                    Err(err) => {
-                        if !p.attempt_recovery {
-                            return Err(err);
-                        }
-
-                        p.dcx.emit_and_push(err);
-
-                        // If we couldn't recover, raise the error from before.
-                        if !p.recover_statement() {
-                            p.dcx.ensure_untainted()?;
-                        }
-                    }
-                }
-            }
-
-            Ok(stmts)
-        })?;
-
-        Ok(Block { statements, location })
-    }
-
-    /// Returns an empty block for external functions and an actual block for
-    /// non-external functions.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn parse_opt_external_block(&mut self, external: bool) -> Result<Option<Block<'ast>>> {
-        if external {
-            if self.peek(TokenType::LeftCurly) {
-                return Err(ExternalFunctionBody {
-                    source: self.source.clone(),
-                    range: self.token().index,
-                }
-                .into());
-            }
-
-            Ok(None)
-        } else {
-            self.parse_block().map(Some)
-        }
-    }
+    (kind, TextSpan(token.index.start, token.index.end))
 }

@@ -1,46 +1,17 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"self.invoke();\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"self.invoke();\")"
 ---
-[
-    Expression(
-        Call(
-            Call {
-                callee: Some(
-                    Variable(
-                        Variable {
-                            name: Identifier {
-                                name: "self",
-                                location: Location(
-                                    0..4,
-                                ),
-                            },
-                        },
-                    ),
-                ),
-                name: Path {
-                    root: [],
-                    name: Callable {
-                        name: Identifier {
-                            name: "invoke",
-                            location: Location(
-                                5..11,
-                            ),
-                        },
-                        bound_types: [],
-                        location: Location(
-                            5..11,
-                        ),
-                    },
-                    location: Location(
-                        5..11,
-                    ),
-                },
-                arguments: [],
-                location: Location(
-                    5..13,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..14
+  EXPR_STMT@0..14
+    INSTANCE_CALL_EXPR@0..13
+      VARIABLE_EXPR@0..4
+        NAME@0..4
+          IDENT@0..4 "self"
+      DOT@4..5 "."
+      NAME@5..11
+        IDENT@5..11 "invoke"
+      ARG_LIST@11..13
+        LEFT_PAREN@11..12 "("
+        RIGHT_PAREN@12..13 ")"
+    SEMICOLON@13..14 ";"

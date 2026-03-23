@@ -1,81 +1,33 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"0 is Foo::A(a, b);\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"0 is Foo::A(a, b);\")"
 ---
-[
-    Expression(
-        Is(
-            Is {
-                target: Literal(
-                    Int(
-                        IntLiteral {
-                            value: 0,
-                            location: Location(
-                                0..1,
-                            ),
-                            kind: None,
-                        },
-                    ),
-                ),
-                pattern: Variant(
-                    VariantPattern {
-                        name: Path {
-                            root: [
-                                Type {
-                                    name: Identifier {
-                                        name: "Foo",
-                                        location: Location(
-                                            5..8,
-                                        ),
-                                    },
-                                    bound_types: [],
-                                    location: Location(
-                                        5..8,
-                                    ),
-                                },
-                            ],
-                            name: Variant {
-                                name: Identifier {
-                                    name: "A",
-                                    location: Location(
-                                        10..11,
-                                    ),
-                                },
-                                location: Location(
-                                    10..11,
-                                ),
-                            },
-                            location: Location(
-                                10..11,
-                            ),
-                        },
-                        fields: [
-                            Identifier(
-                                Identifier {
-                                    name: "a",
-                                    location: Location(
-                                        12..13,
-                                    ),
-                                },
-                            ),
-                            Identifier(
-                                Identifier {
-                                    name: "b",
-                                    location: Location(
-                                        15..16,
-                                    ),
-                                },
-                            ),
-                        ],
-                        location: Location(
-                            10..17,
-                        ),
-                    },
-                ),
-                location: Location(
-                    0..18,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..18
+  EXPR_STMT@0..18
+    IS_EXPR@0..17
+      LIT_EXPR@0..1
+        INTEGER_LIT@0..1
+          INTEGER_LIT@0..1 "0"
+      WHITESPACE@1..2 " "
+      IS_KW@2..4 "is"
+      PAT_VARIANT@4..17
+        WHITESPACE@4..5 " "
+        PATH@5..11
+          PATH_TYPE@5..8
+            NAME@5..8
+              IDENT@5..8 "Foo"
+          PATH_SEP@8..10 "::"
+          PATH_VARIANT@10..11
+            NAME@10..11
+              IDENT@10..11 "A"
+        LEFT_PAREN@11..12 "("
+        PAT_IDENT@12..13
+          NAME@12..13
+            IDENT@12..13 "a"
+        COMMA@13..14 ","
+        WHITESPACE@14..15 " "
+        PAT_IDENT@15..16
+          NAME@15..16
+            IDENT@15..16 "b"
+        RIGHT_PAREN@16..17 ")"
+    SEMICOLON@17..18 ";"

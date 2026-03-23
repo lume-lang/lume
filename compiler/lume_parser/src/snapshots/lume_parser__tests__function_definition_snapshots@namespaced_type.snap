@@ -1,71 +1,31 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn main() -> std::Int32 {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"fn main() -> std::Int32 {}\")"
 ---
-[
-    FunctionDefinition(
-        FunctionDefinition {
-            attributes: [],
-            visibility: None,
-            signature: Signature {
-                external: false,
-                name: Identifier {
-                    name: "main",
-                    location: Location(
-                        3..7,
-                    ),
-                },
-                type_parameters: [],
-                parameters: [],
-                return_type: Some(
-                    Named(
-                        NamedType {
-                            name: Path {
-                                root: [
-                                    Namespace {
-                                        name: Identifier {
-                                            name: "std",
-                                            location: Location(
-                                                13..16,
-                                            ),
-                                        },
-                                    },
-                                ],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "Int32",
-                                        location: Location(
-                                            18..23,
-                                        ),
-                                    },
-                                    bound_types: [],
-                                    location: Location(
-                                        18..23,
-                                    ),
-                                },
-                                location: Location(
-                                    18..23,
-                                ),
-                            },
-                        },
-                    ),
-                ),
-                location: Location(
-                    0..23,
-                ),
-            },
-            block: Some(
-                Block {
-                    statements: [],
-                    location: Location(
-                        24..26,
-                    ),
-                },
-            ),
-            location: Location(
-                0..26,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..26
+  FN@0..26
+    SIG@0..24
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "main"
+      PARAM_LIST@7..9
+        LEFT_PAREN@7..8 "("
+        RIGHT_PAREN@8..9 ")"
+      WHITESPACE@9..10 " "
+      RETURN_TYPE@10..24
+        ARROW@10..12 "->"
+        WHITESPACE@12..13 " "
+        NAMED_TYPE@13..24
+          PATH@13..24
+            PATH_NAMESPACE@13..16
+              NAME@13..16
+                IDENT@13..16 "std"
+            PATH_SEP@16..18 "::"
+            PATH_TYPE@18..24
+              NAME@18..23
+                IDENT@18..23 "Int32"
+              WHITESPACE@23..24 " "
+    BLOCK@24..26
+      LEFT_BRACE@24..25 "{"
+      RIGHT_BRACE@25..26 "}"

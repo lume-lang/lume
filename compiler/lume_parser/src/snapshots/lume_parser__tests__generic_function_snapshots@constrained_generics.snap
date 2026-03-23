@@ -1,127 +1,54 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
 ---
-[
-    FunctionDefinition(
-        FunctionDefinition {
-            attributes: [],
-            visibility: None,
-            signature: Signature {
-                external: false,
-                name: Identifier {
-                    name: "test",
-                    location: Location(
-                        3..7,
-                    ),
-                },
-                type_parameters: [
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T1",
-                            location: Location(
-                                8..10,
-                            ),
-                        },
-                        constraints: [
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Numeric",
-                                                location: Location(
-                                                    12..19,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                12..19,
-                                            ),
-                                        },
-                                        location: Location(
-                                            12..19,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ],
-                    },
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T2",
-                            location: Location(
-                                21..23,
-                            ),
-                        },
-                        constraints: [
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Numeric",
-                                                location: Location(
-                                                    25..32,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                25..32,
-                                            ),
-                                        },
-                                        location: Location(
-                                            25..32,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ],
-                    },
-                ],
-                parameters: [],
-                return_type: Some(
-                    Named(
-                        NamedType {
-                            name: Path {
-                                root: [],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "void",
-                                        location: Location(
-                                            39..43,
-                                        ),
-                                    },
-                                    bound_types: [],
-                                    location: Location(
-                                        39..43,
-                                    ),
-                                },
-                                location: Location(
-                                    39..43,
-                                ),
-                            },
-                        },
-                    ),
-                ),
-                location: Location(
-                    0..43,
-                ),
-            },
-            block: Some(
-                Block {
-                    statements: [],
-                    location: Location(
-                        44..46,
-                    ),
-                },
-            ),
-            location: Location(
-                0..46,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..46
+  FN@0..46
+    SIG@0..44
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "test"
+      BOUND_TYPES@7..33
+        LESS@7..8 "<"
+        BOUND_TYPE@8..19
+          NAME@8..10
+            IDENT@8..10 "T1"
+          CONSTRAINTS@10..19
+            COLON@10..11 ":"
+            WHITESPACE@11..12 " "
+            NAMED_TYPE@12..19
+              PATH@12..19
+                PATH_TYPE@12..19
+                  NAME@12..19
+                    IDENT@12..19 "Numeric"
+        COMMA@19..20 ","
+        WHITESPACE@20..21 " "
+        BOUND_TYPE@21..32
+          NAME@21..23
+            IDENT@21..23 "T2"
+          CONSTRAINTS@23..32
+            COLON@23..24 ":"
+            WHITESPACE@24..25 " "
+            NAMED_TYPE@25..32
+              PATH@25..32
+                PATH_TYPE@25..32
+                  NAME@25..32
+                    IDENT@25..32 "Numeric"
+        GREATER@32..33 ">"
+      PARAM_LIST@33..35
+        LEFT_PAREN@33..34 "("
+        RIGHT_PAREN@34..35 ")"
+      WHITESPACE@35..36 " "
+      RETURN_TYPE@36..44
+        ARROW@36..38 "->"
+        WHITESPACE@38..39 " "
+        NAMED_TYPE@39..44
+          PATH@39..44
+            PATH_TYPE@39..44
+              NAME@39..43
+                IDENT@39..43 "void"
+              WHITESPACE@43..44 " "
+    BLOCK@44..46
+      LEFT_BRACE@44..45 "{"
+      RIGHT_BRACE@45..46 "}"

@@ -1,79 +1,16 @@
-use error_snippet::Error;
-use lume_data_structures::UntypedArena;
+use std::sync::Arc;
 
-use super::*;
+use lume_span::SourceFile;
+use lume_syntax::SyntaxTree;
 
-#[track_caller]
-fn parse<'ast>(input: &str, arena: &'ast UntypedArena) -> SyntaxTree<'ast> {
-    let source = Arc::new(SourceFile::internal(input));
-
-    let mut lexer = lume_lexer::Lexer::new(source.clone());
-    let tokens = lexer.lex().unwrap();
-
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim(), arena);
-    parser.disable_recovery();
-
-    parser.parse().unwrap()
-}
+use crate::{Parser, Target};
 
 #[track_caller]
-fn parse_err(input: &str) -> Error {
-    let arena = UntypedArena::new();
+fn parse(target: Target, input: &str) -> SyntaxTree {
     let source = Arc::new(SourceFile::internal(input));
+    let parser = Parser::from_source(source).expect("failed to lex tokens");
 
-    let mut lexer = lume_lexer::Lexer::new(source.clone());
-    let tokens = lexer.lex().unwrap();
-
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim(), &arena);
-    parser.disable_recovery();
-
-    parser.parse().unwrap_err()
-}
-
-#[track_caller]
-fn parse_expr<'ast>(input: &str, arena: &'ast UntypedArena) -> Vec<Statement<'ast>> {
-    let source = Arc::new(SourceFile::internal(input));
-
-    let mut lexer = lume_lexer::Lexer::new(source.clone());
-    let tokens = lexer.lex().unwrap();
-
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim(), arena);
-    parser.parse_statements().unwrap()
-}
-
-#[track_caller]
-fn parse_expr_err(input: &str) -> Error {
-    let arena = UntypedArena::new();
-    let source = Arc::new(SourceFile::internal(input));
-
-    let mut lexer = lume_lexer::Lexer::new(source.clone());
-    let tokens = lexer.lex().unwrap();
-
-    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim(), &arena);
-    parser.parse_statements().unwrap_err()
-}
-
-macro_rules! assert_module_eq {
-    (
-        $input: expr,
-        $expression: expr
-    ) => {
-        let arena = UntypedArena::new();
-        let parsed = parse($input, &arena);
-
-        assert_eq!(parsed.items, $expression)
-    };
-}
-
-macro_rules! assert_err_eq {
-    (
-        $input: expr,
-        $message: expr
-    ) => {
-        let error = parse_err($input);
-
-        assert_eq!(error.message(), $message)
-    };
+    parser.parse(target)
 }
 
 macro_rules! set_snapshot_suffix {
@@ -85,68 +22,39 @@ macro_rules! set_snapshot_suffix {
 }
 
 macro_rules! assert_snap_eq {
+    // Inline snapshot testing
     (
-        $input: expr,
-        $($expr:expr),+
+        $input:expr,
+        @ $value:expr
     ) => {
-        let arena = UntypedArena::new();
-
-        set_snapshot_suffix!( $($expr),+ );
-        insta::assert_debug_snapshot!(parse($input, &arena).items);
-
-        drop(arena);
+        insta::assert_debug_snapshot!(parse(Target::Item, $input), @$value);
     };
-}
 
-macro_rules! assert_err_snap_eq {
+    // File-based snapshot testing
     (
-        $input: expr,
+        $input:expr,
         $($expr:expr),+
     ) => {
         set_snapshot_suffix!( $($expr),+ );
-
-        insta::assert_debug_snapshot!(parse_err($input));
+        insta::assert_debug_snapshot!(parse(Target::Item, $input));
     };
 }
 
 macro_rules! assert_expr_snap_eq {
     (
-        $input: expr,
-        $($expr:expr),+
-    ) => {
-        let arena = UntypedArena::new();
-
-        set_snapshot_suffix!( $($expr),+ );
-        insta::assert_debug_snapshot!(parse_expr($input, &arena));
-
-        drop(arena);
-    };
-}
-
-macro_rules! assert_expr_err_snap_eq {
-    (
-        $input: expr,
+        $input:expr,
         $($expr:expr),+
     ) => {
         set_snapshot_suffix!( $($expr),+ );
-
-        insta::assert_debug_snapshot!(parse_expr_err($input));
+        insta::assert_debug_snapshot!(parse(Target::Statement, $input));
     };
 }
 
 #[test]
-fn test_empty_module() {
-    assert_module_eq!("", vec![]);
-}
-
-#[test]
-fn test_whitespace_module() {
-    assert_module_eq!("    ", vec![]);
-}
-
-#[test]
-fn test_newline_module() {
-    assert_module_eq!("\n\n    \n", vec![]);
+fn test_module() {
+    assert_snap_eq!("", "empty_module");
+    assert_snap_eq!("    ", "spacecs");
+    assert_snap_eq!("\n\n    \n", "mixed_whitespace");
 }
 
 #[test]
@@ -155,9 +63,9 @@ fn test_imports() {
     assert_snap_eq!("import std::io (File)", "nested");
     assert_snap_eq!("import std::io (File, Buffer)", "multiple");
     assert_snap_eq!("import std::io ()", "empty");
-    assert_err_eq!("import std::io", "invalid import path");
-    assert_err_eq!("import std::io::", "expected identifier");
-    assert_err_eq!("import ::std::io", "expected identifier");
+    assert_snap_eq!("import std::io", "invalid_import_path");
+    assert_snap_eq!("import std::io::", "expected_identifier");
+    assert_snap_eq!("import ::std::io", "unexpected_path_sep");
 }
 
 #[test]
@@ -166,25 +74,26 @@ fn test_namespace_snapshots() {
     assert_snap_eq!("namespace std::io", "path_2");
     assert_snap_eq!("namespace std::io::path", "path_3");
     assert_snap_eq!("namespace System::IO", "path_casing");
-    assert_err_eq!("namespace", "expected identifier");
-    assert_err_eq!("namespace ::std", "expected identifier");
-    assert_err_eq!("namespace std::io::", "expected identifier");
+    assert_snap_eq!("namespace", "only_namespace_kw");
+    assert_snap_eq!("namespace ::std", "unexpected_path_sep");
+    assert_snap_eq!("namespace std::io::", "expected_identifier");
 }
 
 #[test]
 fn test_function_definition_snapshots() {
-    assert_snap_eq!("fn main() -> void {}", "empty");
-    assert_snap_eq!("fn main() -> void { let a = 0; }", "statement");
-    assert_snap_eq!("fn main() -> void { let a = 0; let b = 1; }", "statements");
-    assert_snap_eq!("fn main() {}", "no_return_type");
-    assert_snap_eq!("fn main(argc: UInt8) -> void { }", "parameter");
+    assert_snap_eq!("fn main() {}", "empty");
+    assert_snap_eq!("fn main() -> Void {}", "return_type");
+    assert_snap_eq!("fn main() { let a = 0; }", "statement");
+    assert_snap_eq!("fn main() { let a = 0; let b = 1; }", "statements");
+    assert_snap_eq!("fn main(argc: UInt8) -> Void { }", "parameter");
     assert_snap_eq!("fn main(argc: UInt8, arcv: [String]) -> void { }", "parameters");
-    assert_snap_eq!("fn external main() -> void", "external");
-    assert_err_snap_eq!("fn external main() -> void {}", "external_body");
-    assert_snap_eq!("pub fn main() -> void {}", "pub_modifier");
-    assert_snap_eq!("fn loop() -> void {}", "reserved_keyword");
+    assert_snap_eq!("fn external main() -> Void", "external");
+    assert_snap_eq!("fn external main() -> Void {}", "external_body");
+    assert_snap_eq!("pub fn main() -> Void {}", "pub_modifier");
+    assert_snap_eq!("pub(internal) fn main() -> Void {}", "internal_modifier");
+    assert_snap_eq!("priv fn main() -> Void {}", "priv_modifier");
+    assert_snap_eq!("fn loop() -> Void {}", "reserved_keyword");
     assert_snap_eq!("fn main() -> std::Int32 {}", "namespaced_type");
-    assert_snap_eq!("fn empty?() {}", "boolean_function");
     assert_snap_eq!("fn foo(...args: Int32) {}", "varargs");
 }
 
@@ -258,7 +167,8 @@ fn test_construction_snapshots() {
     assert_expr_snap_eq!("Foo { bar: 0, baz: 1 };", "fields");
     assert_expr_snap_eq!("Foo { bar };", "shorthand");
     assert_expr_snap_eq!("Foo { bar: 0, };", "trailing_comma");
-    assert_expr_err_snap_eq!("Foo { bar: 0 baz };", "missing_comma");
+    assert_expr_snap_eq!("Foo { bar: 0 baz };", "missing_comma");
+    assert_expr_snap_eq!("std::Foo<T> {  };", "pathed");
 }
 
 #[test]
@@ -284,6 +194,7 @@ fn test_scope_snapshots() {
     assert_expr_snap_eq!("let _ = { };", "empty");
     assert_expr_snap_eq!("let _ = { 1; };", "stmt_single");
     assert_expr_snap_eq!("let _ = { 1; 5; };", "stmt_multi");
+    assert_expr_snap_eq!("let _ = { 5 };", "final");
 }
 
 #[test]
@@ -332,7 +243,11 @@ fn test_switch_snapshots() {
         "switch a { std::Optional::Some(a) => a, std::Optional::None => 0 }",
         "variant_absolute_backed"
     );
-    assert_expr_err_snap_eq!("switch a { a => b c => d }", "missing_comma");
+    assert_expr_snap_eq!(
+        "switch a { Optional<T>::Some(a) => a, std::Optional<T>::None => 0 }",
+        "variant_generic"
+    );
+    assert_expr_snap_eq!("switch a { a => b c => d }", "missing_comma");
 }
 
 #[test]
@@ -341,7 +256,7 @@ fn test_array_snapshots() {
     assert_expr_snap_eq!("let _ = [a];", "single");
     assert_expr_snap_eq!("let _ = [a, b];", "multiple");
     assert_expr_snap_eq!("let _ = [a, [a, b]];", "nested");
-    assert_expr_err_snap_eq!("let _ = [a b];", "missing_comma");
+    assert_expr_snap_eq!("let _ = [a b];", "missing_comma");
     assert_expr_snap_eq!("let _ = [a, ];", "trailing_comma");
 }
 
@@ -360,13 +275,12 @@ fn test_call_snapshots() {
     assert_expr_snap_eq!("let _ = call();", "function_empty");
     assert_expr_snap_eq!("let _ = call(a);", "function_param_1");
     assert_expr_snap_eq!("let _ = call(a, b);", "function_param_2");
-    assert_expr_snap_eq!("let _ = call?();", "function_boolean");
     assert_expr_snap_eq!("let _ = call<T>(a, b);", "function_generic");
 
     assert_expr_snap_eq!("let _ = a.call();", "method_empty");
     assert_expr_snap_eq!("let _ = a.call(a);", "method_param_1");
     assert_expr_snap_eq!("let _ = a.call(a, b);", "method_param_2");
-    assert_expr_snap_eq!("let _ = a.call?();", "method_boolean");
+    // assert_expr_snap_eq!("let _ = a.call?();", "method_boolean");
     assert_expr_snap_eq!("let _ = a.call<T>(a, b);", "method_generic");
     assert_expr_snap_eq!("let _ = Foo::call(a, b);", "static_method");
     assert_expr_snap_eq!("let _ = Foo::call<T>(a, b);", "static_generic_method");
@@ -377,11 +291,18 @@ fn test_call_snapshots() {
 }
 
 #[test]
+fn test_member_snapshots() {
+    assert_expr_snap_eq!("let _ = a.b;", "single");
+    assert_expr_snap_eq!("let _ = a.b.c;", "multiple");
+    assert_expr_snap_eq!("let _ = a.b.c();", "callable");
+}
+
+#[test]
 fn test_return_snapshots() {
     assert_expr_snap_eq!("return;", "empty");
     assert_expr_snap_eq!("return 1;", "scalar");
     assert_expr_snap_eq!("return a.b(c);", "call");
-    assert_expr_err_snap_eq!("return;;", "extra_semi");
+    assert_expr_snap_eq!("return;;", "extra_semi");
 }
 
 #[test]
@@ -427,7 +348,7 @@ fn test_generic_function_snapshots() {
         "multiple_types_with_multiple_constraints"
     );
     assert_snap_eq!("fn test<T1,>() -> void {}", "trailing_generic_comma");
-    assert_err_snap_eq!("fn test<T1 T2>() -> void {}", "missing_comma");
+    assert_snap_eq!("fn test<T1 T2>() -> void {}", "missing_comma");
 }
 
 #[test]
@@ -435,11 +356,10 @@ fn test_struct_snapshots() {
     assert_snap_eq!("struct Int32 {}", "empty_decl");
     assert_snap_eq!("impl Int32 {}", "empty_impl");
 
-    assert_err_snap_eq!("struct 1A {}", "invalid_decl_name");
-    assert_err_snap_eq!("impl 1A {}", "invalid_impl_name");
+    assert_snap_eq!("struct 1A {}", "invalid_decl_name");
+    assert_snap_eq!("impl 1A {}", "invalid_impl_name");
 
-    assert_err_snap_eq!("impl Foo { pub x: Bar; }", "field_in_impl");
-    assert_err_snap_eq!("struct Foo { pub fn bar() -> void { } }", "method_in_struct");
+    assert_snap_eq!("struct Foo { pub fn bar() -> void { } }", "method_in_struct");
 
     assert_snap_eq!(
         "
@@ -487,26 +407,10 @@ fn test_struct_snapshots() {
 
     assert_snap_eq!(
         "
-        impl Foo {
-            fn empty?() -> Boolean { }
-        }",
-        "method_boolean"
-    );
-
-    assert_snap_eq!(
-        "
         struct Foo {
             x: Int32 = 0;
         }",
         "field"
-    );
-
-    assert_err_snap_eq!(
-        "
-        struct Foo {
-            x?: Int32 = 0;
-        }",
-        "field_invalid_boolean"
     );
 
     assert_snap_eq!(
@@ -535,7 +439,7 @@ fn test_generic_struct_snapshots() {
     assert_snap_eq!("struct Test<T: Numeric> {}", "constrained_generic");
     assert_snap_eq!("struct Test<T1: Numeric, T2: Numeric> {}", "constrained_generics");
     assert_snap_eq!("struct Test<T1,> {}", "trailing_generic_comma");
-    assert_err_snap_eq!("struct Test<T1 T2> {}", "missing_comma");
+    assert_snap_eq!("struct Test<T1 T2> {}", "missing_comma");
 }
 
 #[test]
@@ -550,7 +454,7 @@ fn test_generic_method_snapshots() {
         "constrained_generics"
     );
     assert_snap_eq!("impl Test { fn test<T1,>() -> void {} }", "trailing_generic_comma");
-    assert_err_snap_eq!("impl Test { fn test<T1 T2>() -> void {} }", "missing_comma");
+    assert_snap_eq!("impl Test { fn test<T1 T2>() -> void {} }", "missing_comma");
 }
 
 #[test]
@@ -562,7 +466,7 @@ fn test_generic_enum_snapshots() {
     assert_snap_eq!("enum Test<T: Numeric> {}", "constrained_generic");
     assert_snap_eq!("enum Test<T1: Numeric, T2: Numeric> {}", "constrained_generics");
     assert_snap_eq!("enum Test<T1,> {}", "trailing_generic_comma");
-    assert_err_snap_eq!("enum Test<T1 T2> {}", "missing_comma");
+    assert_snap_eq!("enum Test<T1 T2> {}", "missing_comma");
 }
 
 #[test]
@@ -570,7 +474,7 @@ fn test_enum_snapshots() {
     assert_snap_eq!("enum Foo {}", "empty");
     assert_snap_eq!("enum Foo { Bar }", "single_variant");
     assert_snap_eq!("enum Foo { Bar, Baz }", "multiple_variants");
-    assert_err_snap_eq!("enum Foo { Bar Baz }", "missing_comma");
+    assert_snap_eq!("enum Foo { Bar Baz }", "missing_comma");
     assert_snap_eq!("enum Foo { Bar, Baz, }", "trailing_comma");
 
     assert_snap_eq!(
@@ -609,10 +513,10 @@ fn test_enum_snapshots() {
 
 #[test]
 fn test_visibility_snapshots() {
-    assert_snap_eq!("fn foo {}", "default");
-    assert_snap_eq!("priv fn foo {}", "priv");
-    assert_snap_eq!("pub(internal) fn foo {}", "internal");
-    assert_snap_eq!("pub fn foo {}", "pub");
+    assert_snap_eq!("fn foo() {}", "default");
+    assert_snap_eq!("priv fn foo() {}", "priv");
+    assert_snap_eq!("pub(internal) fn foo() {}", "internal");
+    assert_snap_eq!("pub fn foo() {}", "pub");
 }
 
 #[test]
@@ -638,16 +542,6 @@ fn test_use_trait_snapshots() {
     assert_snap_eq!(
         "
         use Add: Int32 {
-            fn add(other: Int32) -> Int32 {
-                return self + other;
-            }
-        }",
-        "priv_method"
-    );
-
-    assert_snap_eq!(
-        "
-        use Add: Int32 {
             fn add(other: Int32) {}
         }",
         "method_no_ret"
@@ -665,14 +559,6 @@ fn test_use_trait_snapshots() {
             }
         }",
         "methods"
-    );
-
-    assert_snap_eq!(
-        "
-        use Zero: Int32 {
-            fn zero?() -> Boolean { }
-        }",
-        "boolean_method"
     );
 
     assert_snap_eq!(

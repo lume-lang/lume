@@ -1,19 +1,10 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"0;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"0;\")"
 ---
-[
-    Expression(
-        Literal(
-            Int(
-                IntLiteral {
-                    value: 0,
-                    location: Location(
-                        0..1,
-                    ),
-                    kind: None,
-                },
-            ),
-        ),
-    ),
-]
+SOURCE_FILE@0..2
+  EXPR_STMT@0..2
+    LIT_EXPR@0..1
+      INTEGER_LIT@0..1
+        INTEGER_LIT@0..1 "0"
+    SEMICOLON@1..2 ";"

@@ -1,112 +1,46 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = std::Buffer::call<T>(a, b);\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = std::Buffer::call<T>(a, b);\")"
 ---
-[
-    VariableDeclaration(
-        VariableDeclaration {
-            name: Identifier {
-                name: "_",
-                location: Location(
-                    4..5,
-                ),
-            },
-            variable_type: None,
-            value: Call(
-                Call {
-                    callee: None,
-                    name: Path {
-                        root: [
-                            Namespace {
-                                name: Identifier {
-                                    name: "std",
-                                    location: Location(
-                                        8..11,
-                                    ),
-                                },
-                            },
-                            Type {
-                                name: Identifier {
-                                    name: "Buffer",
-                                    location: Location(
-                                        13..19,
-                                    ),
-                                },
-                                bound_types: [],
-                                location: Location(
-                                    13..19,
-                                ),
-                            },
-                        ],
-                        name: Callable {
-                            name: Identifier {
-                                name: "call",
-                                location: Location(
-                                    21..25,
-                                ),
-                            },
-                            bound_types: [
-                                Named(
-                                    NamedType {
-                                        name: Path {
-                                            root: [],
-                                            name: Type {
-                                                name: Identifier {
-                                                    name: "T",
-                                                    location: Location(
-                                                        26..27,
-                                                    ),
-                                                },
-                                                bound_types: [],
-                                                location: Location(
-                                                    26..27,
-                                                ),
-                                            },
-                                            location: Location(
-                                                26..27,
-                                            ),
-                                        },
-                                    },
-                                ),
-                            ],
-                            location: Location(
-                                21..28,
-                            ),
-                        },
-                        location: Location(
-                            21..28,
-                        ),
-                    },
-                    arguments: [
-                        Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "a",
-                                    location: Location(
-                                        29..30,
-                                    ),
-                                },
-                            },
-                        ),
-                        Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "b",
-                                    location: Location(
-                                        32..33,
-                                    ),
-                                },
-                            },
-                        ),
-                    ],
-                    location: Location(
-                        21..34,
-                    ),
-                },
-            ),
-            location: Location(
-                0..35,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..35
+  LET_STMT@0..35
+    LET_KW@0..3 "let"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    STATIC_CALL_EXPR@7..34
+      WHITESPACE@7..8 " "
+      PATH@8..28
+        PATH_NAMESPACE@8..11
+          NAME@8..11
+            IDENT@8..11 "std"
+        PATH_SEP@11..13 "::"
+        PATH_TYPE@13..19
+          NAME@13..19
+            IDENT@13..19 "Buffer"
+        PATH_SEP@19..21 "::"
+        PATH_CALLABLE@21..28
+          NAME@21..25
+            IDENT@21..25 "call"
+          GENERIC_ARGS@25..28
+            LESS@25..26 "<"
+            NAMED_TYPE@26..27
+              PATH@26..27
+                PATH_TYPE@26..27
+                  NAME@26..27
+                    IDENT@26..27 "T"
+            GREATER@27..28 ">"
+      ARG_LIST@28..34
+        LEFT_PAREN@28..29 "("
+        VARIABLE_EXPR@29..30
+          NAME@29..30
+            IDENT@29..30 "a"
+        COMMA@30..31 ","
+        WHITESPACE@31..32 " "
+        VARIABLE_EXPR@32..33
+          NAME@32..33
+            IDENT@32..33 "b"
+        RIGHT_PAREN@33..34 ")"
+    SEMICOLON@34..35 ";"
