@@ -1,37 +1,17 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"a != b;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"a != b;\")"
 ---
-[
-    Expression(
-        IntrinsicCall(
-            IntrinsicCall {
-                kind: NotEqual {
-                    lhs: Variable(
-                        Variable {
-                            name: Identifier {
-                                name: "a",
-                                location: Location(
-                                    0..1,
-                                ),
-                            },
-                        },
-                    ),
-                    rhs: Variable(
-                        Variable {
-                            name: Identifier {
-                                name: "b",
-                                location: Location(
-                                    5..6,
-                                ),
-                            },
-                        },
-                    ),
-                },
-                location: Location(
-                    0..6,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..7
+  EXPR_STMT@0..7
+    BIN_EXPR@0..6
+      VARIABLE_EXPR@0..1
+        NAME@0..1
+          IDENT@0..1 "a"
+      WHITESPACE@1..2 " "
+      NEQUAL@2..4 "!="
+      WHITESPACE@4..5 " "
+      VARIABLE_EXPR@5..6
+        NAME@5..6
+          IDENT@5..6 "b"
+    SEMICOLON@6..7 ";"

@@ -1,26 +1,16 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"/// This is a doc comment\n        trait Foo { }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"/// This is a doc comment\n        trait Foo { }\")"
 ---
-[
-    TraitDefinition(
-        TraitDefinition {
-            attributes: [],
-            visibility: None,
-            name: Identifier {
-                name: "Foo",
-                location: Location(
-                    40..43,
-                ),
-            },
-            type_parameters: [],
-            methods: [],
-            location: Location(
-                34..47,
-            ),
-            documentation: Some(
-                "This is a doc comment",
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..47
+  TRAIT@0..47
+    DOC_COMMENT@0..25 "/// This is a doc com ..."
+    WHITESPACE@25..34 "\n        "
+    TRAIT_KW@34..39 "trait"
+    WHITESPACE@39..40 " "
+    NAME@40..43
+      IDENT@40..43 "Foo"
+    WHITESPACE@43..44 " "
+    LEFT_BRACE@44..45 "{"
+    WHITESPACE@45..46 " "
+    RIGHT_BRACE@46..47 "}"

@@ -1,64 +1,26 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"0 as u64 == 0;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"0 as u64 == 0;\")"
 ---
-[
-    Expression(
-        IntrinsicCall(
-            IntrinsicCall {
-                kind: Equal {
-                    lhs: Cast(
-                        Cast {
-                            source: Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 0,
-                                        location: Location(
-                                            0..1,
-                                        ),
-                                        kind: None,
-                                    },
-                                ),
-                            ),
-                            target_type: Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Namespace {
-                                            name: Identifier {
-                                                name: "u64",
-                                                location: Location(
-                                                    5..8,
-                                                ),
-                                            },
-                                        },
-                                        location: Location(
-                                            5..8,
-                                        ),
-                                    },
-                                },
-                            ),
-                            location: Location(
-                                0..8,
-                            ),
-                        },
-                    ),
-                    rhs: Literal(
-                        Int(
-                            IntLiteral {
-                                value: 0,
-                                location: Location(
-                                    12..13,
-                                ),
-                                kind: None,
-                            },
-                        ),
-                    ),
-                },
-                location: Location(
-                    0..13,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..14
+  EXPR_STMT@0..14
+    BIN_EXPR@0..13
+      CAST_EXPR@0..9
+        LIT_EXPR@0..1
+          INTEGER_LIT@0..1
+            INTEGER_LIT@0..1 "0"
+        WHITESPACE@1..2 " "
+        AS_KW@2..4 "as"
+        WHITESPACE@4..5 " "
+        NAMED_TYPE@5..9
+          PATH@5..9
+            PATH_NAMESPACE@5..9
+              NAME@5..8
+                IDENT@5..8 "u64"
+              WHITESPACE@8..9 " "
+      EQUAL@9..11 "=="
+      WHITESPACE@11..12 " "
+      LIT_EXPR@12..13
+        INTEGER_LIT@12..13
+          INTEGER_LIT@12..13 "0"
+    SEMICOLON@13..14 ";"

@@ -1,23 +1,16 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"enum Test<> {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"enum Test<> {}\")"
 ---
-[
-    EnumDefinition(
-        EnumDefinition {
-            visibility: None,
-            name: Identifier {
-                name: "Test",
-                location: Location(
-                    5..9,
-                ),
-            },
-            type_parameters: [],
-            cases: [],
-            location: Location(
-                0..14,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..14
+  ENUM@0..14
+    ENUM_KW@0..4 "enum"
+    WHITESPACE@4..5 " "
+    NAME@5..9
+      IDENT@5..9 "Test"
+    BOUND_TYPES@9..11
+      LESS@9..10 "<"
+      GREATER@10..11 ">"
+    WHITESPACE@11..12 " "
+    LEFT_BRACE@12..13 "{"
+    RIGHT_BRACE@13..14 "}"

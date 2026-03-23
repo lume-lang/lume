@@ -1,39 +1,33 @@
-use error_snippet::Result;
-use lume_ast::*;
-use lume_lexer::TokenType;
-
-use crate::Parser;
+use crate::*;
 
 const LOWERCASE_PATH_TYPES: &[&str] = &["void", "self"];
 
-impl<'ast> Parser<'_, 'ast> {
+impl Parser {
     /// Parses the next token as a symbol path.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    pub(crate) fn parse_path(&mut self) -> Result<Path<'ast>> {
-        let mut segments = Vec::new();
+    pub(crate) fn parse_path(&mut self) -> SyntaxKind {
+        let mut prev_kind = None;
+
+        self.start_node(SyntaxKind::PATH);
 
         loop {
-            segments.push(self.parse_path_segment(segments.last())?);
+            prev_kind = Some(self.parse_path_segment(prev_kind));
 
-            if self.consume_if(TokenType::PathSeparator).is_none() {
+            if !self.check(Token![::]) {
                 break;
             }
         }
 
-        let (name, root) = segments.split_last().unwrap();
+        self.finish_node();
 
-        Ok(Path {
-            name: name.to_owned(),
-            root: root.to_owned(),
-            location: name.location().clone(),
-        })
+        prev_kind.unwrap()
     }
 
     /// Parses the next token as a single segment of a symbol path.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn parse_path_segment(&mut self, prev_segment: Option<&PathSegment>) -> Result<PathSegment<'ast>> {
-        let name = self.parse_identifier()?;
-        let start = name.location.start();
+    fn parse_path_segment(&mut self, prev_kind: Option<SyntaxKind>) -> SyntaxKind {
+        let c = self.checkpoint();
+        let ident_slice = self.content_at(self.span()).to_string();
+
+        self.parse_ident();
 
         // If the name starts with a lower case, it can refer to either
         // a namespace or a function call.
@@ -41,46 +35,47 @@ impl<'ast> Parser<'_, 'ast> {
         // We also make sure the name is not referring to a scalar type, such as `void`,
         // since it would parse that as a namespace segment, while it's meant to
         // be a type segment.
-        if name.is_lower() && !LOWERCASE_PATH_TYPES.contains(&name.as_str()) {
+        if ident_slice.starts_with(|c: char| c.is_ascii_lowercase())
+            && !LOWERCASE_PATH_TYPES.contains(&ident_slice.as_str())
+        {
             // If we spot a `<` token, we know it's the start of a type argument list,
             // which can only be defined on function calls.
-            if self.peek(TokenType::Less) || self.peek(TokenType::LeftParen) {
-                let bound_types = self.parse_type_arguments()?;
-                let end = self.previous_token().end();
+            if self.peek(Token![<]) || self.peek(SyntaxKind::LEFT_PAREN) {
+                self.start_node_at(SyntaxKind::PATH_CALLABLE, c);
+                self.parse_type_arguments();
+                self.finish_node();
 
-                return Ok(PathSegment::Callable {
-                    name,
-                    bound_types,
-                    location: (start..end).into(),
-                });
+                return SyntaxKind::PATH_CALLABLE;
             }
 
             // Otherwise, it must be a namespace.
-            Ok(PathSegment::namespace(name))
+            self.complete_node(SyntaxKind::PATH_NAMESPACE, c)
         }
         // If the name starts with an upper case, it refers to a type.
         else {
-            let is_after_type_segment = matches!(prev_segment, Some(PathSegment::Type { .. }));
-
             // If we spot a `(` token, we know it's the start of an argument list,
             // which can only be defined on variant expressions.
-            if self.peek(TokenType::LeftParen) || is_after_type_segment {
-                let end = self.previous_token().end();
-
-                return Ok(PathSegment::Variant {
-                    name,
-                    location: (start..end).into(),
-                });
+            if self.peek(SyntaxKind::LEFT_PAREN) || prev_kind == Some(SyntaxKind::PATH_TYPE) {
+                return self.complete_node(SyntaxKind::PATH_VARIANT, c);
             }
 
-            let bound_types = self.parse_type_arguments()?;
-            let end = self.previous_token().end();
+            self.start_node_at(SyntaxKind::PATH_TYPE, c);
+            self.parse_type_arguments();
+            self.finish_node();
 
-            Ok(PathSegment::Type {
-                name,
-                bound_types,
-                location: (start..end).into(),
-            })
+            SyntaxKind::PATH_TYPE
         }
+    }
+
+    /// Parses the next token(s) as a namespace path.
+    ///
+    /// Identifier paths are much like regular identifiers, but can be joined
+    /// together with periods, to form longer chains of them. They can be as
+    /// short as a single link, such as `std`, but they can also be longer,
+    /// such as `std::fmt::error`.
+    pub(crate) fn parse_import_path(&mut self) {
+        self.start_node(SyntaxKind::IMPORT_PATH);
+        self.consume_delim(Token![::], Parser::parse_ident);
+        self.finish_node();
     }
 }

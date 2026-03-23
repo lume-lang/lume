@@ -1,56 +1,47 @@
-use error_snippet::Result;
-use lume_ast::*;
-use lume_lexer::TokenType;
+use crate::*;
 
-use crate::Parser;
-
-impl<'ast> Parser<'_, 'ast> {
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(super) fn parse_attributes(&mut self) -> Result<Vec<Attribute<'ast>>> {
-        self.consume_any_seq(TokenType::Exclamation, Parser::parse_attribute)
+impl Parser {
+    pub(crate) fn parse_attributes(&mut self) -> bool {
+        self.consume_any_seq(Token![!], Parser::parse_attribute)
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(super) fn parse_attribute(&mut self) -> Result<Attribute<'ast>> {
-        let start = self.consume(TokenType::Exclamation)?.start();
-        self.consume(TokenType::LeftBracket)?;
+    fn parse_attribute(&mut self) {
+        self.start_node(SyntaxKind::ATTR);
 
-        let name = self.parse_identifier()?;
-        let arguments = self.parse_attribute_arguments()?;
+        self.consume(Token![!]);
+        self.consume(SyntaxKind::LEFT_BRACKET);
 
-        let end = self.consume(TokenType::RightBracket)?.end();
+        self.parse_ident();
+        self.parse_attribute_arguments();
 
-        Ok(Attribute {
-            name,
-            arguments,
-            location: (start..end).into(),
-        })
+        self.consume(SyntaxKind::RIGHT_BRACKET);
+
+        self.finish_node();
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn parse_attribute_arguments(&mut self) -> Result<Vec<AttributeArgument<'ast>>> {
+    fn parse_attribute_arguments(&mut self) {
+        if !self.peek(SyntaxKind::LEFT_PAREN) {
+            return;
+        }
+
+        self.start_node(SyntaxKind::ATTR_ARG_LIST);
+
         self.consume_comma_seq(
-            TokenType::LeftParen,
-            TokenType::RightParen,
+            SyntaxKind::LEFT_PAREN,
+            SyntaxKind::RIGHT_PAREN,
             Parser::parse_attribute_argument,
-        )
+        );
+
+        self.finish_node();
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn parse_attribute_argument(&mut self) -> Result<AttributeArgument<'ast>> {
-        let key = self.parse_identifier()?;
+    fn parse_attribute_argument(&mut self) {
+        self.start_node(SyntaxKind::ATTR_ARG);
 
-        self.consume(TokenType::Assign)?;
+        self.parse_ident();
+        self.consume(Token![=]);
+        self.parse_literal();
 
-        let value = self.parse_literal_inner()?;
-
-        let start = key.location.start();
-        let end = value.location().start();
-
-        Ok(AttributeArgument {
-            key,
-            value,
-            location: (start..end).into(),
-        })
+        self.finish_node();
     }
 }

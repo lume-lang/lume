@@ -1,43 +1,25 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"trait Add<T1, T2> { }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"trait Add<T1, T2> { }\")"
 ---
-[
-    TraitDefinition(
-        TraitDefinition {
-            attributes: [],
-            visibility: None,
-            name: Identifier {
-                name: "Add",
-                location: Location(
-                    6..9,
-                ),
-            },
-            type_parameters: [
-                TypeParameter {
-                    name: Identifier {
-                        name: "T1",
-                        location: Location(
-                            10..12,
-                        ),
-                    },
-                    constraints: [],
-                },
-                TypeParameter {
-                    name: Identifier {
-                        name: "T2",
-                        location: Location(
-                            14..16,
-                        ),
-                    },
-                    constraints: [],
-                },
-            ],
-            methods: [],
-            location: Location(
-                0..21,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..21
+  TRAIT@0..21
+    TRAIT_KW@0..5 "trait"
+    WHITESPACE@5..6 " "
+    NAME@6..9
+      IDENT@6..9 "Add"
+    BOUND_TYPES@9..17
+      LESS@9..10 "<"
+      BOUND_TYPE@10..12
+        NAME@10..12
+          IDENT@10..12 "T1"
+      COMMA@12..13 ","
+      WHITESPACE@13..14 " "
+      BOUND_TYPE@14..16
+        NAME@14..16
+          IDENT@14..16 "T2"
+      GREATER@16..17 ">"
+    WHITESPACE@17..18 " "
+    LEFT_BRACE@18..19 "{"
+    WHITESPACE@19..20 " "
+    RIGHT_BRACE@20..21 "}"

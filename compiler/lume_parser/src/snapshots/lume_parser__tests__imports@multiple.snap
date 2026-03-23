@@ -1,46 +1,24 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"import std::io (File, Buffer)\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"import std::io (File, Buffer)\")"
 ---
-[
-    Import(
-        Import {
-            path: ImportPath {
-                path: [
-                    Identifier {
-                        name: "std",
-                        location: Location(
-                            7..10,
-                        ),
-                    },
-                    Identifier {
-                        name: "io",
-                        location: Location(
-                            12..14,
-                        ),
-                    },
-                ],
-                location: Location(
-                    7..14,
-                ),
-            },
-            names: [
-                Identifier {
-                    name: "File",
-                    location: Location(
-                        16..20,
-                    ),
-                },
-                Identifier {
-                    name: "Buffer",
-                    location: Location(
-                        22..28,
-                    ),
-                },
-            ],
-            location: Location(
-                0..29,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..29
+  IMPORT@0..29
+    IMPORT_KW@0..6 "import"
+    WHITESPACE@6..7 " "
+    IMPORT_PATH@7..15
+      NAME@7..10
+        IDENT@7..10 "std"
+      PATH_SEP@10..12 "::"
+      NAME@12..14
+        IDENT@12..14 "io"
+      WHITESPACE@14..15 " "
+    IMPORT_LIST@15..29
+      LEFT_PAREN@15..16 "("
+      NAME@16..20
+        IDENT@16..20 "File"
+      COMMA@20..21 ","
+      WHITESPACE@21..22 " "
+      NAME@22..28
+        IDENT@22..28 "Buffer"
+      RIGHT_PAREN@28..29 ")"

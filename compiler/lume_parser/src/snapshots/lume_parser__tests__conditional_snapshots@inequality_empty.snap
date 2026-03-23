@@ -1,60 +1,25 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"if a != 1 { }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"if a != 1 { }\")"
 ---
-[
-    Expression(
-        If(
-            IfCondition {
-                cases: [
-                    Condition {
-                        condition: Some(
-                            IntrinsicCall(
-                                IntrinsicCall {
-                                    kind: NotEqual {
-                                        lhs: Variable(
-                                            Variable {
-                                                name: Identifier {
-                                                    name: "a",
-                                                    location: Location(
-                                                        3..4,
-                                                    ),
-                                                },
-                                            },
-                                        ),
-                                        rhs: Literal(
-                                            Int(
-                                                IntLiteral {
-                                                    value: 1,
-                                                    location: Location(
-                                                        8..9,
-                                                    ),
-                                                    kind: None,
-                                                },
-                                            ),
-                                        ),
-                                    },
-                                    location: Location(
-                                        3..9,
-                                    ),
-                                },
-                            ),
-                        ),
-                        block: Block {
-                            statements: [],
-                            location: Location(
-                                10..13,
-                            ),
-                        },
-                        location: Location(
-                            3..13,
-                        ),
-                    },
-                ],
-                location: Location(
-                    0..13,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..13
+  EXPR_STMT@0..13
+    IF_EXPR@0..13
+      CONDITION@0..13
+        IF_KW@0..2 "if"
+        BIN_EXPR@2..9
+          VARIABLE_EXPR@2..4
+            WHITESPACE@2..3 " "
+            NAME@3..4
+              IDENT@3..4 "a"
+          WHITESPACE@4..5 " "
+          NEQUAL@5..7 "!="
+          WHITESPACE@7..8 " "
+          LIT_EXPR@8..9
+            INTEGER_LIT@8..9
+              INTEGER_LIT@8..9 "1"
+        WHITESPACE@9..10 " "
+        BLOCK@10..13
+          LEFT_BRACE@10..11 "{"
+          WHITESPACE@11..12 " "
+          RIGHT_BRACE@12..13 "}"

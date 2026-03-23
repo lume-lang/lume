@@ -1,45 +1,25 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"loop { let a = 0; }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"loop { let a = 0; }\")"
 ---
-[
-    InfiniteLoop(
-        InfiniteLoop {
-            block: Block {
-                statements: [
-                    VariableDeclaration(
-                        VariableDeclaration {
-                            name: Identifier {
-                                name: "a",
-                                location: Location(
-                                    11..12,
-                                ),
-                            },
-                            variable_type: None,
-                            value: Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 0,
-                                        location: Location(
-                                            15..16,
-                                        ),
-                                        kind: None,
-                                    },
-                                ),
-                            ),
-                            location: Location(
-                                7..17,
-                            ),
-                        },
-                    ),
-                ],
-                location: Location(
-                    5..19,
-                ),
-            },
-            location: Location(
-                0..19,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..19
+  LOOP_STMT@0..19
+    LOOP_KW@0..4 "loop"
+    WHITESPACE@4..5 " "
+    BLOCK@5..19
+      LEFT_BRACE@5..6 "{"
+      WHITESPACE@6..7 " "
+      LET_STMT@7..17
+        LET_KW@7..10 "let"
+        WHITESPACE@10..11 " "
+        NAME@11..12
+          IDENT@11..12 "a"
+        WHITESPACE@12..13 " "
+        ASSIGN@13..14 "="
+        WHITESPACE@14..15 " "
+        LIT_EXPR@15..16
+          INTEGER_LIT@15..16
+            INTEGER_LIT@15..16 "0"
+        SEMICOLON@16..17 ";"
+      WHITESPACE@17..18 " "
+      RIGHT_BRACE@18..19 "}"

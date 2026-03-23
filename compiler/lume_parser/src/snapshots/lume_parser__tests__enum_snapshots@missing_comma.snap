@@ -1,21 +1,23 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_err(\"enum Foo { Bar Baz }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"enum Foo { Bar Baz }\")"
 ---
-MissingDelimiterInSequence {
-    source: SourceFile {
-        id: SourceFileId(
-            PackageId(
-                0,
-            ),
-            0,
-        ),
-        name: Internal,
-        content: "enum Foo { Bar Baz }",
-        package: PackageId(
-            0,
-        ),
-    },
-    range: 15..18,
-    delimiter: Comma,
-}
+SOURCE_FILE@0..20
+  ENUM@0..15
+    ENUM_KW@0..4 "enum"
+    WHITESPACE@4..5 " "
+    NAME@5..8
+      IDENT@5..8 "Foo"
+    WHITESPACE@8..9 " "
+    LEFT_BRACE@9..10 "{"
+    WHITESPACE@10..11 " "
+    CASE@11..14
+      NAME@11..14
+        IDENT@11..14 "Bar"
+    WHITESPACE@14..15 " "
+  IDENT@15..18 "Baz"
+  WHITESPACE@18..19 " "
+  RIGHT_BRACE@19..20 "}"
+
+expected COMMA@15..18
+invalid top-level item@15..18

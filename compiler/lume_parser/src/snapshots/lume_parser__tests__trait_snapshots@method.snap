@@ -1,106 +1,44 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"trait Add { fn add(other: Int32) -> Int32; }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"trait Add { fn add(other: Int32) -> Int32; }\")"
 ---
-[
-    TraitDefinition(
-        TraitDefinition {
-            attributes: [],
-            visibility: None,
-            name: Identifier {
-                name: "Add",
-                location: Location(
-                    6..9,
-                ),
-            },
-            type_parameters: [],
-            methods: [
-                TraitMethodDefinition {
-                    attributes: [],
-                    signature: Signature {
-                        external: false,
-                        name: Identifier {
-                            name: "add",
-                            location: Location(
-                                15..18,
-                            ),
-                        },
-                        type_parameters: [],
-                        parameters: [
-                            Parameter {
-                                name: Identifier {
-                                    name: "other",
-                                    location: Location(
-                                        19..24,
-                                    ),
-                                },
-                                param_type: Named(
-                                    NamedType {
-                                        name: Path {
-                                            root: [],
-                                            name: Type {
-                                                name: Identifier {
-                                                    name: "Int32",
-                                                    location: Location(
-                                                        26..31,
-                                                    ),
-                                                },
-                                                bound_types: [],
-                                                location: Location(
-                                                    26..31,
-                                                ),
-                                            },
-                                            location: Location(
-                                                26..31,
-                                            ),
-                                        },
-                                    },
-                                ),
-                                vararg: false,
-                                location: Location(
-                                    19..31,
-                                ),
-                            },
-                        ],
-                        return_type: Some(
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Int32",
-                                                location: Location(
-                                                    36..41,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                36..41,
-                                            ),
-                                        },
-                                        location: Location(
-                                            36..41,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            12..41,
-                        ),
-                    },
-                    block: None,
-                    location: Location(
-                        12..42,
-                    ),
-                    documentation: None,
-                },
-            ],
-            location: Location(
-                0..44,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..44
+  TRAIT@0..44
+    TRAIT_KW@0..5 "trait"
+    WHITESPACE@5..6 " "
+    NAME@6..9
+      IDENT@6..9 "Add"
+    WHITESPACE@9..10 " "
+    LEFT_BRACE@10..11 "{"
+    WHITESPACE@11..12 " "
+    METHOD@12..42
+      SIG@12..41
+        FN_KW@12..14 "fn"
+        WHITESPACE@14..15 " "
+        NAME@15..18
+          IDENT@15..18 "add"
+        PARAM_LIST@18..32
+          LEFT_PAREN@18..19 "("
+          PARAM@19..31
+            NAME@19..24
+              IDENT@19..24 "other"
+            COLON@24..25 ":"
+            WHITESPACE@25..26 " "
+            NAMED_TYPE@26..31
+              PATH@26..31
+                PATH_TYPE@26..31
+                  NAME@26..31
+                    IDENT@26..31 "Int32"
+          RIGHT_PAREN@31..32 ")"
+        WHITESPACE@32..33 " "
+        RETURN_TYPE@33..41
+          ARROW@33..35 "->"
+          WHITESPACE@35..36 " "
+          NAMED_TYPE@36..41
+            PATH@36..41
+              PATH_TYPE@36..41
+                NAME@36..41
+                  IDENT@36..41 "Int32"
+      SEMICOLON@41..42 ";"
+    WHITESPACE@42..43 " "
+    RIGHT_BRACE@43..44 "}"

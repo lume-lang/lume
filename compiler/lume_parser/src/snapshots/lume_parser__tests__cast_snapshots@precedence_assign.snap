@@ -1,56 +1,26 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = 0 as u64;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = 0 as u64;\")"
 ---
-[
-    VariableDeclaration(
-        VariableDeclaration {
-            name: Identifier {
-                name: "_",
-                location: Location(
-                    4..5,
-                ),
-            },
-            variable_type: None,
-            value: Cast(
-                Cast {
-                    source: Literal(
-                        Int(
-                            IntLiteral {
-                                value: 0,
-                                location: Location(
-                                    8..9,
-                                ),
-                                kind: None,
-                            },
-                        ),
-                    ),
-                    target_type: Named(
-                        NamedType {
-                            name: Path {
-                                root: [],
-                                name: Namespace {
-                                    name: Identifier {
-                                        name: "u64",
-                                        location: Location(
-                                            13..16,
-                                        ),
-                                    },
-                                },
-                                location: Location(
-                                    13..16,
-                                ),
-                            },
-                        },
-                    ),
-                    location: Location(
-                        8..16,
-                    ),
-                },
-            ),
-            location: Location(
-                0..17,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..17
+  LET_STMT@0..17
+    LET_KW@0..3 "let"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    CAST_EXPR@7..16
+      WHITESPACE@7..8 " "
+      LIT_EXPR@8..9
+        INTEGER_LIT@8..9
+          INTEGER_LIT@8..9 "0"
+      WHITESPACE@9..10 " "
+      AS_KW@10..12 "as"
+      WHITESPACE@12..13 " "
+      NAMED_TYPE@13..16
+        PATH@13..16
+          PATH_NAMESPACE@13..16
+            NAME@13..16
+              IDENT@13..16 "u64"
+    SEMICOLON@16..17 ";"

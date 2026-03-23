@@ -1,21 +1,16 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_err(\"impl 1A {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"impl 1A {}\")"
 ---
-UnexpectedType {
-    source: SourceFile {
-        id: SourceFileId(
-            PackageId(
-                0,
-            ),
-            0,
-        ),
-        name: Internal,
-        content: "impl 1A {}",
-        package: PackageId(
-            0,
-        ),
-    },
-    range: 5..6,
-    actual: Integer,
-}
+SOURCE_FILE@0..9
+  IMPL@0..5
+    IMPL_KW@0..4 "impl"
+    WHITESPACE@4..5 " "
+  IDENT@5..6 "A"
+  WHITESPACE@6..7 " "
+  LEFT_BRACE@7..8 "{"
+  RIGHT_BRACE@8..9 "}"
+
+expected type@5..6
+expected kind LEFT_BRACE@6..7
+invalid top-level item@6..7

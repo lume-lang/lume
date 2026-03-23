@@ -1,26 +1,12 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"return 1;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"return 1;\")"
 ---
-[
-    Return(
-        Return {
-            value: Some(
-                Literal(
-                    Int(
-                        IntLiteral {
-                            value: 1,
-                            location: Location(
-                                7..8,
-                            ),
-                            kind: None,
-                        },
-                    ),
-                ),
-            ),
-            location: Location(
-                0..9,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..9
+  RETURN_STMT@0..9
+    RETURN_KW@0..6 "return"
+    WHITESPACE@6..7 " "
+    LIT_EXPR@7..8
+      INTEGER_LIT@7..8
+        INTEGER_LIT@7..8 "1"
+    SEMICOLON@8..9 ";"

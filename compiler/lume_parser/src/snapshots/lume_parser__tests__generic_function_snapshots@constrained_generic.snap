@@ -1,95 +1,41 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"fn test<T: Numeric>() -> void {}\")"
 ---
-[
-    FunctionDefinition(
-        FunctionDefinition {
-            attributes: [],
-            visibility: None,
-            signature: Signature {
-                external: false,
-                name: Identifier {
-                    name: "test",
-                    location: Location(
-                        3..7,
-                    ),
-                },
-                type_parameters: [
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T",
-                            location: Location(
-                                8..9,
-                            ),
-                        },
-                        constraints: [
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Numeric",
-                                                location: Location(
-                                                    11..18,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                11..18,
-                                            ),
-                                        },
-                                        location: Location(
-                                            11..18,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ],
-                    },
-                ],
-                parameters: [],
-                return_type: Some(
-                    Named(
-                        NamedType {
-                            name: Path {
-                                root: [],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "void",
-                                        location: Location(
-                                            25..29,
-                                        ),
-                                    },
-                                    bound_types: [],
-                                    location: Location(
-                                        25..29,
-                                    ),
-                                },
-                                location: Location(
-                                    25..29,
-                                ),
-                            },
-                        },
-                    ),
-                ),
-                location: Location(
-                    0..29,
-                ),
-            },
-            block: Some(
-                Block {
-                    statements: [],
-                    location: Location(
-                        30..32,
-                    ),
-                },
-            ),
-            location: Location(
-                0..32,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..32
+  FN@0..32
+    SIG@0..30
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "test"
+      BOUND_TYPES@7..19
+        LESS@7..8 "<"
+        BOUND_TYPE@8..18
+          NAME@8..9
+            IDENT@8..9 "T"
+          CONSTRAINTS@9..18
+            COLON@9..10 ":"
+            WHITESPACE@10..11 " "
+            NAMED_TYPE@11..18
+              PATH@11..18
+                PATH_TYPE@11..18
+                  NAME@11..18
+                    IDENT@11..18 "Numeric"
+        GREATER@18..19 ">"
+      PARAM_LIST@19..21
+        LEFT_PAREN@19..20 "("
+        RIGHT_PAREN@20..21 ")"
+      WHITESPACE@21..22 " "
+      RETURN_TYPE@22..30
+        ARROW@22..24 "->"
+        WHITESPACE@24..25 " "
+        NAMED_TYPE@25..30
+          PATH@25..30
+            PATH_TYPE@25..30
+              NAME@25..29
+                IDENT@25..29 "void"
+              WHITESPACE@29..30 " "
+    BLOCK@30..32
+      LEFT_BRACE@30..31 "{"
+      RIGHT_BRACE@31..32 "}"

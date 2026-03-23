@@ -1,34 +1,17 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"0 is test;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"0 is test;\")"
 ---
-[
-    Expression(
-        Is(
-            Is {
-                target: Literal(
-                    Int(
-                        IntLiteral {
-                            value: 0,
-                            location: Location(
-                                0..1,
-                            ),
-                            kind: None,
-                        },
-                    ),
-                ),
-                pattern: Identifier(
-                    Identifier {
-                        name: "test",
-                        location: Location(
-                            5..9,
-                        ),
-                    },
-                ),
-                location: Location(
-                    0..10,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..10
+  EXPR_STMT@0..10
+    IS_EXPR@0..9
+      LIT_EXPR@0..1
+        INTEGER_LIT@0..1
+          INTEGER_LIT@0..1 "0"
+      WHITESPACE@1..2 " "
+      IS_KW@2..4 "is"
+      PAT_IDENT@4..9
+        WHITESPACE@4..5 " "
+        NAME@5..9
+          IDENT@5..9 "test"
+    SEMICOLON@9..10 ";"

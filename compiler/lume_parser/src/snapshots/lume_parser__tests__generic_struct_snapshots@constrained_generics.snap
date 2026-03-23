@@ -1,89 +1,40 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"struct Test<T1: Numeric, T2: Numeric> {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"struct Test<T1: Numeric, T2: Numeric> {}\")"
 ---
-[
-    StructDefinition(
-        StructDefinition {
-            attributes: [],
-            visibility: None,
-            name: Identifier {
-                name: "Test",
-                location: Location(
-                    7..11,
-                ),
-            },
-            fields: [],
-            type_parameters: [
-                TypeParameter {
-                    name: Identifier {
-                        name: "T1",
-                        location: Location(
-                            12..14,
-                        ),
-                    },
-                    constraints: [
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Numeric",
-                                            location: Location(
-                                                16..23,
-                                            ),
-                                        },
-                                        bound_types: [],
-                                        location: Location(
-                                            16..23,
-                                        ),
-                                    },
-                                    location: Location(
-                                        16..23,
-                                    ),
-                                },
-                            },
-                        ),
-                    ],
-                },
-                TypeParameter {
-                    name: Identifier {
-                        name: "T2",
-                        location: Location(
-                            25..27,
-                        ),
-                    },
-                    constraints: [
-                        Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: Type {
-                                        name: Identifier {
-                                            name: "Numeric",
-                                            location: Location(
-                                                29..36,
-                                            ),
-                                        },
-                                        bound_types: [],
-                                        location: Location(
-                                            29..36,
-                                        ),
-                                    },
-                                    location: Location(
-                                        29..36,
-                                    ),
-                                },
-                            },
-                        ),
-                    ],
-                },
-            ],
-            location: Location(
-                0..40,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..40
+  STRUCT@0..40
+    STRUCT_KW@0..6 "struct"
+    WHITESPACE@6..7 " "
+    NAME@7..11
+      IDENT@7..11 "Test"
+    BOUND_TYPES@11..37
+      LESS@11..12 "<"
+      BOUND_TYPE@12..23
+        NAME@12..14
+          IDENT@12..14 "T1"
+        CONSTRAINTS@14..23
+          COLON@14..15 ":"
+          WHITESPACE@15..16 " "
+          NAMED_TYPE@16..23
+            PATH@16..23
+              PATH_TYPE@16..23
+                NAME@16..23
+                  IDENT@16..23 "Numeric"
+      COMMA@23..24 ","
+      WHITESPACE@24..25 " "
+      BOUND_TYPE@25..36
+        NAME@25..27
+          IDENT@25..27 "T2"
+        CONSTRAINTS@27..36
+          COLON@27..28 ":"
+          WHITESPACE@28..29 " "
+          NAMED_TYPE@29..36
+            PATH@29..36
+              PATH_TYPE@29..36
+                NAME@29..36
+                  IDENT@29..36 "Numeric"
+      GREATER@36..37 ">"
+    WHITESPACE@37..38 " "
+    LEFT_BRACE@38..39 "{"
+    RIGHT_BRACE@39..40 "}"

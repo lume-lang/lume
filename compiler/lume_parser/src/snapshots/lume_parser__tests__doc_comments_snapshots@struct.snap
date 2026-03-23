@@ -1,26 +1,16 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"/// This is a doc comment\n        struct Foo { }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"/// This is a doc comment\n        struct Foo { }\")"
 ---
-[
-    StructDefinition(
-        StructDefinition {
-            attributes: [],
-            visibility: None,
-            name: Identifier {
-                name: "Foo",
-                location: Location(
-                    41..44,
-                ),
-            },
-            fields: [],
-            type_parameters: [],
-            location: Location(
-                34..48,
-            ),
-            documentation: Some(
-                "This is a doc comment",
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..48
+  STRUCT@0..48
+    DOC_COMMENT@0..25 "/// This is a doc com ..."
+    WHITESPACE@25..34 "\n        "
+    STRUCT_KW@34..40 "struct"
+    WHITESPACE@40..41 " "
+    NAME@41..44
+      IDENT@41..44 "Foo"
+    WHITESPACE@44..45 " "
+    LEFT_BRACE@45..46 "{"
+    WHITESPACE@46..47 " "
+    RIGHT_BRACE@47..48 "}"

@@ -1,28 +1,17 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = [];\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = [];\")"
 ---
-[
-    VariableDeclaration(
-        VariableDeclaration {
-            name: Identifier {
-                name: "_",
-                location: Location(
-                    4..5,
-                ),
-            },
-            variable_type: None,
-            value: Array(
-                Array {
-                    values: [],
-                    location: Location(
-                        8..10,
-                    ),
-                },
-            ),
-            location: Location(
-                0..11,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..11
+  LET_STMT@0..11
+    LET_KW@0..3 "let"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    WHITESPACE@7..8 " "
+    ARRAY_EXPR@8..10
+      LEFT_BRACKET@8..9 "["
+      RIGHT_BRACKET@9..10 "]"
+    SEMICOLON@10..11 ";"

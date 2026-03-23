@@ -1,37 +1,22 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        enum Foo {\n            Bar()\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"\n        enum Foo {\n            Bar()\n        }\")"
 ---
-[
-    EnumDefinition(
-        EnumDefinition {
-            visibility: None,
-            name: Identifier {
-                name: "Foo",
-                location: Location(
-                    14..17,
-                ),
-            },
-            type_parameters: [],
-            cases: [
-                EnumDefinitionCase {
-                    name: Identifier {
-                        name: "Bar",
-                        location: Location(
-                            32..35,
-                        ),
-                    },
-                    parameters: [],
-                    location: Location(
-                        32..37,
-                    ),
-                    documentation: None,
-                },
-            ],
-            location: Location(
-                9..47,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..47
+  WHITESPACE@0..9 "\n        "
+  ENUM@9..47
+    ENUM_KW@9..13 "enum"
+    WHITESPACE@13..14 " "
+    NAME@14..17
+      IDENT@14..17 "Foo"
+    WHITESPACE@17..18 " "
+    LEFT_BRACE@18..19 "{"
+    WHITESPACE@19..32 "\n            "
+    CASE@32..37
+      NAME@32..35
+        IDENT@32..35 "Bar"
+      CASE_PARAM_LIST@35..37
+        LEFT_PAREN@35..36 "("
+        RIGHT_PAREN@36..37 ")"
+    WHITESPACE@37..46 "\n        "
+    RIGHT_BRACE@46..47 "}"

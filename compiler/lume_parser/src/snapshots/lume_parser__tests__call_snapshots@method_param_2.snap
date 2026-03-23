@@ -1,79 +1,32 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = a.call(a, b);\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = a.call(a, b);\")"
 ---
-[
-    VariableDeclaration(
-        VariableDeclaration {
-            name: Identifier {
-                name: "_",
-                location: Location(
-                    4..5,
-                ),
-            },
-            variable_type: None,
-            value: Call(
-                Call {
-                    callee: Some(
-                        Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "a",
-                                    location: Location(
-                                        8..9,
-                                    ),
-                                },
-                            },
-                        ),
-                    ),
-                    name: Path {
-                        root: [],
-                        name: Callable {
-                            name: Identifier {
-                                name: "call",
-                                location: Location(
-                                    10..14,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                10..14,
-                            ),
-                        },
-                        location: Location(
-                            10..14,
-                        ),
-                    },
-                    arguments: [
-                        Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "a",
-                                    location: Location(
-                                        15..16,
-                                    ),
-                                },
-                            },
-                        ),
-                        Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "b",
-                                    location: Location(
-                                        18..19,
-                                    ),
-                                },
-                            },
-                        ),
-                    ],
-                    location: Location(
-                        10..20,
-                    ),
-                },
-            ),
-            location: Location(
-                0..21,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..21
+  LET_STMT@0..21
+    LET_KW@0..3 "let"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    INSTANCE_CALL_EXPR@7..20
+      VARIABLE_EXPR@7..9
+        WHITESPACE@7..8 " "
+        NAME@8..9
+          IDENT@8..9 "a"
+      DOT@9..10 "."
+      NAME@10..14
+        IDENT@10..14 "call"
+      ARG_LIST@14..20
+        LEFT_PAREN@14..15 "("
+        VARIABLE_EXPR@15..16
+          NAME@15..16
+            IDENT@15..16 "a"
+        COMMA@16..17 ","
+        WHITESPACE@17..18 " "
+        VARIABLE_EXPR@18..19
+          NAME@18..19
+            IDENT@18..19 "b"
+        RIGHT_PAREN@19..20 ")"
+    SEMICOLON@20..21 ";"

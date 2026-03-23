@@ -1,34 +1,17 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"import std (Int)\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"import std (Int)\")"
 ---
-[
-    Import(
-        Import {
-            path: ImportPath {
-                path: [
-                    Identifier {
-                        name: "std",
-                        location: Location(
-                            7..10,
-                        ),
-                    },
-                ],
-                location: Location(
-                    7..10,
-                ),
-            },
-            names: [
-                Identifier {
-                    name: "Int",
-                    location: Location(
-                        12..15,
-                    ),
-                },
-            ],
-            location: Location(
-                0..16,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..16
+  IMPORT@0..16
+    IMPORT_KW@0..6 "import"
+    WHITESPACE@6..7 " "
+    IMPORT_PATH@7..11
+      NAME@7..10
+        IDENT@7..10 "std"
+      WHITESPACE@10..11 " "
+    IMPORT_LIST@11..16
+      LEFT_PAREN@11..12 "("
+      NAME@12..15
+        IDENT@12..15 "Int"
+      RIGHT_PAREN@15..16 ")"

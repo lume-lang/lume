@@ -1,102 +1,48 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        impl Foo {\n            fn bar<T>() -> Int32 { }\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        impl Foo {\n            fn bar<T>() -> Int32 { }\n        }\")"
 ---
-[
-    Implementation(
-        Implementation {
-            name: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Foo",
-                                location: Location(
-                                    14..17,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                14..17,
-                            ),
-                        },
-                        location: Location(
-                            14..17,
-                        ),
-                    },
-                },
-            ),
-            methods: [
-                MethodDefinition {
-                    attributes: [],
-                    visibility: None,
-                    signature: Signature {
-                        external: false,
-                        name: Identifier {
-                            name: "bar",
-                            location: Location(
-                                35..38,
-                            ),
-                        },
-                        type_parameters: [
-                            TypeParameter {
-                                name: Identifier {
-                                    name: "T",
-                                    location: Location(
-                                        39..40,
-                                    ),
-                                },
-                                constraints: [],
-                            },
-                        ],
-                        parameters: [],
-                        return_type: Some(
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Int32",
-                                                location: Location(
-                                                    47..52,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                47..52,
-                                            ),
-                                        },
-                                        location: Location(
-                                            47..52,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            32..52,
-                        ),
-                    },
-                    block: Some(
-                        Block {
-                            statements: [],
-                            location: Location(
-                                53..56,
-                            ),
-                        },
-                    ),
-                    location: Location(
-                        32..56,
-                    ),
-                    documentation: None,
-                },
-            ],
-            type_parameters: [],
-            location: Location(
-                9..66,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..66
+  WHITESPACE@0..9 "\n        "
+  IMPL@9..66
+    IMPL_KW@9..13 "impl"
+    WHITESPACE@13..14 " "
+    NAMED_TYPE@14..18
+      PATH@14..18
+        PATH_TYPE@14..18
+          NAME@14..17
+            IDENT@14..17 "Foo"
+          WHITESPACE@17..18 " "
+    LEFT_BRACE@18..19 "{"
+    WHITESPACE@19..32 "\n            "
+    METHOD@32..56
+      SIG@32..53
+        FN_KW@32..34 "fn"
+        WHITESPACE@34..35 " "
+        NAME@35..38
+          IDENT@35..38 "bar"
+        BOUND_TYPES@38..41
+          LESS@38..39 "<"
+          BOUND_TYPE@39..40
+            NAME@39..40
+              IDENT@39..40 "T"
+          GREATER@40..41 ">"
+        PARAM_LIST@41..43
+          LEFT_PAREN@41..42 "("
+          RIGHT_PAREN@42..43 ")"
+        WHITESPACE@43..44 " "
+        RETURN_TYPE@44..53
+          ARROW@44..46 "->"
+          WHITESPACE@46..47 " "
+          NAMED_TYPE@47..53
+            PATH@47..53
+              PATH_TYPE@47..53
+                NAME@47..52
+                  IDENT@47..52 "Int32"
+                WHITESPACE@52..53 " "
+      BLOCK@53..56
+        LEFT_BRACE@53..54 "{"
+        WHITESPACE@54..55 " "
+        RIGHT_BRACE@55..56 "}"
+    WHITESPACE@56..65 "\n        "
+    RIGHT_BRACE@65..66 "}"

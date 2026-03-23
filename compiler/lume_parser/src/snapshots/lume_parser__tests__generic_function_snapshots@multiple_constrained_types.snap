@@ -1,117 +1,49 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"fn test<T: Numeric + Floating>() -> void {}\")"
 ---
-[
-    FunctionDefinition(
-        FunctionDefinition {
-            attributes: [],
-            visibility: None,
-            signature: Signature {
-                external: false,
-                name: Identifier {
-                    name: "test",
-                    location: Location(
-                        3..7,
-                    ),
-                },
-                type_parameters: [
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T",
-                            location: Location(
-                                8..9,
-                            ),
-                        },
-                        constraints: [
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Numeric",
-                                                location: Location(
-                                                    11..18,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                11..18,
-                                            ),
-                                        },
-                                        location: Location(
-                                            11..18,
-                                        ),
-                                    },
-                                },
-                            ),
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Floating",
-                                                location: Location(
-                                                    21..29,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                21..29,
-                                            ),
-                                        },
-                                        location: Location(
-                                            21..29,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ],
-                    },
-                ],
-                parameters: [],
-                return_type: Some(
-                    Named(
-                        NamedType {
-                            name: Path {
-                                root: [],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "void",
-                                        location: Location(
-                                            36..40,
-                                        ),
-                                    },
-                                    bound_types: [],
-                                    location: Location(
-                                        36..40,
-                                    ),
-                                },
-                                location: Location(
-                                    36..40,
-                                ),
-                            },
-                        },
-                    ),
-                ),
-                location: Location(
-                    0..40,
-                ),
-            },
-            block: Some(
-                Block {
-                    statements: [],
-                    location: Location(
-                        41..43,
-                    ),
-                },
-            ),
-            location: Location(
-                0..43,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..43
+  FN@0..43
+    SIG@0..41
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "test"
+      BOUND_TYPES@7..30
+        LESS@7..8 "<"
+        BOUND_TYPE@8..29
+          NAME@8..9
+            IDENT@8..9 "T"
+          CONSTRAINTS@9..29
+            COLON@9..10 ":"
+            WHITESPACE@10..11 " "
+            NAMED_TYPE@11..19
+              PATH@11..19
+                PATH_TYPE@11..19
+                  NAME@11..18
+                    IDENT@11..18 "Numeric"
+                  WHITESPACE@18..19 " "
+            ADD@19..20 "+"
+            WHITESPACE@20..21 " "
+            NAMED_TYPE@21..29
+              PATH@21..29
+                PATH_TYPE@21..29
+                  NAME@21..29
+                    IDENT@21..29 "Floating"
+        GREATER@29..30 ">"
+      PARAM_LIST@30..32
+        LEFT_PAREN@30..31 "("
+        RIGHT_PAREN@31..32 ")"
+      WHITESPACE@32..33 " "
+      RETURN_TYPE@33..41
+        ARROW@33..35 "->"
+        WHITESPACE@35..36 " "
+        NAMED_TYPE@36..41
+          PATH@36..41
+            PATH_TYPE@36..41
+              NAME@36..40
+                IDENT@36..40 "void"
+              WHITESPACE@40..41 " "
+    BLOCK@41..43
+      LEFT_BRACE@41..42 "{"
+      RIGHT_BRACE@42..43 "}"

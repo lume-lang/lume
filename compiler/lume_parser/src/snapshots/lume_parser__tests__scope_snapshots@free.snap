@@ -1,16 +1,12 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"{ };\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"{ };\")"
 ---
-[
-    Expression(
-        Scope(
-            Scope {
-                body: [],
-                location: Location(
-                    0..3,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..4
+  EXPR_STMT@0..4
+    SCOPE_EXPR@0..3
+      BLOCK@0..3
+        LEFT_BRACE@0..1 "{"
+        WHITESPACE@1..2 " "
+        RIGHT_BRACE@2..3 "}"
+    SEMICOLON@3..4 ";"

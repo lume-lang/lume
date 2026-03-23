@@ -1,36 +1,17 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"1 = b;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"1 = b;\")"
 ---
-[
-    Expression(
-        Assignment(
-            Assignment {
-                target: Literal(
-                    Int(
-                        IntLiteral {
-                            value: 1,
-                            location: Location(
-                                0..1,
-                            ),
-                            kind: None,
-                        },
-                    ),
-                ),
-                value: Variable(
-                    Variable {
-                        name: Identifier {
-                            name: "b",
-                            location: Location(
-                                4..5,
-                            ),
-                        },
-                    },
-                ),
-                location: Location(
-                    0..5,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..6
+  EXPR_STMT@0..6
+    ASSIGNMENT_EXPR@0..5
+      LIT_EXPR@0..1
+        INTEGER_LIT@0..1
+          INTEGER_LIT@0..1 "1"
+      WHITESPACE@1..2 " "
+      ASSIGN@2..3 "="
+      VARIABLE_EXPR@3..5
+        WHITESPACE@3..4 " "
+        NAME@4..5
+          IDENT@4..5 "b"
+    SEMICOLON@5..6 ";"

@@ -1,43 +1,25 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"for pattern in collection { break; }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"for pattern in collection { break; }\")"
 ---
-[
-    IteratorLoop(
-        IteratorLoop {
-            pattern: Identifier {
-                name: "pattern",
-                location: Location(
-                    4..11,
-                ),
-            },
-            collection: Variable(
-                Variable {
-                    name: Identifier {
-                        name: "collection",
-                        location: Location(
-                            15..25,
-                        ),
-                    },
-                },
-            ),
-            block: Block {
-                statements: [
-                    Break(
-                        Break {
-                            location: Location(
-                                28..34,
-                            ),
-                        },
-                    ),
-                ],
-                location: Location(
-                    26..36,
-                ),
-            },
-            location: Location(
-                0..36,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..36
+  FOR_STMT@0..36
+    FOR_KW@0..3 "for"
+    WHITESPACE@3..4 " "
+    NAME@4..11
+      IDENT@4..11 "pattern"
+    WHITESPACE@11..12 " "
+    IN_KW@12..14 "in"
+    VARIABLE_EXPR@14..25
+      WHITESPACE@14..15 " "
+      NAME@15..25
+        IDENT@15..25 "collection"
+    WHITESPACE@25..26 " "
+    BLOCK@26..36
+      LEFT_BRACE@26..27 "{"
+      WHITESPACE@27..28 " "
+      BREAK_STMT@28..34
+        BREAK_KW@28..33 "break"
+        SEMICOLON@33..34 ";"
+      WHITESPACE@34..35 " "
+      RIGHT_BRACE@35..36 "}"

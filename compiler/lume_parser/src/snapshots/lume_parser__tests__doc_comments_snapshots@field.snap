@@ -1,81 +1,37 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"struct Foo {\n            /// This is a doc comment\n            pub bar: Int32 = 0;\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"struct Foo {\n            /// This is a doc comment\n            pub bar: Int32 = 0;\n        }\")"
 ---
-[
-    StructDefinition(
-        StructDefinition {
-            attributes: [],
-            visibility: None,
-            name: Identifier {
-                name: "Foo",
-                location: Location(
-                    7..10,
-                ),
-            },
-            fields: [
-                Field {
-                    visibility: Some(
-                        Public {
-                            location: Location(
-                                63..66,
-                            ),
-                        },
-                    ),
-                    name: Identifier {
-                        name: "bar",
-                        location: Location(
-                            67..70,
-                        ),
-                    },
-                    field_type: Named(
-                        NamedType {
-                            name: Path {
-                                root: [],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "Int32",
-                                        location: Location(
-                                            72..77,
-                                        ),
-                                    },
-                                    bound_types: [],
-                                    location: Location(
-                                        72..77,
-                                    ),
-                                },
-                                location: Location(
-                                    72..77,
-                                ),
-                            },
-                        },
-                    ),
-                    default_value: Some(
-                        Literal(
-                            Int(
-                                IntLiteral {
-                                    value: 0,
-                                    location: Location(
-                                        80..81,
-                                    ),
-                                    kind: None,
-                                },
-                            ),
-                        ),
-                    ),
-                    location: Location(
-                        63..82,
-                    ),
-                    documentation: Some(
-                        "This is a doc comment",
-                    ),
-                },
-            ],
-            type_parameters: [],
-            location: Location(
-                0..92,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..92
+  STRUCT@0..92
+    STRUCT_KW@0..6 "struct"
+    WHITESPACE@6..7 " "
+    NAME@7..10
+      IDENT@7..10 "Foo"
+    WHITESPACE@10..11 " "
+    LEFT_BRACE@11..12 "{"
+    WHITESPACE@12..25 "\n            "
+    FIELD@25..82
+      DOC_COMMENT@25..50 "/// This is a doc com ..."
+      WHITESPACE@50..63 "\n            "
+      VISIBILITY@63..67
+        PUB_KW@63..66 "pub"
+        WHITESPACE@66..67 " "
+      NAME@67..70
+        IDENT@67..70 "bar"
+      COLON@70..71 ":"
+      WHITESPACE@71..72 " "
+      NAMED_TYPE@72..78
+        PATH@72..78
+          PATH_TYPE@72..78
+            NAME@72..77
+              IDENT@72..77 "Int32"
+            WHITESPACE@77..78 " "
+      ASSIGN@78..79 "="
+      WHITESPACE@79..80 " "
+      LIT_EXPR@80..81
+        INTEGER_LIT@80..81
+          INTEGER_LIT@80..81 "0"
+      SEMICOLON@81..82 ";"
+    WHITESPACE@82..91 "\n        "
+    RIGHT_BRACE@91..92 "}"

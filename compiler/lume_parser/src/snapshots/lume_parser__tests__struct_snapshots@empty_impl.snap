@@ -1,37 +1,16 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"impl Int32 {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"impl Int32 {}\")"
 ---
-[
-    Implementation(
-        Implementation {
-            name: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Int32",
-                                location: Location(
-                                    5..10,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                5..10,
-                            ),
-                        },
-                        location: Location(
-                            5..10,
-                        ),
-                    },
-                },
-            ),
-            methods: [],
-            type_parameters: [],
-            location: Location(
-                0..13,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..13
+  IMPL@0..13
+    IMPL_KW@0..4 "impl"
+    WHITESPACE@4..5 " "
+    NAMED_TYPE@5..11
+      PATH@5..11
+        PATH_TYPE@5..11
+          NAME@5..10
+            IDENT@5..10 "Int32"
+          WHITESPACE@10..11 " "
+    LEFT_BRACE@11..12 "{"
+    RIGHT_BRACE@12..13 "}"

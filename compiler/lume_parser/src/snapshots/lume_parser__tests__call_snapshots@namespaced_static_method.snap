@@ -1,97 +1,42 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = std::io::Buffer::call(a, b);\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"let _ = std::io::Buffer::call(a, b);\")"
 ---
-[
-    VariableDeclaration(
-        VariableDeclaration {
-            name: Identifier {
-                name: "_",
-                location: Location(
-                    4..5,
-                ),
-            },
-            variable_type: None,
-            value: Call(
-                Call {
-                    callee: None,
-                    name: Path {
-                        root: [
-                            Namespace {
-                                name: Identifier {
-                                    name: "std",
-                                    location: Location(
-                                        8..11,
-                                    ),
-                                },
-                            },
-                            Namespace {
-                                name: Identifier {
-                                    name: "io",
-                                    location: Location(
-                                        13..15,
-                                    ),
-                                },
-                            },
-                            Type {
-                                name: Identifier {
-                                    name: "Buffer",
-                                    location: Location(
-                                        17..23,
-                                    ),
-                                },
-                                bound_types: [],
-                                location: Location(
-                                    17..23,
-                                ),
-                            },
-                        ],
-                        name: Callable {
-                            name: Identifier {
-                                name: "call",
-                                location: Location(
-                                    25..29,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                25..29,
-                            ),
-                        },
-                        location: Location(
-                            25..29,
-                        ),
-                    },
-                    arguments: [
-                        Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "a",
-                                    location: Location(
-                                        30..31,
-                                    ),
-                                },
-                            },
-                        ),
-                        Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "b",
-                                    location: Location(
-                                        33..34,
-                                    ),
-                                },
-                            },
-                        ),
-                    ],
-                    location: Location(
-                        25..35,
-                    ),
-                },
-            ),
-            location: Location(
-                0..36,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..36
+  LET_STMT@0..36
+    LET_KW@0..3 "let"
+    WHITESPACE@3..4 " "
+    NAME@4..5
+      IDENT@4..5 "_"
+    WHITESPACE@5..6 " "
+    ASSIGN@6..7 "="
+    STATIC_CALL_EXPR@7..35
+      WHITESPACE@7..8 " "
+      PATH@8..29
+        PATH_NAMESPACE@8..11
+          NAME@8..11
+            IDENT@8..11 "std"
+        PATH_SEP@11..13 "::"
+        PATH_NAMESPACE@13..15
+          NAME@13..15
+            IDENT@13..15 "io"
+        PATH_SEP@15..17 "::"
+        PATH_TYPE@17..23
+          NAME@17..23
+            IDENT@17..23 "Buffer"
+        PATH_SEP@23..25 "::"
+        PATH_CALLABLE@25..29
+          NAME@25..29
+            IDENT@25..29 "call"
+      ARG_LIST@29..35
+        LEFT_PAREN@29..30 "("
+        VARIABLE_EXPR@30..31
+          NAME@30..31
+            IDENT@30..31 "a"
+        COMMA@31..32 ","
+        WHITESPACE@32..33 " "
+        VARIABLE_EXPR@33..34
+          NAME@33..34
+            IDENT@33..34 "b"
+        RIGHT_PAREN@34..35 ")"
+    SEMICOLON@35..36 ";"

@@ -1,37 +1,17 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"self + self;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"self + self;\")"
 ---
-[
-    Expression(
-        IntrinsicCall(
-            IntrinsicCall {
-                kind: Add {
-                    lhs: Variable(
-                        Variable {
-                            name: Identifier {
-                                name: "self",
-                                location: Location(
-                                    0..4,
-                                ),
-                            },
-                        },
-                    ),
-                    rhs: Variable(
-                        Variable {
-                            name: Identifier {
-                                name: "self",
-                                location: Location(
-                                    7..11,
-                                ),
-                            },
-                        },
-                    ),
-                },
-                location: Location(
-                    0..11,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..12
+  EXPR_STMT@0..12
+    BIN_EXPR@0..11
+      VARIABLE_EXPR@0..4
+        NAME@0..4
+          IDENT@0..4 "self"
+      WHITESPACE@4..5 " "
+      ADD@5..6 "+"
+      WHITESPACE@6..7 " "
+      VARIABLE_EXPR@7..11
+        NAME@7..11
+          IDENT@7..11 "self"
+    SEMICOLON@11..12 ";"

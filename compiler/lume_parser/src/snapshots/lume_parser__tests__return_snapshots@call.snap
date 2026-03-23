@@ -1,64 +1,22 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"return a.b(c);\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"return a.b(c);\")"
 ---
-[
-    Return(
-        Return {
-            value: Some(
-                Call(
-                    Call {
-                        callee: Some(
-                            Variable(
-                                Variable {
-                                    name: Identifier {
-                                        name: "a",
-                                        location: Location(
-                                            7..8,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ),
-                        name: Path {
-                            root: [],
-                            name: Callable {
-                                name: Identifier {
-                                    name: "b",
-                                    location: Location(
-                                        9..10,
-                                    ),
-                                },
-                                bound_types: [],
-                                location: Location(
-                                    9..10,
-                                ),
-                            },
-                            location: Location(
-                                9..10,
-                            ),
-                        },
-                        arguments: [
-                            Variable(
-                                Variable {
-                                    name: Identifier {
-                                        name: "c",
-                                        location: Location(
-                                            11..12,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ],
-                        location: Location(
-                            9..13,
-                        ),
-                    },
-                ),
-            ),
-            location: Location(
-                0..14,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..14
+  RETURN_STMT@0..14
+    RETURN_KW@0..6 "return"
+    INSTANCE_CALL_EXPR@6..13
+      VARIABLE_EXPR@6..8
+        WHITESPACE@6..7 " "
+        NAME@7..8
+          IDENT@7..8 "a"
+      DOT@8..9 "."
+      NAME@9..10
+        IDENT@9..10 "b"
+      ARG_LIST@10..13
+        LEFT_PAREN@10..11 "("
+        VARIABLE_EXPR@11..12
+          NAME@11..12
+            IDENT@11..12 "c"
+        RIGHT_PAREN@12..13 ")"
+    SEMICOLON@13..14 ";"

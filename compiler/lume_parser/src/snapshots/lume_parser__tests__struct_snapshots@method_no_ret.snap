@@ -1,69 +1,33 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        impl Foo {\n            fn bar() { }\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        impl Foo {\n            fn bar() { }\n        }\")"
 ---
-[
-    Implementation(
-        Implementation {
-            name: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Foo",
-                                location: Location(
-                                    14..17,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                14..17,
-                            ),
-                        },
-                        location: Location(
-                            14..17,
-                        ),
-                    },
-                },
-            ),
-            methods: [
-                MethodDefinition {
-                    attributes: [],
-                    visibility: None,
-                    signature: Signature {
-                        external: false,
-                        name: Identifier {
-                            name: "bar",
-                            location: Location(
-                                35..38,
-                            ),
-                        },
-                        type_parameters: [],
-                        parameters: [],
-                        return_type: None,
-                        location: Location(
-                            32..40,
-                        ),
-                    },
-                    block: Some(
-                        Block {
-                            statements: [],
-                            location: Location(
-                                41..44,
-                            ),
-                        },
-                    ),
-                    location: Location(
-                        32..44,
-                    ),
-                    documentation: None,
-                },
-            ],
-            type_parameters: [],
-            location: Location(
-                9..54,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..54
+  WHITESPACE@0..9 "\n        "
+  IMPL@9..54
+    IMPL_KW@9..13 "impl"
+    WHITESPACE@13..14 " "
+    NAMED_TYPE@14..18
+      PATH@14..18
+        PATH_TYPE@14..18
+          NAME@14..17
+            IDENT@14..17 "Foo"
+          WHITESPACE@17..18 " "
+    LEFT_BRACE@18..19 "{"
+    WHITESPACE@19..32 "\n            "
+    METHOD@32..44
+      SIG@32..40
+        FN_KW@32..34 "fn"
+        WHITESPACE@34..35 " "
+        NAME@35..38
+          IDENT@35..38 "bar"
+        PARAM_LIST@38..40
+          LEFT_PAREN@38..39 "("
+          RIGHT_PAREN@39..40 ")"
+      WHITESPACE@40..41 " "
+      BLOCK@41..44
+        LEFT_BRACE@41..42 "{"
+        WHITESPACE@42..43 " "
+        RIGHT_BRACE@43..44 "}"
+    WHITESPACE@44..53 "\n        "
+    RIGHT_BRACE@53..54 "}"

@@ -1,66 +1,47 @@
-use error_snippet::Result;
-use lume_ast::*;
-use lume_lexer::TokenType;
+use crate::*;
 
-use crate::Parser;
-use crate::errors::*;
-
-impl<'ast> Parser<'_, 'ast> {
+impl Parser {
     /// Parses some abstract type at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(super) fn parse_type(&mut self) -> Result<Type<'ast>> {
-        let token = self.token();
-
-        match token.kind.as_type() {
-            TokenType::Identifier => self.parse_named_type(),
-            TokenType::LeftBracket => self.parse_array_type(),
-            ty => Err(UnexpectedType {
-                source: self.source.clone(),
-                range: token.index.clone(),
-                actual: ty,
+    pub(super) fn parse_type(&mut self) {
+        match self.token() {
+            SyntaxKind::IDENT => self.parse_identd_type(),
+            SyntaxKind::LEFT_BRACKET => self.parse_array_type(),
+            SyntaxKind::SELF_TYPE => self.parse_self_type(),
+            _ => {
+                self.error_and_skip("expected type");
             }
-            .into()),
         }
     }
 
     /// Parses either a scalar- or generic-type at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn parse_named_type(&mut self) -> Result<Type<'ast>> {
-        let name = self.parse_path()?;
-
-        if name.is_self_type() {
-            return Ok(Type::SelfType(SelfType {
-                location: name.location,
-            }));
-        }
-
-        Ok(Type::Named(NamedType { name }))
+    fn parse_identd_type(&mut self) {
+        self.start_node(SyntaxKind::NAMED_TYPE);
+        self.parse_path();
+        self.finish_node();
     }
 
     /// Parses an array type at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn parse_array_type(&mut self) -> Result<Type<'ast>> {
-        let start = self.consume(TokenType::LeftBracket)?.start();
+    fn parse_array_type(&mut self) {
+        self.start_node(SyntaxKind::ARRAY_TYPE);
 
-        let element_type = Box::new(self.parse_type()?);
+        self.consume(SyntaxKind::LEFT_BRACKET);
+        self.parse_type();
+        self.consume(SyntaxKind::RIGHT_BRACKET);
 
-        let end = self.consume(TokenType::RightBracket)?.end();
+        self.finish_node();
+    }
 
-        let array_type = ArrayType {
-            element_type,
-            location: (start..end).into(),
-        };
-
-        Ok(Type::Array(array_type))
+    /// Parses a `Self` type at the current cursor position.
+    fn parse_self_type(&mut self) {
+        self.start_node(SyntaxKind::SELF_TYPE);
+        self.consume(SyntaxKind::SELF_TYPE);
+        self.finish_node();
     }
 
     /// Parses some abstract type at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(super) fn parse_opt_type(&mut self) -> Result<Option<Type<'ast>>> {
-        if self.check(TokenType::Colon) {
-            Ok(Some(self.parse_type()?))
-        } else {
-            Ok(None)
+    pub(super) fn parse_opt_type(&mut self) {
+        if self.check(Token![:]) {
+            self.parse_type();
         }
     }
 }

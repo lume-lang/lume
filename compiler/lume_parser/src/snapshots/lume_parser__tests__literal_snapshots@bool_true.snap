@@ -1,18 +1,10 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"true\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"true;\")"
 ---
-[
-    Expression(
-        Literal(
-            Boolean(
-                BooleanLiteral {
-                    value: true,
-                    location: Location(
-                        0..4,
-                    ),
-                },
-            ),
-        ),
-    ),
-]
+SOURCE_FILE@0..5
+  EXPR_STMT@0..5
+    LIT_EXPR@0..4
+      BOOLEAN_LIT@0..4
+        BOOLEAN_LIT@0..4 "true"
+    SEMICOLON@4..5 ";"

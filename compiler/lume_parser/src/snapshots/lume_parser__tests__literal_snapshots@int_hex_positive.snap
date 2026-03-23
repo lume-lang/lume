@@ -1,19 +1,10 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"0x55;\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"0x55;\")"
 ---
-[
-    Expression(
-        Literal(
-            Int(
-                IntLiteral {
-                    value: 85,
-                    location: Location(
-                        0..4,
-                    ),
-                    kind: None,
-                },
-            ),
-        ),
-    ),
-]
+SOURCE_FILE@0..5
+  EXPR_STMT@0..5
+    LIT_EXPR@0..4
+      INTEGER_LIT@0..4
+        INTEGER_LIT@0..4 "0x55"
+    SEMICOLON@4..5 ";"

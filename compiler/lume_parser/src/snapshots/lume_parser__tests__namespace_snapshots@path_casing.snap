@@ -1,32 +1,14 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"namespace System::IO\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"namespace System::IO\")"
 ---
-[
-    Namespace(
-        Namespace {
-            path: ImportPath {
-                path: [
-                    Identifier {
-                        name: "System",
-                        location: Location(
-                            10..16,
-                        ),
-                    },
-                    Identifier {
-                        name: "IO",
-                        location: Location(
-                            18..20,
-                        ),
-                    },
-                ],
-                location: Location(
-                    10..20,
-                ),
-            },
-            location: Location(
-                0..20,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..20
+  NAMESPACE@0..20
+    NAMESPACE_KW@0..9 "namespace"
+    WHITESPACE@9..10 " "
+    IMPORT_PATH@10..20
+      NAME@10..16
+        IDENT@10..16 "System"
+      PATH_SEP@16..18 "::"
+      NAME@18..20
+        IDENT@18..20 "IO"

@@ -1,123 +1,49 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        use Add: Int32 {\n            fn add(other: Int32) {}\n        }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        use Add: Int32 {\n            fn add(other: Int32) {}\n        }\")"
 ---
-[
-    TraitImplementation(
-        TraitImplementation {
-            name: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Add",
-                                location: Location(
-                                    13..16,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                13..16,
-                            ),
-                        },
-                        location: Location(
-                            13..16,
-                        ),
-                    },
-                },
-            ),
-            target: Named(
-                NamedType {
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Int32",
-                                location: Location(
-                                    18..23,
-                                ),
-                            },
-                            bound_types: [],
-                            location: Location(
-                                18..23,
-                            ),
-                        },
-                        location: Location(
-                            18..23,
-                        ),
-                    },
-                },
-            ),
-            methods: [
-                TraitMethodImplementation {
-                    signature: Signature {
-                        external: false,
-                        name: Identifier {
-                            name: "add",
-                            location: Location(
-                                41..44,
-                            ),
-                        },
-                        type_parameters: [],
-                        parameters: [
-                            Parameter {
-                                name: Identifier {
-                                    name: "other",
-                                    location: Location(
-                                        45..50,
-                                    ),
-                                },
-                                param_type: Named(
-                                    NamedType {
-                                        name: Path {
-                                            root: [],
-                                            name: Type {
-                                                name: Identifier {
-                                                    name: "Int32",
-                                                    location: Location(
-                                                        52..57,
-                                                    ),
-                                                },
-                                                bound_types: [],
-                                                location: Location(
-                                                    52..57,
-                                                ),
-                                            },
-                                            location: Location(
-                                                52..57,
-                                            ),
-                                        },
-                                    },
-                                ),
-                                vararg: false,
-                                location: Location(
-                                    45..57,
-                                ),
-                            },
-                        ],
-                        return_type: None,
-                        location: Location(
-                            38..58,
-                        ),
-                    },
-                    block: Some(
-                        Block {
-                            statements: [],
-                            location: Location(
-                                59..61,
-                            ),
-                        },
-                    ),
-                    location: Location(
-                        38..61,
-                    ),
-                },
-            ],
-            type_parameters: [],
-            location: Location(
-                9..71,
-            ),
-        },
-    ),
-]
+SOURCE_FILE@0..71
+  WHITESPACE@0..9 "\n        "
+  TRAIT_IMPL@9..71
+    USE_KW@9..12 "use"
+    WHITESPACE@12..13 " "
+    NAMED_TYPE@13..16
+      PATH@13..16
+        PATH_TYPE@13..16
+          NAME@13..16
+            IDENT@13..16 "Add"
+    COLON@16..17 ":"
+    WHITESPACE@17..18 " "
+    NAMED_TYPE@18..24
+      PATH@18..24
+        PATH_TYPE@18..24
+          NAME@18..23
+            IDENT@18..23 "Int32"
+          WHITESPACE@23..24 " "
+    LEFT_BRACE@24..25 "{"
+    WHITESPACE@25..38 "\n            "
+    METHOD@38..61
+      SIG@38..58
+        FN_KW@38..40 "fn"
+        WHITESPACE@40..41 " "
+        NAME@41..44
+          IDENT@41..44 "add"
+        PARAM_LIST@44..58
+          LEFT_PAREN@44..45 "("
+          PARAM@45..57
+            NAME@45..50
+              IDENT@45..50 "other"
+            COLON@50..51 ":"
+            WHITESPACE@51..52 " "
+            NAMED_TYPE@52..57
+              PATH@52..57
+                PATH_TYPE@52..57
+                  NAME@52..57
+                    IDENT@52..57 "Int32"
+          RIGHT_PAREN@57..58 ")"
+      WHITESPACE@58..59 " "
+      BLOCK@59..61
+        LEFT_BRACE@59..60 "{"
+        RIGHT_BRACE@60..61 "}"
+    WHITESPACE@61..70 "\n        "
+    RIGHT_BRACE@70..71 "}"

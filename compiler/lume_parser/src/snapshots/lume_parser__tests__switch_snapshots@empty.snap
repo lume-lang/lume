@@ -1,26 +1,16 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"switch a { }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"switch a { }\")"
 ---
-[
-    Expression(
-        Switch(
-            Switch {
-                operand: Variable(
-                    Variable {
-                        name: Identifier {
-                            name: "a",
-                            location: Location(
-                                7..8,
-                            ),
-                        },
-                    },
-                ),
-                cases: [],
-                location: Location(
-                    0..12,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..12
+  EXPR_STMT@0..12
+    SWITCH_EXPR@0..12
+      SWITCH_KW@0..6 "switch"
+      VARIABLE_EXPR@6..8
+        WHITESPACE@6..7 " "
+        NAME@7..8
+          IDENT@7..8 "a"
+      WHITESPACE@8..9 " "
+      LEFT_BRACE@9..10 "{"
+      WHITESPACE@10..11 " "
+      RIGHT_BRACE@11..12 "}"

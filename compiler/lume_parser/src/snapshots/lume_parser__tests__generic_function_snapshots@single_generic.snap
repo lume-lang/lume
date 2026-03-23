@@ -1,72 +1,33 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn test<T>() -> void {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"fn test<T>() -> void {}\")"
 ---
-[
-    FunctionDefinition(
-        FunctionDefinition {
-            attributes: [],
-            visibility: None,
-            signature: Signature {
-                external: false,
-                name: Identifier {
-                    name: "test",
-                    location: Location(
-                        3..7,
-                    ),
-                },
-                type_parameters: [
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T",
-                            location: Location(
-                                8..9,
-                            ),
-                        },
-                        constraints: [],
-                    },
-                ],
-                parameters: [],
-                return_type: Some(
-                    Named(
-                        NamedType {
-                            name: Path {
-                                root: [],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "void",
-                                        location: Location(
-                                            16..20,
-                                        ),
-                                    },
-                                    bound_types: [],
-                                    location: Location(
-                                        16..20,
-                                    ),
-                                },
-                                location: Location(
-                                    16..20,
-                                ),
-                            },
-                        },
-                    ),
-                ),
-                location: Location(
-                    0..20,
-                ),
-            },
-            block: Some(
-                Block {
-                    statements: [],
-                    location: Location(
-                        21..23,
-                    ),
-                },
-            ),
-            location: Location(
-                0..23,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..23
+  FN@0..23
+    SIG@0..21
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..7
+        IDENT@3..7 "test"
+      BOUND_TYPES@7..10
+        LESS@7..8 "<"
+        BOUND_TYPE@8..9
+          NAME@8..9
+            IDENT@8..9 "T"
+        GREATER@9..10 ">"
+      PARAM_LIST@10..12
+        LEFT_PAREN@10..11 "("
+        RIGHT_PAREN@11..12 ")"
+      WHITESPACE@12..13 " "
+      RETURN_TYPE@13..21
+        ARROW@13..15 "->"
+        WHITESPACE@15..16 " "
+        NAMED_TYPE@16..21
+          PATH@16..21
+            PATH_TYPE@16..21
+              NAME@16..20
+                IDENT@16..20 "void"
+              WHITESPACE@20..21 " "
+    BLOCK@21..23
+      LEFT_BRACE@21..22 "{"
+      RIGHT_BRACE@22..23 "}"

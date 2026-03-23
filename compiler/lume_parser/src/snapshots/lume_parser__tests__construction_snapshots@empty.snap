@@ -1,34 +1,16 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"Foo { };\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement, \"Foo { };\")"
 ---
-[
-    Expression(
-        Construct(
-            Construct {
-                path: Path {
-                    root: [],
-                    name: Type {
-                        name: Identifier {
-                            name: "Foo",
-                            location: Location(
-                                0..3,
-                            ),
-                        },
-                        bound_types: [],
-                        location: Location(
-                            0..3,
-                        ),
-                    },
-                    location: Location(
-                        0..3,
-                    ),
-                },
-                fields: [],
-                location: Location(
-                    0..8,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..8
+  EXPR_STMT@0..8
+    CONSTRUCT_EXPR@0..7
+      PATH@0..4
+        PATH_TYPE@0..4
+          NAME@0..3
+            IDENT@0..3 "Foo"
+          WHITESPACE@3..4 " "
+      LEFT_BRACE@4..5 "{"
+      WHITESPACE@5..6 " "
+      RIGHT_BRACE@6..7 "}"
+    SEMICOLON@7..8 ";"

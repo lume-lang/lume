@@ -1,151 +1,59 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"switch a { std::Address::V4 => 4, std::Address::V6 => 6 }\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Statement,\n\"switch a { std::Address::V4 => 4, std::Address::V6 => 6 }\")"
 ---
-[
-    Expression(
-        Switch(
-            Switch {
-                operand: Variable(
-                    Variable {
-                        name: Identifier {
-                            name: "a",
-                            location: Location(
-                                7..8,
-                            ),
-                        },
-                    },
-                ),
-                cases: [
-                    SwitchCase {
-                        pattern: Variant(
-                            VariantPattern {
-                                name: Path {
-                                    root: [
-                                        Namespace {
-                                            name: Identifier {
-                                                name: "std",
-                                                location: Location(
-                                                    11..14,
-                                                ),
-                                            },
-                                        },
-                                        Type {
-                                            name: Identifier {
-                                                name: "Address",
-                                                location: Location(
-                                                    16..23,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                16..23,
-                                            ),
-                                        },
-                                    ],
-                                    name: Variant {
-                                        name: Identifier {
-                                            name: "V4",
-                                            location: Location(
-                                                25..27,
-                                            ),
-                                        },
-                                        location: Location(
-                                            25..27,
-                                        ),
-                                    },
-                                    location: Location(
-                                        25..27,
-                                    ),
-                                },
-                                fields: [],
-                                location: Location(
-                                    25..27,
-                                ),
-                            },
-                        ),
-                        branch: Literal(
-                            Int(
-                                IntLiteral {
-                                    value: 4,
-                                    location: Location(
-                                        31..32,
-                                    ),
-                                    kind: None,
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            25..32,
-                        ),
-                    },
-                    SwitchCase {
-                        pattern: Variant(
-                            VariantPattern {
-                                name: Path {
-                                    root: [
-                                        Namespace {
-                                            name: Identifier {
-                                                name: "std",
-                                                location: Location(
-                                                    34..37,
-                                                ),
-                                            },
-                                        },
-                                        Type {
-                                            name: Identifier {
-                                                name: "Address",
-                                                location: Location(
-                                                    39..46,
-                                                ),
-                                            },
-                                            bound_types: [],
-                                            location: Location(
-                                                39..46,
-                                            ),
-                                        },
-                                    ],
-                                    name: Variant {
-                                        name: Identifier {
-                                            name: "V6",
-                                            location: Location(
-                                                48..50,
-                                            ),
-                                        },
-                                        location: Location(
-                                            48..50,
-                                        ),
-                                    },
-                                    location: Location(
-                                        48..50,
-                                    ),
-                                },
-                                fields: [],
-                                location: Location(
-                                    48..50,
-                                ),
-                            },
-                        ),
-                        branch: Literal(
-                            Int(
-                                IntLiteral {
-                                    value: 6,
-                                    location: Location(
-                                        54..55,
-                                    ),
-                                    kind: None,
-                                },
-                            ),
-                        ),
-                        location: Location(
-                            48..55,
-                        ),
-                    },
-                ],
-                location: Location(
-                    0..57,
-                ),
-            },
-        ),
-    ),
-]
+SOURCE_FILE@0..57
+  EXPR_STMT@0..57
+    SWITCH_EXPR@0..57
+      SWITCH_KW@0..6 "switch"
+      VARIABLE_EXPR@6..8
+        WHITESPACE@6..7 " "
+        NAME@7..8
+          IDENT@7..8 "a"
+      WHITESPACE@8..9 " "
+      LEFT_BRACE@9..10 "{"
+      WHITESPACE@10..11 " "
+      SWITCH_ARM@11..32
+        PAT_VARIANT@11..28
+          PATH@11..28
+            PATH_NAMESPACE@11..14
+              NAME@11..14
+                IDENT@11..14 "std"
+            PATH_SEP@14..16 "::"
+            PATH_TYPE@16..23
+              NAME@16..23
+                IDENT@16..23 "Address"
+            PATH_SEP@23..25 "::"
+            PATH_VARIANT@25..28
+              NAME@25..27
+                IDENT@25..27 "V4"
+              WHITESPACE@27..28 " "
+        BIG_ARROW@28..30 "=>"
+        WHITESPACE@30..31 " "
+        LIT_EXPR@31..32
+          INTEGER_LIT@31..32
+            INTEGER_LIT@31..32 "4"
+      COMMA@32..33 ","
+      WHITESPACE@33..34 " "
+      SWITCH_ARM@34..55
+        PAT_VARIANT@34..51
+          PATH@34..51
+            PATH_NAMESPACE@34..37
+              NAME@34..37
+                IDENT@34..37 "std"
+            PATH_SEP@37..39 "::"
+            PATH_TYPE@39..46
+              NAME@39..46
+                IDENT@39..46 "Address"
+            PATH_SEP@46..48 "::"
+            PATH_VARIANT@48..51
+              NAME@48..50
+                IDENT@48..50 "V6"
+              WHITESPACE@50..51 " "
+        BIG_ARROW@51..53 "=>"
+        WHITESPACE@53..54 " "
+        LIT_EXPR@54..55
+          INTEGER_LIT@54..55
+            INTEGER_LIT@54..55 "6"
+      WHITESPACE@55..56 " "
+      RIGHT_BRACE@56..57 "}"

@@ -210,15 +210,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "843867be96c8daad0d758b57df9392b6d8d271134fce549de6ce169ff98a92af"
 
 [[package]]
-name = "bitmaps"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "031043d04099746d8db04daf1fa424b2bc8bd69d92b25962dcde24da39ab64a2"
-dependencies = [
- "typenum",
-]
-
-[[package]]
 name = "blake3"
 version = "1.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -403,12 +394,6 @@ name = "clap_lex"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
-
-[[package]]
-name = "clone_dyn_types"
-version = "0.43.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5be5cab647cdb7972547601689c7175c7bdb4971071691fe13b4b68755a5599e"
 
 [[package]]
 name = "colorchoice"
@@ -693,7 +678,7 @@ dependencies = [
  "ciborium",
  "clap",
  "criterion-plot",
- "itertools 0.13.0",
+ "itertools",
  "num-traits",
  "oorandom",
  "page_size",
@@ -713,7 +698,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed943f81ea2faa8dcecbbfa50164acf95d555afec96a27871663b300e387b2e4"
 dependencies = [
  "cast",
- "itertools 0.13.0",
+ "itertools",
 ]
 
 [[package]]
@@ -1333,20 +1318,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "im"
-version = "15.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0acd33ff0285af998aaf9b57342af478078f53492322fafc47450e09397e0e9"
-dependencies = [
- "bitmaps",
- "rand_core",
- "rand_xoshiro",
- "sized-chunks",
- "typenum",
- "version_check",
-]
-
-[[package]]
 name = "indexmap"
 version = "2.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1393,25 +1364,6 @@ name = "is_terminal_polyfill"
 version = "1.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
-
-[[package]]
-name = "iter_tools"
-version = "0.43.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e3a2444798c5e9be78700ac18b7a5e325345cad692ee18f229eb8dac940c341"
-dependencies = [
- "clone_dyn_types",
- "itertools 0.11.0",
-]
-
-[[package]]
-name = "itertools"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
-dependencies = [
- "either",
-]
 
 [[package]]
 name = "itertools"
@@ -1660,7 +1612,7 @@ version = "0.1.3"
 dependencies = [
  "insta",
  "lume_data_structures",
- "lume_parse",
+ "lume_parser",
  "lume_span",
  "lume_syntax",
 ]
@@ -1701,7 +1653,6 @@ dependencies = [
  "glob",
  "lume_driver",
  "lume_errors",
- "lume_fmt",
  "lume_lsp",
  "lume_session",
  "lume_span",
@@ -1804,21 +1755,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lume_fmt"
-version = "0.1.3"
-dependencies = [
- "im",
- "iter_tools",
- "lume_ast",
- "lume_data_structures",
- "lume_errors",
- "lume_lexer",
- "lume_parser",
- "lume_span",
- "serde",
-]
-
-[[package]]
 name = "lume_gc"
 version = "0.1.3"
 dependencies = [
@@ -1851,7 +1787,6 @@ dependencies = [
  "lume_ast",
  "lume_errors",
  "lume_macros",
- "lume_parser",
  "lume_span",
  "serde",
 ]
@@ -1870,7 +1805,6 @@ dependencies = [
  "lume_errors_test",
  "lume_hir",
  "lume_lexer",
- "lume_parse",
  "lume_parser",
  "lume_session",
  "lume_span",
@@ -1893,7 +1827,6 @@ dependencies = [
  "lume_errors_test",
  "lume_hir",
  "lume_hir_lower",
- "lume_parser",
  "lume_session",
  "lume_span",
  "lume_types",
@@ -1932,7 +1865,6 @@ dependencies = [
  "lsp-types",
  "lume_driver",
  "lume_errors",
- "lume_fmt",
  "lume_hash",
  "lume_hir",
  "lume_infer",
@@ -2042,7 +1974,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lume_parse"
+name = "lume_parser"
 version = "0.1.3"
 dependencies = [
  "insta",
@@ -2050,21 +1982,6 @@ dependencies = [
  "lume_lexer",
  "lume_span",
  "lume_syntax",
- "tracing",
-]
-
-[[package]]
-name = "lume_parser"
-version = "0.1.3"
-dependencies = [
- "error_snippet",
- "error_snippet_derive",
- "insta",
- "lume_ast",
- "lume_data_structures",
- "lume_errors",
- "lume_lexer",
- "lume_span",
  "tracing",
 ]
 
@@ -2216,7 +2133,6 @@ dependencies = [
  "lume_hir",
  "lume_hir_lower",
  "lume_infer",
- "lume_parser",
  "lume_session",
  "lume_span",
  "lume_types",
@@ -2584,21 +2500,6 @@ name = "r-efi"
 version = "5.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
-
-[[package]]
-name = "rand_core"
-version = "0.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
-
-[[package]]
-name = "rand_xoshiro"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f97cdb2a36ed4183de61b2f824cc45c9f1037f28afe0a322e9fff4c108b5aaa"
-dependencies = [
- "rand_core",
-]
 
 [[package]]
 name = "rayon"
@@ -2979,16 +2880,6 @@ name = "similar"
 version = "2.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
-
-[[package]]
-name = "sized-chunks"
-version = "0.6.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16d69225bde7a69b235da73377861095455d298f2b970996eec25ddbb42b3d1e"
-dependencies = [
- "bitmaps",
- "typenum",
-]
 
 [[package]]
 name = "smallvec"

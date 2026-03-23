@@ -6,7 +6,7 @@ edition = { workspace = true }
 default-run = "lume"
 
 [workspace]
-members = ["compiler/lume_cli", "compiler/lume_parse", "crates/*", "tools/bootstrap", "tools/manifold", "fuzz", "rt/lume_runtime"]
+members = ["compiler/lume_cli", "crates/*", "tools/bootstrap", "tools/manifold", "tools/grammar", "fuzz", "rt/lume_runtime"]
 resolver = "3"
 
 [[bin]]

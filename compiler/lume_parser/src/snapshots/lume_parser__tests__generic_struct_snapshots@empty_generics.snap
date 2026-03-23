@@ -1,24 +1,16 @@
 ---
-source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"struct Test<> {}\")"
+source: compiler/lume_parse/src/tests.rs
+expression: "parse(Target :: Item, \"struct Test<> {}\")"
 ---
-[
-    StructDefinition(
-        StructDefinition {
-            attributes: [],
-            visibility: None,
-            name: Identifier {
-                name: "Test",
-                location: Location(
-                    7..11,
-                ),
-            },
-            fields: [],
-            type_parameters: [],
-            location: Location(
-                0..16,
-            ),
-            documentation: None,
-        },
-    ),
-]
+SOURCE_FILE@0..16
+  STRUCT@0..16
+    STRUCT_KW@0..6 "struct"
+    WHITESPACE@6..7 " "
+    NAME@7..11
+      IDENT@7..11 "Test"
+    BOUND_TYPES@11..13
+      LESS@11..12 "<"
+      GREATER@12..13 ">"
+    WHITESPACE@13..14 " "
+    LEFT_BRACE@14..15 "{"
+    RIGHT_BRACE@15..16 "}"
