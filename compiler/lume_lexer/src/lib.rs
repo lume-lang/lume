@@ -913,7 +913,13 @@ mod tests {
         let mut lex = TokenKind::lexer(source);
 
         for tuple in tokens {
-            assert_eq!(&(lex.next().expect("unexpected end"), lex.slice(), lex.span()), tuple);
+            let mut next_token = lex.next().expect("unexpected end");
+
+            while next_token.as_ref().is_ok_and(|t| t.as_type() == TokenType::Whitespace) {
+                next_token = lex.next().expect("unexpected end");
+            }
+
+            assert_eq!(&(next_token, lex.slice(), lex.span()), tuple);
         }
 
         assert_eq!(lex.next(), None);
