@@ -129,17 +129,27 @@ impl crate::IntegerLit {
 
 impl crate::FloatLit {
     pub fn as_parts(&self) -> (String, Option<FloatKind>) {
-        let text = self.syntax().text().to_string();
-        let len = text.len().saturating_sub(1);
+        let mut value = self.syntax().text().to_string();
 
-        let kind = match text.get(len - 3..).unwrap_or_default() {
-            "f32" => Some(FloatKind::F32),
-            "f64" => Some(FloatKind::F64),
-            _ => None,
+        // Remove all underscores from the literal
+        while let Some(idx) = value.find('_') {
+            value.remove(idx);
+        }
+
+        let kind = if value.ends_with("f32") {
+            Some(FloatKind::F32)
+        } else if value.ends_with("f64") {
+            Some(FloatKind::F64)
+        } else {
+            None
         };
 
-        let text = text[..len - 3].to_string();
-        (text, kind)
+        // Remove the literal kind from the value, since they cannot be parsed.
+        if kind.is_some() {
+            value.truncate(value.len() - 3);
+        }
+
+        (value, kind)
     }
 }
 
