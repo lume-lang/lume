@@ -30,6 +30,52 @@ impl crate::Name {
     }
 }
 
+impl crate::TraitImpl {
+    pub fn trait_type(&self) -> Option<crate::Type> {
+        children(self.syntax()).nth(0)
+    }
+
+    pub fn target_type(&self) -> Option<crate::Type> {
+        children(self.syntax()).nth(1)
+    }
+}
+
+impl crate::Param {
+    pub fn is_self(&self) -> bool {
+        self.name().is_some_and(|name| name.syntax().text() == "self")
+    }
+}
+
+impl crate::AssignmentExpr {
+    pub fn lhs(&self) -> Option<crate::Expr> {
+        children(self.syntax()).nth(0)
+    }
+
+    pub fn rhs(&self) -> Option<crate::Expr> {
+        children(self.syntax()).nth(1)
+    }
+}
+
+impl crate::BinExpr {
+    pub fn lhs(&self) -> Option<crate::Expr> {
+        children(self.syntax()).nth(0)
+    }
+
+    pub fn rhs(&self) -> Option<crate::Expr> {
+        children(self.syntax()).nth(1)
+    }
+}
+
+impl crate::RangeExpr {
+    pub fn lower(&self) -> Option<crate::Expr> {
+        children(self.syntax()).nth(0)
+    }
+
+    pub fn upper(&self) -> Option<crate::Expr> {
+        children(self.syntax()).nth(1)
+    }
+}
+
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Radix {
     Binary = 2,
@@ -118,6 +164,18 @@ impl crate::PathSegment {
             seg.name().is_some_and(|ident| ident.syntax().text() == "Self")
         } else {
             false
+        }
+    }
+
+    pub fn name(&self) -> String {
+        match self {
+            PathSegment::PathNamespace(_) | PathSegment::PathVariant(_) => self.as_text(),
+            PathSegment::PathCallable(p) => p
+                .name()
+                .map_or_else(|| String::from("[missing name]"), |name| name.as_text()),
+            PathSegment::PathType(p) => p
+                .name()
+                .map_or_else(|| String::from("[missing name]"), |name| name.as_text()),
         }
     }
 }

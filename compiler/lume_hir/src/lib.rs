@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::sync::LazyLock;
 
 use lume_macros::Location;
 use lume_span::*;
@@ -196,7 +197,9 @@ pub enum PathSegment {
     /// std::io::File
     /// ^^^  ^^ both namespace segments
     /// ```
-    Namespace { name: Identifier },
+    Namespace {
+        name: Identifier,
+    },
 
     /// Denotes a segment which refers to a type, optionally with type
     /// arguments.
@@ -237,7 +240,12 @@ pub enum PathSegment {
     /// Option::Some(false)
     ///         ^^^^^^^^^^^ variant segment
     /// ```
-    Variant { name: Identifier, location: Location },
+    Variant {
+        name: Identifier,
+        location: Location,
+    },
+
+    Missing,
 }
 
 impl PathSegment {
@@ -272,11 +280,17 @@ impl PathSegment {
 
     /// Gets the name of the path segment.
     pub fn name(&self) -> &Identifier {
+        static EMPTY: LazyLock<Identifier> = LazyLock::new(|| Identifier {
+            name: String::new(),
+            location: Location::empty(),
+        });
+
         match self {
             Self::Namespace { name }
             | Self::Type { name, .. }
             | Self::Callable { name, .. }
             | Self::Variant { name, .. } => name,
+            Self::Missing => &EMPTY,
         }
     }
 
@@ -288,7 +302,7 @@ impl PathSegment {
     /// Gets the bound types of the path segment.
     pub fn bound_types(&self) -> &[Type] {
         match self {
-            Self::Namespace { .. } | Self::Variant { .. } => &[],
+            Self::Namespace { .. } | Self::Variant { .. } | Self::Missing => &[],
             Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => bound_types.as_slice(),
         }
     }
@@ -296,7 +310,7 @@ impl PathSegment {
     /// Takes the bound types from the path segment.
     pub fn take_bound_types(self) -> Vec<Type> {
         match self {
-            Self::Namespace { .. } | Self::Variant { .. } => Vec::new(),
+            Self::Namespace { .. } | Self::Variant { .. } | Self::Missing => Vec::new(),
             Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => bound_types,
         }
     }
@@ -304,7 +318,7 @@ impl PathSegment {
     /// Replaces a single bound type in the path segment.
     pub fn put_bound_type(&mut self, idx: usize, ty: Type) {
         match self {
-            Self::Namespace { .. } | Self::Variant { .. } => {}
+            Self::Namespace { .. } | Self::Variant { .. } | Self::Missing => {}
             Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => {
                 if bound_types.len() <= idx {
                     bound_types.push(ty);
@@ -318,7 +332,7 @@ impl PathSegment {
     /// Replaces the bound types in the path segment.
     pub fn place_bound_types(&mut self, types: Vec<Type>) -> Vec<Type> {
         match self {
-            Self::Namespace { .. } | Self::Variant { .. } => Vec::new(),
+            Self::Namespace { .. } | Self::Variant { .. } | Self::Missing => Vec::new(),
             Self::Type { bound_types, .. } | Self::Callable { bound_types, .. } => {
                 std::mem::replace(bound_types, types)
             }
@@ -350,6 +364,9 @@ impl std::fmt::Display for PathSegment {
             Self::Variant { name, .. } => {
                 write!(f, "{name}")
             }
+            Self::Missing => {
+                write!(f, "[missing]")
+            }
         }
     }
 }
@@ -360,6 +377,7 @@ impl WithLocation for PathSegment {
         match self {
             Self::Namespace { name } => name.location,
             Self::Type { location, .. } | Self::Callable { location, .. } | Self::Variant { location, .. } => *location,
+            Self::Missing => Location::empty(),
         }
     }
 }
@@ -1055,10 +1073,11 @@ impl TraitImplementation {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
     pub id: NodeId,
-    pub name: Identifier,
-    pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<NodeId>,
-    pub return_type: Type,
+
+    #[serde(skip)]
+    pub doc_comment: Option<String>,
+
+    pub signature: FnSignature,
 
     #[serde(skip)]
     pub block: Option<Block>,
@@ -1068,10 +1087,10 @@ pub struct TraitMethodImplementation {
 impl TraitMethodImplementation {
     pub fn signature(&'_ self) -> Signature<'_> {
         Signature {
-            name: &self.name,
-            type_parameters: &self.type_parameters,
-            parameters: &self.parameters,
-            return_type: &self.return_type,
+            name: self.signature.name.name(),
+            type_parameters: &self.signature.type_parameters,
+            parameters: &self.signature.parameters,
+            return_type: &self.signature.return_type,
         }
     }
 }
@@ -1320,6 +1339,8 @@ expr_lit_int!(lit_u32, U32, u32);
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
+    Missing,
+
     Assignment(Assignment),
     Cast(Cast),
     Construct(Construct),
@@ -1835,8 +1856,9 @@ impl Pattern {
     }
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub enum PatternKind {
+    Missing,
     Literal(LiteralPattern),
     Identifier(IdentifierPattern),
     Variant(VariantPattern),
@@ -1851,6 +1873,18 @@ impl PatternKind {
             &lit.literal
         } else {
             panic!("expectation failed: expected literal pattern");
+        }
+    }
+}
+
+impl WithLocation for PatternKind {
+    fn location(&self) -> Location {
+        match self {
+            Self::Missing => Location::empty(),
+            Self::Literal(pat) => pat.location,
+            Self::Identifier(pat) => pat.location,
+            Self::Variant(pat) => pat.location,
+            Self::Wildcard(pat) => pat.location,
         }
     }
 }

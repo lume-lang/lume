@@ -2,11 +2,17 @@ use lume_hir::{SELF_PARAM_NAME, SELF_TYPE_NAME};
 
 use crate::*;
 
-fn visibility(expr: Option<&lume_ast::Visibility>) -> lume_hir::Visibility {
-    match expr {
-        Some(lume_ast::Visibility::Public { .. }) => lume_hir::Visibility::Public,
-        Some(lume_ast::Visibility::Internal { .. }) => lume_hir::Visibility::Internal,
-        None | Some(lume_ast::Visibility::Private { .. }) => lume_hir::Visibility::Private,
+fn visibility(expr: Option<lume_ast::Visibility>) -> lume_hir::Visibility {
+    let Some(visibility) = expr else {
+        return lume_hir::Visibility::Private;
+    };
+
+    if visibility.pub_kw().is_some() && visibility.internal_kw().is_some() {
+        lume_hir::Visibility::Internal
+    } else if visibility.pub_kw().is_some() {
+        lume_hir::Visibility::Public
+    } else {
+        lume_hir::Visibility::Private
     }
 }
 
@@ -15,20 +21,23 @@ impl LoweringContext<'_> {
     pub(crate) fn item(&mut self, expr: lume_ast::Item) -> Result<()> {
         let hir_ast = match expr {
             lume_ast::Item::Import(i) => {
-                self.import(*i)?;
+                self.import(i)?;
 
                 return Ok(());
             }
             lume_ast::Item::Namespace(namespace) => {
-                self.namespace = Some(self.expand_import_path(namespace.path)?);
+                if let Some(import_path) = namespace.import_path() {
+                    self.namespace = Some(self.expand_import_path(import_path));
+                }
+
                 return Ok(());
             }
-            lume_ast::Item::StructDefinition(t) => self.struct_definition(*t)?,
-            lume_ast::Item::TraitDefinition(t) => self.trait_definition(*t)?,
-            lume_ast::Item::EnumDefinition(t) => self.enum_definition(*t)?,
-            lume_ast::Item::FunctionDefinition(f) => self.function_definition(*f)?,
-            lume_ast::Item::TraitImplementation(f) => self.trait_implementation(*f)?,
-            lume_ast::Item::Implementation(f) => self.implementation(*f)?,
+            lume_ast::Item::Struct(t) => self.struct_definition(t),
+            lume_ast::Item::Trait(t) => self.trait_definition(t),
+            lume_ast::Item::Enum(t) => self.enum_definition(t),
+            lume_ast::Item::Fn(f) => self.function_definition(f),
+            lume_ast::Item::TraitImpl(f) => self.trait_implementation(f),
+            lume_ast::Item::Impl(f) => self.implementation(f),
         };
 
         let id = hir_ast.id();
@@ -43,16 +52,19 @@ impl LoweringContext<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn import(&mut self, expr: lume_ast::Import) -> Result<()> {
-        for imported_name in expr.names {
-            let namespace = self.expand_import_path(expr.path.clone())?;
+        let Some(list) = expr.import_list() else { return Ok(()) };
+        let Some(path) = expr.import_path() else { return Ok(()) };
 
+        let namespace = self.expand_import_path(path);
+
+        for imported_name in list.items() {
             let import_path_name = if imported_name.is_lower() {
-                lume_hir::PathSegment::callable(self.identifier(imported_name))
+                lume_hir::PathSegment::callable(self.ident(imported_name))
             } else {
-                lume_hir::PathSegment::ty(self.identifier(imported_name))
+                lume_hir::PathSegment::ty(self.ident(imported_name))
             };
 
-            let imported_path = lume_hir::Path::with_root(namespace, import_path_name);
+            let imported_path = lume_hir::Path::with_root(namespace.clone(), import_path_name);
 
             self.imports.insert(imported_path.name.to_string(), imported_path);
         }
@@ -61,56 +73,93 @@ impl LoweringContext<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn signature(&mut self, sig: lume_ast::Signature) -> Result<lume_hir::FnSignature> {
-        let name = self.expand_callable_name(sig.name)?;
-        let type_parameters = self.type_parameters(sig.type_parameters)?;
-        let parameters = self.parameters(sig.parameters, false)?;
-        let return_type = self.hir_type_opt(sig.return_type)?;
-        let location = self.location(sig.location);
+    fn signature(&mut self, sig: lume_ast::Sig, allow_self: bool) -> lume_hir::FnSignature {
+        // Must be defined first, so any type arguments in the method name can be
+        // resolved correctly.
+        let type_parameters = match sig.bound_types() {
+            Some(bound_types) => self.type_parameters(bound_types.types()),
+            None => Vec::new(),
+        };
 
-        Ok(lume_hir::FnSignature {
+        let name = match self.self_type.as_ref() {
+            Some(self_path) => {
+                let method_name = lume_hir::PathSegment::callable(self.ident_opt(sig.name()));
+                lume_hir::Path::with_root(self_path.to_owned(), method_name)
+            }
+            None => self.expand_callable_name(sig.name()),
+        };
+
+        let parameters = self.parameters(sig.param_list(), allow_self);
+        let return_type = self.type_or_void(sig.return_type().and_then(|ret| ret.ty()));
+        let location = self.location(sig.location());
+
+        lume_hir::FnSignature {
             name,
             parameters,
             type_parameters,
             return_type,
             location,
-        })
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn function_definition(&mut self, expr: lume_ast::FunctionDefinition) -> Result<lume_hir::Node> {
+    fn signature_opt(&mut self, sig: Option<lume_ast::Sig>, allow_self: bool) -> lume_hir::FnSignature {
+        if let Some(sig) = sig {
+            return self.signature(sig, allow_self);
+        }
+
+        lume_hir::FnSignature {
+            name: lume_hir::Path::missing(),
+            parameters: Vec::new(),
+            type_parameters: Vec::new(),
+            return_type: lume_hir::Type::void(),
+            location: Location::empty(),
+        }
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn function_definition(&mut self, expr: lume_ast::Fn) -> lume_hir::Node {
         let id = self.next_node_id();
-        self.handle_attributes(&expr.attributes)?;
+        self.handle_attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
-            let visibility = visibility(expr.visibility.as_ref());
-            let signature = self.signature(expr.signature.clone())?;
-            let location = self.location(expr.location);
+            let visibility = visibility(expr.visibility());
+            let signature = self.signature_opt(expr.sig(), false);
+            let doc_comment = self.documentation(expr.doc_comments());
+            let location = self.location(expr.location());
 
-            let name = self.expand_callable_name(expr.signature.name)?;
-            self.ensure_item_undefined(id, DefinedItem::Function(name.clone()))?;
+            self.ensure_item_undefined(id, DefinedItem::Function(signature.name.clone()));
 
             let block = expr
-                .block
+                .block()
                 .map(|block| self.isolated_block(block, &signature.parameters));
 
-            Ok(lume_hir::Node::Function(lume_hir::FunctionDefinition {
+            lume_hir::Node::Function(lume_hir::FunctionDefinition {
                 id,
-                doc_comment: expr.documentation,
+                doc_comment,
                 visibility,
                 signature,
                 block,
                 location,
-            }))
+            })
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn parameters(&mut self, params: Vec<lume_ast::Parameter>, allow_self: bool) -> Result<Vec<lume_hir::Parameter>> {
-        let param_len = params.len();
+    fn parameters(
+        &mut self,
+        parameter_list: Option<lume_ast::ParamList>,
+        allow_self: bool,
+    ) -> Vec<lume_hir::Parameter> {
+        let Some(parameter_list) = parameter_list else {
+            return Vec::new();
+        };
+
+        let parameter_list: Vec<_> = parameter_list.param().collect();
+        let param_len = parameter_list.len();
         let mut parameters = Vec::with_capacity(param_len);
 
-        for (index, param) in params.into_iter().enumerate() {
+        for (index, param) in parameter_list.into_iter().enumerate() {
             // Make sure that `self` is the first parameter.
             //
             // While it doesn't change must in the view of the compiler,
@@ -118,54 +167,72 @@ impl LoweringContext<'_> {
             // so much easier to see whether a method is an instance method or a static
             // method.
             if index > 0 && param.is_self() {
-                return Err(crate::errors::SelfNotFirstParameter {
-                    source: self.current_file().clone(),
-                    range: param.location.0.clone(),
-                    ty: String::from(SELF_PARAM_NAME),
-                }
-                .into());
+                self.dcx.emit_and_push(
+                    crate::errors::SelfNotFirstParameter {
+                        source: self.current_file().clone(),
+                        range: param.location().0.clone(),
+                        ty: String::from(SELF_PARAM_NAME),
+                    }
+                    .into(),
+                );
             }
 
             // Using `self` outside of an object context is not allowed, such as functions.
-            if !allow_self && param.param_type.is_self() {
-                return Err(crate::errors::InvalidSelfParameter {
-                    source: self.current_file().clone(),
-                    range: param.location.0.clone(),
-                    ty: String::from(SELF_TYPE_NAME),
-                }
-                .into());
+            if !allow_self && param.ty().is_some_and(|ty| ty.is_self()) {
+                self.dcx.emit_and_push(
+                    crate::errors::InvalidSelfParameter {
+                        source: self.current_file().clone(),
+                        range: param.location().0.clone(),
+                        ty: String::from(SELF_TYPE_NAME),
+                    }
+                    .into(),
+                );
             }
 
+            let is_vararg = param.vararg().is_some();
+
             // Naming a parameter `self` with an explicit type is not allowed.
-            if param.name.as_str() == SELF_PARAM_NAME && !param.param_type.is_self() {
-                return Err(crate::errors::SelfWithExplicitType {
-                    source: self.current_file().clone(),
-                    range: param.location.0.clone(),
-                    ty: String::from(SELF_PARAM_NAME),
-                }
-                .into());
+            if param.ty().is_some()
+                && !param.is_self_type()
+                && param.name().is_some_and(|name| name.syntax().text() == SELF_PARAM_NAME)
+            {
+                self.dcx.emit_and_push(
+                    crate::errors::SelfWithExplicitType {
+                        source: self.current_file().clone(),
+                        range: param.location().0.clone(),
+                        ty: String::from(SELF_PARAM_NAME),
+                    }
+                    .into(),
+                );
             }
 
             // Make sure that any vararg parameters exist only on the last position.
-            if param.vararg && index + 1 < param_len {
-                return Err(crate::errors::VarargNotLastParameter {
-                    source: self.current_file().clone(),
-                    range: param.location.0.clone(),
-                }
-                .into());
+            if is_vararg && index + 1 < param_len {
+                self.dcx.emit_and_push(
+                    crate::errors::VarargNotLastParameter {
+                        source: self.current_file().clone(),
+                        range: param.location().0.clone(),
+                    }
+                    .into(),
+                );
             }
 
             let id = self.next_node_id();
-            let name = self.identifier(param.name);
-            let param_type = self.hir_type(param.param_type)?;
-            let location = self.location(param.location);
+            let name = self.ident_opt(param.name());
+            let location = self.location(param.location());
+
+            let param_type = if name.as_str() == SELF_PARAM_NAME {
+                self.self_type(self.location(param.location()))
+            } else {
+                self.type_or_void(param.ty())
+            };
 
             let parameter = lume_hir::Parameter {
                 id,
                 index,
                 name,
                 param_type,
-                vararg: param.vararg,
+                vararg: is_vararg,
                 location,
             };
 
@@ -181,74 +248,73 @@ impl LoweringContext<'_> {
                 name: existing.name.to_string(),
             }
             .into()
-        })?;
+        });
 
-        Ok(parameters)
+        parameters
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn struct_definition(&mut self, expr: lume_ast::StructDefinition) -> Result<lume_hir::Node> {
+    fn struct_definition(&mut self, expr: lume_ast::Struct) -> lume_hir::Node {
         let id = self.next_node_id();
-        self.handle_attributes(&expr.attributes)?;
+        self.handle_attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
-            let name = self.expand_generic_name(expr.name, expr.type_parameters.clone())?;
+            let type_parameters = match expr.bound_types() {
+                Some(bound_types) => self.type_parameters(bound_types.types()),
+                None => Vec::new(),
+            };
 
-            let visibility = visibility(expr.visibility.as_ref());
-            let type_parameters = self.type_parameters(expr.type_parameters)?;
-            let location = self.location(expr.location);
+            let name = self.expand_generic_name(expr.name(), expr.bound_types().map(|list| list.types()));
 
-            self.ensure_item_undefined(id, DefinedItem::Type(name.clone()))?;
-            let mut fields = Vec::with_capacity(expr.fields.len());
+            let visibility = visibility(expr.visibility());
+            let doc_comment = self.documentation(expr.doc_comments());
+            let location = self.location(expr.location());
+
+            self.ensure_item_undefined(id, DefinedItem::Type(name.clone()));
+            let mut fields = Vec::new();
 
             self.with_self_as(name.clone(), |ctx| {
-                for (idx, field) in expr.fields.into_iter().enumerate() {
-                    fields.push(ctx.struct_field_definition(idx, field)?);
+                for (idx, field) in expr.fields().enumerate() {
+                    fields.push(ctx.struct_field_definition(idx, field));
                 }
 
                 ctx.ensure_unique_series(&fields, |duplicate, existing| {
                     crate::errors::DuplicateField {
-                        duplicate_range: duplicate.name.location,
-                        original_range: existing.location,
+                        duplicate_range: duplicate.location(),
+                        original_range: existing.location(),
                         name: existing.name.to_string(),
                     }
                     .into()
-                })
-            })?;
+                });
+            });
 
-            Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(Box::new(
-                lume_hir::StructDefinition {
-                    id,
-                    doc_comment: expr.documentation,
-                    name,
-                    visibility,
-                    type_parameters,
-                    fields,
-                    location,
-                },
-            ))))
+            lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(Box::new(lume_hir::StructDefinition {
+                id,
+                doc_comment,
+                name,
+                visibility,
+                type_parameters,
+                fields,
+                location,
+            })))
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn struct_field_definition(&mut self, index: usize, expr: lume_ast::Field) -> Result<lume_hir::Field> {
+    fn struct_field_definition(&mut self, index: usize, expr: lume_ast::Field) -> lume_hir::Field {
         let id = self.next_node_id();
 
-        let visibility = visibility(expr.visibility.as_ref());
-        let name = self.identifier(expr.name);
-        let field_type = self.hir_type(expr.field_type)?;
-        let location = self.location(expr.location);
-
-        let default_value = if let Some(def) = expr.default_value {
-            Some(self.expression(def)?)
-        } else {
-            None
-        };
+        let doc_comment = self.documentation(expr.doc_comments());
+        let visibility = visibility(expr.visibility());
+        let name = self.ident_opt(expr.name());
+        let field_type = self.type_or_void(expr.field_type());
+        let default_value = expr.default_value().map(|def| self.expression(def));
+        let location = self.location(expr.location());
 
         let field = lume_hir::Field {
             id,
             index,
-            doc_comment: expr.documentation,
+            doc_comment,
             name,
             visibility,
             field_type,
@@ -258,28 +324,26 @@ impl LoweringContext<'_> {
 
         self.map.nodes.insert(id, lume_hir::Node::Field(field.clone()));
 
-        Ok(field)
+        field
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn implementation(&mut self, expr: lume_ast::Implementation) -> Result<lume_hir::Node> {
+    fn implementation(&mut self, expr: lume_ast::Impl) -> lume_hir::Node {
         let id = self.next_node_id();
 
         lume_hir::with_frame!(self.current_type_params, || {
-            let impl_name = expr.name.to_string();
-            let type_name = self.expand_type_name(lume_ast::Identifier {
-                name: &impl_name,
-                location: expr.name.location().to_owned(),
-            })?;
+            let type_parameters = match expr.bound_types() {
+                Some(bound_types) => self.type_parameters(bound_types.types()),
+                None => Vec::new(),
+            };
 
-            let type_parameters = self.type_parameters(expr.type_parameters)?;
-            let target = self.hir_type(*expr.name)?;
-            let location = self.location(expr.location);
+            let target = self.type_or_void(expr.target());
+            let location = self.location(expr.location());
 
-            let mut methods = Vec::with_capacity(expr.methods.len());
+            let mut methods = Vec::new();
             self.with_self_as(target.name.clone(), |ctx| {
-                for method in expr.methods {
-                    let method = ctx.implementation_method(type_name.clone(), method)?;
+                for method in expr.methods() {
+                    let method = ctx.implementation_method(method);
                     ctx.map.nodes.insert(method.id, lume_hir::Node::Method(method.clone()));
 
                     methods.push(method);
@@ -292,81 +356,71 @@ impl LoweringContext<'_> {
                         name: existing.signature.name.to_string(),
                     }
                     .into()
-                })
-            })?;
+                });
+            });
 
-            Ok(lume_hir::Node::Impl(lume_hir::Implementation {
+            lume_hir::Node::Impl(lume_hir::Implementation {
                 id,
                 target: Box::new(target),
                 methods,
                 type_parameters,
-                location,
-            }))
-        })
-    }
-
-    #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn implementation_method(
-        &mut self,
-        type_name: lume_hir::Path,
-        expr: lume_ast::MethodDefinition,
-    ) -> Result<lume_hir::MethodDefinition> {
-        let id = self.next_node_id();
-        self.handle_attributes(&expr.attributes)?;
-
-        lume_hir::with_frame!(self.current_type_params, || {
-            // Must be defined first, so any type arguments in the method name can be
-            // resolved correctly.
-            let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
-
-            let method_name = self.path_segment(lume_ast::PathSegment::callable(expr.signature.name.clone()))?;
-            self.ensure_item_undefined(id, DefinedItem::Method(type_name.clone(), method_name.clone()))?;
-
-            let visibility = visibility(expr.visibility.as_ref());
-            let name = lume_hir::Path::with_root(type_name, method_name);
-            let parameters = self.parameters(expr.signature.parameters, true)?;
-            let return_type = self.hir_type_opt(expr.signature.return_type)?;
-            let location = self.location(expr.location);
-
-            let block = expr.block.map(|block| self.isolated_block(block, &parameters));
-
-            Ok(lume_hir::MethodDefinition {
-                id,
-                doc_comment: expr.documentation,
-                signature: lume_hir::FnSignature {
-                    name,
-                    parameters,
-                    type_parameters,
-                    return_type,
-                    location,
-                },
-                visibility,
-                block,
                 location,
             })
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn trait_definition(&mut self, expr: lume_ast::TraitDefinition) -> Result<lume_hir::Node> {
+    fn implementation_method(&mut self, expr: lume_ast::Method) -> lume_hir::MethodDefinition {
         let id = self.next_node_id();
-        self.handle_attributes(&expr.attributes)?;
+        self.handle_attributes(expr.attr());
+
+        lume_hir::with_frame!(self.current_type_params, || {
+            let visibility = visibility(expr.visibility());
+            let signature = self.signature_opt(expr.sig(), true);
+            let doc_comment = self.documentation(expr.doc_comments());
+            let location = self.location(expr.location());
+
+            self.ensure_item_undefined(id, DefinedItem::Method(signature.name.clone()));
+
+            let block = expr
+                .block()
+                .map(|block| self.isolated_block(block, &signature.parameters));
+
+            lume_hir::MethodDefinition {
+                id,
+                doc_comment,
+                signature,
+                visibility,
+                block,
+                location,
+            }
+        })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn trait_definition(&mut self, expr: lume_ast::Trait) -> lume_hir::Node {
+        let id = self.next_node_id();
+        self.handle_attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
             // Must be defined first, so any type arguments in the trait name can be
             // resolved correctly.
-            let type_parameters = self.type_parameters(expr.type_parameters.clone())?;
+            let type_parameters = match expr.bound_types() {
+                Some(bound_types) => self.type_parameters(bound_types.types()),
+                None => Vec::new(),
+            };
 
-            let name = self.expand_generic_name(expr.name.clone(), expr.type_parameters)?;
-            self.ensure_item_undefined(id, DefinedItem::Type(name.clone()))?;
+            let name = self.expand_generic_name(expr.name(), expr.bound_types().map(|list| list.types()));
+            self.ensure_item_undefined(id, DefinedItem::Type(name.clone()));
 
-            let visibility = visibility(expr.visibility.as_ref());
-            let location = self.location(expr.location);
+            let visibility = visibility(expr.visibility());
+            let doc_comment = self.documentation(expr.doc_comments());
+            let location = self.location(expr.location());
 
-            let mut methods = Vec::with_capacity(expr.methods.len());
+            let mut methods = Vec::new();
             self.with_self_as(name.clone(), |ctx| {
-                for method in expr.methods {
-                    let method = ctx.trait_definition_method(name.clone(), method)?;
+                for method in expr.methods() {
+                    let method = ctx.trait_definition_method(method);
                     ctx.map
                         .nodes
                         .insert(method.id, lume_hir::Node::TraitMethodDef(method.clone()));
@@ -381,72 +435,61 @@ impl LoweringContext<'_> {
                         name: existing.signature.name.to_string(),
                     }
                     .into()
-                })
-            })?;
+                });
+            });
 
-            Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(Box::new(
-                lume_hir::TraitDefinition {
-                    id,
-                    doc_comment: expr.documentation,
-                    name,
-                    visibility,
-                    type_parameters,
-                    methods,
-                    location,
-                },
-            ))))
+            lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(Box::new(lume_hir::TraitDefinition {
+                id,
+                doc_comment,
+                name,
+                visibility,
+                type_parameters,
+                methods,
+                location,
+            })))
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn trait_definition_method(
-        &mut self,
-        type_name: lume_hir::Path,
-        expr: lume_ast::TraitMethodDefinition,
-    ) -> Result<lume_hir::TraitMethodDefinition> {
+    fn trait_definition_method(&mut self, expr: lume_ast::Method) -> lume_hir::TraitMethodDefinition {
         let id = self.next_node_id();
 
         lume_hir::with_frame!(self.current_type_params, || {
-            let ident = self.identifier(expr.signature.name);
+            let signature = self.signature_opt(expr.sig(), true);
+            let location = self.location(expr.location());
+            let doc_comment = self.documentation(expr.doc_comments());
+            let block = expr.block().map(|b| self.isolated_block(b, &signature.parameters));
 
-            let name = lume_hir::Path::with_root(type_name, lume_hir::PathSegment::callable(ident));
-            let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
-            let parameters = self.parameters(expr.signature.parameters, true)?;
-            let return_type = self.hir_type_opt(expr.signature.return_type)?;
-            let location = self.location(expr.location);
-            let block = expr.block.map(|b| self.isolated_block(b, &parameters));
-
-            Ok(lume_hir::TraitMethodDefinition {
+            lume_hir::TraitMethodDefinition {
                 id,
-                doc_comment: expr.documentation,
-                signature: lume_hir::FnSignature {
-                    name,
-                    parameters,
-                    type_parameters,
-                    return_type,
-                    location,
-                },
+                doc_comment,
+                signature,
                 block,
                 location,
-            })
+            }
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn enum_definition(&mut self, expr: lume_ast::EnumDefinition) -> Result<lume_hir::Node> {
+    fn enum_definition(&mut self, expr: lume_ast::Enum) -> lume_hir::Node {
         let id = self.next_node_id();
 
         lume_hir::with_frame!(self.current_type_params, || {
-            let type_parameters = self.type_parameters(expr.type_parameters.clone())?;
-            let visibility = visibility(expr.visibility.as_ref());
-            let location = self.location(expr.location);
+            let type_parameters = match expr.bound_types() {
+                Some(bound_types) => self.type_parameters(bound_types.types()),
+                None => Vec::new(),
+            };
 
-            let name = self.expand_generic_name(expr.name, expr.type_parameters)?;
-            self.ensure_item_undefined(id, DefinedItem::Type(name.clone()))?;
+            let visibility = visibility(expr.visibility());
+            let doc_comment = self.documentation(expr.doc_comments());
+            let location = self.location(expr.location());
 
-            let mut cases = Vec::with_capacity(expr.cases.len());
-            for (idx, case) in expr.cases.into_iter().enumerate() {
-                cases.push(self.enum_definition_case(idx, case)?);
+            let name = self.expand_generic_name(expr.name(), expr.bound_types().map(|list| list.types()));
+            self.ensure_item_undefined(id, DefinedItem::Type(name.clone()));
+
+            let mut cases = Vec::new();
+            for (idx, case) in expr.cases().enumerate() {
+                cases.push(self.enum_definition_case(idx, case));
             }
 
             self.ensure_unique_series(&cases, |duplicate, existing| {
@@ -456,61 +499,61 @@ impl LoweringContext<'_> {
                     name: existing.name.to_string(),
                 }
                 .into()
-            })?;
+            });
 
-            Ok(lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(Box::new(
-                lume_hir::EnumDefinition {
-                    id,
-                    doc_comment: expr.documentation,
-                    name,
-                    type_parameters,
-                    visibility,
-                    cases,
-                    location,
-                },
-            ))))
+            lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(Box::new(lume_hir::EnumDefinition {
+                id,
+                doc_comment,
+                name,
+                type_parameters,
+                visibility,
+                cases,
+                location,
+            })))
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn enum_definition_case(
-        &mut self,
-        idx: usize,
-        expr: lume_ast::EnumDefinitionCase,
-    ) -> Result<lume_hir::EnumDefinitionCase> {
-        let name = self.expand_type_name(expr.name)?;
-        let location = self.location(expr.location);
+    fn enum_definition_case(&mut self, idx: usize, expr: lume_ast::Case) -> lume_hir::EnumDefinitionCase {
+        let name = self.expand_type_name(expr.name());
+        let doc_comment = self.documentation(expr.doc_comments());
+        let location = self.location(expr.location());
 
-        let mut parameters = Vec::with_capacity(expr.parameters.len());
-        for param in expr.parameters {
-            parameters.push(self.hir_type(param)?);
+        let mut parameters = Vec::new();
+
+        if let Some(param_list) = expr.case_param_list() {
+            for param in param_list.ty() {
+                parameters.push(self.hir_type(param));
+            }
         }
 
-        let symbol = lume_hir::EnumDefinitionCase {
+        lume_hir::EnumDefinitionCase {
             idx,
-            doc_comment: expr.documentation,
+            doc_comment,
             name,
             parameters,
             location,
-        };
-
-        Ok(symbol)
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn trait_implementation(&mut self, expr: lume_ast::TraitImplementation) -> Result<lume_hir::Node> {
+    fn trait_implementation(&mut self, expr: lume_ast::TraitImpl) -> lume_hir::Node {
         let id = self.next_node_id();
 
         lume_hir::with_frame!(self.current_type_params, || {
-            let type_parameters = self.type_parameters(expr.type_parameters)?;
-            let name = self.hir_type(*expr.name)?;
-            let target = self.hir_type(*expr.target)?;
-            let location = self.location(expr.location);
+            let type_parameters = match expr.bound_types() {
+                Some(bound_types) => self.type_parameters(bound_types.types()),
+                None => Vec::new(),
+            };
 
-            let mut methods = Vec::with_capacity(expr.methods.len());
+            let name = self.type_or_void(expr.trait_type());
+            let target = self.type_or_void(expr.target_type());
+            let location = self.location(expr.location());
+
+            let mut methods = Vec::new();
             self.with_self_as(target.name.clone(), |ctx| {
-                for method in expr.methods {
-                    let method = ctx.trait_implementation_method(method)?;
+                for method in expr.methods() {
+                    let method = ctx.trait_implementation_method(method);
                     ctx.map
                         .nodes
                         .insert(method.id, lume_hir::Node::TraitMethodImpl(method.clone()));
@@ -520,50 +563,45 @@ impl LoweringContext<'_> {
 
                 ctx.ensure_unique_series(&methods, |duplicate, existing| {
                     crate::errors::DuplicateMethod {
-                        duplicate_range: duplicate.name.location,
+                        duplicate_range: duplicate.signature.name.location,
                         original_range: existing.location,
-                        name: existing.name.to_string(),
+                        name: existing.signature.name.to_string(),
                     }
                     .into()
-                })
-            })?;
+                });
+            });
 
-            Ok(lume_hir::Node::TraitImpl(lume_hir::TraitImplementation {
+            lume_hir::Node::TraitImpl(lume_hir::TraitImplementation {
                 id,
                 name: Box::new(name),
                 target: Box::new(target),
                 methods,
                 type_parameters,
                 location,
-            }))
+            })
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn trait_implementation_method(
-        &mut self,
-        expr: lume_ast::TraitMethodImplementation,
-    ) -> Result<lume_hir::TraitMethodImplementation> {
+    fn trait_implementation_method(&mut self, expr: lume_ast::Method) -> lume_hir::TraitMethodImplementation {
         let id = self.next_node_id();
 
         lume_hir::with_frame!(self.current_type_params, || {
-            let name = self.identifier(expr.signature.name);
-            let parameters = self.parameters(expr.signature.parameters, true)?;
-            let type_parameters = self.type_parameters(expr.signature.type_parameters)?;
-            let return_type = self.hir_type_opt(expr.signature.return_type)?;
-            let location = self.location(expr.location);
+            let signature = self.signature_opt(expr.sig(), true);
+            let doc_comment = self.documentation(expr.doc_comments());
+            let location = self.location(expr.location());
 
-            let block = expr.block.map(|block| self.isolated_block(block, &parameters));
+            let block = expr
+                .block()
+                .map(|block| self.isolated_block(block, &signature.parameters));
 
-            Ok(lume_hir::TraitMethodImplementation {
+            lume_hir::TraitMethodImplementation {
                 id,
-                name,
-                parameters,
-                type_parameters,
-                return_type,
+                doc_comment,
+                signature,
                 block,
                 location,
-            })
+            }
         })
     }
 }

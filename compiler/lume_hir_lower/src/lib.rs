@@ -4,6 +4,7 @@ pub(crate) mod expr;
 pub(crate) mod generics;
 pub(crate) mod item;
 pub(crate) mod lit;
+pub(crate) mod make;
 pub(crate) mod path;
 pub(crate) mod pattern;
 pub(crate) mod stmt;
@@ -14,7 +15,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, LazyLock};
 
 pub use lume_ast;
-pub use lume_ast::Node as _;
+use lume_ast::AstNode;
 use lume_errors::{DiagCtxHandle, Result};
 pub use lume_hir::WithLocation as _;
 use lume_hir::symbols::SymbolTable;
@@ -49,17 +50,21 @@ pub fn lower_to_hir(package: &Package, dcx: DiagCtxHandle) -> Result<Map> {
     let mut ctx = LoweringContext::new(package, dcx);
 
     for (_file_name, source_file) in ctx.package.files.clone() {
-        let arena = lume_data_structures::UntypedArena::new();
+        let mut lexer = lume_lexer::Lexer::new(source_file.clone());
+        let tokens = match lexer.lex() {
+            Ok(tokens) => tokens,
+            Err(err) => {
+                ctx.dcx.emit_and_push(err);
+                continue;
+            }
+        };
 
-        let syntax_tree = ctx.dcx.with(|handle| {
-            let mut lexer = lume_lexer::Lexer::new(source_file.clone());
-            let tokens = lexer.lex()?;
+        let parser = lume_parser::Parser::from_tokens(source_file.clone(), tokens.into_iter());
+        let syntax_tree = parser.parse(lume_parser::Target::Item);
 
-            let mut parser = lume_parser::Parser::new(source_file.clone(), tokens, handle, &arena);
-            parser.parse()
-        })?;
+        let source_node = lume_ast::SourceFile::cast(syntax_tree.syntax()).unwrap();
 
-        if let Err(err) = ctx.lower_items(source_file.id, syntax_tree.items) {
+        if let Err(err) = ctx.lower_items(source_file.id, source_node.item()) {
             ctx.dcx.emit_and_push(err);
         }
     }
@@ -70,15 +75,14 @@ pub fn lower_to_hir(package: &Package, dcx: DiagCtxHandle) -> Result<Map> {
 #[derive(Hash, Debug, PartialEq, Eq)]
 pub enum DefinedItem {
     Function(Path),
-    Method(Path, PathSegment),
+    Method(Path),
     Type(Path),
 }
 
 impl DefinedItem {
     pub fn path(&self) -> Path {
         match self {
-            Self::Function(path) | Self::Type(path) => path.clone(),
-            Self::Method(path, name) => Path::with_root(path.clone(), name.clone()),
+            Self::Function(path) | Self::Method(path) | Self::Type(path) => path.clone(),
         }
     }
 
@@ -148,13 +152,37 @@ impl LoweringContext<'_> {
     }
 
     /// Lowers the given AST identifier into a [`lume_hir::Identifier`].
-    pub(crate) fn identifier(&self, expr: lume_ast::Identifier) -> lume_hir::Identifier {
-        let location = self.location(expr.location.clone());
+    pub(crate) fn ident(&self, expr: lume_ast::Name) -> lume_hir::Identifier {
+        let location = self.location(expr.location());
 
         lume_hir::Identifier {
-            name: expr.name.to_string(),
+            name: expr.as_text(),
             location,
         }
+    }
+
+    /// Lowers the given AST identifier into a [`lume_hir::Identifier`].
+    pub(crate) fn ident_opt(&self, name: Option<lume_ast::Name>) -> lume_hir::Identifier {
+        let location = self.location(name.as_ref().map_or(lume_ast::Location(0..0), |n| n.location()));
+
+        lume_hir::Identifier {
+            name: name.map_or(String::from("[missing-name]"), |n| n.as_text()),
+            location,
+        }
+    }
+
+    /// Collects the given iterator of doc comments into a single string.
+    pub(crate) fn documentation<I>(&self, comments: I) -> Option<String>
+    where
+        I: IntoIterator<Item = lume_ast::DocComment>,
+    {
+        let str = comments
+            .into_iter()
+            .map(|doc| doc.as_text().trim_start_matches("/// ").to_string())
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        if str.is_empty() { None } else { Some(str) }
     }
 
     /// Lowers the given AST location into a [`Location`].
@@ -174,135 +202,44 @@ impl LoweringContext<'_> {
         result
     }
 
+    pub(crate) fn existing_type_id<N: AsRef<str>>(&self, name: N) -> Option<lume_hir::TypeId> {
+        self.current_type_params.retrieve(name.as_ref()).copied()
+    }
+
+    pub(crate) fn existing_type_id_or_new<N: AsRef<str>>(&mut self, name: N) -> lume_hir::TypeId {
+        self.existing_type_id(name)
+            .unwrap_or_else(|| lume_hir::TypeId::from(self.next_node_id()))
+    }
+
     /// Ensure that the item with the given name is undefined within the file.
     ///
     /// If the item is not defined, it is added into the list of defined items.
     /// If the item is defined, raises an error to reflect it.
     #[tracing::instrument(level = "TRACE", skip_all)]
-    fn ensure_item_undefined(&mut self, id: NodeId, item: DefinedItem) -> Result<()> {
+    fn ensure_item_undefined(&mut self, id: NodeId, item: DefinedItem) {
         if let Some((existing, _)) = self.defined.get_key_value(&item) {
-            return Err(crate::errors::DuplicateDefinition {
-                duplicate_range: lume_span::source::Location {
-                    file: self.current_file().clone(),
-                    index: item.location().index.clone(),
+            self.dcx.emit_and_push(
+                crate::errors::DuplicateDefinition {
+                    duplicate_range: lume_span::source::Location {
+                        file: self.current_file().clone(),
+                        index: item.location().index.clone(),
+                    }
+                    .intern(),
+                    original_range: existing.location(),
+                    name: item.path().to_string(),
                 }
-                .intern(),
-                original_range: existing.location(),
-                name: item.path().to_string(),
-            }
-            .into());
+                .into(),
+            );
+
+            return;
         }
 
         self.defined.insert(item, id);
-
-        Ok(())
     }
 
-    /// Gets the [`lume_hir::Path`] for the item with the given name.
-    pub(crate) fn resolve_symbol_name(&mut self, path: &lume_ast::Path) -> Result<Path> {
-        if path.root.first().is_some_and(|segment| segment.is_self_type()) {
-            return self.resolve_self_name(path);
-        }
-
-        if let Some(symbol) = self.resolve_imported_symbol(path)? {
-            return Ok(symbol.clone());
-        }
-
-        let has_namespace_root = path
-            .root
-            .iter()
-            .any(|root| matches!(root, lume_ast::PathSegment::Namespace { .. }));
-
-        let mut root = if let Some(namespace) = &self.namespace
-            && !has_namespace_root
-        {
-            namespace.clone().as_root()
-        } else {
-            Vec::new()
-        };
-
-        root.extend(self.path_segments(path.root.clone())?);
-
-        Ok(Path {
-            root,
-            name: self.path_segment(path.name.clone())?,
-            location: self.location(path.location.clone()),
-        })
-    }
-
-    /// Gets the [`lume_hir::Path`] for the item with the given name, within the
-    /// current parent type.
-    fn resolve_self_name(&mut self, path: &lume_ast::Path) -> Result<Path> {
-        debug_assert!(path.root.first().is_some_and(|seg| seg.is_self_type()));
-
-        let mut selfless_path = path.clone();
-        let self_segment = selfless_path.root.remove(0);
-
-        if let Some(self_path) = self.self_type.clone() {
-            return Ok(Path::join(self_path, self.path(selfless_path)?));
-        }
-
-        Err(errors::SelfOutsideObjectContext {
-            source: self.current_file().clone(),
-            range: self_segment.location().0.clone(),
-            ty: String::from("Self"),
-        }
-        .into())
-    }
-
-    /// Attemps to resolve a [`lume_hir::Path`] for an imported symbol.
-    pub(crate) fn resolve_imported_symbol(&mut self, path: &lume_ast::Path) -> Result<Option<Path>> {
-        for (import, symbol) in &self.imports {
-            // Match against imported paths, which match the first segment of the imported
-            // path.
-            //
-            // This handles situations where a subpath was imported, which is then
-            // referenced later, such as:
-            //
-            // ```lume
-            //     import std (io);
-            //
-            //     io::File::from_path("foo.txt");
-            // ```
-            if let Some(name) = path.root.first() {
-                if name.name().name == *import {
-                    // Since we only matched a subset of the imported symbol,
-                    // we need to merge the two paths together, so it forms a fully-qualified path.
-                    let mut root: Vec<PathSegment> = symbol.root.clone();
-
-                    for segment in &path.root {
-                        root.push(self.path_segment(segment.clone())?);
-                    }
-
-                    return Ok(Some(Path {
-                        root,
-                        name: self.path_segment(path.name.clone())?,
-                        location: self.location(path.location.clone()),
-                    }));
-                }
-            }
-            // Match against the the imported symbol directly, such as:
-            //
-            // ```lume
-            //     import std.io (File);
-            //
-            //     File::from_path("foo.txt");
-            // ```
-            else if path.name.name().name == *import {
-                return Ok(Some(Path {
-                    root: symbol.root.clone(),
-                    name: self.path_segment(path.name.clone())?,
-                    location: self.location(path.location.clone()),
-                }));
-            }
-        }
-
-        Ok(None)
-    }
-
-    pub(crate) fn lower_items<'ast, I>(&mut self, source_file_id: SourceFileId, items: I) -> Result<()>
+    pub(crate) fn lower_items<I>(&mut self, source_file_id: SourceFileId, items: I) -> Result<()>
     where
-        I: IntoIterator<Item = lume_ast::Item<'ast>>,
+        I: IntoIterator<Item = lume_ast::Item>,
     {
         self.current_file_id = source_file_id;
         self.namespace = None;
@@ -340,6 +277,67 @@ impl LoweringContext<'_> {
         self.item(item)?;
 
         self.dcx.ensure_untainted()
+    }
+}
+
+pub(crate) trait Sentinal {
+    fn missing() -> Self;
+}
+
+impl Sentinal for lume_hir::Identifier {
+    fn missing() -> Self {
+        Self {
+            name: String::from("[missing name]"),
+            location: Location::empty(),
+        }
+    }
+}
+
+impl Sentinal for lume_hir::PathSegment {
+    fn missing() -> Self {
+        Self::Missing
+    }
+}
+
+impl Sentinal for lume_hir::Path {
+    fn missing() -> Self {
+        Self {
+            root: Vec::new(),
+            name: PathSegment::Missing,
+            location: Location::empty(),
+        }
+    }
+}
+
+impl Sentinal for lume_hir::Block {
+    fn missing() -> Self {
+        Self {
+            id: NodeId::default(),
+            statements: Vec::new(),
+            location: Location::empty(),
+        }
+    }
+}
+
+impl Sentinal for lume_hir::LiteralPattern {
+    fn missing() -> Self {
+        Self {
+            literal: lume_hir::Literal::missing(),
+            location: Location::empty(),
+        }
+    }
+}
+
+impl Sentinal for lume_hir::Literal {
+    fn missing() -> Self {
+        Self {
+            id: NodeId::default(),
+            kind: lume_hir::LiteralKind::Boolean(Box::new(lume_hir::BooleanLiteral {
+                id: NodeId::default(),
+                value: false,
+            })),
+            location: Location::empty(),
+        }
     }
 }
 
@@ -410,7 +408,7 @@ impl Unique for lume_hir::TraitMethodDefinition {
 
 impl Unique for lume_hir::TraitMethodImplementation {
     fn name(&self) -> Cow<'_, str> {
-        Cow::Borrowed(&self.name.name)
+        Cow::Borrowed(self.signature.name.name().as_str())
     }
 }
 
@@ -426,7 +424,7 @@ impl LoweringContext<'_> {
     /// If a duplicate is found, the provided closure is called with the
     /// duplicate item and the existing item. The closure should return an
     /// error, which is reported to the current diagnostic context.
-    pub(crate) fn ensure_unique_series<'a, T, F>(&self, items: &'a [T], on_duplicate: F) -> Result<()>
+    pub(crate) fn ensure_unique_series<'a, T, F>(&self, items: &'a [T], on_duplicate: F)
     where
         T: Unique,
         F: Fn(&T, &T) -> lume_errors::Error,
@@ -442,7 +440,5 @@ impl LoweringContext<'_> {
 
             seen.insert(item_name, item);
         }
-
-        self.dcx.ensure_untainted()
     }
 }

@@ -16,6 +16,7 @@ lume_hir = { path = "../lume_hir" }
 lume_lexer = { path = "../lume_lexer" }
 lume_parser = { path = "../lume_parser" }
 lume_session = { path = "../lume_session" }
+lume_syntax = { path = "../../crates/lume_syntax" }
 lume_span = { path = "../../crates/lume_span" }
 
 error_snippet = { workspace = true }
@@ -24,7 +25,6 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 lume_errors_test = { path = "../../crates/lume_errors_test" }
-lume_parser = { path = "../lume_parser" }
 insta = { version = "1.42.2", features = ["yaml"] }
 
 [lints]

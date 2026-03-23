@@ -18,7 +18,6 @@ indexmap = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
-lume_parser = { path = "../lume_parser" }
 insta = { version = "1.42.2", features = ["yaml"] }
 
 [lints]

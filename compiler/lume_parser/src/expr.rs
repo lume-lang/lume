@@ -54,7 +54,7 @@ impl Parser {
             Token![switch] => self.parse_switch_expression(),
             SyntaxKind::IDENT | Token![self] | Token![Self] => self.parse_named_expression(),
 
-            k if k.is_literal() => self.parse_literal(),
+            k if k.is_literal() => self.parse_literal_expr(),
             k if k.is_unary() => self.parse_unary(c),
 
             _ => {
@@ -227,13 +227,15 @@ impl Parser {
 
             // If the next token is a dot, it's some form of member access
             Token![.] => {
-                self.parse_variable_reference(self.checkpoint());
+                let cp_varref = self.checkpoint();
+                self.parse_variable_reference(cp_varref);
                 self.parse_member(c)
             }
 
             // If the next token is an equal sign, it's an assignment expression
             Token![=] => {
-                self.parse_ident();
+                let cp_varref = self.checkpoint();
+                self.parse_variable_reference(cp_varref);
                 self.parse_assignment(c)
             }
 
@@ -255,7 +257,8 @@ impl Parser {
 
                 match (has_type_args, next_token) {
                     (_, SyntaxKind::LEFT_PAREN) => {
-                        self.parse_variable_reference(self.checkpoint());
+                        let cp_varref = self.checkpoint();
+                        self.parse_variable_reference(cp_varref);
                         self.parse_instance_call(c)
                     }
                     (_, SyntaxKind::LEFT_BRACE) => {
@@ -487,9 +490,18 @@ impl Parser {
     }
 
     /// Parses a literal value expression on the current cursor position.
-    pub(crate) fn parse_literal(&mut self) -> SyntaxKind {
+    pub(crate) fn parse_literal_expr(&mut self) -> SyntaxKind {
         self.start_node(SyntaxKind::LIT_EXPR);
 
+        let kind = self.parse_literal();
+
+        self.finish_node();
+
+        kind
+    }
+
+    /// Parses a literal value expression on the current cursor position.
+    pub(crate) fn parse_literal(&mut self) -> SyntaxKind {
         match self.token() {
             SyntaxKind::INTEGER_LIT => {
                 self.start_node(SyntaxKind::INTEGER_LIT);
@@ -517,7 +529,6 @@ impl Parser {
         }
 
         self.skip();
-        self.finish_node();
 
         SyntaxKind::LIT_EXPR
     }

@@ -106,7 +106,7 @@ Impl =
 
 TraitImpl =
   doc_comments:DocComment* Attr*
-  'use' BoundTypes? trait_:Type ':' target:Type
+  'use' BoundTypes? __trait:Type ':' __target:Type
   '{' methods:Method* '}'
 
 //
@@ -196,7 +196,7 @@ ArrayExpr =
   '[' items:Expr* ']'
 
 AssignmentExpr =
-    target:Expr '=' value:Expr
+    __target:Expr '=' __value:Expr
 
 InstanceCallExpr =
     callee:Expr '.' name:Name GenericArgs? ArgList
@@ -211,8 +211,7 @@ ConstructExpr =
     type:Path '{' fields:ConstructorField* '}'
 
 IfExpr =
-    'if' condition:Expr then_branch:Block
-    ('else' (else_if:IfExpr | else_branch:Block))
+    cases:Condition*
 
 IsExpr =
     Expr 'is' Pat
@@ -224,7 +223,7 @@ MemberExpr =
     Expr '.' name:Name
 
 RangeExpr =
-    lower:Expr '..' '='? upper:Expr
+    __lower:Expr '..' '='? __upper:Expr
 
 ScopeExpr =
     Block
@@ -242,9 +241,9 @@ VariantExpr =
     Path ArgList
 
 BinExpr =
-   lhs:Expr
+   __lhs:Expr
    ('&' | '|' | '^' | '+' | '-' | '*' | '/' | '&&' | '||' | '==' | '!=' | '<' | '<=' | '>' | '>=')
-   rhs:Expr
+   __rhs:Expr
 
 UnaryExpr =
     ('!' | '-') Expr
@@ -315,10 +314,7 @@ Constraints =
   ':' Type*
 
 GenericArgs =
-  '<' args:GenericArg* '>'
-
-GenericArg =
-  Type
+  '<' args:Type* '>'
 
 //
 // Types

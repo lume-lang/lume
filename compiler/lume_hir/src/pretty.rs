@@ -262,13 +262,13 @@ impl PrettyPrint for TraitImplementation {
 
 impl PrettyPrint for TraitMethodImplementation {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let parameters = pretty_list!(self.parameters, map);
+        let parameters = pretty_list!(self.signature.parameters, map);
 
         f.debug_struct("TraitMethodImplementation")
-            .field("name", &self.name)
+            .field("name", &self.signature.name)
             .field("parameters", &parameters)
-            .field("type_parameters", &pretty_list!(self.type_parameters, map))
-            .field("return_type", pretty_item!(self.return_type, map))
+            .field("type_parameters", &pretty_list!(self.signature.type_parameters, map))
+            .field("return_type", pretty_item!(self.signature.return_type, map))
             .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
@@ -365,6 +365,7 @@ impl PrettyPrint for Expression {
 impl PrettyPrint for ExpressionKind {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Missing => write!(f, "Missing"),
             Self::Assignment(e) => e.pretty_fmt(map, f),
             Self::Cast(e) => e.pretty_fmt(map, f),
             Self::Construct(e) => e.pretty_fmt(map, f),
@@ -732,6 +733,7 @@ impl PrettyPrint for Pattern {
 impl PrettyPrint for PatternKind {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Missing => write!(f, "Missing"),
             Self::Literal(pat) => pat.pretty_fmt(map, f),
             Self::Identifier(pat) => pat.pretty_fmt(map, f),
             Self::Variant(pat) => pat.pretty_fmt(map, f),
