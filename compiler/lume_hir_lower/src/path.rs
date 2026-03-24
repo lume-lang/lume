@@ -73,7 +73,7 @@ impl LoweringContext<'_> {
 
                         lume_hir::Type {
                             id,
-                            name: lume_hir::Path::rooted(lume_hir::PathSegment::ty(ident.name)),
+                            name: lume_hir::Path::rooted(lume_hir::PathSegment::ty(ident.clone())),
                             self_type: false,
                             location: self.location(type_param.location()),
                         }

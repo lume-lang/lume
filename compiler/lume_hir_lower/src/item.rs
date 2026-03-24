@@ -222,7 +222,7 @@ impl LoweringContext<'_> {
             let location = self.location(param.location());
 
             let param_type = if name.as_str() == SELF_PARAM_NAME {
-                self.self_type(self.location(param.location()))
+                self.alloc_self_type(self.location(param.location()))
             } else {
                 self.type_or_void(param.ty())
             };
