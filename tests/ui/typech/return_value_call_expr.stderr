@@ -7,7 +7,7 @@
    ∶
  4 │
  5 │ fn bar() -> Int32 {
-   ∶             ^^^^^ ...because of type defined here
+   ∶             ^^^^^^ ...because of type defined here
  6 │     return foo();
    ╰──
    help: expected type Int32
