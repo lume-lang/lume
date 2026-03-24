@@ -7,7 +7,7 @@
    ∶
  4 │
  5 │ fn foo<T: A + B>() { }
-   ∶           ^ ...which is required by the type parameter T
+   ∶           ^^ ...which is required by the type parameter T
    ╰──
 × error[LM4120]: type constraint not satisfied
    ╭─[generic_function_call_unsatisfied_constraints.lm:8:9]

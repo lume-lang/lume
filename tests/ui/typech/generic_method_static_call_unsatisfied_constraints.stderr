@@ -7,7 +7,7 @@
     ∶
  7  │ impl Foo {
  8  │     pub fn bar<T: A + B>(val: T) -> T {
-    ∶                   ^ ...which is required by the type parameter T
+    ∶                   ^^ ...which is required by the type parameter T
  9  │         return val;
     ╰──
 × error[LM4120]: type constraint not satisfied

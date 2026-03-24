@@ -6,7 +6,7 @@
  4 │     }
    ∶
  1 │ fn foo() -> Int32 {
-   ∶             ^^^^^ ...because of type defined here
+   ∶             ^^^^^^ ...because of type defined here
  2 │     loop {
    ╰──
    help: expected type Int32
