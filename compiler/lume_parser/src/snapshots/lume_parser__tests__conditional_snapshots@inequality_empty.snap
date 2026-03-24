@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Statement, \"if a != 1 { }\")"
 ---
 SOURCE_FILE@0..13
@@ -7,9 +7,9 @@ SOURCE_FILE@0..13
     IF_EXPR@0..13
       CONDITION@0..13
         IF_KW@0..2 "if"
-        BIN_EXPR@2..9
-          VARIABLE_EXPR@2..4
-            WHITESPACE@2..3 " "
+        WHITESPACE@2..3 " "
+        BIN_EXPR@3..9
+          VARIABLE_EXPR@3..4
             NAME@3..4
               IDENT@3..4 "a"
           WHITESPACE@4..5 " "

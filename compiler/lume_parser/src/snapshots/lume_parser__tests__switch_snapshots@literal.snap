@@ -1,13 +1,13 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Statement, \"switch a { 1 => 4, 2 => 6 }\")"
 ---
 SOURCE_FILE@0..27
   EXPR_STMT@0..27
     SWITCH_EXPR@0..27
       SWITCH_KW@0..6 "switch"
-      VARIABLE_EXPR@6..8
-        WHITESPACE@6..7 " "
+      WHITESPACE@6..7 " "
+      VARIABLE_EXPR@7..8
         NAME@7..8
           IDENT@7..8 "a"
       WHITESPACE@8..9 " "
@@ -15,9 +15,8 @@ SOURCE_FILE@0..27
       WHITESPACE@10..11 " "
       SWITCH_ARM@11..17
         PAT_LITERAL@11..12
-          LIT_EXPR@11..12
-            INTEGER_LIT@11..12
-              INTEGER_LIT@11..12 "1"
+          INTEGER_LIT@11..12
+            INTEGER_LIT@11..12 "1"
         WHITESPACE@12..13 " "
         BIG_ARROW@13..15 "=>"
         WHITESPACE@15..16 " "
@@ -28,9 +27,8 @@ SOURCE_FILE@0..27
       WHITESPACE@18..19 " "
       SWITCH_ARM@19..25
         PAT_LITERAL@19..20
-          LIT_EXPR@19..20
-            INTEGER_LIT@19..20
-              INTEGER_LIT@19..20 "2"
+          INTEGER_LIT@19..20
+            INTEGER_LIT@19..20 "2"
         WHITESPACE@20..21 " "
         BIG_ARROW@21..23 "=>"
         WHITESPACE@23..24 " "

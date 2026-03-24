@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Statement, \"let _ = { 1; };\")"
 ---
 SOURCE_FILE@0..15
@@ -14,8 +14,8 @@ SOURCE_FILE@0..15
     SCOPE_EXPR@8..14
       BLOCK@8..14
         LEFT_BRACE@8..9 "{"
-        EXPR_STMT@9..12
-          WHITESPACE@9..10 " "
+        WHITESPACE@9..10 " "
+        EXPR_STMT@10..12
           LIT_EXPR@10..11
             INTEGER_LIT@10..11
               INTEGER_LIT@10..11 "1"

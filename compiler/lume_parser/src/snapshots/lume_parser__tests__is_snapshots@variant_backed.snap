@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Statement, \"0 is Foo::A(a, b);\")"
 ---
 SOURCE_FILE@0..18
@@ -10,8 +10,8 @@ SOURCE_FILE@0..18
           INTEGER_LIT@0..1 "0"
       WHITESPACE@1..2 " "
       IS_KW@2..4 "is"
-      PAT_VARIANT@4..17
-        WHITESPACE@4..5 " "
+      WHITESPACE@4..5 " "
+      PAT_VARIANT@5..17
         PATH@5..11
           PATH_TYPE@5..8
             NAME@5..8
