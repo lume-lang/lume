@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Statement, \"let _ = 0 as u64;\")"
 ---
 SOURCE_FILE@0..17
@@ -10,8 +10,8 @@ SOURCE_FILE@0..17
       IDENT@4..5 "_"
     WHITESPACE@5..6 " "
     ASSIGN@6..7 "="
-    CAST_EXPR@7..16
-      WHITESPACE@7..8 " "
+    WHITESPACE@7..8 " "
+    CAST_EXPR@8..16
       LIT_EXPR@8..9
         INTEGER_LIT@8..9
           INTEGER_LIT@8..9 "0"

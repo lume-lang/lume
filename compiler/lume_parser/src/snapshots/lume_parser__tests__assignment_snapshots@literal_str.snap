@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Statement, \"\\\"foo\\\" = b;\")"
 ---
 SOURCE_FILE@0..10
@@ -10,8 +10,8 @@ SOURCE_FILE@0..10
           STRING_LIT@0..5 "\"foo\""
       WHITESPACE@5..6 " "
       ASSIGN@6..7 "="
-      VARIABLE_EXPR@7..9
-        WHITESPACE@7..8 " "
+      WHITESPACE@7..8 " "
+      VARIABLE_EXPR@8..9
         NAME@8..9
           IDENT@8..9 "b"
     SEMICOLON@9..10 ";"

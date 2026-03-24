@@ -1,13 +1,13 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Statement,\n\"switch a { std::Optional::Some(a) => a, std::Optional::None => 0 }\")"
 ---
 SOURCE_FILE@0..66
   EXPR_STMT@0..66
     SWITCH_EXPR@0..66
       SWITCH_KW@0..6 "switch"
-      VARIABLE_EXPR@6..8
-        WHITESPACE@6..7 " "
+      WHITESPACE@6..7 " "
+      VARIABLE_EXPR@7..8
         NAME@7..8
           IDENT@7..8 "a"
       WHITESPACE@8..9 " "
@@ -34,8 +34,8 @@ SOURCE_FILE@0..66
           RIGHT_PAREN@32..33 ")"
         WHITESPACE@33..34 " "
         BIG_ARROW@34..36 "=>"
-        VARIABLE_EXPR@36..38
-          WHITESPACE@36..37 " "
+        WHITESPACE@36..37 " "
+        VARIABLE_EXPR@37..38
           NAME@37..38
             IDENT@37..38 "a"
       COMMA@38..39 ","

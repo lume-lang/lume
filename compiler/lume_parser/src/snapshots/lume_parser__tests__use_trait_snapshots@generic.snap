@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Item,\n\"\n        use Add<Int32>: Int32 {\n            fn add(other: Int32) -> Int32 {\n                return self + other;\n            }\n        }\")"
 ---
 SOURCE_FILE@0..137
@@ -64,9 +64,9 @@ SOURCE_FILE@0..137
         WHITESPACE@76..93 "\n                "
         RETURN_STMT@93..113
           RETURN_KW@93..99 "return"
-          BIN_EXPR@99..112
-            VARIABLE_EXPR@99..104
-              WHITESPACE@99..100 " "
+          WHITESPACE@99..100 " "
+          BIN_EXPR@100..112
+            VARIABLE_EXPR@100..104
               NAME@100..104
                 IDENT@100..104 "self"
             WHITESPACE@104..105 " "

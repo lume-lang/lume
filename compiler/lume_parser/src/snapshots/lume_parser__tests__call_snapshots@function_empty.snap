@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Statement, \"let _ = call();\")"
 ---
 SOURCE_FILE@0..15
@@ -10,8 +10,8 @@ SOURCE_FILE@0..15
       IDENT@4..5 "_"
     WHITESPACE@5..6 " "
     ASSIGN@6..7 "="
-    STATIC_CALL_EXPR@7..14
-      WHITESPACE@7..8 " "
+    WHITESPACE@7..8 " "
+    STATIC_CALL_EXPR@8..14
       PATH@8..12
         PATH_CALLABLE@8..12
           NAME@8..12

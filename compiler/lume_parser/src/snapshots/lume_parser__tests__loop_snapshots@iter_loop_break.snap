@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Statement, \"for pattern in collection { break; }\")"
 ---
 SOURCE_FILE@0..36
@@ -10,8 +10,8 @@ SOURCE_FILE@0..36
       IDENT@4..11 "pattern"
     WHITESPACE@11..12 " "
     IN_KW@12..14 "in"
-    VARIABLE_EXPR@14..25
-      WHITESPACE@14..15 " "
+    WHITESPACE@14..15 " "
+    VARIABLE_EXPR@15..25
       NAME@15..25
         IDENT@15..25 "collection"
     WHITESPACE@25..26 " "

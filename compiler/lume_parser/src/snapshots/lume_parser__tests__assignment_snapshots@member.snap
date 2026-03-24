@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Statement, \"foo.bar = a;\")"
 ---
 SOURCE_FILE@0..12
@@ -14,8 +14,8 @@ SOURCE_FILE@0..12
           IDENT@4..7 "bar"
         WHITESPACE@7..8 " "
       ASSIGN@8..9 "="
-      VARIABLE_EXPR@9..11
-        WHITESPACE@9..10 " "
+      WHITESPACE@9..10 " "
+      VARIABLE_EXPR@10..11
         NAME@10..11
           IDENT@10..11 "a"
     SEMICOLON@11..12 ";"

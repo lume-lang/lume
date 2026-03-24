@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Item,\n\"\n        use Cast: Int32 {\n            fn to_string() -> String {\n                return self;\n            }\n\n            fn to_int() -> Int32 {\n                return self;\n            }\n        }\")"
 ---
 SOURCE_FILE@0..197
@@ -46,8 +46,8 @@ SOURCE_FILE@0..197
         WHITESPACE@65..82 "\n                "
         RETURN_STMT@82..94
           RETURN_KW@82..88 "return"
-          VARIABLE_EXPR@88..93
-            WHITESPACE@88..89 " "
+          WHITESPACE@88..89 " "
+          VARIABLE_EXPR@89..93
             NAME@89..93
               IDENT@89..93 "self"
           SEMICOLON@93..94 ";"
@@ -78,8 +78,8 @@ SOURCE_FILE@0..197
         WHITESPACE@144..161 "\n                "
         RETURN_STMT@161..173
           RETURN_KW@161..167 "return"
-          VARIABLE_EXPR@167..172
-            WHITESPACE@167..168 " "
+          WHITESPACE@167..168 " "
+          VARIABLE_EXPR@168..172
             NAME@168..172
               IDENT@168..172 "self"
           SEMICOLON@172..173 ";"
