@@ -78,11 +78,15 @@ pub(crate) fn verify_type_names(tcx: &TyInferCtx) {
                 verify_type_name(tcx, &trait_impl.target.name, trait_impl.target.location);
 
                 for method in &trait_impl.methods {
-                    for param in &method.parameters {
+                    for param in &method.signature.parameters {
                         verify_type_name(tcx, &param.param_type.name, param.param_type.location);
                     }
 
-                    verify_type_name(tcx, &method.return_type.name, method.return_type.location);
+                    verify_type_name(
+                        tcx,
+                        &method.signature.return_type.name,
+                        method.signature.return_type.location,
+                    );
                 }
             }
             lume_hir::Node::Function(func) => {

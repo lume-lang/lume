@@ -206,6 +206,7 @@ impl TyInferCtx {
 
                 enum_ty.ok_or_else(|| self.missing_type_err(&enum_segment, enum_segment.location()))?
             }
+            lume_hir::ExpressionKind::Missing => TypeRef::void().with_location(expr.location),
         };
 
         Result::Ok(ty.with_location(expr.location))
@@ -501,6 +502,7 @@ impl TyInferCtx {
 
                 panic!("bug!: pattern outside switch expression");
             }
+            lume_hir::PatternKind::Missing => TypeRef::void(),
         };
 
         Ok(ty.with_location(pat.location))
@@ -779,7 +781,8 @@ impl TyInferCtx {
             | lume_hir::ExpressionKind::Is(_)
             | lume_hir::ExpressionKind::Literal(_)
             | lume_hir::ExpressionKind::Switch(_)
-            | lume_hir::ExpressionKind::Variant(_) => false,
+            | lume_hir::ExpressionKind::Variant(_)
+            | lume_hir::ExpressionKind::Missing => false,
             lume_hir::ExpressionKind::Member(_) | lume_hir::ExpressionKind::Variable(_) => true,
         }
     }
@@ -888,7 +891,6 @@ impl TyInferCtx {
                 lume_hir::ExpressionKind::Assignment(_) | lume_hir::ExpressionKind::Scope(_) => {
                     self.try_expected_type_of(parent_id)
                 }
-                lume_hir::ExpressionKind::Cast(_) | lume_hir::ExpressionKind::Member(_) => Ok(None),
                 lume_hir::ExpressionKind::Construct(construct) => self.expected_type_of_construct(id, construct),
                 lume_hir::ExpressionKind::InstanceCall(call) => {
                     self.expected_type_of_call(id, CallExpression::Instanced(call))
@@ -942,6 +944,10 @@ impl TyInferCtx {
 
                     self.mk_type_ref_from(enum_field_type, enum_def.id).map(Some)
                 }
+
+                lume_hir::ExpressionKind::Cast(_)
+                | lume_hir::ExpressionKind::Member(_)
+                | lume_hir::ExpressionKind::Missing => Ok(None),
             },
             lume_hir::Node::Statement(stmt) => match &stmt.kind {
                 lume_hir::StatementKind::Variable(decl) => {
@@ -1130,7 +1136,7 @@ impl TyInferCtx {
     pub fn is_switch_constant(&self, expr: &lume_hir::Switch) -> bool {
         for case in &expr.cases {
             match &self.hir_expect_pattern(case.pattern).kind {
-                lume_hir::PatternKind::Variant(_) => return false,
+                lume_hir::PatternKind::Variant(_) | lume_hir::PatternKind::Missing => return false,
                 lume_hir::PatternKind::Literal(lit) => {
                     if !matches!(
                         lit.literal.kind,

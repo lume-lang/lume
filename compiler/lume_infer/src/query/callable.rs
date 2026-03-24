@@ -916,9 +916,9 @@ impl TyInferCtx {
                 }),
                 lume_hir::Node::TraitMethodImpl(method) => Ok(FunctionSigOwned {
                     id: method.id,
-                    params: params_of(self, method.id, &method.parameters)?,
-                    type_params: method.type_parameters.clone(),
-                    ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                    params: params_of(self, method.id, &method.signature.parameters)?,
+                    type_params: method.signature.type_parameters.clone(),
+                    ret_ty: self.mk_type_ref_from(&method.signature.return_type, method.id)?,
                 }),
                 _ => panic!("bug!: invalid Callable::Method reference node"),
             },
@@ -961,9 +961,9 @@ impl TyInferCtx {
                     },
                     lume_hir::Node::TraitMethodImpl(method) => FunctionSigOwned {
                         id: method.id,
-                        params: params_of(self, method.id, &method.parameters)?,
-                        type_params: method.type_parameters.clone(),
-                        ret_ty: self.mk_type_ref_from(&method.return_type, method.id)?,
+                        params: params_of(self, method.id, &method.signature.parameters)?,
+                        type_params: method.signature.type_parameters.clone(),
+                        ret_ty: self.mk_type_ref_from(&method.signature.return_type, method.id)?,
                     },
                     _ => panic!("bug!: invalid Callable::Method reference node"),
                 };
@@ -1054,7 +1054,7 @@ impl TyInferCtx {
         match node {
             Node::Method(method) => method.signature.parameters.iter().any(|param| param.is_self()),
             Node::TraitMethodDef(method) => method.signature.parameters.iter().any(|param| param.is_self()),
-            Node::TraitMethodImpl(method) => method.parameters.iter().any(|param| param.is_self()),
+            Node::TraitMethodImpl(method) => method.signature.parameters.iter().any(|param| param.is_self()),
             _ => false,
         }
     }

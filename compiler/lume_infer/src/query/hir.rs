@@ -347,7 +347,7 @@ impl TyInferCtx {
                     .expect("expected parent of method definition");
 
                 let parent_name = self.hir_path_of_node(parent);
-                Path::with_root(parent_name, lume_hir::PathSegment::callable(method.name.clone()))
+                Path::with_root(parent_name, method.signature.name.name.clone())
             }
             Node::Field(field) => {
                 let parent = self

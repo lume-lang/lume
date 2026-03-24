@@ -80,7 +80,7 @@ impl TyCheckCtx {
                 let type_parameters_id = self.available_type_params_at(method.id);
                 let type_parameters = self.as_type_params(&type_parameters_id)?;
 
-                let return_type = self.mk_type_ref_generic(&method.return_type, &type_parameters)?;
+                let return_type = self.mk_type_ref_generic(&method.signature.return_type, &type_parameters)?;
 
                 self.ensure_block_ty_match(block, &return_type)?;
             }
@@ -346,6 +346,7 @@ impl TyCheckCtx {
 
                 self.variant_expression(expr)
             }
+            lume_hir::ExpressionKind::Missing => todo!(),
             lume_hir::ExpressionKind::Literal(_) | lume_hir::ExpressionKind::Variable(_) => Ok(()),
         }
     }

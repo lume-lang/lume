@@ -97,7 +97,7 @@ impl TyInferCtx {
                 lume_hir::Node::Function(func) => &func.signature.parameters,
                 lume_hir::Node::Method(method) => &method.signature.parameters,
                 lume_hir::Node::TraitMethodDef(method) => &method.signature.parameters,
-                lume_hir::Node::TraitMethodImpl(method) => &method.parameters,
+                lume_hir::Node::TraitMethodImpl(method) => &method.signature.parameters,
                 _ => continue,
             };
 
@@ -131,7 +131,7 @@ impl TyInferCtx {
             Node::Function(func) => Some(&func.signature.return_type),
             Node::Method(method) => Some(&method.signature.return_type),
             Node::TraitMethodDef(method) => Some(&method.signature.return_type),
-            Node::TraitMethodImpl(method) => Some(&method.return_type),
+            Node::TraitMethodImpl(method) => Some(&method.signature.return_type),
             _ => None,
         }
     }
