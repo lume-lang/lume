@@ -99,6 +99,7 @@ fn test_function_definition_snapshots() {
     assert_snap_eq!("priv fn main() -> Void {}", "priv_modifier");
     assert_snap_eq!("fn loop() -> Void {}", "reserved_keyword");
     assert_snap_eq!("fn main() -> std::Int32 {}", "namespaced_type");
+    assert_snap_eq!("fn empty?() {}", "boolean_function");
     assert_snap_eq!("fn foo(...args: Int32) {}", "varargs");
 }
 
@@ -285,8 +286,9 @@ fn test_call_snapshots() {
     assert_expr_snap_eq!("let _ = a.call();", "method_empty");
     assert_expr_snap_eq!("let _ = a.call(a);", "method_param_1");
     assert_expr_snap_eq!("let _ = a.call(a, b);", "method_param_2");
-    // assert_expr_snap_eq!("let _ = a.call?();", "method_boolean");
+    assert_expr_snap_eq!("let _ = a.call?();", "method_boolean");
     assert_expr_snap_eq!("let _ = a.call<T>(a, b);", "method_generic");
+    assert_expr_snap_eq!("let _ = a.call?<T>(a, b);", "method_boolean_generic");
     assert_expr_snap_eq!("let _ = Foo::call(a, b);", "static_method");
     assert_expr_snap_eq!("let _ = Foo::call<T>(a, b);", "static_generic_method");
     assert_expr_snap_eq!("let _ = Foo<T>::call(a, b);", "generic_static_method");
@@ -408,6 +410,14 @@ fn test_struct_snapshots() {
             fn bar<T>() -> Int32 { }
         }",
         "generic_method"
+    );
+
+    assert_snap_eq!(
+        "
+        impl Foo {
+            fn empty?() -> Boolean { }
+        }",
+        "method_boolean"
     );
 
     assert_snap_eq!(
@@ -564,6 +574,14 @@ fn test_use_trait_snapshots() {
             }
         }",
         "methods"
+    );
+
+    assert_snap_eq!(
+        "
+        use Zero: Int32 {
+            fn zero?() -> Boolean { }
+        }",
+        "boolean_method"
     );
 
     assert_snap_eq!(

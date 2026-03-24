@@ -1,0 +1,50 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        use Zero: Int32 {\n            fn zero?() -> Boolean { }\n        }\")"
+---
+SOURCE_FILE@0..74
+  WHITESPACE@0..9 "\n        "
+  TRAIT_IMPL@9..74
+    USE_KW@9..12 "use"
+    WHITESPACE@12..13 " "
+    NAMED_TYPE@13..17
+      PATH@13..17
+        PATH_TYPE@13..17
+          NAME@13..17
+            IDENT@13..17 "Zero"
+    COLON@17..18 ":"
+    WHITESPACE@18..19 " "
+    NAMED_TYPE@19..25
+      PATH@19..25
+        PATH_TYPE@19..25
+          NAME@19..24
+            IDENT@19..24 "Int32"
+          WHITESPACE@24..25 " "
+    LEFT_BRACE@25..26 "{"
+    WHITESPACE@26..39 "\n            "
+    METHOD@39..64
+      SIG@39..61
+        FN_KW@39..41 "fn"
+        WHITESPACE@41..42 " "
+        NAME@42..47
+          IDENT@42..46 "zero"
+          QUESTION@46..47 "?"
+        PARAM_LIST@47..49
+          LEFT_PAREN@47..48 "("
+          RIGHT_PAREN@48..49 ")"
+        WHITESPACE@49..50 " "
+        RETURN_TYPE@50..61
+          ARROW@50..52 "->"
+          WHITESPACE@52..53 " "
+          NAMED_TYPE@53..61
+            PATH@53..61
+              PATH_TYPE@53..61
+                NAME@53..60
+                  IDENT@53..60 "Boolean"
+                WHITESPACE@60..61 " "
+      BLOCK@61..64
+        LEFT_BRACE@61..62 "{"
+        WHITESPACE@62..63 " "
+        RIGHT_BRACE@63..64 "}"
+    WHITESPACE@64..73 "\n        "
+    RIGHT_BRACE@73..74 "}"
