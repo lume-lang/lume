@@ -314,13 +314,10 @@ impl TyInferCtx {
         self.tcx.db_mut().traits.add_impl(id, &trait_type_ref, &target_type_ref);
 
         for method in &trait_impl.methods {
-            let method_name = method.name.clone();
-            let mut qualified_name = Path::with_root(
-                trait_impl.target.name.clone(),
-                PathSegment::callable(method_name.clone()),
-            );
+            let method_name = method.signature.name.name.clone();
+            let mut qualified_name = Path::with_root(trait_impl.target.name.clone(), method_name);
 
-            qualified_name.location = method_name.location;
+            qualified_name.location = method.signature.name.location();
 
             let method_kind = if INTRINSIC_METHODS.contains(format!("{qualified_name:+}").as_str()) {
                 lume_types::MethodKind::Intrinsic
@@ -509,7 +506,7 @@ impl TyInferCtx {
         }
 
         for method in &trait_impl.methods {
-            for &type_param_id in &method.type_parameters {
+            for &type_param_id in &method.signature.type_parameters {
                 let type_param_name = self.hir_expect_type_parameter(type_param_id).name.clone();
 
                 self.tcx.db_mut().type_alloc(
@@ -702,11 +699,11 @@ impl TyInferCtx {
                 assert_eq!(existing, parent);
             }
 
-            for &type_param in &method.type_parameters {
+            for &type_param in &method.signature.type_parameters {
                 tree.insert(type_param, method.id);
             }
 
-            for parameter in &method.parameters {
+            for parameter in &method.signature.parameters {
                 tree.insert(parameter.id, method.id);
             }
 
@@ -758,6 +755,8 @@ impl TyInferCtx {
     }
 
     fn define_stmt_scope(&self, tree: &mut BTreeMap<NodeId, NodeId>, stmt_id: NodeId, parent: NodeId) -> Result<()> {
+        debug_assert_ne!(stmt_id, parent);
+
         if let Some(existing) = tree.insert(stmt_id, parent) {
             assert_eq!(existing, parent);
         }
@@ -800,6 +799,8 @@ impl TyInferCtx {
     }
 
     fn define_expr_scope(&self, tree: &mut BTreeMap<NodeId, NodeId>, expr_id: NodeId, parent: NodeId) -> Result<()> {
+        debug_assert_ne!(expr_id, parent);
+
         if let Some(existing) = tree.insert(expr_id, parent) {
             assert_eq!(
                 existing, parent,
@@ -885,7 +886,9 @@ impl TyInferCtx {
 
                 Ok(())
             }
-            lume_hir::ExpressionKind::Literal(_) | lume_hir::ExpressionKind::Variable(_) => Ok(()),
+            lume_hir::ExpressionKind::Literal(_)
+            | lume_hir::ExpressionKind::Variable(_)
+            | lume_hir::ExpressionKind::Missing => Ok(()),
         }
     }
 
@@ -900,7 +903,8 @@ impl TyInferCtx {
         match &pattern.kind {
             lume_hir::PatternKind::Literal(_)
             | lume_hir::PatternKind::Identifier(_)
-            | lume_hir::PatternKind::Wildcard(_) => Ok(()),
+            | lume_hir::PatternKind::Wildcard(_)
+            | lume_hir::PatternKind::Missing => Ok(()),
             lume_hir::PatternKind::Variant(var) => {
                 for &field in &var.fields {
                     self.define_pat_scope(tree, field, pattern_id)?;

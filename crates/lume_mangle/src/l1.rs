@@ -187,7 +187,7 @@ fn mangled_name_of_trait_method_impl(
 
     let package_segment = mangled_package_segment(tcx, method_impl.id.package);
     let path_segment = mangled_path_segment(&trait_def.name);
-    let name_segment = mangled_name_segment(method_impl.name.as_str());
+    let name_segment = mangled_name_segment(method_impl.signature.name.name().as_str());
     let impl_segment = mangled_impl_segment(tcx, &trait_impl.target);
 
     Ok(format!(
@@ -249,6 +249,7 @@ fn mangled_path_name(name: &lume_hir::Path) -> String {
 
                 name_str.push(format!("{len}{str}"));
             }
+            lume_hir::PathSegment::Missing => {}
         }
     }
 

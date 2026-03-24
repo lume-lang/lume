@@ -54,6 +54,9 @@ impl LowerFunction<'_> {
             lume_hir::PathSegment::Variant { name, .. } => {
                 Ok(lume_tir::PathSegment::Variant { name: name.to_string() })
             }
+            lume_hir::PathSegment::Missing => {
+                unreachable!()
+            }
         }
     }
 }

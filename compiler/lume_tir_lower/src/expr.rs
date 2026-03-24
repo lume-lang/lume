@@ -30,6 +30,7 @@ impl LowerFunction<'_> {
             lume_hir::ExpressionKind::Scope(expr) => self.scope_expression(expr)?,
             lume_hir::ExpressionKind::Variable(expr) => self.variable_expression(expr),
             lume_hir::ExpressionKind::Variant(expr) => self.variant_expression(expr)?,
+            lume_hir::ExpressionKind::Missing => unreachable!(),
         };
 
         let ty = self.lower.tcx.type_of_expr(expr)?;
@@ -466,7 +467,7 @@ impl LowerFunction<'_> {
                     fallback = Some(branch);
                     continue;
                 }
-                lume_hir::PatternKind::Variant(_) => unreachable!(),
+                lume_hir::PatternKind::Variant(_) | lume_hir::PatternKind::Missing => unreachable!(),
             };
 
             entries.push((pattern, branch));
@@ -518,6 +519,7 @@ impl LowerFunction<'_> {
                     // the rest of the cases, since they can never be met.
                     break;
                 }
+                lume_hir::PatternKind::Missing => unreachable!(),
             };
 
             let branch = self.expression(case.branch)?;

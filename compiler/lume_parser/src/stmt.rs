@@ -100,6 +100,10 @@ impl Parser {
 
         let kind = self.parse_expression(None);
 
+        if kind.is_none() {
+            return;
+        }
+
         // If we match the end of the current body, assume it's a final.
         if self.peek(SyntaxKind::RIGHT_BRACE) {
             self.complete_node(SyntaxKind::FINAL_STMT, c);

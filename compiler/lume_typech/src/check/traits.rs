@@ -43,7 +43,7 @@ impl TyCheckCtx {
             let Some(method_impl) = trait_impl
                 .methods
                 .iter()
-                .find(|method_impl| &method_impl.name == method_def.signature.name.name())
+                .find(|method_impl| method_impl.signature.name.name() == method_def.signature.name.name())
             else {
                 // If a block is defined in the trait definition for the method,
                 // we can default back to that when resolving.
@@ -66,11 +66,11 @@ impl TyCheckCtx {
             if !trait_def
                 .methods
                 .iter()
-                .any(|method_def| method_def.signature.name.name() == &method_impl.name)
+                .any(|method_def| method_def.signature.name.name() == method_impl.signature.name.name())
             {
                 return Err(crate::check::errors::TraitImplExtraneousMethod {
                     source: trait_impl.location,
-                    name: method_impl.name.clone(),
+                    name: method_impl.signature.name.name().clone(),
                 }
                 .into());
             }
@@ -102,7 +102,9 @@ impl TyCheckCtx {
 
         let impl_sig = self.signature_of_call_ref(CallReference::Method(method_impl.id))?;
         let mut inst_impl_sig = self.instantiate_signature_isolate(impl_sig.as_ref(), &type_params, &type_args);
-        inst_impl_sig.type_params.clone_from(&method_impl.type_parameters);
+        inst_impl_sig
+            .type_params
+            .clone_from(&method_impl.signature.type_parameters);
 
         if !self.check_signature_compatibility(inst_def_sig.as_ref(), inst_impl_sig.as_ref())? {
             return Err(crate::check::errors::TraitMethodSignatureMismatch {

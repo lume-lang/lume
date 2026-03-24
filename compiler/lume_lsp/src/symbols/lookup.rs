@@ -174,7 +174,7 @@ impl Visitor for LocationVisitor {
                     kind: SymbolKind::Callable {
                         reference: CallReference::Method(method.id),
                     },
-                    location: method.name.location,
+                    location: method.signature.location,
                 });
             }
             lume_hir::Node::Type(type_def) => match type_def {
@@ -301,7 +301,8 @@ impl Visitor for LocationVisitor {
             | lume_hir::ExpressionKind::If(_)
             | lume_hir::ExpressionKind::Is(_)
             | lume_hir::ExpressionKind::Scope(_)
-            | lume_hir::ExpressionKind::Switch(_) => {}
+            | lume_hir::ExpressionKind::Switch(_)
+            | lume_hir::ExpressionKind::Missing => {}
         }
 
         Ok(())
@@ -342,6 +343,7 @@ impl Visitor for LocationVisitor {
                     kind: SymbolKind::Pattern { id: pattern.id },
                 });
             }
+            lume_hir::PatternKind::Missing => {}
         }
 
         Ok(())

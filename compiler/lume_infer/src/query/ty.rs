@@ -29,7 +29,7 @@ impl TyInferCtx {
             lume_hir::Node::Impl(implementation) => Ok(&implementation.type_parameters),
             lume_hir::Node::TraitImpl(trait_impl) => Ok(&trait_impl.type_parameters),
             lume_hir::Node::TraitMethodDef(method_def) => Ok(&method_def.signature.type_parameters),
-            lume_hir::Node::TraitMethodImpl(method_impl) => Ok(&method_impl.type_parameters),
+            lume_hir::Node::TraitMethodImpl(method_impl) => Ok(&method_impl.signature.type_parameters),
             lume_hir::Node::Method(method) => Ok(&method.signature.type_parameters),
             _ => Err(crate::query::diagnostics::CannotHoldTypeParams { id }.into()),
         }

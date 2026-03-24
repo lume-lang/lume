@@ -46,7 +46,8 @@ pub(crate) fn definition_of(engine: &Engine, location: Location) -> Option<Locat
             match &pattern.kind {
                 lume_hir::PatternKind::Literal(_)
                 | lume_hir::PatternKind::Identifier(_)
-                | lume_hir::PatternKind::Wildcard(_) => None,
+                | lume_hir::PatternKind::Wildcard(_)
+                | lume_hir::PatternKind::Missing => None,
                 lume_hir::PatternKind::Variant(pattern) => {
                     let enum_case_def = package.tcx.enum_case_with_name(&pattern.name).ok()?;
 

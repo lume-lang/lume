@@ -58,6 +58,7 @@ impl Parser {
                 Token![,]
                 | Token![::]
                 | SyntaxKind::IDENT
+                | SyntaxKind::SELF_TYPE
                 | SyntaxKind::LEFT_BRACKET
                 | SyntaxKind::RIGHT_BRACKET
                 | SyntaxKind::WHITESPACE

@@ -61,6 +61,9 @@ impl LowerFunction<'_> {
                 kind: lume_tir::PatternKind::Wildcard,
                 location: pattern.location,
             }),
+            lume_hir::PatternKind::Missing => {
+                unreachable!()
+            }
         }
     }
 }
