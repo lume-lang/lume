@@ -8,7 +8,7 @@ impl LoweringContext<'_> {
         match ty {
             lume_ast::Type::NamedType(t) => self.named_type(t),
             lume_ast::Type::ArrayType(t) => self.array_type(t),
-            lume_ast::Type::SelfType(t) => self.self_type(self.location(t.location())),
+            lume_ast::Type::SelfType(t) => self.alloc_self_type(self.location(t.location())),
         }
     }
 
@@ -27,7 +27,7 @@ impl LoweringContext<'_> {
         let id = if let Some(path) = expr.path()
             && !path.has_root()
         {
-            self.existing_type_id_or_new(path.as_text())
+            self.existing_type_id_or_new(path.as_text().trim())
         } else {
             // ...otherwise, just generate a new ID.
             lume_hir::TypeId::from(self.next_node_id())
@@ -70,7 +70,7 @@ impl LoweringContext<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(crate) fn self_type(&mut self, location: Location) -> lume_hir::Type {
+    pub(crate) fn alloc_self_type(&mut self, location: Location) -> lume_hir::Type {
         let id = self.next_node_id();
         let name = if let Some(ty) = &self.self_type {
             ty.clone()
