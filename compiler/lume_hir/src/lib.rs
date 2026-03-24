@@ -278,6 +278,16 @@ impl PathSegment {
         }
     }
 
+    /// Creates a new callable segment, with the given name.
+    pub fn variant(identifier: impl Into<Identifier>) -> Self {
+        let identifier = identifier.into();
+
+        Self::Variant {
+            location: identifier.location,
+            name: identifier,
+        }
+    }
+
     /// Gets the name of the path segment.
     pub fn name(&self) -> &Identifier {
         static EMPTY: LazyLock<Identifier> = LazyLock::new(|| Identifier {

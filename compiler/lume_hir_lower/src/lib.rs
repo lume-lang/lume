@@ -1,4 +1,5 @@
 pub(crate) mod attr;
+pub(crate) mod desugar;
 pub(crate) mod errors;
 pub(crate) mod expr;
 pub(crate) mod generics;
