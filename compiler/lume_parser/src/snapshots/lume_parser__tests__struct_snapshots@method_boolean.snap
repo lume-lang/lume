@@ -1,0 +1,43 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(Target :: Item,\n\"\n        impl Foo {\n            fn empty?() -> Boolean { }\n        }\")"
+---
+SOURCE_FILE@0..68
+  WHITESPACE@0..9 "\n        "
+  IMPL@9..68
+    IMPL_KW@9..13 "impl"
+    WHITESPACE@13..14 " "
+    NAMED_TYPE@14..18
+      PATH@14..18
+        PATH_TYPE@14..18
+          NAME@14..17
+            IDENT@14..17 "Foo"
+          WHITESPACE@17..18 " "
+    LEFT_BRACE@18..19 "{"
+    WHITESPACE@19..32 "\n            "
+    METHOD@32..58
+      SIG@32..55
+        FN_KW@32..34 "fn"
+        WHITESPACE@34..35 " "
+        NAME@35..41
+          IDENT@35..40 "empty"
+          QUESTION@40..41 "?"
+        PARAM_LIST@41..43
+          LEFT_PAREN@41..42 "("
+          RIGHT_PAREN@42..43 ")"
+        WHITESPACE@43..44 " "
+        RETURN_TYPE@44..55
+          ARROW@44..46 "->"
+          WHITESPACE@46..47 " "
+          NAMED_TYPE@47..55
+            PATH@47..55
+              PATH_TYPE@47..55
+                NAME@47..54
+                  IDENT@47..54 "Boolean"
+                WHITESPACE@54..55 " "
+      BLOCK@55..58
+        LEFT_BRACE@55..56 "{"
+        WHITESPACE@56..57 " "
+        RIGHT_BRACE@57..58 "}"
+    WHITESPACE@58..67 "\n        "
+    RIGHT_BRACE@67..68 "}"

@@ -95,7 +95,7 @@ impl Parser {
         self.consume(Token![fn]);
         let is_external = self.check(Token![external]);
 
-        self.parse_ident();
+        self.parse_callable_ident();
 
         self.parse_type_parameters();
         self.parse_parameters();

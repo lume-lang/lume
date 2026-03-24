@@ -363,14 +363,13 @@ impl Parser {
     /// preceded by some identifier.
     fn parse_member(&mut self, c: Checkpoint) -> SyntaxKind {
         self.consume(Token![.]);
-        self.parse_ident();
 
-        let is_method_call = self.peek(SyntaxKind::LEFT_PAREN);
+        let is_method_call = self.peek_at(1, SyntaxKind::LEFT_PAREN) || self.peek_at(1, Token![?]);
 
-        let is_generic_method_call = if self.peek(Token![<])
-            && let SyntaxKind::IDENT = self.token_at(1)
+        let is_generic_method_call = if self.peek_at(1, Token![<])
+            && let SyntaxKind::IDENT = self.token_at(2)
             && self
-                .content_at(self.span_at(1))
+                .content_at(self.span_at(2))
                 .starts_with(|c: char| c.is_ascii_uppercase())
         {
             true
@@ -381,9 +380,12 @@ impl Parser {
         if is_method_call || is_generic_method_call {
             tracing::trace!("member expr is method invocation");
 
+            self.parse_callable_ident();
+
             return self.parse_instance_call(c);
         }
 
+        self.parse_ident();
         self.complete_node(SyntaxKind::MEMBER_EXPR, c);
 
         // If there is yet another dot, it's part of a longer expression.

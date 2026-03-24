@@ -476,6 +476,33 @@ impl Parser {
         self.finish_node();
     }
 
+    /// Parses the next token as a callable name.
+    fn parse_callable_ident(&mut self) {
+        self.start_node(SyntaxKind::NAME);
+
+        match self.token() {
+            // Actual identifiers are obviously allowed, so they pass through.
+            SyntaxKind::IDENT => {
+                self.node_token(SyntaxKind::IDENT, self.span());
+                self.skip();
+            }
+
+            // Keywords are also allowed, so reserved keywords can be used as identifiers.
+            ident if ident.is_keyword() => {
+                self.node_token(SyntaxKind::IDENT, self.span());
+                self.skip();
+            }
+
+            _ => {
+                self.error_and_skip("expected identifier");
+            }
+        }
+
+        let _ = self.check(Token![?]);
+
+        self.finish_node();
+    }
+
     /// Reads the current documentation comment into the parser's state, if any
     /// is present.
     #[tracing::instrument(level = "TRACE", skip_all)]

@@ -1,0 +1,19 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(Target :: Item, \"fn empty?() {}\")"
+---
+SOURCE_FILE@0..14
+  FN@0..14
+    SIG@0..11
+      FN_KW@0..2 "fn"
+      WHITESPACE@2..3 " "
+      NAME@3..9
+        IDENT@3..8 "empty"
+        QUESTION@8..9 "?"
+      PARAM_LIST@9..11
+        LEFT_PAREN@9..10 "("
+        RIGHT_PAREN@10..11 ")"
+    WHITESPACE@11..12 " "
+    BLOCK@12..14
+      LEFT_BRACE@12..13 "{"
+      RIGHT_BRACE@13..14 "}"
