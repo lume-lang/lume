@@ -38,7 +38,7 @@ Map {
                             location: generic_function_constrained_generic.lm:11:18,
                         },
                     ],
-                    location: generic_function_constrained_generic.lm:8:9,
+                    location: generic_function_constrained_generic.lm:8:18,
                 },
             ],
             return_type: Type {
@@ -50,11 +50,11 @@ Map {
                             location: generic_function_constrained_generic.lm:25:29,
                         },
                         bound_types: [],
-                        location: generic_function_constrained_generic.lm:25:29,
+                        location: generic_function_constrained_generic.lm:25:30,
                     },
-                    location: generic_function_constrained_generic.lm:25:29,
+                    location: generic_function_constrained_generic.lm:25:30,
                 },
-                location: generic_function_constrained_generic.lm:25:29,
+                location: generic_function_constrained_generic.lm:25:30,
             },
             block: Block {
                 statements: [],

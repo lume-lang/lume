@@ -30,7 +30,7 @@ Map {
                         location: doc_comments_enum_case.lm:45:48,
                     },
                     parameters: [],
-                    location: doc_comments_enum_case.lm:45:48,
+                    location: doc_comments_enum_case.lm:15:48,
                 },
             ],
             location: doc_comments_enum_case.lm:0:50,

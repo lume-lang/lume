@@ -53,18 +53,41 @@ Map {
                             location: use_trait_methods.lm:10:15,
                         },
                         bound_types: [],
-                        location: use_trait_methods.lm:10:15,
+                        location: use_trait_methods.lm:10:16,
                     },
-                    location: use_trait_methods.lm:10:15,
+                    location: use_trait_methods.lm:10:16,
                 },
                 self_type: false,
-                location: use_trait_methods.lm:10:15,
+                location: use_trait_methods.lm:10:16,
             },
             methods: [
                 TraitMethodImplementation {
-                    name: Identifier {
-                        name: "to_string",
-                        location: use_trait_methods.lm:25:34,
+                    name: Path {
+                        root: [
+                            Namespace {
+                                name: Identifier {
+                                    name: "std",
+                                    location: <internal>:0:0,
+                                },
+                            },
+                            Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: use_trait_methods.lm:10:15,
+                                },
+                                bound_types: [],
+                                location: use_trait_methods.lm:10:16,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "to_string",
+                                location: use_trait_methods.lm:25:34,
+                            },
+                            bound_types: [],
+                            location: use_trait_methods.lm:25:34,
+                        },
+                        location: use_trait_methods.lm:10:16,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -84,11 +107,11 @@ Map {
                                     location: use_trait_methods.lm:40:46,
                                 },
                                 bound_types: [],
-                                location: use_trait_methods.lm:40:46,
+                                location: use_trait_methods.lm:40:47,
                             },
-                            location: use_trait_methods.lm:40:46,
+                            location: use_trait_methods.lm:40:47,
                         },
-                        location: use_trait_methods.lm:40:46,
+                        location: use_trait_methods.lm:40:47,
                     },
                     block: Block {
                         statements: [],
@@ -97,9 +120,32 @@ Map {
                     location: use_trait_methods.lm:22:49,
                 },
                 TraitMethodImplementation {
-                    name: Identifier {
-                        name: "to_int",
-                        location: use_trait_methods.lm:58:64,
+                    name: Path {
+                        root: [
+                            Namespace {
+                                name: Identifier {
+                                    name: "std",
+                                    location: <internal>:0:0,
+                                },
+                            },
+                            Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: use_trait_methods.lm:10:15,
+                                },
+                                bound_types: [],
+                                location: use_trait_methods.lm:10:16,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "to_int",
+                                location: use_trait_methods.lm:58:64,
+                            },
+                            bound_types: [],
+                            location: use_trait_methods.lm:58:64,
+                        },
+                        location: use_trait_methods.lm:10:16,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -119,11 +165,11 @@ Map {
                                     location: use_trait_methods.lm:70:75,
                                 },
                                 bound_types: [],
-                                location: use_trait_methods.lm:70:75,
+                                location: use_trait_methods.lm:70:76,
                             },
-                            location: use_trait_methods.lm:70:75,
+                            location: use_trait_methods.lm:70:76,
                         },
-                        location: use_trait_methods.lm:70:75,
+                        location: use_trait_methods.lm:70:76,
                     },
                     block: Block {
                         statements: [],

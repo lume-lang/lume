@@ -105,7 +105,7 @@ Map {
                                                     },
                                                     location: switch_variant.lm:51:55,
                                                 },
-                                                location: switch_variant.lm:51:55,
+                                                location: switch_variant.lm:34:55,
                                             },
                                             fields: [
                                                 Pattern {
@@ -119,9 +119,9 @@ Map {
                                                     location: switch_variant.lm:56:57,
                                                 },
                                             ],
-                                            location: switch_variant.lm:51:58,
+                                            location: switch_variant.lm:34:58,
                                         },
-                                        location: switch_variant.lm:51:58,
+                                        location: switch_variant.lm:34:58,
                                     },
                                     branch: Variable {
                                         name: Identifier {
@@ -131,7 +131,7 @@ Map {
                                         reference: Pattern(!16755538266343769544),
                                         location: switch_variant.lm:62:63,
                                     },
-                                    location: switch_variant.lm:51:63,
+                                    location: switch_variant.lm:34:63,
                                 },
                                 SwitchCase {
                                     pattern: Pattern {
@@ -186,14 +186,14 @@ Map {
                                                         name: "None",
                                                         location: switch_variant.lm:90:94,
                                                     },
-                                                    location: switch_variant.lm:90:94,
+                                                    location: switch_variant.lm:90:95,
                                                 },
-                                                location: switch_variant.lm:90:94,
+                                                location: switch_variant.lm:73:95,
                                             },
                                             fields: [],
-                                            location: switch_variant.lm:90:94,
+                                            location: switch_variant.lm:73:95,
                                         },
-                                        location: switch_variant.lm:90:94,
+                                        location: switch_variant.lm:73:95,
                                     },
                                     branch: Literal {
                                         kind: IntLiteral {
@@ -202,12 +202,12 @@ Map {
                                         },
                                         location: switch_variant.lm:98:99,
                                     },
-                                    location: switch_variant.lm:90:99,
+                                    location: switch_variant.lm:73:99,
                                 },
                             ],
                             location: switch_variant.lm:15:106,
                         },
-                        location: switch_variant.lm:15:106,
+                        location: switch_variant.lm:15:107,
                     },
                 ],
                 location: switch_variant.lm:9:108,

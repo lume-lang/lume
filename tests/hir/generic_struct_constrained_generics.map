@@ -34,7 +34,7 @@ Map {
                                 location: generic_struct_constrained_generics.lm:12:14,
                             },
                             self_type: false,
-                            location: generic_struct_constrained_generics.lm:12:14,
+                            location: generic_struct_constrained_generics.lm:12:23,
                         },
                         Type {
                             id: TypeId(
@@ -43,7 +43,7 @@ Map {
                                         10850729242277675618,
                                     ),
                                     index: Idx(
-                                        259,
+                                        260,
                                     ),
                                 },
                             ),
@@ -60,7 +60,7 @@ Map {
                                 location: generic_struct_constrained_generics.lm:25:27,
                             },
                             self_type: false,
-                            location: generic_struct_constrained_generics.lm:25:27,
+                            location: generic_struct_constrained_generics.lm:25:36,
                         },
                     ],
                     location: generic_struct_constrained_generics.lm:7:11,
@@ -91,7 +91,7 @@ Map {
                             location: generic_struct_constrained_generics.lm:16:23,
                         },
                     ],
-                    location: generic_struct_constrained_generics.lm:12:14,
+                    location: generic_struct_constrained_generics.lm:12:23,
                 },
                 TypeParameter {
                     name: Identifier {
@@ -115,7 +115,7 @@ Map {
                             location: generic_struct_constrained_generics.lm:29:36,
                         },
                     ],
-                    location: generic_struct_constrained_generics.lm:25:27,
+                    location: generic_struct_constrained_generics.lm:25:36,
                 },
             ],
             location: generic_struct_constrained_generics.lm:0:40,

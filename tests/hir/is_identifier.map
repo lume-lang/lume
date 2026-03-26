@@ -58,7 +58,7 @@ Map {
                             },
                             location: is_identifier.lm:17:22,
                         },
-                        location: is_identifier.lm:12:23,
+                        location: is_identifier.lm:12:22,
                     },
                 ],
                 location: is_identifier.lm:9:25,

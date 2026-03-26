@@ -81,9 +81,9 @@ Map {
                                     location: trait_method_impl.lm:34:37,
                                 },
                             },
-                            location: trait_method_impl.lm:34:37,
+                            location: trait_method_impl.lm:34:38,
                         },
-                        location: trait_method_impl.lm:34:37,
+                        location: trait_method_impl.lm:34:38,
                     },
                     block: Block {
                         statements: [],

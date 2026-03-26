@@ -111,7 +111,7 @@ Map {
                                                     },
                                                     location: switch_variant_absolute.lm:56:60,
                                                 },
-                                                location: switch_variant_absolute.lm:56:60,
+                                                location: switch_variant_absolute.lm:34:60,
                                             },
                                             fields: [
                                                 Pattern {
@@ -125,9 +125,9 @@ Map {
                                                     location: switch_variant_absolute.lm:61:62,
                                                 },
                                             ],
-                                            location: switch_variant_absolute.lm:56:63,
+                                            location: switch_variant_absolute.lm:34:63,
                                         },
-                                        location: switch_variant_absolute.lm:56:63,
+                                        location: switch_variant_absolute.lm:34:63,
                                     },
                                     branch: Variable {
                                         name: Identifier {
@@ -137,7 +137,7 @@ Map {
                                         reference: Pattern(!16755538266343769544),
                                         location: switch_variant_absolute.lm:67:68,
                                     },
-                                    location: switch_variant_absolute.lm:56:68,
+                                    location: switch_variant_absolute.lm:34:68,
                                 },
                                 SwitchCase {
                                     pattern: Pattern {
@@ -198,14 +198,14 @@ Map {
                                                         name: "None",
                                                         location: switch_variant_absolute.lm:100:104,
                                                     },
-                                                    location: switch_variant_absolute.lm:100:104,
+                                                    location: switch_variant_absolute.lm:100:105,
                                                 },
-                                                location: switch_variant_absolute.lm:100:104,
+                                                location: switch_variant_absolute.lm:78:105,
                                             },
                                             fields: [],
-                                            location: switch_variant_absolute.lm:100:104,
+                                            location: switch_variant_absolute.lm:78:105,
                                         },
-                                        location: switch_variant_absolute.lm:100:104,
+                                        location: switch_variant_absolute.lm:78:105,
                                     },
                                     branch: Literal {
                                         kind: IntLiteral {
@@ -214,12 +214,12 @@ Map {
                                         },
                                         location: switch_variant_absolute.lm:108:109,
                                     },
-                                    location: switch_variant_absolute.lm:100:109,
+                                    location: switch_variant_absolute.lm:78:109,
                                 },
                             ],
                             location: switch_variant_absolute.lm:15:116,
                         },
-                        location: switch_variant_absolute.lm:15:116,
+                        location: switch_variant_absolute.lm:15:117,
                     },
                 ],
                 location: switch_variant_absolute.lm:9:118,

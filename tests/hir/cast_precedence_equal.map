@@ -57,7 +57,7 @@ Map {
                                                 10850729242277675618,
                                             ),
                                             index: Idx(
-                                                263,
+                                                262,
                                             ),
                                         },
                                     ),
@@ -69,12 +69,12 @@ Map {
                                                 location: cast_precedence_equal.lm:17:20,
                                             },
                                         },
-                                        location: cast_precedence_equal.lm:17:20,
+                                        location: cast_precedence_equal.lm:17:21,
                                     },
                                     self_type: false,
-                                    location: cast_precedence_equal.lm:17:20,
+                                    location: cast_precedence_equal.lm:17:21,
                                 },
-                                location: cast_precedence_equal.lm:12:20,
+                                location: cast_precedence_equal.lm:12:21,
                             },
                             rhs: Literal {
                                 kind: IntLiteral {

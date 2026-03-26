@@ -54,7 +54,7 @@ Map {
                                         statements: [],
                                         location: conditional_if_else_if_else_empty.lm:20:23,
                                     },
-                                    location: conditional_if_else_if_else_empty.lm:15:23,
+                                    location: conditional_if_else_if_else_empty.lm:12:23,
                                 },
                                 Condition {
                                     condition: Literal {
@@ -67,7 +67,7 @@ Map {
                                         statements: [],
                                         location: conditional_if_else_if_else_empty.lm:38:41,
                                     },
-                                    location: conditional_if_else_if_else_empty.lm:32:41,
+                                    location: conditional_if_else_if_else_empty.lm:24:41,
                                 },
                                 Condition {
                                     condition: None,
@@ -80,7 +80,7 @@ Map {
                             ],
                             location: conditional_if_else_if_else_empty.lm:12:50,
                         },
-                        location: conditional_if_else_if_else_empty.lm:12:50,
+                        location: conditional_if_else_if_else_empty.lm:12:51,
                     },
                 ],
                 location: conditional_if_else_if_else_empty.lm:9:52,

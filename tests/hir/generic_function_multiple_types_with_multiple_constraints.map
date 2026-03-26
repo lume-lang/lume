@@ -31,11 +31,11 @@ Map {
                                         location: generic_function_multiple_types_with_multiple_constraints.lm:12:19,
                                     },
                                     bound_types: [],
-                                    location: generic_function_multiple_types_with_multiple_constraints.lm:12:19,
+                                    location: generic_function_multiple_types_with_multiple_constraints.lm:12:20,
                                 },
-                                location: generic_function_multiple_types_with_multiple_constraints.lm:12:19,
+                                location: generic_function_multiple_types_with_multiple_constraints.lm:12:20,
                             },
-                            location: generic_function_multiple_types_with_multiple_constraints.lm:12:19,
+                            location: generic_function_multiple_types_with_multiple_constraints.lm:12:20,
                         },
                         Type {
                             name: Path {
@@ -53,7 +53,7 @@ Map {
                             location: generic_function_multiple_types_with_multiple_constraints.lm:22:30,
                         },
                     ],
-                    location: generic_function_multiple_types_with_multiple_constraints.lm:8:10,
+                    location: generic_function_multiple_types_with_multiple_constraints.lm:8:30,
                 },
                 TypeParameter {
                     name: Identifier {
@@ -70,11 +70,11 @@ Map {
                                         location: generic_function_multiple_types_with_multiple_constraints.lm:36:43,
                                     },
                                     bound_types: [],
-                                    location: generic_function_multiple_types_with_multiple_constraints.lm:36:43,
+                                    location: generic_function_multiple_types_with_multiple_constraints.lm:36:44,
                                 },
-                                location: generic_function_multiple_types_with_multiple_constraints.lm:36:43,
+                                location: generic_function_multiple_types_with_multiple_constraints.lm:36:44,
                             },
-                            location: generic_function_multiple_types_with_multiple_constraints.lm:36:43,
+                            location: generic_function_multiple_types_with_multiple_constraints.lm:36:44,
                         },
                         Type {
                             name: Path {
@@ -92,7 +92,7 @@ Map {
                             location: generic_function_multiple_types_with_multiple_constraints.lm:46:54,
                         },
                     ],
-                    location: generic_function_multiple_types_with_multiple_constraints.lm:32:34,
+                    location: generic_function_multiple_types_with_multiple_constraints.lm:32:54,
                 },
             ],
             return_type: Type {
@@ -104,11 +104,11 @@ Map {
                             location: generic_function_multiple_types_with_multiple_constraints.lm:61:65,
                         },
                         bound_types: [],
-                        location: generic_function_multiple_types_with_multiple_constraints.lm:61:65,
+                        location: generic_function_multiple_types_with_multiple_constraints.lm:61:66,
                     },
-                    location: generic_function_multiple_types_with_multiple_constraints.lm:61:65,
+                    location: generic_function_multiple_types_with_multiple_constraints.lm:61:66,
                 },
-                location: generic_function_multiple_types_with_multiple_constraints.lm:61:65,
+                location: generic_function_multiple_types_with_multiple_constraints.lm:61:66,
             },
             block: Block {
                 statements: [],

@@ -25,11 +25,11 @@ Map {
                             location: function_definition_statement.lm:13:17,
                         },
                         bound_types: [],
-                        location: function_definition_statement.lm:13:17,
+                        location: function_definition_statement.lm:13:18,
                     },
-                    location: function_definition_statement.lm:13:17,
+                    location: function_definition_statement.lm:13:18,
                 },
-                location: function_definition_statement.lm:13:17,
+                location: function_definition_statement.lm:13:18,
             },
             block: Block {
                 statements: [

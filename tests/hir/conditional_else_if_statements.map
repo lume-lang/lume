@@ -67,7 +67,7 @@ Map {
                                         ],
                                         location: conditional_else_if_statements.lm:20:34,
                                     },
-                                    location: conditional_else_if_statements.lm:15:34,
+                                    location: conditional_else_if_statements.lm:12:34,
                                 },
                                 Condition {
                                     condition: Literal {
@@ -93,12 +93,12 @@ Map {
                                         ],
                                         location: conditional_else_if_statements.lm:49:63,
                                     },
-                                    location: conditional_else_if_statements.lm:43:63,
+                                    location: conditional_else_if_statements.lm:35:63,
                                 },
                             ],
                             location: conditional_else_if_statements.lm:12:63,
                         },
-                        location: conditional_else_if_statements.lm:12:63,
+                        location: conditional_else_if_statements.lm:12:64,
                     },
                 ],
                 location: conditional_else_if_statements.lm:9:65,

@@ -102,16 +102,60 @@ Map {
                         ],
                         location: use_trait_generic_type.lm:19:28,
                     },
-                    location: use_trait_generic_type.lm:19:28,
+                    location: use_trait_generic_type.lm:19:29,
                 },
                 self_type: false,
-                location: use_trait_generic_type.lm:19:28,
+                location: use_trait_generic_type.lm:19:29,
             },
             methods: [
                 TraitMethodImplementation {
-                    name: Identifier {
-                        name: "next",
-                        location: use_trait_generic_type.lm:38:42,
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "Vector",
+                                    location: use_trait_generic_type.lm:19:25,
+                                },
+                                bound_types: [
+                                    Type {
+                                        id: TypeId(
+                                            NodeId {
+                                                package: PackageId(
+                                                    10850729242277675618,
+                                                ),
+                                                index: Idx(
+                                                    261,
+                                                ),
+                                            },
+                                        ),
+                                        name: Path {
+                                            root: [],
+                                            name: Type {
+                                                name: Identifier {
+                                                    name: "T",
+                                                    location: use_trait_generic_type.lm:26:27,
+                                                },
+                                                bound_types: [],
+                                                location: use_trait_generic_type.lm:26:27,
+                                            },
+                                            location: use_trait_generic_type.lm:26:27,
+                                        },
+                                        self_type: false,
+                                        location: use_trait_generic_type.lm:26:27,
+                                    },
+                                ],
+                                location: use_trait_generic_type.lm:19:28,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "next",
+                                location: use_trait_generic_type.lm:38:42,
+                            },
+                            bound_types: [],
+                            location: use_trait_generic_type.lm:38:42,
+                        },
+                        location: use_trait_generic_type.lm:19:29,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -124,11 +168,11 @@ Map {
                                     location: use_trait_generic_type.lm:48:49,
                                 },
                                 bound_types: [],
-                                location: use_trait_generic_type.lm:48:49,
+                                location: use_trait_generic_type.lm:48:50,
                             },
-                            location: use_trait_generic_type.lm:48:49,
+                            location: use_trait_generic_type.lm:48:50,
                         },
-                        location: use_trait_generic_type.lm:48:49,
+                        location: use_trait_generic_type.lm:48:50,
                     },
                     block: Block {
                         statements: [],

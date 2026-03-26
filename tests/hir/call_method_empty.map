@@ -50,7 +50,7 @@ Map {
                                     location: call_method_empty.lm:22:26,
                                 },
                                 bound_types: [],
-                                location: call_method_empty.lm:22:26,
+                                location: call_method_empty.lm:20:28,
                             },
                             callee: Literal {
                                 kind: IntLiteral {
@@ -60,7 +60,7 @@ Map {
                                 location: call_method_empty.lm:20:21,
                             },
                             arguments: [],
-                            location: call_method_empty.lm:22:28,
+                            location: call_method_empty.lm:20:28,
                         },
                         location: call_method_empty.lm:12:29,
                     },

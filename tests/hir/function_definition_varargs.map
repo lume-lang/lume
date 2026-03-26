@@ -54,7 +54,7 @@ Map {
                         location: function_definition_varargs.lm:16:21,
                     },
                     vararg: true,
-                    location: function_definition_varargs.lm:10:21,
+                    location: function_definition_varargs.lm:7:21,
                 },
             ],
             type_parameters: [],
