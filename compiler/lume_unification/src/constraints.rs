@@ -209,9 +209,6 @@ impl Engine<'_, TyInferCtx> {
                 _ => unreachable!("bug!: invalid node type"),
             };
 
-            tracing::error!("expected_type => {}", self.ctx.name_of_type(&expected_type)?);
-            tracing::error!("value_type => {}", self.ctx.name_of_type(&value_type)?);
-
             self.canonicalize_type_variables(expected_type, value_type, type_parameter_id, type_variable);
         }
 
