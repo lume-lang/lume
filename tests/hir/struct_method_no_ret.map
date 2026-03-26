@@ -20,12 +20,12 @@ Map {
                             location: struct_method_no_ret.lm:5:8,
                         },
                         bound_types: [],
-                        location: struct_method_no_ret.lm:5:8,
+                        location: struct_method_no_ret.lm:5:9,
                     },
-                    location: struct_method_no_ret.lm:5:8,
+                    location: struct_method_no_ret.lm:5:9,
                 },
                 self_type: false,
-                location: struct_method_no_ret.lm:5:8,
+                location: struct_method_no_ret.lm:5:9,
             },
             methods: [
                 MethodDefinition {
@@ -38,7 +38,7 @@ Map {
                                     location: struct_method_no_ret.lm:5:8,
                                 },
                                 bound_types: [],
-                                location: struct_method_no_ret.lm:5:8,
+                                location: struct_method_no_ret.lm:5:9,
                             },
                         ],
                         name: Callable {
@@ -49,7 +49,7 @@ Map {
                             bound_types: [],
                             location: struct_method_no_ret.lm:18:21,
                         },
-                        location: struct_method_no_ret.lm:5:8,
+                        location: struct_method_no_ret.lm:5:9,
                     },
                     parameters: [],
                     type_parameters: [],

@@ -33,7 +33,7 @@ Map {
                     location: doc_comments_enum.lm:41:44,
                 },
             ],
-            location: doc_comments_enum.lm:26:46,
+            location: doc_comments_enum.lm:0:46,
         },
     ],
 }

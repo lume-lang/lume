@@ -61,7 +61,7 @@ Map {
                             },
                             location: is_literal.lm:17:18,
                         },
-                        location: is_literal.lm:12:19,
+                        location: is_literal.lm:12:18,
                     },
                 ],
                 location: is_literal.lm:9:21,

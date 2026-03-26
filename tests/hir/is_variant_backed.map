@@ -68,7 +68,7 @@ Map {
                                         },
                                         location: is_variant_backed.lm:22:23,
                                     },
-                                    location: is_variant_backed.lm:22:23,
+                                    location: is_variant_backed.lm:17:23,
                                 },
                                 fields: [
                                     Pattern {
@@ -92,11 +92,11 @@ Map {
                                         location: is_variant_backed.lm:27:28,
                                     },
                                 ],
-                                location: is_variant_backed.lm:22:29,
+                                location: is_variant_backed.lm:17:29,
                             },
-                            location: is_variant_backed.lm:22:29,
+                            location: is_variant_backed.lm:17:29,
                         },
-                        location: is_variant_backed.lm:12:30,
+                        location: is_variant_backed.lm:12:29,
                     },
                 ],
                 location: is_variant_backed.lm:9:32,

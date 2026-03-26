@@ -53,18 +53,41 @@ Map {
                             location: use_trait_priv_method.lm:9:14,
                         },
                         bound_types: [],
-                        location: use_trait_priv_method.lm:9:14,
+                        location: use_trait_priv_method.lm:9:15,
                     },
-                    location: use_trait_priv_method.lm:9:14,
+                    location: use_trait_priv_method.lm:9:15,
                 },
                 self_type: false,
-                location: use_trait_priv_method.lm:9:14,
+                location: use_trait_priv_method.lm:9:15,
             },
             methods: [
                 TraitMethodImplementation {
-                    name: Identifier {
-                        name: "add",
-                        location: use_trait_priv_method.lm:24:27,
+                    name: Path {
+                        root: [
+                            Namespace {
+                                name: Identifier {
+                                    name: "std",
+                                    location: <internal>:0:0,
+                                },
+                            },
+                            Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: use_trait_priv_method.lm:9:14,
+                                },
+                                bound_types: [],
+                                location: use_trait_priv_method.lm:9:15,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "add",
+                                location: use_trait_priv_method.lm:24:27,
+                            },
+                            bound_types: [],
+                            location: use_trait_priv_method.lm:24:27,
+                        },
+                        location: use_trait_priv_method.lm:9:15,
                     },
                     parameters: [
                         Parameter {
@@ -126,11 +149,11 @@ Map {
                                     location: use_trait_priv_method.lm:45:50,
                                 },
                                 bound_types: [],
-                                location: use_trait_priv_method.lm:45:50,
+                                location: use_trait_priv_method.lm:45:51,
                             },
-                            location: use_trait_priv_method.lm:45:50,
+                            location: use_trait_priv_method.lm:45:51,
                         },
-                        location: use_trait_priv_method.lm:45:50,
+                        location: use_trait_priv_method.lm:45:51,
                     },
                     block: Block {
                         statements: [],

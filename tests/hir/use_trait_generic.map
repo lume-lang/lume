@@ -87,18 +87,41 @@ Map {
                             location: use_trait_generic.lm:16:21,
                         },
                         bound_types: [],
-                        location: use_trait_generic.lm:16:21,
+                        location: use_trait_generic.lm:16:22,
                     },
-                    location: use_trait_generic.lm:16:21,
+                    location: use_trait_generic.lm:16:22,
                 },
                 self_type: false,
-                location: use_trait_generic.lm:16:21,
+                location: use_trait_generic.lm:16:22,
             },
             methods: [
                 TraitMethodImplementation {
-                    name: Identifier {
-                        name: "add",
-                        location: use_trait_generic.lm:31:34,
+                    name: Path {
+                        root: [
+                            Namespace {
+                                name: Identifier {
+                                    name: "std",
+                                    location: <internal>:0:0,
+                                },
+                            },
+                            Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: use_trait_generic.lm:16:21,
+                                },
+                                bound_types: [],
+                                location: use_trait_generic.lm:16:22,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "add",
+                                location: use_trait_generic.lm:31:34,
+                            },
+                            bound_types: [],
+                            location: use_trait_generic.lm:31:34,
+                        },
+                        location: use_trait_generic.lm:16:22,
                     },
                     parameters: [
                         Parameter {
@@ -160,11 +183,11 @@ Map {
                                     location: use_trait_generic.lm:52:57,
                                 },
                                 bound_types: [],
-                                location: use_trait_generic.lm:52:57,
+                                location: use_trait_generic.lm:52:58,
                             },
-                            location: use_trait_generic.lm:52:57,
+                            location: use_trait_generic.lm:52:58,
                         },
-                        location: use_trait_generic.lm:52:57,
+                        location: use_trait_generic.lm:52:58,
                     },
                     block: Block {
                         statements: [],

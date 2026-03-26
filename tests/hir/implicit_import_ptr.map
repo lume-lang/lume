@@ -68,9 +68,9 @@ Map {
                         ],
                         location: implicit_import_ptr.lm:12:26,
                     },
-                    location: implicit_import_ptr.lm:12:26,
+                    location: implicit_import_ptr.lm:12:27,
                 },
-                location: implicit_import_ptr.lm:12:26,
+                location: implicit_import_ptr.lm:12:27,
             },
             block: Block {
                 statements: [],

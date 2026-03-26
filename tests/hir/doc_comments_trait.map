@@ -16,7 +16,7 @@ Map {
             },
             methods: [],
             type_parameters: [],
-            location: doc_comments_trait.lm:26:39,
+            location: doc_comments_trait.lm:0:39,
         },
     ],
 }

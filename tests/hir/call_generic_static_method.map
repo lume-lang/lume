@@ -65,7 +65,7 @@ Map {
                                                             10850729242277675618,
                                                         ),
                                                         index: Idx(
-                                                            261,
+                                                            260,
                                                         ),
                                                     },
                                                 ),
@@ -96,7 +96,7 @@ Map {
                                     bound_types: [],
                                     location: call_generic_static_method.lm:30:34,
                                 },
-                                location: call_generic_static_method.lm:30:34,
+                                location: call_generic_static_method.lm:20:34,
                             },
                             arguments: [
                                 Literal {
@@ -114,7 +114,7 @@ Map {
                                     location: call_generic_static_method.lm:38:39,
                                 },
                             ],
-                            location: call_generic_static_method.lm:30:40,
+                            location: call_generic_static_method.lm:20:40,
                         },
                         location: call_generic_static_method.lm:12:41,
                     },

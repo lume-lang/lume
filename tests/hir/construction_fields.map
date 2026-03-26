@@ -49,9 +49,9 @@ Map {
                                     location: construction_fields.lm:12:15,
                                 },
                                 bound_types: [],
-                                location: construction_fields.lm:12:15,
+                                location: construction_fields.lm:12:16,
                             },
-                            location: construction_fields.lm:12:15,
+                            location: construction_fields.lm:12:16,
                         },
                         fields: [
                             ConstructorField {
@@ -77,7 +77,7 @@ Map {
                                 location: construction_fields.lm:26:32,
                             },
                         ],
-                        location: construction_fields.lm:12:35,
+                        location: construction_fields.lm:12:34,
                     },
                 ],
                 location: construction_fields.lm:9:37,

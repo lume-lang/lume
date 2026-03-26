@@ -47,12 +47,12 @@ Map {
                                     location: struct_pub_field.lm:24:29,
                                 },
                                 bound_types: [],
-                                location: struct_pub_field.lm:24:29,
+                                location: struct_pub_field.lm:24:30,
                             },
-                            location: struct_pub_field.lm:24:29,
+                            location: struct_pub_field.lm:24:30,
                         },
                         self_type: false,
-                        location: struct_pub_field.lm:24:29,
+                        location: struct_pub_field.lm:24:30,
                     },
                     default_value: Literal {
                         kind: IntLiteral {

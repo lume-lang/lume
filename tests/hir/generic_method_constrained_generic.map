@@ -20,12 +20,12 @@ Map {
                             location: generic_method_constrained_generic.lm:5:9,
                         },
                         bound_types: [],
-                        location: generic_method_constrained_generic.lm:5:9,
+                        location: generic_method_constrained_generic.lm:5:10,
                     },
-                    location: generic_method_constrained_generic.lm:5:9,
+                    location: generic_method_constrained_generic.lm:5:10,
                 },
                 self_type: false,
-                location: generic_method_constrained_generic.lm:5:9,
+                location: generic_method_constrained_generic.lm:5:10,
             },
             methods: [
                 MethodDefinition {
@@ -38,7 +38,7 @@ Map {
                                     location: generic_method_constrained_generic.lm:5:9,
                                 },
                                 bound_types: [],
-                                location: generic_method_constrained_generic.lm:5:9,
+                                location: generic_method_constrained_generic.lm:5:10,
                             },
                         ],
                         name: Callable {
@@ -49,7 +49,7 @@ Map {
                             bound_types: [],
                             location: generic_method_constrained_generic.lm:15:19,
                         },
-                        location: generic_method_constrained_generic.lm:5:9,
+                        location: generic_method_constrained_generic.lm:5:10,
                     },
                     parameters: [],
                     type_parameters: [
@@ -75,7 +75,7 @@ Map {
                                     location: generic_method_constrained_generic.lm:23:30,
                                 },
                             ],
-                            location: generic_method_constrained_generic.lm:20:21,
+                            location: generic_method_constrained_generic.lm:20:30,
                         },
                     ],
                     return_type: Type {
@@ -87,11 +87,11 @@ Map {
                                     location: generic_method_constrained_generic.lm:37:41,
                                 },
                                 bound_types: [],
-                                location: generic_method_constrained_generic.lm:37:41,
+                                location: generic_method_constrained_generic.lm:37:42,
                             },
-                            location: generic_method_constrained_generic.lm:37:41,
+                            location: generic_method_constrained_generic.lm:37:42,
                         },
-                        location: generic_method_constrained_generic.lm:37:41,
+                        location: generic_method_constrained_generic.lm:37:42,
                     },
                     block: Block {
                         statements: [],

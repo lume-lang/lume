@@ -20,12 +20,12 @@ Map {
                             location: generic_method_single_generic.lm:5:9,
                         },
                         bound_types: [],
-                        location: generic_method_single_generic.lm:5:9,
+                        location: generic_method_single_generic.lm:5:10,
                     },
-                    location: generic_method_single_generic.lm:5:9,
+                    location: generic_method_single_generic.lm:5:10,
                 },
                 self_type: false,
-                location: generic_method_single_generic.lm:5:9,
+                location: generic_method_single_generic.lm:5:10,
             },
             methods: [
                 MethodDefinition {
@@ -38,7 +38,7 @@ Map {
                                     location: generic_method_single_generic.lm:5:9,
                                 },
                                 bound_types: [],
-                                location: generic_method_single_generic.lm:5:9,
+                                location: generic_method_single_generic.lm:5:10,
                             },
                         ],
                         name: Callable {
@@ -49,7 +49,7 @@ Map {
                             bound_types: [],
                             location: generic_method_single_generic.lm:15:19,
                         },
-                        location: generic_method_single_generic.lm:5:9,
+                        location: generic_method_single_generic.lm:5:10,
                     },
                     parameters: [],
                     type_parameters: [
@@ -71,11 +71,11 @@ Map {
                                     location: generic_method_single_generic.lm:28:32,
                                 },
                                 bound_types: [],
-                                location: generic_method_single_generic.lm:28:32,
+                                location: generic_method_single_generic.lm:28:33,
                             },
-                            location: generic_method_single_generic.lm:28:32,
+                            location: generic_method_single_generic.lm:28:33,
                         },
-                        location: generic_method_single_generic.lm:28:32,
+                        location: generic_method_single_generic.lm:28:33,
                     },
                     block: Block {
                         statements: [],

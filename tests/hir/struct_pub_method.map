@@ -20,12 +20,12 @@ Map {
                             location: struct_pub_method.lm:5:8,
                         },
                         bound_types: [],
-                        location: struct_pub_method.lm:5:8,
+                        location: struct_pub_method.lm:5:9,
                     },
-                    location: struct_pub_method.lm:5:8,
+                    location: struct_pub_method.lm:5:9,
                 },
                 self_type: false,
-                location: struct_pub_method.lm:5:8,
+                location: struct_pub_method.lm:5:9,
             },
             methods: [
                 MethodDefinition {
@@ -38,7 +38,7 @@ Map {
                                     location: struct_pub_method.lm:5:8,
                                 },
                                 bound_types: [],
-                                location: struct_pub_method.lm:5:8,
+                                location: struct_pub_method.lm:5:9,
                             },
                         ],
                         name: Callable {
@@ -49,7 +49,7 @@ Map {
                             bound_types: [],
                             location: struct_pub_method.lm:22:25,
                         },
-                        location: struct_pub_method.lm:5:8,
+                        location: struct_pub_method.lm:5:9,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -69,11 +69,11 @@ Map {
                                     location: struct_pub_method.lm:31:36,
                                 },
                                 bound_types: [],
-                                location: struct_pub_method.lm:31:36,
+                                location: struct_pub_method.lm:31:37,
                             },
-                            location: struct_pub_method.lm:31:36,
+                            location: struct_pub_method.lm:31:37,
                         },
-                        location: struct_pub_method.lm:31:36,
+                        location: struct_pub_method.lm:31:37,
                     },
                     block: Block {
                         statements: [

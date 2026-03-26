@@ -49,9 +49,9 @@ Map {
                                     location: construction_trailing_comma.lm:12:15,
                                 },
                                 bound_types: [],
-                                location: construction_trailing_comma.lm:12:15,
+                                location: construction_trailing_comma.lm:12:16,
                             },
-                            location: construction_trailing_comma.lm:12:15,
+                            location: construction_trailing_comma.lm:12:16,
                         },
                         fields: [
                             ConstructorField {
@@ -66,7 +66,7 @@ Map {
                                 location: construction_trailing_comma.lm:18:24,
                             },
                         ],
-                        location: construction_trailing_comma.lm:12:28,
+                        location: construction_trailing_comma.lm:12:27,
                     },
                 ],
                 location: construction_trailing_comma.lm:9:30,

@@ -54,7 +54,7 @@ Map {
                             },
                             location: is_wildcard.lm:17:19,
                         },
-                        location: is_wildcard.lm:12:20,
+                        location: is_wildcard.lm:12:19,
                     },
                 ],
                 location: is_wildcard.lm:9:22,

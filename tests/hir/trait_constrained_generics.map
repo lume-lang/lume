@@ -34,7 +34,7 @@ Map {
                                 location: trait_constrained_generics.lm:10:12,
                             },
                             self_type: false,
-                            location: trait_constrained_generics.lm:10:12,
+                            location: trait_constrained_generics.lm:10:21,
                         },
                         Type {
                             id: TypeId(
@@ -60,7 +60,7 @@ Map {
                                 location: trait_constrained_generics.lm:23:25,
                             },
                             self_type: false,
-                            location: trait_constrained_generics.lm:23:25,
+                            location: trait_constrained_generics.lm:23:34,
                         },
                     ],
                     location: trait_constrained_generics.lm:6:9,
@@ -91,7 +91,7 @@ Map {
                             location: trait_constrained_generics.lm:14:21,
                         },
                     ],
-                    location: trait_constrained_generics.lm:10:12,
+                    location: trait_constrained_generics.lm:10:21,
                 },
                 TypeParameter {
                     name: Identifier {
@@ -115,7 +115,7 @@ Map {
                             location: trait_constrained_generics.lm:27:34,
                         },
                     ],
-                    location: trait_constrained_generics.lm:23:25,
+                    location: trait_constrained_generics.lm:23:34,
                 },
             ],
             location: trait_constrained_generics.lm:0:38,
