@@ -135,6 +135,13 @@ impl LoweringContext<'_> {
                     hir.alloc_variable_decl(VAR_ITERATOR_NAME, var_value, None, location)
                 };
 
+                // `std::iter::Iterator::next($iter);`
+                let switch_operand = {
+                    let iter_ref = hir.alloc_variable_ref(VAR_ITERATOR_NAME, location);
+
+                    hir.alloc_static_call(ITERATOR_NEXT_PATH.clone(), vec![iter_ref], location)
+                };
+
                 // `std::Optional::Some(<pattern>) => <body>`
                 let some_case = {
                     let some_pattern = {
@@ -171,17 +178,10 @@ impl LoweringContext<'_> {
                     }
                 };
 
-                let switch_expr = {
-                    let iter_ref = hir.alloc_variable_ref(VAR_ITERATOR_NAME, location);
-
-                    // `std::iter::Iterator::next($iter);`
-                    let iter_next_call = hir.alloc_static_call(ITERATOR_NEXT_PATH.clone(), vec![iter_ref], location);
-
-                    hir.alloc_switch_expr(iter_next_call, vec![some_case, none_case], location)
-                };
+                let switch_expr = { hir.alloc_switch_expr(switch_operand, vec![some_case, none_case], location) };
 
                 let loop_stmt = {
-                    let switch_stmt = hir.alloc_expr_stmt(switch_expr);
+                    let switch_stmt = hir.alloc_final_stmt(switch_expr);
 
                     let loop_body = lume_hir::Block {
                         id: hir.next_node_id(),
@@ -197,6 +197,6 @@ impl LoweringContext<'_> {
             location,
         );
 
-        self.alloc_expr_stmt(scope_id)
+        self.alloc_final_stmt(scope_id)
     }
 }

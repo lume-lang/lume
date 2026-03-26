@@ -33,6 +33,21 @@ impl LoweringContext<'_> {
         id
     }
 
+    pub(crate) fn alloc_final_stmt(&mut self, expr: NodeId) -> NodeId {
+        let id = self.next_node_id();
+        let location = self.map.expect_node(expr).unwrap().location();
+
+        self.alloc_stmt(lume_hir::Statement {
+            id,
+            location,
+            kind: lume_hir::StatementKind::Final(lume_hir::Final {
+                id,
+                value: expr,
+                location,
+            }),
+        })
+    }
+
     pub(crate) fn alloc_expr_stmt(&mut self, expr: NodeId) -> NodeId {
         let id = self.next_node_id();
         let location = self.map.expect_node(expr).unwrap().location();
