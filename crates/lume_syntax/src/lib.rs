@@ -114,6 +114,10 @@ impl SyntaxError {
         Self(message.into(), TextSpan(offset, offset))
     }
 
+    pub fn message(&self) -> &str {
+        &self.0
+    }
+
     pub fn span(&self) -> TextSpan {
         self.1
     }

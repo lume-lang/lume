@@ -63,6 +63,18 @@ pub fn lower_to_hir(package: &Package, dcx: DiagCtxHandle) -> Result<Map> {
         let parser = lume_parser::Parser::from_tokens(source_file.clone(), tokens.into_iter());
         let syntax_tree = parser.parse(lume_parser::Target::Item);
 
+        for error in syntax_tree.errors() {
+            ctx.dcx.emit_and_push(
+                lume_errors::SimpleDiagnostic::new(error.message())
+                    .with_label(lume_errors::Label::error(
+                        Some(source_file.clone()),
+                        error.span().0..error.span().1,
+                        "error occurred here",
+                    ))
+                    .into(),
+            );
+        }
+
         let source_node = lume_ast::SourceFile::cast(syntax_tree.syntax()).unwrap();
 
         if let Err(err) = ctx.lower_items(source_file.id, source_node.item()) {
