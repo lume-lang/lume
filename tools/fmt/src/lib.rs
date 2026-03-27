@@ -335,7 +335,20 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
                 items.push(line());
             }
 
-            (prev_line, _) = self.coordinates_of(item.location().end());
+            // When getting the end of the item span, trim any whitespace from it.
+            //
+            // This prevents items such as:
+            // ```lm
+            // namespace std
+            //
+            // import std (Optional)
+            // ```
+            // where the `namespace std` item spans to the start of the `import` item.
+            let item_snippet = &self.source_file.content[item.range()];
+            let extra_whitespace_len = item.range().len() - item_snippet.trim_end().len();
+            let span_end = item.location().end() - extra_whitespace_len;
+
+            (prev_line, _) = self.coordinates_of(span_end);
             items.push(f(self, item).group());
         }
 
