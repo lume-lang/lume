@@ -6,7 +6,7 @@ namespace std
 /// by the variant `Some`, or nothing, as represented by the variant `None`.
 pub enum Optional<T> {
     Some(T),
-    None
+    None,
 }
 
 impl<T> Optional<T> {
