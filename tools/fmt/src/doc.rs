@@ -1,3 +1,5 @@
+use lume_ast::AstNode;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Document<'a> {
     /// Renders the number of newlines, as defined by the value within the
@@ -132,6 +134,11 @@ pub fn str(s: &str) -> Document<'_> {
     Document::Text(s)
 }
 
+/// Returns a node with the given text content.
+pub fn string<'a>(s: String) -> Document<'a> {
+    Document::String(s)
+}
+
 /// Create a conditional rendering node, where the emitted content
 /// depends on whether the wrapping group is broken or not.
 ///
@@ -237,6 +244,15 @@ impl<'a> AsDocument<'a> for Document<'a> {
 impl<'a> AsDocument<'a> for Vec<Document<'a>> {
     fn as_doc(self) -> Document<'a> {
         Document::Vec(self)
+    }
+}
+
+impl<'a> AsDocument<'a> for Option<lume_ast::Name> {
+    fn as_doc(self) -> Document<'a> {
+        match self {
+            Some(name) => name.as_text().as_doc(),
+            None => empty(),
+        }
     }
 }
 
