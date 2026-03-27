@@ -51,11 +51,6 @@ macro_rules! assert_expr_snap_eq {
 }
 
 #[test]
-fn test_lmfao() {
-    assert_snap_eq!("struct A { foo: Boolean = 0; };", "1");
-}
-
-#[test]
 fn test_module() {
     assert_snap_eq!("", "empty_module");
     assert_snap_eq!("    ", "spacecs");
