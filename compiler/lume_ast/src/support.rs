@@ -21,6 +21,37 @@ pub(crate) fn token(
         .find(|it| it.kind() == kind)
 }
 
+#[inline]
+pub(crate) fn tokens(
+    parent: &lume_syntax::SyntaxNode,
+    kind: lume_syntax::SyntaxKind,
+) -> impl Iterator<Item = lume_syntax::SyntaxToken> {
+    parent
+        .children_with_tokens()
+        .filter_map(|it| it.into_token())
+        .filter(move |it| it.kind() == kind)
+}
+
+pub trait WithDocumentation {
+    fn documentation(&self) -> impl Iterator<Item = String>;
+}
+
+macro_rules! with_doc_types {
+    ($($ty:ty),*) => {
+        $(
+            impl WithDocumentation for $ty {
+                fn documentation(&self) -> impl Iterator<Item = String> {
+                    tokens(self.syntax(), lume_syntax::SyntaxKind::DOC_COMMENT).map(|tok| tok.text().to_string())
+                }
+            }
+        )*
+    };
+}
+
+with_doc_types! {
+    Fn, Struct, Field, Trait, Enum, Case, Impl, TraitImpl, Method
+}
+
 impl crate::Name {
     pub fn is_lower(&self) -> bool {
         self.syntax()
