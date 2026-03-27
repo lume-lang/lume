@@ -258,10 +258,12 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
     where
         I: IntoIterator<Item = String>,
     {
-        concat(
-            doc.into_iter()
-                .map(|doc| self.doc_comment(doc.trim_start_matches("///").trim_start())),
-        )
+        let joined_docs = doc
+            .into_iter()
+            .map(|doc| doc.trim_start_matches("/// ").trim_start_matches("///").to_string())
+            .join("\n");
+
+        self.doc_comment(&joined_docs)
     }
 
     fn doc_comment<'a>(&self, doc: &str) -> Document<'a> {
@@ -603,7 +605,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         };
 
         if fields.is_empty() {
-            return identifier;
+            return identifier.append(",");
         }
 
         identifier
