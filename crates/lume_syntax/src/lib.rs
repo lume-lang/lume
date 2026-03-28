@@ -79,12 +79,38 @@ impl Debug for SyntaxTree {
 pub struct SyntaxTreeBuilder {
     pub errors: Vec<SyntaxError>,
     pub inner: GreenNodeBuilder<'static>,
+
+    stack: Vec<SyntaxKind>,
 }
 
 impl SyntaxTreeBuilder {
     #[inline]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    #[inline]
+    pub fn stack(&self) -> &[SyntaxKind] {
+        &self.stack
+    }
+
+    pub fn start_node(&mut self, kind: SyntaxKind) {
+        self.stack.push(kind);
+        self.inner.start_node(kind.into());
+    }
+
+    pub fn start_node_at(&mut self, kind: SyntaxKind, c: Checkpoint) {
+        self.stack.push(kind);
+        self.inner.start_node_at(c, kind.into());
+    }
+
+    pub fn token(&mut self, kind: SyntaxKind, text: &str) {
+        self.inner.token(kind.into(), text);
+    }
+
+    pub fn finish_node(&mut self) {
+        self.stack.pop().expect("expected stack to be non-empty");
+        self.inner.finish_node();
     }
 
     #[inline]
@@ -98,6 +124,7 @@ impl Default for SyntaxTreeBuilder {
         Self {
             errors: Vec::new(),
             inner: GreenNodeBuilder::new(),
+            stack: Vec::with_capacity(64),
         }
     }
 }

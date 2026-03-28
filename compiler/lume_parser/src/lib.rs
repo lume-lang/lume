@@ -404,26 +404,26 @@ impl Parser {
     fn node_token(&mut self, kind: SyntaxKind, span: TextSpan) {
         let text = self.source.content.get(span.0..span.1).unwrap_or("");
 
-        self.builder.inner.token(kind.into(), text);
+        self.builder.token(kind, text);
     }
 
     /// Starts a new node.
     fn start_node(&mut self, kind: SyntaxKind) {
         self.with_trivia(|parser| {
-            parser.builder.inner.start_node(kind.into());
+            parser.builder.start_node(kind);
         });
     }
 
     /// Starts a new node at the given checkpoint.
     fn start_node_at(&mut self, kind: SyntaxKind, c: Checkpoint) {
         self.with_trivia(|parser| {
-            parser.builder.inner.start_node_at(c, kind.into());
+            parser.builder.start_node_at(kind, c);
         });
     }
 
     /// Finish the current node.
     fn finish_node(&mut self) {
-        self.builder.inner.finish_node();
+        self.builder.finish_node();
     }
 
     /// Starts the given checkout and immedietly finishes it.
@@ -440,7 +440,7 @@ impl Parser {
         // nodes (which is invalid).
         //
         // If this is the first token, consume the trivia *after* starting the node.
-        let is_at_root = self.tokens.last().is_none_or(|(_, span)| span.0 == 0);
+        let is_at_root = self.builder.stack().is_empty();
 
         if !is_at_root {
             self.consume_trivia();
