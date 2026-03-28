@@ -263,7 +263,7 @@ pub enum SyntaxKind {
 impl SyntaxKind {
     #[inline]
     pub fn is_trivia(self) -> bool {
-        matches!(self, Self::WHITESPACE)
+        matches!(self, Self::WHITESPACE | Self::LINE_COMMENT)
     }
 
     #[inline]
