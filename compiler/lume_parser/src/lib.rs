@@ -60,7 +60,7 @@ impl Parser {
     {
         Self {
             source,
-            tokens: tokens.into_iter().rev().filter_map(as_parser_token).collect(),
+            tokens: tokens.into_iter().rev().map(as_parser_token).collect(),
             builder: SyntaxTreeBuilder::new(),
         }
     }
@@ -515,10 +515,8 @@ impl Parser {
     }
 }
 
-fn as_parser_token(token: Token<'_>) -> Option<(SyntaxKind, TextSpan)> {
+fn as_parser_token(token: Token<'_>) -> (SyntaxKind, TextSpan) {
     let kind = match token.kind {
-        TokenKind::Comment(_) => return None,
-
         TokenKind::As => SyntaxKind::AS_KW,
         TokenKind::Add => SyntaxKind::ADD,
         TokenKind::AddAssign => SyntaxKind::ADDASSIGN,
@@ -533,6 +531,7 @@ fn as_parser_token(token: Token<'_>) -> Option<(SyntaxKind, TextSpan)> {
         TokenKind::Break => SyntaxKind::BREAK_KW,
         TokenKind::Colon => SyntaxKind::COLON,
         TokenKind::Comma => SyntaxKind::COMMA,
+        TokenKind::Comment(_) => SyntaxKind::LINE_COMMENT,
         TokenKind::Continue => SyntaxKind::CONTINUE_KW,
         TokenKind::Decrement => SyntaxKind::DECREMENT,
         TokenKind::Div => SyntaxKind::DIV,
@@ -596,5 +595,5 @@ fn as_parser_token(token: Token<'_>) -> Option<(SyntaxKind, TextSpan)> {
         TokenKind::Whitespace(_) => SyntaxKind::WHITESPACE,
     };
 
-    Some((kind, TextSpan(token.index.start, token.index.end)))
+    (kind, TextSpan(token.index.start, token.index.end))
 }
