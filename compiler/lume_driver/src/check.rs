@@ -44,9 +44,13 @@ impl Driver {
         let TypeChecked { gcx, ctx } = pipeline(gcx).lower_to_hir()?.type_check()?;
 
         for (package_id, tcx) in ctx {
+            let StageResult::Value(tcx) = tcx else {
+                continue;
+            };
+
             graph.packages.insert(package_id, CheckedPackage {
                 package: gcx.package(package_id).unwrap().clone(),
-                tcx,
+                tcx: *tcx,
             });
         }
 

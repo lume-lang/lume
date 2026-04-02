@@ -39,36 +39,42 @@ pub fn pipeline(gcx: Arc<GlobalCtx>) -> Pipeline {
 /// Compiler stage: HIR
 pub struct LoweredToHir {
     pub gcx: Arc<GlobalCtx>,
-    pub maps: IndexMap<PackageId, PackageHir>,
+    pub maps: IndexMap<PackageId, StageResult<TyInferCtx>>,
 }
 
-pub enum PackageHir {
-    Lowered { tcx: Box<TyInferCtx> },
+pub enum StageResult<T> {
+    Value(Box<T>),
     Cached { bc_path: PathBuf },
+}
+
+impl<T> StageResult<T> {
+    pub fn value(value: T) -> Self {
+        Self::Value(Box::new(value))
+    }
 }
 
 /// Compiler stage: type-checked
 pub struct TypeChecked {
     pub gcx: Arc<GlobalCtx>,
-    pub ctx: IndexMap<PackageId, TyCheckCtx>,
+    pub ctx: IndexMap<PackageId, StageResult<TyCheckCtx>>,
 }
 
 /// Compiler stage: TIR
 pub struct LoweredToTir {
     pub gcx: Arc<GlobalCtx>,
-    pub tir: IndexMap<PackageId, (lume_typech::TyCheckCtx, lume_tir::TypedIR)>,
+    pub tir: IndexMap<PackageId, StageResult<(lume_typech::TyCheckCtx, lume_tir::TypedIR)>>,
 }
 
 /// Compiler stage: MIR
 pub struct LoweredToMir {
     pub gcx: Arc<GlobalCtx>,
-    pub mir: IndexMap<PackageId, (lume_typech::TyCheckCtx, lume_mir::ModuleMap)>,
+    pub mir: IndexMap<PackageId, StageResult<(lume_typech::TyCheckCtx, lume_mir::ModuleMap)>>,
 }
 
 /// Compiler stage: codegen
 pub struct GeneratedCode {
     pub gcx: Arc<GlobalCtx>,
-    pub objects: IndexMap<PackageId, GeneratedObject>,
+    pub objects: IndexMap<PackageId, StageResult<GeneratedObject>>,
 }
 
 pub struct GeneratedObject {
@@ -109,7 +115,7 @@ impl Pipeline {
             // - the package hash within the package's `.mlib` file is the same as now,
             // - and the target object file already exists
             if !dirty_packages.contains(&dependency.id) && !has_hash_changed && bc_path.exists() {
-                maps.insert(dependency.id, PackageHir::Cached { bc_path });
+                maps.insert(dependency.id, StageResult::Cached { bc_path });
                 continue;
             }
 
@@ -140,19 +146,19 @@ impl Pipeline {
 
             // Create an inferencing context so we can partition all the public HIR nodes,
             // for use in any dependants.
-            let tcx = tracing::info_span!("type_inference").in_scope(|| {
+            let tcx = tracing::info_span!("type_inference").in_scope(|| -> Result<TyInferCtx> {
                 let tcx = lume_types::TyCtx::new(gcx.clone());
 
-                let mut ticx = lume_infer::TyInferCtx::new(tcx, hir);
+                let mut ticx = TyInferCtx::new(tcx, hir);
                 ticx.infer()?;
 
-                Result::Ok(ticx)
+                Ok(ticx)
             })?;
 
             let public_hir = lume_metadata::partition_public_nodes(&tcx);
             public_hir.merge_into(&mut dependency_hir);
 
-            maps.insert(dependency.id, PackageHir::Lowered { tcx: Box::new(tcx) });
+            maps.insert(dependency.id, StageResult::value(tcx));
         }
 
         Ok(LoweredToHir { gcx, maps })
@@ -168,19 +174,23 @@ impl LoweredToHir {
         for (package_id, map) in maps {
             tracing::debug!(package = gcx.package_name(package_id).unwrap_or("<empty>"));
 
-            let PackageHir::Lowered { mut tcx } = map else {
-                continue;
+            let mut tcx = match map {
+                StageResult::Value(tcx) => tcx,
+                StageResult::Cached { bc_path } => {
+                    ctx.insert(package_id, StageResult::Cached { bc_path });
+                    continue;
+                }
             };
 
             // Unifies all the types within the type inference context.
             tracing::info_span!("type_unification").in_scope(|| lume_unification::unify(&mut tcx))?;
 
             // Then, make sure they're all valid.
-            let tcx = tracing::info_span!("type_checking").in_scope(|| {
+            let tcx = tracing::info_span!("type_checking").in_scope(|| -> Result<TyCheckCtx> {
                 let mut tcx = lume_typech::TyCheckCtx::new(*tcx);
                 tcx.typecheck()?;
 
-                Result::Ok(tcx)
+                Ok(tcx)
             })?;
 
             #[allow(clippy::disallowed_macros, reason = "only used in debugging")]
@@ -188,7 +198,7 @@ impl LoweredToHir {
                 println!("{:#?}", tcx.tdb());
             }
 
-            ctx.insert(package_id, tcx);
+            ctx.insert(package_id, StageResult::value(tcx));
         }
 
         Ok(TypeChecked { gcx, ctx })
@@ -202,10 +212,18 @@ impl TypeChecked {
         let mut tir = IndexMap::with_capacity(ctx.len());
 
         for (package_id, tcx) in ctx {
+            let tcx = match tcx {
+                StageResult::Value(tcx) => *tcx,
+                StageResult::Cached { bc_path } => {
+                    tir.insert(package_id, StageResult::Cached { bc_path });
+                    continue;
+                }
+            };
+
             tracing::debug!(package = tcx.gcx().package_name(package_id).unwrap_or("<empty>"));
 
             let typed_ir = lume_tir_lower::Lower::build(&tcx)?;
-            tir.insert(package_id, (tcx, typed_ir));
+            tir.insert(package_id, StageResult::value((tcx, typed_ir)));
         }
 
         Ok(LoweredToTir { gcx, tir })
@@ -218,7 +236,15 @@ impl LoweredToTir {
         let LoweredToTir { gcx, tir } = self;
         let mut mir_maps = IndexMap::with_capacity(tir.len());
 
-        for (package_id, (tcx, typed_ir)) in tir {
+        for (package_id, result) in tir {
+            let (tcx, typed_ir) = match result {
+                StageResult::Value(res) => *res,
+                StageResult::Cached { bc_path } => {
+                    mir_maps.insert(package_id, StageResult::Cached { bc_path });
+                    continue;
+                }
+            };
+
             tracing::debug!(package = gcx.package_name(package_id).unwrap_or("<empty>"));
 
             let opts = gcx.session.options.clone();
@@ -228,7 +254,7 @@ impl LoweredToTir {
             let mir = transformer.transform(&typed_ir.functions.into_values().collect::<Vec<_>>());
             let optimized_mir = lume_mir_opt::Optimizer::optimize(&tcx, mir);
 
-            mir_maps.insert(package_id, (tcx, optimized_mir));
+            mir_maps.insert(package_id, StageResult::Value(Box::new((tcx, optimized_mir))));
         }
 
         Ok(LoweredToMir { gcx, mir: mir_maps })
@@ -241,17 +267,28 @@ impl LoweredToMir {
         let LoweredToMir { gcx, mir } = self;
         let mut objects = IndexMap::with_capacity(mir.len());
 
-        for (package_id, (tcx, mir)) in mir {
+        for (package_id, map) in mir {
             tracing::debug!(package = gcx.package_name(package_id).unwrap_or("<empty>"));
+
+            let (tcx, mir) = match map {
+                StageResult::Value(res) => *res,
+                StageResult::Cached { bc_path } => {
+                    objects.insert(package_id, StageResult::Cached { bc_path });
+                    continue;
+                }
+            };
 
             let metadata = lume_metadata::PackageMetadata::create(&mir.package, &tcx);
             let object = lume_codegen::generate(mir)?;
 
-            objects.insert(package_id, GeneratedObject {
-                name: metadata.header.name.clone(),
-                object,
-                metadata,
-            });
+            objects.insert(
+                package_id,
+                StageResult::value(GeneratedObject {
+                    name: metadata.header.name.clone(),
+                    object,
+                    metadata,
+                }),
+            );
         }
 
         Ok(GeneratedCode { gcx, objects })
