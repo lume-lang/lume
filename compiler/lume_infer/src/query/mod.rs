@@ -1229,4 +1229,81 @@ impl TyInferCtx {
             Node::Method(n) => Some(n.visibility),
         }
     }
+
+    /// Determines whether the given node is visible outside it's owning
+    /// package.
+    ///
+    /// If no node with the given ID is found or if the node cannot hold
+    /// a visibility modifier, returns `false`.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub fn is_visible_outside_package(&self, id: NodeId) -> bool {
+        self.visibility_of(id) == Some(Visibility::Public)
+    }
+
+    /// Determines whether the given node should be exported to the package
+    /// metadata when building.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    pub fn should_export(&self, id: NodeId) -> Result<bool> {
+        let Some(node) = self.hir_node(id) else {
+            return Ok(false);
+        };
+
+        match node {
+            Node::Type(def) => Ok(def.should_export()),
+            Node::Function(_) | Node::Field(_) => Ok(self.is_visible_outside_package(id)),
+            Node::Parameter(_) => {
+                let parent = self.hir_parent_of(node.id()).expect("expected parameter parent");
+
+                self.should_export(parent)
+            }
+
+            Node::Method(method) => {
+                if method.visibility != lume_hir::Visibility::Public {
+                    return Ok(false);
+                }
+
+                let impl_type = self.impl_type_of_method(method.id)?;
+
+                Ok(self.is_visible_outside_package(impl_type.instance_of))
+            }
+
+            // Traits can be required by other packages, if the traits are public.
+            Node::TraitImpl(trait_impl) => {
+                let trait_type = self.mk_type_ref_from(&trait_impl.name, trait_impl.id)?;
+                let trait_target = self.mk_type_ref_from(&trait_impl.target, trait_impl.id)?;
+
+                Ok(self.is_visible_outside_package(trait_type.instance_of)
+                    && self.is_visible_outside_package(trait_target.instance_of))
+            }
+
+            // Just like trait implementations, the should be exported if the implemented type is visible.
+            Node::Impl(implementation) => {
+                let impl_type = self.mk_type_ref_from(&implementation.target, id)?;
+
+                self.should_export(impl_type.instance_of)
+            }
+
+            // Trait methods should be exported if the parent trait object is exported.
+            Node::TraitMethodDef(_) => self.should_export(self.hir_parent_of(id).unwrap()),
+
+            // Trait methods should be exported if the parent trait object is exported, as well as the trait target
+            // type.
+            Node::TraitMethodImpl(method_impl) => {
+                let Some(lume_hir::Node::TraitImpl(trait_impl)) = self.hir_parent_node_of(method_impl.id) else {
+                    unreachable!();
+                };
+
+                let trait_type = self.mk_type_ref_from(&trait_impl.name, trait_impl.id)?;
+                let trait_target = self.mk_type_ref_from(&trait_impl.target, trait_impl.id)?;
+
+                Ok(self.is_visible_outside_package(trait_type.instance_of)
+                    && self.is_visible_outside_package(trait_target.instance_of))
+            }
+
+            // Non-item nodes shouldn't be exported since they have no effect on type-checking in other packages.
+            Node::Pattern(_) | Node::Statement(_) | Node::Expression(_) | Node::TypeVariable(_) => Ok(false),
+        }
+    }
 }

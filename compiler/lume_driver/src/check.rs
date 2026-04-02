@@ -39,32 +39,15 @@ impl Driver {
         };
 
         let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
-        let mut dependencies = gcx.session.dep_graph.iter().cloned().collect::<Vec<_>>();
-
-        // Build all the dependencies of the package in reverse, so all the
-        // dependencies without any sub-dependencies can be built first.
-        dependencies.reverse();
-
         let mut graph = CheckedPackageGraph::new(gcx.session.dep_graph.root);
-        let mut dependency_hir = lume_hir::map::Map::empty(PackageId::empty());
 
-        for dependency in dependencies {
-            tracing::info!(
-                "checking {} v{} ({})",
-                dependency.name,
-                dependency.version,
-                dependency.path.display()
-            );
+        let TypeChecked { gcx, ctx } = pipeline(gcx).lower_to_hir()?.type_check()?;
 
-            let checked = Compiler::check_package(dependency, gcx.clone(), &dependency_hir)?;
-            let exposed_hir = if self.config.export_private_nodes {
-                checked.tcx.hir().clone()
-            } else {
-                lume_metadata::partition_public_nodes(&checked.tcx)
-            };
-
-            graph.packages.insert(checked.package.id, checked);
-            exposed_hir.merge_into(&mut dependency_hir);
+        for (package_id, tcx) in ctx {
+            graph.packages.insert(package_id, CheckedPackage {
+                package: gcx.package(package_id).unwrap().clone(),
+                tcx,
+            });
         }
 
         Ok(graph)
@@ -99,35 +82,4 @@ pub struct CheckedPackage {
 
     /// Defines the checked type context.
     pub tcx: TyCheckCtx,
-}
-
-impl Compiler {
-    /// Checks the given [`Package`] for errors, such as parsing-, semantic- or
-    /// configuration errors.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if:
-    /// - an error occured while compiling the project,
-    /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[tracing::instrument(level = "INFO", skip_all, fields(package = %package.name), err)]
-    pub fn check_package(
-        package: Package,
-        gcx: Arc<GlobalCtx>,
-        dep_hir: &lume_hir::map::Map,
-    ) -> Result<CheckedPackage> {
-        let mut compiler = Self { package, gcx };
-
-        let mut sources = compiler.parse()?;
-        tracing::debug!("finished parsing");
-
-        dep_hir.clone().merge_into(&mut sources);
-
-        let (tcx, _) = compiler.type_check(sources)?;
-
-        Ok(CheckedPackage {
-            package: compiler.package,
-            tcx,
-        })
-    }
 }
