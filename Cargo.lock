@@ -1969,8 +1969,8 @@ dependencies = [
  "ciborium",
  "lume_errors",
  "lume_hir",
+ "lume_infer",
  "lume_session",
- "lume_typech",
  "serde",
 ]
 

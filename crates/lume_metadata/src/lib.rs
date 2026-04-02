@@ -2,8 +2,8 @@ use std::path::{Path, PathBuf};
 
 use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 use lume_hir::map::Map;
+use lume_infer::TyInferCtx;
 use lume_session::{Package, PackageHash};
-use lume_typech::TyCheckCtx;
 use serde::{Deserialize, Serialize};
 
 /// Defines the file extension to use for metadata library files.
@@ -47,7 +47,7 @@ pub struct PackageMetadata {
 
 impl PackageMetadata {
     /// Creates a new [`PackageMetadata`] from the given [`Package`].
-    pub fn create(pkg: &Package, tcx: &TyCheckCtx) -> Self {
+    pub fn create(pkg: &Package, tcx: &TyInferCtx) -> Self {
         let public_hir = partition_public_nodes(tcx);
         let header = PackageHeader::create_from(pkg);
 
@@ -63,7 +63,7 @@ impl PackageMetadata {
 /// Any item or node which is not visible outside of the package is
 /// not included. As a result of this function, a new HIR map is created
 /// with all public items cloned into it.
-pub fn partition_public_nodes(tcx: &TyCheckCtx) -> Map {
+pub fn partition_public_nodes(tcx: &TyInferCtx) -> Map {
     let mut pub_hir = Map::empty(tcx.hir().package);
 
     pub_hir.nodes = tcx

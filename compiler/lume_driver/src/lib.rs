@@ -5,22 +5,18 @@ use std::sync::Arc;
 use arc::locate_package;
 use indexmap::IndexMap;
 use lume_errors::{DiagCtxHandle, Result};
-use lume_hir_lower::lower_to_hir;
-use lume_infer::TyInferCtx;
 use lume_session::{DependencyMap, FileLoader, GlobalCtx, Options, Package, Session};
 use lume_span::{FileName, PackageId, SourceFile};
-use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
-use lume_types::TyCtx;
 
 #[cfg(feature = "codegen")]
 pub mod build;
 
-#[cfg(feature = "codegen")]
-pub use build::*;
-
 pub mod check;
 pub use check::*;
+
+pub mod pipeline;
+pub use pipeline::*;
 
 #[cfg(feature = "test-support")]
 pub mod test_support;
@@ -119,74 +115,5 @@ impl Driver {
                     .insert(file_name, Arc::new(source_file));
             }
         }
-    }
-}
-
-pub struct Compiler {
-    /// Defines the specific [`Package`] instance to compile.
-    package: Package,
-
-    /// Defines the global compilation context.
-    gcx: Arc<GlobalCtx>,
-}
-
-impl Compiler {
-    /// Parses all the source files within the current [`Package`] into HIR.
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn parse(&mut self) -> Result<lume_hir::map::Map> {
-        let hir = self.gcx.dcx.with(|dcx| lower_to_hir(&self.package, dcx))?;
-
-        #[allow(clippy::disallowed_macros, reason = "only used in debugging")]
-        if self.gcx.session.options.dump_hir {
-            let mut package_hir = hir.clone();
-            package_hir
-                .nodes
-                .retain(|id, _node| id.package == self.gcx.session.dep_graph.root);
-
-            println!("{package_hir:#?}");
-        }
-
-        Ok(hir)
-    }
-
-    /// Type checks all the given source files.
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<(TyCheckCtx, TypedIR)> {
-        let tcx = TyCtx::new(self.gcx.clone());
-
-        // Defines the types of all nodes within the HIR maps.
-        let mut ticx = TyInferCtx::new(tcx, hir);
-        ticx.infer()?;
-        tracing::info!("finished type inference");
-
-        // Unifies all the types within the type inference context.
-        lume_unification::unify(&mut ticx)?;
-        tracing::info!("finished type unification");
-
-        // Then, make sure they're all valid.
-        let mut tccx = TyCheckCtx::new(ticx);
-        tccx.typecheck()?;
-        tracing::info!("finished type checking");
-
-        #[allow(clippy::disallowed_macros, reason = "only used in debugging")]
-        if self.gcx.session.options.print_type_context {
-            println!("{:#?}", tccx.tdb());
-        }
-
-        let typed_ir = lume_tir_lower::Lower::build(&tccx)?;
-
-        Ok((tccx, typed_ir))
-    }
-
-    /// Generates MIR for all the modules within the given state object.
-    #[cfg(feature = "codegen")]
-    #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn codegen(self, tcx: &TyCheckCtx, tir: TypedIR) -> lume_mir::ModuleMap {
-        let opts = self.gcx.session.options.clone();
-
-        let mut transformer = lume_mir_lower::ModuleTransformer::create(self.package, tcx, tir.metadata, opts);
-        let mir = transformer.transform(&tir.functions.into_values().collect::<Vec<_>>());
-
-        lume_mir_opt::Optimizer::optimize(tcx, mir)
     }
 }

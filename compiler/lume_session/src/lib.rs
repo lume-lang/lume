@@ -262,6 +262,11 @@ impl GlobalCtx {
         }
     }
 
+    /// Gets a reference to the package within the given ID.
+    pub fn package(&self, id: PackageId) -> Option<&Package> {
+        self.session.dep_graph.packages.get(&id)
+    }
+
     /// Defines the absolute path of the directory to
     /// place compilation artifacts within.
     ///
