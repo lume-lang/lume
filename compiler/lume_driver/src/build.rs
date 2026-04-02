@@ -48,14 +48,25 @@ impl Driver {
 
         let mut linker_objects = Vec::with_capacity(objects.len());
 
-        for (_package_id, GeneratedObject { object, metadata, .. }) in objects {
-            linker_objects.push(lume_linker::ObjectSource::Compiled {
-                name: metadata.header.name.clone(),
-                data: object,
-            });
+        for (package_id, stage_result) in objects {
+            match stage_result {
+                StageResult::Value(object) => {
+                    let GeneratedObject { name, object, metadata } = *object;
 
-            if gcx.session.options.enable_incremental && !self.config.dry_run {
-                lume_metadata::write_metadata_object(gcx.obj_metadata_path(), &metadata)?;
+                    linker_objects.push(lume_linker::ObjectSource::Compiled { name, data: object });
+
+                    if gcx.session.options.enable_incremental && !self.config.dry_run {
+                        lume_metadata::write_metadata_object(gcx.obj_metadata_path(), &metadata)?;
+                    }
+                }
+                StageResult::Cached { bc_path } => {
+                    let package_name = gcx.package_name(package_id).unwrap();
+
+                    linker_objects.push(lume_linker::ObjectSource::Cache {
+                        name: package_name.into(),
+                        path: bc_path,
+                    });
+                }
             }
         }
 
