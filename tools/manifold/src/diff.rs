@@ -3,7 +3,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use error_snippet::IntoDiagnostic;
-use lume_errors::Result;
+use lume_errors::{DiagCtx, Result};
 use owo_colors::{OwoColorize, Style};
 use similar::{ChangeTag, TextDiff};
 
@@ -49,6 +49,17 @@ pub(crate) fn diff_output_of(output: String, path: PathBuf, output_path: PathBuf
 
         Ok(TestResult::Failure { write_failure_report })
     }
+}
+
+pub(crate) fn render_dcx_output(dcx: &DiagCtx) -> String {
+    let mut renderer = error_snippet::GraphicalRenderer::new();
+    renderer.use_colors = false;
+    renderer.highlight_source = false;
+
+    owo_colors::set_override(false);
+    let buffer = dcx.render_buffer(&mut renderer).unwrap_or_default();
+
+    normalize_output(&buffer)
 }
 
 pub(crate) fn normalize_output(value: &str) -> String {
