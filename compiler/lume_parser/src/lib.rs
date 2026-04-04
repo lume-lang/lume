@@ -198,7 +198,7 @@ impl Parser {
             .enumerate()
             .rev()
             .skip(from)
-            .find_map(|(idx, (tok, _range))| if !tok.is_trivia() { Some(idx) } else { None })
+            .find_map(|(idx, (tok, _range))| if tok.is_trivia() { None } else { Some(idx) })
             .unwrap_or(0)
     }
 
@@ -216,6 +216,10 @@ impl Parser {
     /// advancing the cursor.
     fn check(&mut self, kind: SyntaxKind) -> bool {
         self.consume_trivia();
+
+        if self.eof() {
+            return false;
+        }
 
         if let Some((kind, span)) = self.tokens.pop_if(|(tok, _span)| *tok == kind) {
             self.node_token(kind, span);
@@ -442,12 +446,12 @@ impl Parser {
         // If this is the first token, consume the trivia *after* starting the node.
         let is_at_root = self.builder.stack().is_empty();
 
-        if !is_at_root {
-            self.consume_trivia();
+        if is_at_root {
             f(self);
+            self.consume_trivia();
         } else {
-            f(self);
             self.consume_trivia();
+            f(self);
         }
     }
 

@@ -107,7 +107,7 @@ struct Source<'src> {
     pub comments: Vec<(Range<usize>, &'src str)>,
 }
 
-fn parse_source<'src>(content: &'src str, dcx: DiagCtxHandle) -> lume_errors::Result<Source<'src>> {
+fn parse_source(content: &str, dcx: DiagCtxHandle) -> lume_errors::Result<Source<'_>> {
     let source_file = Arc::new(SourceFile::internal(content));
 
     let mut tokens = lume_lexer::Lexer::lex_ref(content)?;
