@@ -1,3 +1,5 @@
+struct Foo { }
+
 impl Foo {
     pub fn bar(self, a: Int32) -> void { }
 }

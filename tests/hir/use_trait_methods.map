@@ -1,5 +1,23 @@
 Map {
     items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Cast",
+                        location: use_trait_methods.lm:6:10,
+                    },
+                    bound_types: [],
+                    location: use_trait_methods.lm:6:10,
+                },
+                location: use_trait_methods.lm:6:10,
+            },
+            methods: [],
+            type_parameters: [],
+            location: use_trait_methods.lm:0:14,
+        },
         TraitImplementation {
             name: Type {
                 id: TypeId(
@@ -8,7 +26,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            258,
+                            259,
                         ),
                     },
                 ),
@@ -17,15 +35,15 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Cast",
-                            location: use_trait_methods.lm:4:8,
+                            location: use_trait_methods.lm:20:24,
                         },
                         bound_types: [],
-                        location: use_trait_methods.lm:4:8,
+                        location: use_trait_methods.lm:20:24,
                     },
-                    location: use_trait_methods.lm:4:8,
+                    location: use_trait_methods.lm:20:24,
                 },
                 self_type: false,
-                location: use_trait_methods.lm:4:8,
+                location: use_trait_methods.lm:20:24,
             },
             target: Type {
                 id: TypeId(
@@ -34,7 +52,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            259,
+                            260,
                         ),
                     },
                 ),
@@ -50,15 +68,15 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Int32",
-                            location: use_trait_methods.lm:10:15,
+                            location: use_trait_methods.lm:26:31,
                         },
                         bound_types: [],
-                        location: use_trait_methods.lm:10:16,
+                        location: use_trait_methods.lm:26:32,
                     },
-                    location: use_trait_methods.lm:10:16,
+                    location: use_trait_methods.lm:26:32,
                 },
                 self_type: false,
-                location: use_trait_methods.lm:10:16,
+                location: use_trait_methods.lm:26:32,
             },
             methods: [
                 TraitMethodImplementation {
@@ -73,21 +91,21 @@ Map {
                             Type {
                                 name: Identifier {
                                     name: "Int32",
-                                    location: use_trait_methods.lm:10:15,
+                                    location: use_trait_methods.lm:26:31,
                                 },
                                 bound_types: [],
-                                location: use_trait_methods.lm:10:16,
+                                location: use_trait_methods.lm:26:32,
                             },
                         ],
                         name: Callable {
                             name: Identifier {
                                 name: "to_string",
-                                location: use_trait_methods.lm:25:34,
+                                location: use_trait_methods.lm:41:50,
                             },
                             bound_types: [],
-                            location: use_trait_methods.lm:25:34,
+                            location: use_trait_methods.lm:41:50,
                         },
-                        location: use_trait_methods.lm:10:16,
+                        location: use_trait_methods.lm:26:32,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -104,20 +122,20 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "String",
-                                    location: use_trait_methods.lm:40:46,
+                                    location: use_trait_methods.lm:56:62,
                                 },
                                 bound_types: [],
-                                location: use_trait_methods.lm:40:47,
+                                location: use_trait_methods.lm:56:63,
                             },
-                            location: use_trait_methods.lm:40:47,
+                            location: use_trait_methods.lm:56:63,
                         },
-                        location: use_trait_methods.lm:40:47,
+                        location: use_trait_methods.lm:56:63,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_methods.lm:47:49,
+                        location: use_trait_methods.lm:63:65,
                     },
-                    location: use_trait_methods.lm:22:49,
+                    location: use_trait_methods.lm:38:65,
                 },
                 TraitMethodImplementation {
                     name: Path {
@@ -131,21 +149,21 @@ Map {
                             Type {
                                 name: Identifier {
                                     name: "Int32",
-                                    location: use_trait_methods.lm:10:15,
+                                    location: use_trait_methods.lm:26:31,
                                 },
                                 bound_types: [],
-                                location: use_trait_methods.lm:10:16,
+                                location: use_trait_methods.lm:26:32,
                             },
                         ],
                         name: Callable {
                             name: Identifier {
                                 name: "to_int",
-                                location: use_trait_methods.lm:58:64,
+                                location: use_trait_methods.lm:74:80,
                             },
                             bound_types: [],
-                            location: use_trait_methods.lm:58:64,
+                            location: use_trait_methods.lm:74:80,
                         },
-                        location: use_trait_methods.lm:10:16,
+                        location: use_trait_methods.lm:26:32,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -162,24 +180,24 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "Int32",
-                                    location: use_trait_methods.lm:70:75,
+                                    location: use_trait_methods.lm:86:91,
                                 },
                                 bound_types: [],
-                                location: use_trait_methods.lm:70:76,
+                                location: use_trait_methods.lm:86:92,
                             },
-                            location: use_trait_methods.lm:70:76,
+                            location: use_trait_methods.lm:86:92,
                         },
-                        location: use_trait_methods.lm:70:76,
+                        location: use_trait_methods.lm:86:92,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_methods.lm:76:78,
+                        location: use_trait_methods.lm:92:94,
                     },
-                    location: use_trait_methods.lm:55:78,
+                    location: use_trait_methods.lm:71:94,
                 },
             ],
             type_parameters: [],
-            location: use_trait_methods.lm:0:80,
+            location: use_trait_methods.lm:16:96,
         },
     ],
 }

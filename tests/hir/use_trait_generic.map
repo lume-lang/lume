@@ -1,5 +1,59 @@
 Map {
     items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Add",
+                        location: use_trait_generic.lm:6:9,
+                    },
+                    bound_types: [
+                        Type {
+                            id: TypeId(
+                                NodeId {
+                                    package: PackageId(
+                                        10850729242277675618,
+                                    ),
+                                    index: Idx(
+                                        258,
+                                    ),
+                                },
+                            ),
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "T",
+                                        location: use_trait_generic.lm:10:11,
+                                    },
+                                    bound_types: [],
+                                    location: use_trait_generic.lm:10:11,
+                                },
+                                location: use_trait_generic.lm:10:11,
+                            },
+                            self_type: false,
+                            location: use_trait_generic.lm:10:11,
+                        },
+                    ],
+                    location: use_trait_generic.lm:6:9,
+                },
+                location: use_trait_generic.lm:6:9,
+            },
+            methods: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T",
+                        location: use_trait_generic.lm:10:11,
+                    },
+                    constraints: [],
+                    location: use_trait_generic.lm:10:11,
+                },
+            ],
+            location: use_trait_generic.lm:0:16,
+        },
         TraitImplementation {
             name: Type {
                 id: TypeId(
@@ -8,7 +62,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            258,
+                            260,
                         ),
                     },
                 ),
@@ -17,7 +71,7 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Add",
-                            location: use_trait_generic.lm:4:7,
+                            location: use_trait_generic.lm:22:25,
                         },
                         bound_types: [
                             Type {
@@ -27,7 +81,7 @@ Map {
                                             10850729242277675618,
                                         ),
                                         index: Idx(
-                                            259,
+                                            261,
                                         ),
                                     },
                                 ),
@@ -43,23 +97,23 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "Int32",
-                                            location: use_trait_generic.lm:8:13,
+                                            location: use_trait_generic.lm:26:31,
                                         },
                                         bound_types: [],
-                                        location: use_trait_generic.lm:8:13,
+                                        location: use_trait_generic.lm:26:31,
                                     },
-                                    location: use_trait_generic.lm:8:13,
+                                    location: use_trait_generic.lm:26:31,
                                 },
                                 self_type: false,
-                                location: use_trait_generic.lm:8:13,
+                                location: use_trait_generic.lm:26:31,
                             },
                         ],
-                        location: use_trait_generic.lm:4:14,
+                        location: use_trait_generic.lm:22:32,
                     },
-                    location: use_trait_generic.lm:4:14,
+                    location: use_trait_generic.lm:22:32,
                 },
                 self_type: false,
-                location: use_trait_generic.lm:4:14,
+                location: use_trait_generic.lm:22:32,
             },
             target: Type {
                 id: TypeId(
@@ -68,7 +122,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            260,
+                            262,
                         ),
                     },
                 ),
@@ -84,15 +138,15 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Int32",
-                            location: use_trait_generic.lm:16:21,
+                            location: use_trait_generic.lm:34:39,
                         },
                         bound_types: [],
-                        location: use_trait_generic.lm:16:22,
+                        location: use_trait_generic.lm:34:40,
                     },
-                    location: use_trait_generic.lm:16:22,
+                    location: use_trait_generic.lm:34:40,
                 },
                 self_type: false,
-                location: use_trait_generic.lm:16:22,
+                location: use_trait_generic.lm:34:40,
             },
             methods: [
                 TraitMethodImplementation {
@@ -107,27 +161,27 @@ Map {
                             Type {
                                 name: Identifier {
                                     name: "Int32",
-                                    location: use_trait_generic.lm:16:21,
+                                    location: use_trait_generic.lm:34:39,
                                 },
                                 bound_types: [],
-                                location: use_trait_generic.lm:16:22,
+                                location: use_trait_generic.lm:34:40,
                             },
                         ],
                         name: Callable {
                             name: Identifier {
                                 name: "add",
-                                location: use_trait_generic.lm:31:34,
+                                location: use_trait_generic.lm:49:52,
                             },
                             bound_types: [],
-                            location: use_trait_generic.lm:31:34,
+                            location: use_trait_generic.lm:49:52,
                         },
-                        location: use_trait_generic.lm:16:22,
+                        location: use_trait_generic.lm:34:40,
                     },
                     parameters: [
                         Parameter {
                             name: Identifier {
                                 name: "other",
-                                location: use_trait_generic.lm:35:40,
+                                location: use_trait_generic.lm:53:58,
                             },
                             param_type: Type {
                                 id: TypeId(
@@ -136,7 +190,7 @@ Map {
                                             10850729242277675618,
                                         ),
                                         index: Idx(
-                                            263,
+                                            265,
                                         ),
                                     },
                                 ),
@@ -152,18 +206,18 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "Int32",
-                                            location: use_trait_generic.lm:42:47,
+                                            location: use_trait_generic.lm:60:65,
                                         },
                                         bound_types: [],
-                                        location: use_trait_generic.lm:42:47,
+                                        location: use_trait_generic.lm:60:65,
                                     },
-                                    location: use_trait_generic.lm:42:47,
+                                    location: use_trait_generic.lm:60:65,
                                 },
                                 self_type: false,
-                                location: use_trait_generic.lm:42:47,
+                                location: use_trait_generic.lm:60:65,
                             },
                             vararg: false,
-                            location: use_trait_generic.lm:35:47,
+                            location: use_trait_generic.lm:53:65,
                         },
                     ],
                     type_parameters: [],
@@ -180,24 +234,24 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "Int32",
-                                    location: use_trait_generic.lm:52:57,
+                                    location: use_trait_generic.lm:70:75,
                                 },
                                 bound_types: [],
-                                location: use_trait_generic.lm:52:58,
+                                location: use_trait_generic.lm:70:76,
                             },
-                            location: use_trait_generic.lm:52:58,
+                            location: use_trait_generic.lm:70:76,
                         },
-                        location: use_trait_generic.lm:52:58,
+                        location: use_trait_generic.lm:70:76,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_generic.lm:58:60,
+                        location: use_trait_generic.lm:76:78,
                     },
-                    location: use_trait_generic.lm:28:60,
+                    location: use_trait_generic.lm:46:78,
                 },
             ],
             type_parameters: [],
-            location: use_trait_generic.lm:0:62,
+            location: use_trait_generic.lm:18:80,
         },
     ],
 }

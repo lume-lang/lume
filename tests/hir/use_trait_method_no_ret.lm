@@ -1,3 +1,5 @@
+trait Add { }
+
 use Add: Int32 {
     fn add(other: Int32) {}
 }

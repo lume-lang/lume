@@ -1,3 +1,5 @@
+trait Add<T1, T2> { }
+
 use Add<Int32, Int64>: Int32 {
     fn add(other: Int32) -> Int64 {}
 }

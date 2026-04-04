@@ -1,19 +1,16 @@
 use std::path::PathBuf;
-use std::sync::{Arc, LazyLock};
+use std::sync::LazyLock;
 
-use build_stage::ManifoldDriver;
-use error_snippet::IntoDiagnostic;
-use lume_errors::{DiagCtx, Result};
-use lume_span::{PackageId, SourceFile};
+use lume_errors::{DiagCtx, MapDiagnostic, Result};
 use owo_colors::OwoColorize;
 use regex::Regex;
 
-use crate::diff::normalize_output;
-use crate::{TestFailureCallback, TestResult};
+use crate::diff::render_dcx_output;
+use crate::{TestFailureCallback, TestPath, TestResult};
 
 pub(crate) struct TestCase {
     /// Absolute path to the test file itself.
-    path: PathBuf,
+    path: TestPath,
 
     /// Absolute path to the `.stderr` output.
     stderr_path: PathBuf,
@@ -28,14 +25,14 @@ pub(crate) enum TestOutcome {
     Success,
 }
 
-pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
-    let mut stderr_path = path.clone();
+pub(crate) fn run_test(path: TestPath) -> Result<TestResult> {
+    let mut stderr_path = path.absolute.0.clone();
     stderr_path.set_extension("stderr");
 
-    let mut stderr_new_path = path.clone();
+    let mut stderr_new_path = path.absolute.0.clone();
     stderr_new_path.set_extension("stderr.new");
 
-    let file_content = std::fs::read_to_string(&path).map_err(IntoDiagnostic::into_diagnostic)?;
+    let file_content = std::fs::read_to_string(&*path.absolute).map_diagnostic()?;
     let expected_test_outcome = determine_test_outcome(&file_content);
 
     let files = split_test_files(file_content);
@@ -54,14 +51,14 @@ pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
                 let write_failure_report: TestFailureCallback = Box::new(move || {
                     format!(
                         "Expected failure, found success:  {}\n{stderr_output}",
-                        test_case.path.display().cyan().underline()
+                        test_case.path.relative.display().cyan().underline()
                     )
                 });
 
                 return Ok(TestResult::Failure { write_failure_report });
             }
 
-            crate::diff::diff_output_of(stderr_output, test_case.path, test_case.stderr_path)
+            crate::diff::diff_output_of(stderr_output, test_case.path.relative.0, test_case.stderr_path)
         }
         TestOutcome::Success => {
             if stderr_output.trim().is_empty() {
@@ -71,7 +68,7 @@ pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
             let write_failure_report: TestFailureCallback = Box::new(move || {
                 format!(
                     "Expected success, found failure:  {}\n{stderr_output}",
-                    test_case.path.display().cyan().underline()
+                    test_case.path.relative.display().cyan().underline()
                 )
             });
 
@@ -101,31 +98,37 @@ fn determine_test_outcome(content: &str) -> TestOutcome {
 }
 
 fn build_test_file(test_case: &TestCase) -> String {
+    let dcx = DiagCtx::new();
     let use_segmented_names = test_case.files.len() > 1;
 
-    let source_files = test_case.files.iter().enumerate().map(|(idx, content)| {
-        let test_name = test_case.path.file_name().unwrap();
+    let mut builder = lume_driver::test_support::workspace(test_case.path.root.0.clone())
+        .with_option(|opts| opts.enable_incremental = false)
+        .with_file(
+            "Arcfile",
+            r#"
+                [package]
+                name = "<manifold-test>"
+                version = "1.0.0"
+                lume_version = "^0"
+            "#,
+        );
+
+    for (idx, content) in test_case.files.iter().enumerate() {
+        let test_name = test_case.path.relative.file_name().unwrap();
+        let file_base = test_name.to_str().unwrap().split('.').next().unwrap();
+
         let file_name = if use_segmented_names {
-            PathBuf::from(&format!("{}_{idx}", test_name.display()))
+            PathBuf::from(&format!("{file_base}_{idx}.lm"))
         } else {
             PathBuf::from(test_name)
         };
 
-        Arc::new(SourceFile::new(PackageId::empty(), file_name, content.clone()))
-    });
+        builder = builder.with_file(file_name, content);
+    }
 
-    let stub_package = build_stage::stub_package_with(|pkg| {
-        for source_file in source_files {
-            pkg.add_source(source_file);
-        }
-
-        pkg.add_std_sources();
-    });
-
-    let dcx = DiagCtx::new();
-    let manifold_driver = ManifoldDriver::new(stub_package, dcx.clone());
-
-    if let Err(err) = manifold_driver.type_check() {
+    if let Err(err) =
+        || -> Result<lume_driver::TypeChecked> { builder.pipeline(dcx.handle())?.lower_to_hir()?.type_check() }()
+    {
         dcx.emit(err);
     }
 
@@ -134,15 +137,4 @@ fn build_test_file(test_case: &TestCase) -> String {
     }
 
     render_dcx_output(&dcx)
-}
-
-fn render_dcx_output(dcx: &DiagCtx) -> String {
-    let mut renderer = error_snippet::GraphicalRenderer::new();
-    renderer.use_colors = false;
-    renderer.highlight_source = false;
-
-    owo_colors::set_override(false);
-    let buffer = dcx.render_buffer(&mut renderer).unwrap_or_default();
-
-    normalize_output(&buffer)
 }

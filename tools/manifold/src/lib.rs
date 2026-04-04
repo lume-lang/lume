@@ -8,6 +8,7 @@ mod panic;
 mod ui;
 
 use std::io::Write;
+use std::ops::Deref;
 use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
 use std::sync::Arc;
 
@@ -45,8 +46,49 @@ impl Config {
 
         self.test_names
             .iter()
-            .any(|name| test.relative_path.to_string_lossy().contains(name))
+            .any(|name| test.path.relative.to_string_lossy().contains(name))
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AbsolutePath(PathBuf);
+
+impl From<PathBuf> for AbsolutePath {
+    fn from(value: PathBuf) -> Self {
+        Self(value)
+    }
+}
+
+impl Deref for AbsolutePath {
+    type Target = Path;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RelativePath(PathBuf);
+
+impl From<PathBuf> for RelativePath {
+    fn from(value: PathBuf) -> Self {
+        Self(value)
+    }
+}
+
+impl Deref for RelativePath {
+    type Target = Path;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TestPath {
+    pub root: AbsolutePath,
+    pub absolute: AbsolutePath,
+    pub relative: RelativePath,
 }
 
 pub enum TestResult {
@@ -143,8 +185,7 @@ pub enum ManifoldTestType {
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct ManifoldCollectedTest {
-    pub absolute_path: PathBuf,
-    pub relative_path: PathBuf,
+    pub path: TestPath,
     pub test_type: ManifoldTestType,
 }
 
@@ -223,8 +264,11 @@ pub fn collect_tests(root: &PathBuf, config: &Config) -> Result<Vec<ManifoldColl
             let test_type = determine_test_type(root, &file)?;
 
             Ok(ManifoldCollectedTest {
-                absolute_path: absolute_path.to_path_buf(),
-                relative_path: relative_path.to_path_buf(),
+                path: TestPath {
+                    root: AbsolutePath(root.clone()),
+                    absolute: AbsolutePath(absolute_path.to_path_buf()),
+                    relative: RelativePath(relative_path.to_path_buf()),
+                },
                 test_type,
             })
         })
@@ -242,12 +286,10 @@ pub fn run_test_file(test_case: ManifoldCollectedTest, dcx: DiagCtx) -> Result<T
         let stderr = std::io::stderr();
         let mut stderr = stderr.lock();
 
-        writeln!(stderr, " manifold test {} ... ", test_case.relative_path.display())
+        writeln!(stderr, " manifold test {} ... ", test_case.path.relative.display())
     };
 
-    if let Ok(result) =
-        std::panic::catch_unwind(|| run_single_test(test_case.test_type, test_case.absolute_path.clone(), dcx))
-    {
+    if let Ok(result) = std::panic::catch_unwind(|| run_single_test(test_case.test_type, test_case.path.clone(), dcx)) {
         return result;
     }
 
@@ -265,7 +307,7 @@ pub fn run_test_file(test_case: ManifoldCollectedTest, dcx: DiagCtx) -> Result<T
     writeln!(
         &mut f,
         "Source file:    {}",
-        test_case.absolute_path.display().cyan().underline()
+        test_case.path.absolute.display().cyan().underline()
     )?;
 
     if let Some(panic_msg) = panic_buf {
@@ -279,12 +321,12 @@ pub fn run_test_file(test_case: ManifoldCollectedTest, dcx: DiagCtx) -> Result<T
     })
 }
 
-pub fn run_single_test(test_type: ManifoldTestType, test_file_path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
+pub fn run_single_test(test_type: ManifoldTestType, test_path: TestPath, dcx: DiagCtx) -> Result<TestResult> {
     Ok(match test_type {
-        ManifoldTestType::Ui => ui::run_test(test_file_path)?,
-        ManifoldTestType::Hir => hir::run_test(test_file_path)?,
-        ManifoldTestType::Mir => mir::run_test(test_file_path)?,
-        ManifoldTestType::Binary => binary::run_test(test_file_path, dcx)?,
+        ManifoldTestType::Ui => ui::run_test(test_path)?,
+        ManifoldTestType::Hir => hir::run_test(test_path)?,
+        ManifoldTestType::Mir => mir::run_test(test_path)?,
+        ManifoldTestType::Binary => binary::run_test(test_path, dcx)?,
     })
 }
 

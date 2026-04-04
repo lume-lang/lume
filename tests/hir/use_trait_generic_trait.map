@@ -1,5 +1,113 @@
 Map {
     items: [
+        StructDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Vector",
+                        location: use_trait_generic_trait.lm:7:13,
+                    },
+                    bound_types: [
+                        Type {
+                            id: TypeId(
+                                NodeId {
+                                    package: PackageId(
+                                        10850729242277675618,
+                                    ),
+                                    index: Idx(
+                                        258,
+                                    ),
+                                },
+                            ),
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "T",
+                                        location: use_trait_generic_trait.lm:14:15,
+                                    },
+                                    bound_types: [],
+                                    location: use_trait_generic_trait.lm:14:15,
+                                },
+                                location: use_trait_generic_trait.lm:14:15,
+                            },
+                            self_type: false,
+                            location: use_trait_generic_trait.lm:14:15,
+                        },
+                    ],
+                    location: use_trait_generic_trait.lm:7:13,
+                },
+                location: use_trait_generic_trait.lm:7:13,
+            },
+            fields: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T",
+                        location: use_trait_generic_trait.lm:14:15,
+                    },
+                    constraints: [],
+                    location: use_trait_generic_trait.lm:14:15,
+                },
+            ],
+            location: use_trait_generic_trait.lm:0:20,
+        },
+        TraitDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Enumerable",
+                        location: use_trait_generic_trait.lm:27:37,
+                    },
+                    bound_types: [
+                        Type {
+                            id: TypeId(
+                                NodeId {
+                                    package: PackageId(
+                                        10850729242277675618,
+                                    ),
+                                    index: Idx(
+                                        260,
+                                    ),
+                                },
+                            ),
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "T",
+                                        location: use_trait_generic_trait.lm:38:39,
+                                    },
+                                    bound_types: [],
+                                    location: use_trait_generic_trait.lm:38:39,
+                                },
+                                location: use_trait_generic_trait.lm:38:39,
+                            },
+                            self_type: false,
+                            location: use_trait_generic_trait.lm:38:39,
+                        },
+                    ],
+                    location: use_trait_generic_trait.lm:27:37,
+                },
+                location: use_trait_generic_trait.lm:27:37,
+            },
+            methods: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T",
+                        location: use_trait_generic_trait.lm:38:39,
+                    },
+                    constraints: [],
+                    location: use_trait_generic_trait.lm:38:39,
+                },
+            ],
+            location: use_trait_generic_trait.lm:21:44,
+        },
         TraitImplementation {
             name: Type {
                 id: TypeId(
@@ -8,7 +116,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            259,
+                            263,
                         ),
                     },
                 ),
@@ -17,7 +125,7 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Enumerable",
-                            location: use_trait_generic_trait.lm:7:17,
+                            location: use_trait_generic_trait.lm:53:63,
                         },
                         bound_types: [
                             Type {
@@ -27,7 +135,7 @@ Map {
                                             10850729242277675618,
                                         ),
                                         index: Idx(
-                                            258,
+                                            262,
                                         ),
                                     },
                                 ),
@@ -36,23 +144,23 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "T",
-                                            location: use_trait_generic_trait.lm:18:19,
+                                            location: use_trait_generic_trait.lm:64:65,
                                         },
                                         bound_types: [],
-                                        location: use_trait_generic_trait.lm:18:19,
+                                        location: use_trait_generic_trait.lm:64:65,
                                     },
-                                    location: use_trait_generic_trait.lm:18:19,
+                                    location: use_trait_generic_trait.lm:64:65,
                                 },
                                 self_type: false,
-                                location: use_trait_generic_trait.lm:18:19,
+                                location: use_trait_generic_trait.lm:64:65,
                             },
                         ],
-                        location: use_trait_generic_trait.lm:7:20,
+                        location: use_trait_generic_trait.lm:53:66,
                     },
-                    location: use_trait_generic_trait.lm:7:20,
+                    location: use_trait_generic_trait.lm:53:66,
                 },
                 self_type: false,
-                location: use_trait_generic_trait.lm:7:20,
+                location: use_trait_generic_trait.lm:53:66,
             },
             target: Type {
                 id: TypeId(
@@ -61,7 +169,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            260,
+                            264,
                         ),
                     },
                 ),
@@ -70,7 +178,7 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Vector",
-                            location: use_trait_generic_trait.lm:22:28,
+                            location: use_trait_generic_trait.lm:68:74,
                         },
                         bound_types: [
                             Type {
@@ -80,7 +188,7 @@ Map {
                                             10850729242277675618,
                                         ),
                                         index: Idx(
-                                            258,
+                                            262,
                                         ),
                                     },
                                 ),
@@ -89,23 +197,23 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "T",
-                                            location: use_trait_generic_trait.lm:29:30,
+                                            location: use_trait_generic_trait.lm:75:76,
                                         },
                                         bound_types: [],
-                                        location: use_trait_generic_trait.lm:29:30,
+                                        location: use_trait_generic_trait.lm:75:76,
                                     },
-                                    location: use_trait_generic_trait.lm:29:30,
+                                    location: use_trait_generic_trait.lm:75:76,
                                 },
                                 self_type: false,
-                                location: use_trait_generic_trait.lm:29:30,
+                                location: use_trait_generic_trait.lm:75:76,
                             },
                         ],
-                        location: use_trait_generic_trait.lm:22:31,
+                        location: use_trait_generic_trait.lm:68:77,
                     },
-                    location: use_trait_generic_trait.lm:22:32,
+                    location: use_trait_generic_trait.lm:68:78,
                 },
                 self_type: false,
-                location: use_trait_generic_trait.lm:22:32,
+                location: use_trait_generic_trait.lm:68:78,
             },
             methods: [
                 TraitMethodImplementation {
@@ -114,7 +222,7 @@ Map {
                             Type {
                                 name: Identifier {
                                     name: "Vector",
-                                    location: use_trait_generic_trait.lm:22:28,
+                                    location: use_trait_generic_trait.lm:68:74,
                                 },
                                 bound_types: [
                                     Type {
@@ -124,7 +232,7 @@ Map {
                                                     10850729242277675618,
                                                 ),
                                                 index: Idx(
-                                                    258,
+                                                    262,
                                                 ),
                                             },
                                         ),
@@ -133,29 +241,29 @@ Map {
                                             name: Type {
                                                 name: Identifier {
                                                     name: "T",
-                                                    location: use_trait_generic_trait.lm:29:30,
+                                                    location: use_trait_generic_trait.lm:75:76,
                                                 },
                                                 bound_types: [],
-                                                location: use_trait_generic_trait.lm:29:30,
+                                                location: use_trait_generic_trait.lm:75:76,
                                             },
-                                            location: use_trait_generic_trait.lm:29:30,
+                                            location: use_trait_generic_trait.lm:75:76,
                                         },
                                         self_type: false,
-                                        location: use_trait_generic_trait.lm:29:30,
+                                        location: use_trait_generic_trait.lm:75:76,
                                     },
                                 ],
-                                location: use_trait_generic_trait.lm:22:31,
+                                location: use_trait_generic_trait.lm:68:77,
                             },
                         ],
                         name: Callable {
                             name: Identifier {
                                 name: "next",
-                                location: use_trait_generic_trait.lm:41:45,
+                                location: use_trait_generic_trait.lm:87:91,
                             },
                             bound_types: [],
-                            location: use_trait_generic_trait.lm:41:45,
+                            location: use_trait_generic_trait.lm:87:91,
                         },
-                        location: use_trait_generic_trait.lm:22:32,
+                        location: use_trait_generic_trait.lm:68:78,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -165,33 +273,33 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "T",
-                                    location: use_trait_generic_trait.lm:51:52,
+                                    location: use_trait_generic_trait.lm:97:98,
                                 },
                                 bound_types: [],
-                                location: use_trait_generic_trait.lm:51:53,
+                                location: use_trait_generic_trait.lm:97:99,
                             },
-                            location: use_trait_generic_trait.lm:51:53,
+                            location: use_trait_generic_trait.lm:97:99,
                         },
-                        location: use_trait_generic_trait.lm:51:53,
+                        location: use_trait_generic_trait.lm:97:99,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_generic_trait.lm:53:56,
+                        location: use_trait_generic_trait.lm:99:102,
                     },
-                    location: use_trait_generic_trait.lm:38:56,
+                    location: use_trait_generic_trait.lm:84:102,
                 },
             ],
             type_parameters: [
                 TypeParameter {
                     name: Identifier {
                         name: "T",
-                        location: use_trait_generic_trait.lm:4:5,
+                        location: use_trait_generic_trait.lm:50:51,
                     },
                     constraints: [],
-                    location: use_trait_generic_trait.lm:4:5,
+                    location: use_trait_generic_trait.lm:50:51,
                 },
             ],
-            location: use_trait_generic_trait.lm:0:58,
+            location: use_trait_generic_trait.lm:46:104,
         },
     ],
 }

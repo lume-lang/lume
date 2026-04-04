@@ -381,7 +381,9 @@ impl Package {
     pub fn relative_source_path<'a>(&'a self, file: &'a Path) -> PathBuf {
         let root = self.root();
 
-        if file.is_absolute() {
+        if file.is_absolute() && file.starts_with(root) {
+            file.strip_prefix(root).unwrap_or(file).to_path_buf()
+        } else if file.is_absolute() {
             file.to_path_buf()
         } else {
             root.join(file)

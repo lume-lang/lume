@@ -46,10 +46,10 @@ const NEWCOMER_TYPE_NAMES: &[(&str, &str)] = &[
 /// etc., such that it can be used and/or consumed in the `lume_typech` crate.
 pub struct TyInferCtx {
     /// Defines the type context from the build context.
-    tcx: TyCtx,
+    pub tcx: TyCtx,
 
     /// Defines the HIR map which contains the input expressions.
-    hir: lume_hir::map::Map,
+    pub hir: lume_hir::map::Map,
 
     /// Defines a mapping any single node and their parent node.
     ancestry: BTreeMap<NodeId, NodeId>,

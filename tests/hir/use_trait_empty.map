@@ -1,5 +1,23 @@
 Map {
     items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Add",
+                        location: use_trait_empty.lm:6:9,
+                    },
+                    bound_types: [],
+                    location: use_trait_empty.lm:6:9,
+                },
+                location: use_trait_empty.lm:6:9,
+            },
+            methods: [],
+            type_parameters: [],
+            location: use_trait_empty.lm:0:13,
+        },
         TraitImplementation {
             name: Type {
                 id: TypeId(
@@ -8,7 +26,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            258,
+                            259,
                         ),
                     },
                 ),
@@ -17,15 +35,15 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Add",
-                            location: use_trait_empty.lm:4:7,
+                            location: use_trait_empty.lm:19:22,
                         },
                         bound_types: [],
-                        location: use_trait_empty.lm:4:7,
+                        location: use_trait_empty.lm:19:22,
                     },
-                    location: use_trait_empty.lm:4:7,
+                    location: use_trait_empty.lm:19:22,
                 },
                 self_type: false,
-                location: use_trait_empty.lm:4:7,
+                location: use_trait_empty.lm:19:22,
             },
             target: Type {
                 id: TypeId(
@@ -34,7 +52,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            259,
+                            260,
                         ),
                     },
                 ),
@@ -50,19 +68,19 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Int32",
-                            location: use_trait_empty.lm:9:14,
+                            location: use_trait_empty.lm:24:29,
                         },
                         bound_types: [],
-                        location: use_trait_empty.lm:9:15,
+                        location: use_trait_empty.lm:24:30,
                     },
-                    location: use_trait_empty.lm:9:15,
+                    location: use_trait_empty.lm:24:30,
                 },
                 self_type: false,
-                location: use_trait_empty.lm:9:15,
+                location: use_trait_empty.lm:24:30,
             },
             methods: [],
             type_parameters: [],
-            location: use_trait_empty.lm:0:17,
+            location: use_trait_empty.lm:15:32,
         },
     ],
 }

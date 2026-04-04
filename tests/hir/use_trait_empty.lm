@@ -1,1 +1,3 @@
+trait Add { }
+
 use Add: Int32 {}
