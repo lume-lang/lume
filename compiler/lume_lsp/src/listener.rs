@@ -156,7 +156,7 @@ pub enum CompletionKind {
     /// Expand completions on the instance of a type
     Instance,
 
-    /// Expand completions on a static type.
+    /// Expand completions on a static type or path.
     Static,
 
     /// Expand completions from the surrounding scope and context.

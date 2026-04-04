@@ -258,16 +258,15 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_constructor_field(&mut self, expr: lume_ast::ConstructorField) -> lume_hir::ConstructorField {
         let name = self.ident_opt(expr.name());
-        let value = match expr.value() {
-            Some(value) => self.expression(value),
-            None => {
-                let ast_expr: lume_ast::Expr = crate::make::parse_from_text(name.as_str(), Target::Statement);
-                let expr_id = self.expression(ast_expr);
+        let value = if let Some(value) = expr.value() {
+            self.expression(value)
+        } else {
+            let ast_expr: lume_ast::Expr = crate::make::parse_from_text(name.as_str(), Target::Statement);
+            let expr_id = self.expression(ast_expr);
 
-                self.map.expression_mut(expr_id).unwrap().location = name.location;
+            self.map.expression_mut(expr_id).unwrap().location = name.location;
 
-                expr_id
-            }
+            expr_id
         };
 
         let location = self.location(expr.location());

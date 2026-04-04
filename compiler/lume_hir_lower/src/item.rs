@@ -2,6 +2,20 @@ use lume_hir::{SELF_PARAM_NAME, SELF_TYPE_NAME};
 
 use crate::*;
 
+/// Collects the given iterator of doc comments into a single string.
+pub(crate) fn documentation<I>(comments: I) -> Option<String>
+where
+    I: IntoIterator<Item = lume_ast::DocComment>,
+{
+    let str = comments
+        .into_iter()
+        .map(|doc| doc.as_text().trim_start_matches("/// ").to_string())
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    if str.is_empty() { None } else { Some(str) }
+}
+
 fn visibility(expr: Option<lume_ast::Visibility>) -> lume_hir::Visibility {
     let Some(visibility) = expr else {
         return lume_hir::Visibility::Private;
@@ -125,7 +139,7 @@ impl LoweringContext<'_> {
         lume_hir::with_frame!(self.current_type_params, || {
             let visibility = visibility(expr.visibility());
             let signature = self.signature_opt(expr.sig(), false);
-            let doc_comment = self.documentation(expr.doc_comments());
+            let doc_comment = documentation(expr.doc_comments());
             let location = self.location(expr.location());
 
             self.ensure_item_undefined(id, DefinedItem::Function(signature.name.clone()));
@@ -267,7 +281,7 @@ impl LoweringContext<'_> {
             let name = self.expand_generic_name(expr.name(), expr.bound_types().map(|list| list.types()));
 
             let visibility = visibility(expr.visibility());
-            let doc_comment = self.documentation(expr.doc_comments());
+            let doc_comment = documentation(expr.doc_comments());
             let location = self.location(expr.location());
 
             self.ensure_item_undefined(id, DefinedItem::Type(name.clone()));
@@ -304,7 +318,7 @@ impl LoweringContext<'_> {
     fn struct_field_definition(&mut self, index: usize, expr: lume_ast::Field) -> lume_hir::Field {
         let id = self.next_node_id();
 
-        let doc_comment = self.documentation(expr.doc_comments());
+        let doc_comment = documentation(expr.doc_comments());
         let visibility = visibility(expr.visibility());
         let name = self.ident_opt(expr.name());
         let field_type = self.type_or_void(expr.field_type());
@@ -377,7 +391,7 @@ impl LoweringContext<'_> {
         lume_hir::with_frame!(self.current_type_params, || {
             let visibility = visibility(expr.visibility());
             let signature = self.signature_opt(expr.sig(), true);
-            let doc_comment = self.documentation(expr.doc_comments());
+            let doc_comment = documentation(expr.doc_comments());
             let location = self.location(expr.location());
 
             self.ensure_item_undefined(id, DefinedItem::Method(signature.name.clone()));
@@ -414,7 +428,7 @@ impl LoweringContext<'_> {
             self.ensure_item_undefined(id, DefinedItem::Type(name.clone()));
 
             let visibility = visibility(expr.visibility());
-            let doc_comment = self.documentation(expr.doc_comments());
+            let doc_comment = documentation(expr.doc_comments());
             let location = self.location(expr.location());
 
             let mut methods = Vec::new();
@@ -457,7 +471,7 @@ impl LoweringContext<'_> {
         lume_hir::with_frame!(self.current_type_params, || {
             let signature = self.signature_opt(expr.sig(), true);
             let location = self.location(expr.location());
-            let doc_comment = self.documentation(expr.doc_comments());
+            let doc_comment = documentation(expr.doc_comments());
             let block = expr.block().map(|b| self.isolated_block(b, &signature.parameters));
 
             lume_hir::TraitMethodDefinition {
@@ -481,7 +495,7 @@ impl LoweringContext<'_> {
             };
 
             let visibility = visibility(expr.visibility());
-            let doc_comment = self.documentation(expr.doc_comments());
+            let doc_comment = documentation(expr.doc_comments());
             let location = self.location(expr.location());
 
             let name = self.expand_generic_name(expr.name(), expr.bound_types().map(|list| list.types()));
@@ -516,7 +530,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn enum_definition_case(&mut self, idx: usize, expr: lume_ast::Case) -> lume_hir::EnumDefinitionCase {
         let name = self.expand_type_name(expr.name());
-        let doc_comment = self.documentation(expr.doc_comments());
+        let doc_comment = documentation(expr.doc_comments());
         let location = self.location(expr.location());
 
         let mut parameters = Vec::new();
@@ -588,7 +602,7 @@ impl LoweringContext<'_> {
 
         lume_hir::with_frame!(self.current_type_params, || {
             let signature = self.signature_opt(expr.sig(), true);
-            let doc_comment = self.documentation(expr.doc_comments());
+            let doc_comment = documentation(expr.doc_comments());
             let location = self.location(expr.location());
 
             let block = expr

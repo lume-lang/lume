@@ -184,20 +184,6 @@ impl LoweringContext<'_> {
         }
     }
 
-    /// Collects the given iterator of doc comments into a single string.
-    pub(crate) fn documentation<I>(&self, comments: I) -> Option<String>
-    where
-        I: IntoIterator<Item = lume_ast::DocComment>,
-    {
-        let str = comments
-            .into_iter()
-            .map(|doc| doc.as_text().trim_start_matches("/// ").to_string())
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        if str.is_empty() { None } else { Some(str) }
-    }
-
     /// Lowers the given AST location into a [`Location`].
     fn location(&self, expr: lume_ast::Location) -> Location {
         lume_span::source::Location {

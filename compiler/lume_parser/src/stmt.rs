@@ -6,7 +6,7 @@ impl Parser {
         self.start_node(SyntaxKind::BLOCK);
         self.consume(SyntaxKind::LEFT_BRACE);
 
-        while !self.peek(SyntaxKind::RIGHT_BRACE) {
+        while !self.peek(SyntaxKind::RIGHT_BRACE) && !self.eof() {
             self.parse_statement();
         }
 
