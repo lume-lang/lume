@@ -1,3 +1,0 @@
-use Enumerable<T>: Vector<T> {
-    fn next() -> T {}
-}

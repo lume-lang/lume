@@ -1,5 +1,23 @@
 Map {
     items: [
+        StructDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: doc_comments_method.lm:7:10,
+                    },
+                    bound_types: [],
+                    location: doc_comments_method.lm:7:10,
+                },
+                location: doc_comments_method.lm:7:10,
+            },
+            fields: [],
+            type_parameters: [],
+            location: doc_comments_method.lm:0:14,
+        },
         Implementation {
             target: Type {
                 id: TypeId(
@@ -8,7 +26,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            258,
+                            259,
                         ),
                     },
                 ),
@@ -17,15 +35,15 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Foo",
-                            location: doc_comments_method.lm:5:8,
+                            location: doc_comments_method.lm:21:24,
                         },
                         bound_types: [],
-                        location: doc_comments_method.lm:5:9,
+                        location: doc_comments_method.lm:21:25,
                     },
-                    location: doc_comments_method.lm:5:9,
+                    location: doc_comments_method.lm:21:25,
                 },
                 self_type: false,
-                location: doc_comments_method.lm:5:9,
+                location: doc_comments_method.lm:21:25,
             },
             methods: [
                 MethodDefinition {
@@ -35,21 +53,21 @@ Map {
                             Type {
                                 name: Identifier {
                                     name: "Foo",
-                                    location: doc_comments_method.lm:5:8,
+                                    location: doc_comments_method.lm:21:24,
                                 },
                                 bound_types: [],
-                                location: doc_comments_method.lm:5:9,
+                                location: doc_comments_method.lm:21:25,
                             },
                         ],
                         name: Callable {
                             name: Identifier {
                                 name: "bar",
-                                location: doc_comments_method.lm:52:55,
+                                location: doc_comments_method.lm:68:71,
                             },
                             bound_types: [],
-                            location: doc_comments_method.lm:52:55,
+                            location: doc_comments_method.lm:68:71,
                         },
-                        location: doc_comments_method.lm:5:9,
+                        location: doc_comments_method.lm:21:25,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -58,25 +76,25 @@ Map {
                             root: [],
                             name: Type {
                                 name: Identifier {
-                                    name: "void",
-                                    location: doc_comments_method.lm:61:65,
+                                    name: "Void",
+                                    location: doc_comments_method.lm:77:81,
                                 },
                                 bound_types: [],
-                                location: doc_comments_method.lm:61:66,
+                                location: doc_comments_method.lm:77:82,
                             },
-                            location: doc_comments_method.lm:61:66,
+                            location: doc_comments_method.lm:77:82,
                         },
-                        location: doc_comments_method.lm:61:66,
+                        location: doc_comments_method.lm:77:82,
                     },
                     block: Block {
                         statements: [],
-                        location: doc_comments_method.lm:66:69,
+                        location: doc_comments_method.lm:82:85,
                     },
-                    location: doc_comments_method.lm:15:69,
+                    location: doc_comments_method.lm:31:85,
                 },
             ],
             type_parameters: [],
-            location: doc_comments_method.lm:0:71,
+            location: doc_comments_method.lm:16:87,
         },
     ],
 }

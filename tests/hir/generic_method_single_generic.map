@@ -1,5 +1,23 @@
 Map {
     items: [
+        StructDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Test",
+                        location: generic_method_single_generic.lm:7:11,
+                    },
+                    bound_types: [],
+                    location: generic_method_single_generic.lm:7:11,
+                },
+                location: generic_method_single_generic.lm:7:11,
+            },
+            fields: [],
+            type_parameters: [],
+            location: generic_method_single_generic.lm:0:15,
+        },
         Implementation {
             target: Type {
                 id: TypeId(
@@ -8,7 +26,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            258,
+                            259,
                         ),
                     },
                 ),
@@ -17,15 +35,15 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Test",
-                            location: generic_method_single_generic.lm:5:9,
+                            location: generic_method_single_generic.lm:22:26,
                         },
                         bound_types: [],
-                        location: generic_method_single_generic.lm:5:10,
+                        location: generic_method_single_generic.lm:22:27,
                     },
-                    location: generic_method_single_generic.lm:5:10,
+                    location: generic_method_single_generic.lm:22:27,
                 },
                 self_type: false,
-                location: generic_method_single_generic.lm:5:10,
+                location: generic_method_single_generic.lm:22:27,
             },
             methods: [
                 MethodDefinition {
@@ -35,31 +53,31 @@ Map {
                             Type {
                                 name: Identifier {
                                     name: "Test",
-                                    location: generic_method_single_generic.lm:5:9,
+                                    location: generic_method_single_generic.lm:22:26,
                                 },
                                 bound_types: [],
-                                location: generic_method_single_generic.lm:5:10,
+                                location: generic_method_single_generic.lm:22:27,
                             },
                         ],
                         name: Callable {
                             name: Identifier {
                                 name: "test",
-                                location: generic_method_single_generic.lm:15:19,
+                                location: generic_method_single_generic.lm:32:36,
                             },
                             bound_types: [],
-                            location: generic_method_single_generic.lm:15:19,
+                            location: generic_method_single_generic.lm:32:36,
                         },
-                        location: generic_method_single_generic.lm:5:10,
+                        location: generic_method_single_generic.lm:22:27,
                     },
                     parameters: [],
                     type_parameters: [
                         TypeParameter {
                             name: Identifier {
                                 name: "T",
-                                location: generic_method_single_generic.lm:20:21,
+                                location: generic_method_single_generic.lm:37:38,
                             },
                             constraints: [],
-                            location: generic_method_single_generic.lm:20:21,
+                            location: generic_method_single_generic.lm:37:38,
                         },
                     ],
                     return_type: Type {
@@ -67,25 +85,25 @@ Map {
                             root: [],
                             name: Type {
                                 name: Identifier {
-                                    name: "void",
-                                    location: generic_method_single_generic.lm:28:32,
+                                    name: "Void",
+                                    location: generic_method_single_generic.lm:45:49,
                                 },
                                 bound_types: [],
-                                location: generic_method_single_generic.lm:28:33,
+                                location: generic_method_single_generic.lm:45:50,
                             },
-                            location: generic_method_single_generic.lm:28:33,
+                            location: generic_method_single_generic.lm:45:50,
                         },
-                        location: generic_method_single_generic.lm:28:33,
+                        location: generic_method_single_generic.lm:45:50,
                     },
                     block: Block {
                         statements: [],
-                        location: generic_method_single_generic.lm:33:35,
+                        location: generic_method_single_generic.lm:50:52,
                     },
-                    location: generic_method_single_generic.lm:12:35,
+                    location: generic_method_single_generic.lm:29:52,
                 },
             ],
             type_parameters: [],
-            location: generic_method_single_generic.lm:0:37,
+            location: generic_method_single_generic.lm:17:54,
         },
     ],
 }

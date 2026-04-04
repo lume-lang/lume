@@ -1,4 +1,6 @@
+struct Foo { }
+
 impl Foo {
     /// This is a doc comment
-    pub fn bar() -> void { }
+    pub fn bar() -> Void { }
 }

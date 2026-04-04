@@ -1,5 +1,23 @@
 Map {
     items: [
+        StructDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Test",
+                        location: generic_method_multiple_generics.lm:7:11,
+                    },
+                    bound_types: [],
+                    location: generic_method_multiple_generics.lm:7:11,
+                },
+                location: generic_method_multiple_generics.lm:7:11,
+            },
+            fields: [],
+            type_parameters: [],
+            location: generic_method_multiple_generics.lm:0:15,
+        },
         Implementation {
             target: Type {
                 id: TypeId(
@@ -8,7 +26,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            258,
+                            259,
                         ),
                     },
                 ),
@@ -17,15 +35,15 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Test",
-                            location: generic_method_multiple_generics.lm:5:9,
+                            location: generic_method_multiple_generics.lm:22:26,
                         },
                         bound_types: [],
-                        location: generic_method_multiple_generics.lm:5:10,
+                        location: generic_method_multiple_generics.lm:22:27,
                     },
-                    location: generic_method_multiple_generics.lm:5:10,
+                    location: generic_method_multiple_generics.lm:22:27,
                 },
                 self_type: false,
-                location: generic_method_multiple_generics.lm:5:10,
+                location: generic_method_multiple_generics.lm:22:27,
             },
             methods: [
                 MethodDefinition {
@@ -35,39 +53,39 @@ Map {
                             Type {
                                 name: Identifier {
                                     name: "Test",
-                                    location: generic_method_multiple_generics.lm:5:9,
+                                    location: generic_method_multiple_generics.lm:22:26,
                                 },
                                 bound_types: [],
-                                location: generic_method_multiple_generics.lm:5:10,
+                                location: generic_method_multiple_generics.lm:22:27,
                             },
                         ],
                         name: Callable {
                             name: Identifier {
                                 name: "test",
-                                location: generic_method_multiple_generics.lm:15:19,
+                                location: generic_method_multiple_generics.lm:32:36,
                             },
                             bound_types: [],
-                            location: generic_method_multiple_generics.lm:15:19,
+                            location: generic_method_multiple_generics.lm:32:36,
                         },
-                        location: generic_method_multiple_generics.lm:5:10,
+                        location: generic_method_multiple_generics.lm:22:27,
                     },
                     parameters: [],
                     type_parameters: [
                         TypeParameter {
                             name: Identifier {
                                 name: "T1",
-                                location: generic_method_multiple_generics.lm:20:22,
+                                location: generic_method_multiple_generics.lm:37:39,
                             },
                             constraints: [],
-                            location: generic_method_multiple_generics.lm:20:22,
+                            location: generic_method_multiple_generics.lm:37:39,
                         },
                         TypeParameter {
                             name: Identifier {
                                 name: "T2",
-                                location: generic_method_multiple_generics.lm:24:26,
+                                location: generic_method_multiple_generics.lm:41:43,
                             },
                             constraints: [],
-                            location: generic_method_multiple_generics.lm:24:26,
+                            location: generic_method_multiple_generics.lm:41:43,
                         },
                     ],
                     return_type: Type {
@@ -75,25 +93,25 @@ Map {
                             root: [],
                             name: Type {
                                 name: Identifier {
-                                    name: "void",
-                                    location: generic_method_multiple_generics.lm:33:37,
+                                    name: "Void",
+                                    location: generic_method_multiple_generics.lm:50:54,
                                 },
                                 bound_types: [],
-                                location: generic_method_multiple_generics.lm:33:38,
+                                location: generic_method_multiple_generics.lm:50:55,
                             },
-                            location: generic_method_multiple_generics.lm:33:38,
+                            location: generic_method_multiple_generics.lm:50:55,
                         },
-                        location: generic_method_multiple_generics.lm:33:38,
+                        location: generic_method_multiple_generics.lm:50:55,
                     },
                     block: Block {
                         statements: [],
-                        location: generic_method_multiple_generics.lm:38:40,
+                        location: generic_method_multiple_generics.lm:55:57,
                     },
-                    location: generic_method_multiple_generics.lm:12:40,
+                    location: generic_method_multiple_generics.lm:29:57,
                 },
             ],
             type_parameters: [],
-            location: generic_method_multiple_generics.lm:0:42,
+            location: generic_method_multiple_generics.lm:17:59,
         },
     ],
 }

@@ -1,3 +1,6 @@
+struct Vector<T> { }
+trait Enumerable<T> { }
+
 use<T> Enumerable<T>: Vector<T> {
     fn next() -> T { }
 }

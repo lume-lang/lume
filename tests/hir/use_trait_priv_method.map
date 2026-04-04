@@ -1,5 +1,23 @@
 Map {
     items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Add",
+                        location: use_trait_priv_method.lm:6:9,
+                    },
+                    bound_types: [],
+                    location: use_trait_priv_method.lm:6:9,
+                },
+                location: use_trait_priv_method.lm:6:9,
+            },
+            methods: [],
+            type_parameters: [],
+            location: use_trait_priv_method.lm:0:13,
+        },
         TraitImplementation {
             name: Type {
                 id: TypeId(
@@ -8,7 +26,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            258,
+                            259,
                         ),
                     },
                 ),
@@ -17,15 +35,15 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Add",
-                            location: use_trait_priv_method.lm:4:7,
+                            location: use_trait_priv_method.lm:19:22,
                         },
                         bound_types: [],
-                        location: use_trait_priv_method.lm:4:7,
+                        location: use_trait_priv_method.lm:19:22,
                     },
-                    location: use_trait_priv_method.lm:4:7,
+                    location: use_trait_priv_method.lm:19:22,
                 },
                 self_type: false,
-                location: use_trait_priv_method.lm:4:7,
+                location: use_trait_priv_method.lm:19:22,
             },
             target: Type {
                 id: TypeId(
@@ -34,7 +52,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            259,
+                            260,
                         ),
                     },
                 ),
@@ -50,15 +68,15 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Int32",
-                            location: use_trait_priv_method.lm:9:14,
+                            location: use_trait_priv_method.lm:24:29,
                         },
                         bound_types: [],
-                        location: use_trait_priv_method.lm:9:15,
+                        location: use_trait_priv_method.lm:24:30,
                     },
-                    location: use_trait_priv_method.lm:9:15,
+                    location: use_trait_priv_method.lm:24:30,
                 },
                 self_type: false,
-                location: use_trait_priv_method.lm:9:15,
+                location: use_trait_priv_method.lm:24:30,
             },
             methods: [
                 TraitMethodImplementation {
@@ -73,27 +91,27 @@ Map {
                             Type {
                                 name: Identifier {
                                     name: "Int32",
-                                    location: use_trait_priv_method.lm:9:14,
+                                    location: use_trait_priv_method.lm:24:29,
                                 },
                                 bound_types: [],
-                                location: use_trait_priv_method.lm:9:15,
+                                location: use_trait_priv_method.lm:24:30,
                             },
                         ],
                         name: Callable {
                             name: Identifier {
                                 name: "add",
-                                location: use_trait_priv_method.lm:24:27,
+                                location: use_trait_priv_method.lm:39:42,
                             },
                             bound_types: [],
-                            location: use_trait_priv_method.lm:24:27,
+                            location: use_trait_priv_method.lm:39:42,
                         },
-                        location: use_trait_priv_method.lm:9:15,
+                        location: use_trait_priv_method.lm:24:30,
                     },
                     parameters: [
                         Parameter {
                             name: Identifier {
                                 name: "other",
-                                location: use_trait_priv_method.lm:28:33,
+                                location: use_trait_priv_method.lm:43:48,
                             },
                             param_type: Type {
                                 id: TypeId(
@@ -102,7 +120,7 @@ Map {
                                             10850729242277675618,
                                         ),
                                         index: Idx(
-                                            262,
+                                            263,
                                         ),
                                     },
                                 ),
@@ -118,18 +136,18 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "Int32",
-                                            location: use_trait_priv_method.lm:35:40,
+                                            location: use_trait_priv_method.lm:50:55,
                                         },
                                         bound_types: [],
-                                        location: use_trait_priv_method.lm:35:40,
+                                        location: use_trait_priv_method.lm:50:55,
                                     },
-                                    location: use_trait_priv_method.lm:35:40,
+                                    location: use_trait_priv_method.lm:50:55,
                                 },
                                 self_type: false,
-                                location: use_trait_priv_method.lm:35:40,
+                                location: use_trait_priv_method.lm:50:55,
                             },
                             vararg: false,
-                            location: use_trait_priv_method.lm:28:40,
+                            location: use_trait_priv_method.lm:43:55,
                         },
                     ],
                     type_parameters: [],
@@ -146,24 +164,24 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "Int32",
-                                    location: use_trait_priv_method.lm:45:50,
+                                    location: use_trait_priv_method.lm:60:65,
                                 },
                                 bound_types: [],
-                                location: use_trait_priv_method.lm:45:51,
+                                location: use_trait_priv_method.lm:60:66,
                             },
-                            location: use_trait_priv_method.lm:45:51,
+                            location: use_trait_priv_method.lm:60:66,
                         },
-                        location: use_trait_priv_method.lm:45:51,
+                        location: use_trait_priv_method.lm:60:66,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_priv_method.lm:51:53,
+                        location: use_trait_priv_method.lm:66:68,
                     },
-                    location: use_trait_priv_method.lm:21:53,
+                    location: use_trait_priv_method.lm:36:68,
                 },
             ],
             type_parameters: [],
-            location: use_trait_priv_method.lm:0:55,
+            location: use_trait_priv_method.lm:15:70,
         },
     ],
 }

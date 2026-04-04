@@ -1,1 +1,3 @@
-impl Test { fn test<T>() -> void {} }
+struct Test { }
+
+impl Test { fn test<T>() -> Void {} }

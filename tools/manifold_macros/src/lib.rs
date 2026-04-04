@@ -58,7 +58,7 @@ pub fn manifold_tests(_attr: proc_macro::TokenStream, item: proc_macro::TokenStr
 }
 
 fn build_test_block(test: &ManifoldCollectedTest) -> proc_macro2::TokenStream {
-    let test_relative_path = test.relative_path.display().to_string();
+    let test_relative_path = test.path.relative.display().to_string();
     let test_name = test_relative_path
         .replace(std::path::MAIN_SEPARATOR_STR, "__")
         .replace('.', "_");
@@ -68,8 +68,17 @@ fn build_test_block(test: &ManifoldCollectedTest) -> proc_macro2::TokenStream {
     let type_type = format_ident!("{}", format!("{:?}", test.test_type));
     let test_type_tt = quote! { manifold::ManifoldTestType::#type_type };
 
-    let test_path = test.absolute_path.display().to_string();
-    let test_path_tt = quote! { std::path::PathBuf::from(#test_path) };
+    let test_root = test.path.root.display().to_string();
+    let rel_test_path = test.path.relative.display().to_string();
+    let abs_test_path = test.path.absolute.display().to_string();
+
+    let test_path_tt = quote! { {
+        manifold::TestPath {
+            root: manifold::AbsolutePath::from(std::path::PathBuf::from(#test_root)),
+            relative: manifold::RelativePath::from(std::path::PathBuf::from(#rel_test_path)),
+            absolute: manifold::AbsolutePath::from(std::path::PathBuf::from(#abs_test_path)),
+        }
+    } };
 
     quote! {
         #[test]

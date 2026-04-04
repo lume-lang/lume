@@ -1,3 +1,5 @@
+trait Cast { }
+
 use Cast: Int32 {
     fn to_string() -> String {}
 

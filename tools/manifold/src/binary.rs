@@ -7,7 +7,7 @@ use lume_errors::{DiagCtx, MapDiagnostic, Result, SimpleDiagnostic};
 use owo_colors::OwoColorize;
 use regex::Regex;
 
-use crate::TestResult;
+use crate::{TestPath, TestResult};
 
 pub(crate) struct TestCase {
     source_path: PathBuf,
@@ -15,15 +15,15 @@ pub(crate) struct TestCase {
     file_content: String,
 }
 
-pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
-    let mut stdout_path = path.clone();
+pub(crate) fn run_test(path: TestPath, dcx: DiagCtx) -> Result<TestResult> {
+    let mut stdout_path = path.absolute.0.clone();
     stdout_path.set_extension("stdout");
 
-    let file_name = path.file_name().expect("expected file path");
+    let file_name = path.relative.file_name().expect("expected file path");
     let file_base = file_name.to_str().unwrap().split('.').next().unwrap();
-    let file_content = std::fs::read_to_string(&path).map_diagnostic()?;
+    let file_content = std::fs::read_to_string(&*path.absolute).map_diagnostic()?;
 
-    let binary_path = lume_driver::test_support::workspace(path.parent().unwrap())
+    let binary_path = lume_driver::test_support::workspace(&*path.root)
         .with_option(|opts| opts.enable_incremental = false)
         .with_option(|opts| {
             // Giving each test it's own output directory.
@@ -31,7 +31,7 @@ pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
             // This is to avoid race conditions between tests where some packages have the
             // same name (for example, `std`). If not defined, multiple threads might try to
             // write `bc/std.o`, which will cause the linkers to throw errors.
-            let relative_dir = PathBuf::from(format!("obj/{file_base}/"));
+            let relative_dir = PathBuf::from(format!("bin/obj/{file_base}/"));
             opts.output_directory = Some(relative_dir);
         })
         .with_file(
@@ -49,7 +49,7 @@ pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
         .build(dcx.handle())?;
 
     let test_case = TestCase {
-        source_path: path.clone(),
+        source_path: path.relative.0.clone(),
         binary_path,
         file_content,
     };
@@ -97,7 +97,7 @@ pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
         return Ok(TestResult::Success);
     }
 
-    crate::diff::diff_output_of(stdout, path, stdout_path)
+    crate::diff::diff_output_of(stdout, path.relative.0, stdout_path)
 }
 
 fn determine_expected_result_code(test_case: &TestCase) -> Option<u8> {

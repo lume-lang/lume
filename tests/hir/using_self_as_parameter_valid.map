@@ -1,5 +1,23 @@
 Map {
     items: [
+        StructDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: using_self_as_parameter_valid.lm:7:10,
+                    },
+                    bound_types: [],
+                    location: using_self_as_parameter_valid.lm:7:10,
+                },
+                location: using_self_as_parameter_valid.lm:7:10,
+            },
+            fields: [],
+            type_parameters: [],
+            location: using_self_as_parameter_valid.lm:0:14,
+        },
         Implementation {
             target: Type {
                 id: TypeId(
@@ -8,7 +26,7 @@ Map {
                             10850729242277675618,
                         ),
                         index: Idx(
-                            258,
+                            259,
                         ),
                     },
                 ),
@@ -17,15 +35,15 @@ Map {
                     name: Type {
                         name: Identifier {
                             name: "Foo",
-                            location: using_self_as_parameter_valid.lm:5:8,
+                            location: using_self_as_parameter_valid.lm:21:24,
                         },
                         bound_types: [],
-                        location: using_self_as_parameter_valid.lm:5:9,
+                        location: using_self_as_parameter_valid.lm:21:25,
                     },
-                    location: using_self_as_parameter_valid.lm:5:9,
+                    location: using_self_as_parameter_valid.lm:21:25,
                 },
                 self_type: false,
-                location: using_self_as_parameter_valid.lm:5:9,
+                location: using_self_as_parameter_valid.lm:21:25,
             },
             methods: [
                 MethodDefinition {
@@ -35,27 +53,27 @@ Map {
                             Type {
                                 name: Identifier {
                                     name: "Foo",
-                                    location: using_self_as_parameter_valid.lm:5:8,
+                                    location: using_self_as_parameter_valid.lm:21:24,
                                 },
                                 bound_types: [],
-                                location: using_self_as_parameter_valid.lm:5:9,
+                                location: using_self_as_parameter_valid.lm:21:25,
                             },
                         ],
                         name: Callable {
                             name: Identifier {
                                 name: "bar",
-                                location: using_self_as_parameter_valid.lm:22:25,
+                                location: using_self_as_parameter_valid.lm:38:41,
                             },
                             bound_types: [],
-                            location: using_self_as_parameter_valid.lm:22:25,
+                            location: using_self_as_parameter_valid.lm:38:41,
                         },
-                        location: using_self_as_parameter_valid.lm:5:9,
+                        location: using_self_as_parameter_valid.lm:21:25,
                     },
                     parameters: [
                         Parameter {
                             name: Identifier {
                                 name: "self",
-                                location: using_self_as_parameter_valid.lm:26:30,
+                                location: using_self_as_parameter_valid.lm:42:46,
                             },
                             param_type: Type {
                                 id: TypeId(
@@ -64,7 +82,7 @@ Map {
                                             10850729242277675618,
                                         ),
                                         index: Idx(
-                                            261,
+                                            262,
                                         ),
                                     },
                                 ),
@@ -73,23 +91,23 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "Foo",
-                                            location: using_self_as_parameter_valid.lm:5:8,
+                                            location: using_self_as_parameter_valid.lm:21:24,
                                         },
                                         bound_types: [],
-                                        location: using_self_as_parameter_valid.lm:5:9,
+                                        location: using_self_as_parameter_valid.lm:21:25,
                                     },
-                                    location: using_self_as_parameter_valid.lm:5:9,
+                                    location: using_self_as_parameter_valid.lm:21:25,
                                 },
                                 self_type: true,
-                                location: using_self_as_parameter_valid.lm:26:30,
+                                location: using_self_as_parameter_valid.lm:42:46,
                             },
                             vararg: false,
-                            location: using_self_as_parameter_valid.lm:26:30,
+                            location: using_self_as_parameter_valid.lm:42:46,
                         },
                         Parameter {
                             name: Identifier {
                                 name: "a",
-                                location: using_self_as_parameter_valid.lm:32:33,
+                                location: using_self_as_parameter_valid.lm:48:49,
                             },
                             param_type: Type {
                                 id: TypeId(
@@ -98,7 +116,7 @@ Map {
                                             10850729242277675618,
                                         ),
                                         index: Idx(
-                                            263,
+                                            264,
                                         ),
                                     },
                                 ),
@@ -114,18 +132,18 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "Int32",
-                                            location: using_self_as_parameter_valid.lm:35:40,
+                                            location: using_self_as_parameter_valid.lm:51:56,
                                         },
                                         bound_types: [],
-                                        location: using_self_as_parameter_valid.lm:35:40,
+                                        location: using_self_as_parameter_valid.lm:51:56,
                                     },
-                                    location: using_self_as_parameter_valid.lm:35:40,
+                                    location: using_self_as_parameter_valid.lm:51:56,
                                 },
                                 self_type: false,
-                                location: using_self_as_parameter_valid.lm:35:40,
+                                location: using_self_as_parameter_valid.lm:51:56,
                             },
                             vararg: false,
-                            location: using_self_as_parameter_valid.lm:32:40,
+                            location: using_self_as_parameter_valid.lm:48:56,
                         },
                     ],
                     type_parameters: [],
@@ -135,24 +153,24 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "void",
-                                    location: using_self_as_parameter_valid.lm:45:49,
+                                    location: using_self_as_parameter_valid.lm:61:65,
                                 },
                                 bound_types: [],
-                                location: using_self_as_parameter_valid.lm:45:50,
+                                location: using_self_as_parameter_valid.lm:61:66,
                             },
-                            location: using_self_as_parameter_valid.lm:45:50,
+                            location: using_self_as_parameter_valid.lm:61:66,
                         },
-                        location: using_self_as_parameter_valid.lm:45:50,
+                        location: using_self_as_parameter_valid.lm:61:66,
                     },
                     block: Block {
                         statements: [],
-                        location: using_self_as_parameter_valid.lm:50:53,
+                        location: using_self_as_parameter_valid.lm:66:69,
                     },
-                    location: using_self_as_parameter_valid.lm:15:53,
+                    location: using_self_as_parameter_valid.lm:31:69,
                 },
             ],
             type_parameters: [],
-            location: using_self_as_parameter_valid.lm:0:55,
+            location: using_self_as_parameter_valid.lm:16:71,
         },
     ],
 }

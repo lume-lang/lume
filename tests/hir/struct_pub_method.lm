@@ -1,3 +1,5 @@
+struct Foo { }
+
 impl Foo {
     pub fn bar() -> Int32 {
         return 0;
