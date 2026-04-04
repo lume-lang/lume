@@ -30,16 +30,11 @@ impl Driver {
     pub fn build(mut self) -> Result<CompiledExecutable> {
         self.override_root_sources();
 
-        let session = Session {
-            dep_graph: self.dependencies.clone(),
-            workspace_root: self.package.path.clone(),
-            options: self.config.options,
-            loader: self.config.loader,
-        };
+        let dry_run = self.config.dry_run;
+        let package_name = self.package.name.clone();
 
-        let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
-
-        let GeneratedCode { gcx, objects } = pipeline(gcx)
+        let GeneratedCode { gcx, objects } = self
+            .to_pipeline()
             .lower_to_hir()?
             .type_check()?
             .lower_to_tir()?
@@ -55,7 +50,7 @@ impl Driver {
 
                     linker_objects.push(lume_linker::ObjectSource::Compiled { name, data: object });
 
-                    if gcx.session.options.enable_incremental && !self.config.dry_run {
+                    if gcx.session.options.enable_incremental && !dry_run {
                         lume_metadata::write_metadata_object(gcx.obj_metadata_path(), &metadata)?;
                     }
                 }
@@ -70,9 +65,9 @@ impl Driver {
             }
         }
 
-        let output_file_path = gcx.binary_output_path(&self.package.name);
+        let output_file_path = gcx.binary_output_path(&package_name);
 
-        if !self.config.dry_run {
+        if !dry_run {
             let span = tracing::info_span!(
                 "link_executable",
                 output.path = %output_file_path.display()

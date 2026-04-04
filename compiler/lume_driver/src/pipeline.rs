@@ -9,6 +9,8 @@ use lume_session::GlobalCtx;
 use lume_span::PackageId;
 use lume_typech::TyCheckCtx;
 
+use crate::*;
+
 /// Compiler pipeline wrapper - functions as the entrypoint for any interactions
 /// with the compiler directly.
 ///
@@ -34,6 +36,22 @@ pub struct Pipeline(Arc<GlobalCtx>);
 #[inline]
 pub fn pipeline(gcx: Arc<GlobalCtx>) -> Pipeline {
     Pipeline(gcx)
+}
+
+impl Driver {
+    /// Creates a new pipeline from the current driver instance.
+    pub fn to_pipeline(self) -> Pipeline {
+        let session = Session {
+            dep_graph: self.dependencies.clone(),
+            workspace_root: self.package.path.clone(),
+            options: self.config.options,
+            loader: self.config.loader,
+        };
+
+        let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
+
+        pipeline(gcx)
+    }
 }
 
 /// Compiler stage: HIR
@@ -85,7 +103,7 @@ pub struct GeneratedObject {
 
 impl Pipeline {
     #[tracing::instrument(level = "INFO", skip_all)]
-    pub(crate) fn lower_to_hir(self) -> Result<LoweredToHir> {
+    pub fn lower_to_hir(self) -> Result<LoweredToHir> {
         let Pipeline(gcx) = self;
 
         let mut maps = IndexMap::new();
@@ -167,7 +185,7 @@ impl Pipeline {
 
 impl LoweredToHir {
     #[tracing::instrument(level = "INFO", skip_all)]
-    pub(crate) fn type_check(self) -> Result<TypeChecked> {
+    pub fn type_check(self) -> Result<TypeChecked> {
         let LoweredToHir { gcx, maps } = self;
         let mut ctx = IndexMap::with_capacity(maps.len());
 
@@ -207,7 +225,7 @@ impl LoweredToHir {
 
 impl TypeChecked {
     #[tracing::instrument(level = "INFO", skip_all)]
-    pub(crate) fn lower_to_tir(self) -> Result<LoweredToTir> {
+    pub fn lower_to_tir(self) -> Result<LoweredToTir> {
         let TypeChecked { gcx, ctx } = self;
         let mut tir = IndexMap::with_capacity(ctx.len());
 
@@ -232,7 +250,7 @@ impl TypeChecked {
 
 impl LoweredToTir {
     #[tracing::instrument(level = "INFO", skip_all)]
-    pub(crate) fn lower_to_mir(self) -> Result<LoweredToMir> {
+    pub fn lower_to_mir(self) -> Result<LoweredToMir> {
         let LoweredToTir { gcx, tir } = self;
         let mut mir_maps = IndexMap::with_capacity(tir.len());
 
@@ -263,7 +281,7 @@ impl LoweredToTir {
 
 impl LoweredToMir {
     #[tracing::instrument(level = "INFO", skip_all)]
-    pub(crate) fn codegen(self) -> Result<GeneratedCode> {
+    pub fn codegen(self) -> Result<GeneratedCode> {
         let LoweredToMir { gcx, mir } = self;
         let mut objects = IndexMap::with_capacity(mir.len());
 

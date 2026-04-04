@@ -31,17 +31,8 @@ impl Driver {
     pub fn check(mut self) -> Result<CheckedPackageGraph> {
         self.override_root_sources();
 
-        let session = Session {
-            dep_graph: self.dependencies.clone(),
-            workspace_root: self.package.path.clone(),
-            options: self.config.options,
-            loader: self.config.loader,
-        };
-
-        let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
+        let TypeChecked { gcx, ctx } = self.to_pipeline().lower_to_hir()?.type_check()?;
         let mut graph = CheckedPackageGraph::new(gcx.session.dep_graph.root);
-
-        let TypeChecked { gcx, ctx } = pipeline(gcx).lower_to_hir()?.type_check()?;
 
         for (package_id, tcx) in ctx {
             let StageResult::Value(tcx) = tcx else {
