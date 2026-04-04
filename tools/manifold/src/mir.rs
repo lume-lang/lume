@@ -1,55 +1,65 @@
 use std::path::{Path, PathBuf};
 
-use build_stage::ManifoldDriver;
-use error_snippet::IntoDiagnostic;
-use lume_errors::{DiagCtx, Result};
+use lume_errors::{DiagCtx, MapDiagnostic, Result};
 
 use crate::TestResult;
-use crate::diff::normalize_output;
+use crate::diff::render_dcx_output;
 
 pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
     let mut map_path = path.clone();
     map_path.set_extension("mir");
 
-    let file_content = std::fs::read_to_string(&path).map_err(IntoDiagnostic::into_diagnostic)?;
-    let mir_output = build_mir(&path, file_content);
+    let file_content = std::fs::read_to_string(&path).map_diagnostic()?;
+    let mir_output = build_mir(&path, file_content)?;
 
     crate::diff::diff_output_of(mir_output, path, map_path)
 }
 
-fn build_mir(path: &Path, content: String) -> String {
-    let source_file_name = path.file_name().unwrap();
-
-    let package = build_stage::PackageBuilder::new("<manifold-test>")
-        .with_source(source_file_name, content)
-        .with_standard_library()
-        .finish();
-
+fn build_mir(path: &Path, content: String) -> Result<String> {
     let dcx = DiagCtx::new();
-    let manifold_driver = ManifoldDriver::new(package, dcx.clone());
+    let file_name = path.file_name().unwrap();
 
-    let mir = match manifold_driver.build_mir() {
-        Ok(mir) => mir,
+    let pipeline = lume_driver::test_support::workspace(path.parent().unwrap())
+        .with_option(|opts| opts.enable_incremental = false)
+        .with_file(
+            "Arcfile",
+            r#"
+                [package]
+                name = "<manifold-test>"
+                version = "1.0.0"
+                lume_version = "^0"
+            "#,
+        )
+        .with_file(PathBuf::from("src").join(file_name), &content)
+        .pipeline(dcx.handle())?;
+
+    let mir_result = || -> Result<lume_driver::LoweredToMir> {
+        pipeline.lower_to_hir()?.type_check()?.lower_to_tir()?.lower_to_mir()
+    }();
+
+    let mir = match mir_result {
+        Ok(lume_driver::LoweredToMir { gcx, mut mir }) => {
+            let root_package_id = gcx.session.dep_graph.root;
+
+            let lume_driver::StageResult::Value(result) = mir.swap_remove(&root_package_id).unwrap() else {
+                panic!("");
+            };
+
+            result.1
+        }
         Err(err) => {
             dcx.emit(err);
 
-            let mut renderer = error_snippet::GraphicalRenderer::new();
-            renderer.use_colors = false;
-            renderer.highlight_source = false;
-
-            owo_colors::set_override(false);
-            let buffer = dcx.render_buffer(&mut renderer).unwrap_or_default();
-
-            return normalize_output(&buffer);
+            return Ok(render_dcx_output(&dcx));
         }
     };
 
     let filtered_functions: Vec<_> = mir
         .functions
         .values()
-        .filter(|func| func.location.file.name.to_pathbuf().ends_with(source_file_name))
+        .filter(|func| func.location.file.name.to_pathbuf().ends_with(file_name))
         .map(ToString::to_string)
         .collect();
 
-    filtered_functions.join("")
+    Ok(filtered_functions.join(""))
 }
