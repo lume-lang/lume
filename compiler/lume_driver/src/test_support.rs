@@ -4,7 +4,7 @@ use indexmap::IndexMap;
 use lume_errors::{DiagCtxHandle, Result};
 use lume_session::{FileLoader, FileSystemLoader, Options};
 
-use crate::{Config, Driver};
+use crate::{Config, Driver, Pipeline};
 
 /// Creates a new workspace builder at the specified root directory.
 ///
@@ -135,6 +135,22 @@ impl WorkspaceBuilder {
         self.config.loader = Box::new(self.vfs);
 
         Driver::from_root(&root, self.config, dcx)
+    }
+
+    /// Creates a new pipeline instance from the workspace builder.
+    ///
+    /// # Example:
+    ///
+    /// ```
+    /// use lume_driver::test_support::workspace;
+    /// use lume_errors::{DiagCtx, DiagCtxHandle};
+    ///
+    /// let dcx = DiagCtx::new();
+    /// let root = std::path::PathBuf::new();
+    /// let _ = dcx.with(|handle| workspace(root).pipeline(handle));
+    /// ```
+    pub fn pipeline(self, dcx: DiagCtxHandle) -> Result<Pipeline> {
+        self.driver(dcx).map(|driver| driver.to_pipeline())
     }
 
     /// Checks the workspace for errors without compiling anything.
