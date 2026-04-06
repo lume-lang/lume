@@ -39,10 +39,12 @@ impl Diagnostics {
             for diagnostic in diagnostics {
                 tracing::info!("publishing diagnostic: {}", diagnostic.message());
 
-                if diagnostic.labels().is_some() || diagnostic.source_code().is_some() {
-                    self.publish_diagnostic(sender, diagnostic.as_ref());
-                } else {
+                let labels = diagnostic.labels().map_or_else(Vec::new, |iter| iter.collect());
+
+                if labels.is_empty() {
                     publish_message(sender, diagnostic.as_ref());
+                } else {
+                    self.publish_diagnostic(sender, diagnostic.as_ref(), labels.into_iter());
                 }
             }
         });
@@ -63,14 +65,17 @@ impl Diagnostics {
 
     /// Publishes the given [`error_snippet::Diagnostic`] to the language
     /// client.
-    fn publish_diagnostic(&self, sender: &Sender<lsp_server::Message>, diagnostic: &dyn error_snippet::Diagnostic) {
-        let Some(labels) = diagnostic.labels() else {
-            return;
-        };
-
+    fn publish_diagnostic<L>(
+        &self,
+        sender: &Sender<lsp_server::Message>,
+        diagnostic: &dyn error_snippet::Diagnostic,
+        labels: L,
+    ) where
+        L: Iterator<Item = lume_errors::Label>,
+    {
         let labels = labels
             .into_iter()
-            .filter_map(|label| self.lower_diagnostic_label(&label))
+            .filter_map(|label| self.lower_diagnostic_label(diagnostic, &label))
             .collect::<Vec<_>>();
 
         for label in &labels {
@@ -124,8 +129,12 @@ impl Diagnostics {
     ///
     /// If the label doesn't have any source content attached,
     /// returns [`None`].
-    fn lower_diagnostic_label(&self, label: &error_snippet::Label) -> Option<DiagnosticLabel> {
-        let source = label.source()?;
+    fn lower_diagnostic_label(
+        &self,
+        diagnostic: &dyn error_snippet::Diagnostic,
+        label: &error_snippet::Label,
+    ) -> Option<DiagnosticLabel> {
+        let source = label.source().or_else(|| diagnostic.source_code())?;
 
         let position = crate::position_from_range(source.content().as_ref(), &label.range().0);
         let file_path = PathBuf::from(source.name()?);
