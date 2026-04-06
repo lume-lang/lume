@@ -21,6 +21,9 @@ mod symbols {
 
 pub(crate) use pos::*;
 
+#[cfg(test)]
+pub(crate) mod test;
+
 pub fn start_server() -> std::result::Result<(), Box<dyn Error + Sync + Send>> {
     let (conn, io) = Connection::stdio();
     let capabilities = capabilities();
