@@ -168,7 +168,7 @@ enum Call<'hir> {
 impl Engine<'_, TyInferCtx> {
     #[tracing::instrument(level = "INFO", skip_all, err)]
     pub(crate) fn introduce_type_variables(&mut self) -> Result<()> {
-        for id in self.ctx.hir().nodes.keys().copied().collect::<Vec<_>>() {
+        for id in self.ctx.hir_local_nodes().map(|node| node.id()).collect::<Vec<_>>() {
             let mut node = if let Some(node) = self.ctx.hir_node(id)
                 && let Ok(inferred) = InferedNode::try_from(node)
             {
@@ -177,35 +177,37 @@ impl Engine<'_, TyInferCtx> {
                 continue;
             };
 
-            match &mut node {
+            let result = match &mut node {
                 InferedNode::Pattern(pattern) => {
                     if let lume_hir::PatternKind::Variant(variant) = &mut pattern.kind {
-                        self.introduce_type_variables_on_variant(pattern.id, &mut variant.name)?;
+                        self.introduce_type_variables_on_variant(pattern.id, &mut variant.name)
+                    } else {
+                        Ok(())
                     }
                 }
                 InferedNode::VariableDeclaration(decl) => {
                     if let Some(declared_type) = &mut decl.declared_type {
-                        self.introduce_type_variables_on_type(decl.id, &mut declared_type.name)?;
+                        self.introduce_type_variables_on_type(decl.id, &mut declared_type.name)
+                    } else {
+                        Ok(())
                     }
                 }
-                InferedNode::Cast(expr) => {
-                    self.introduce_type_variables_on_type(expr.id, &mut expr.target.name)?;
-                }
-                InferedNode::Construct(expr) => {
-                    self.introduce_type_variables_on_type(expr.id, &mut expr.path)?;
-                }
+                InferedNode::Cast(expr) => self.introduce_type_variables_on_type(expr.id, &mut expr.target.name),
+                InferedNode::Construct(expr) => self.introduce_type_variables_on_type(expr.id, &mut expr.path),
                 InferedNode::IntrinsicCall(expr) => {
-                    self.introduce_type_variables_on_callable(expr.id, &mut Call::Intrinsic(expr))?;
+                    self.introduce_type_variables_on_callable(expr.id, &mut Call::Intrinsic(expr))
                 }
                 InferedNode::InstanceCall(expr) => {
-                    self.introduce_type_variables_on_callable(expr.id, &mut Call::Instance(expr))?;
+                    self.introduce_type_variables_on_callable(expr.id, &mut Call::Instance(expr))
                 }
                 InferedNode::StaticCall(expr) => {
-                    self.introduce_type_variables_on_callable(expr.id, &mut Call::Static(expr))?;
+                    self.introduce_type_variables_on_callable(expr.id, &mut Call::Static(expr))
                 }
-                InferedNode::Variant(expr) => {
-                    self.introduce_type_variables_on_variant(expr.id, &mut expr.name)?;
-                }
+                InferedNode::Variant(expr) => self.introduce_type_variables_on_variant(expr.id, &mut expr.name),
+            };
+
+            if let Err(err) = result {
+                self.ctx.dcx().emit(err);
             }
 
             self.ctx.hir_mut().nodes.insert(id, Into::<lume_hir::Node>::into(node));
