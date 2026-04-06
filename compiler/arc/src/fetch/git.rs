@@ -25,7 +25,7 @@ fn is_git_installed() -> bool {
 pub struct GitDependencyFetcher;
 
 impl DependencyFetcher for GitDependencyFetcher {
-    fn metadata(&self, loader: &dyn FileLoader, dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
+    fn metadata<L: FileLoader>(&self, loader: &L, dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
         let path = clone_repository(dependency)?;
         let manifest = PackageParser::locate(&path, loader)?;
 

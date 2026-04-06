@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use lume_driver::{Config, Driver};
 use lume_errors::DiagCtxHandle;
+use lume_session::FileSystemLoader;
 
 use crate::commands::project_or_cwd;
 
@@ -29,7 +30,7 @@ impl CheckCommand {
             }
         };
 
-        let config = Config {
+        let config = Config::<FileSystemLoader> {
             options: self.build.options(),
             ..Default::default()
         };

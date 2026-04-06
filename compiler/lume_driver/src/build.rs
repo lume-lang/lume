@@ -1,6 +1,9 @@
 use crate::*;
 
-impl Driver {
+impl<IO> Driver<IO>
+where
+    IO: FileLoader,
+{
     /// Locates the [`Package`] from the given path and builds it into an
     /// executable.
     ///
@@ -12,7 +15,7 @@ impl Driver {
     /// - an error occured while writing the output executable
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn build_package(root: &Path, config: Config, dcx: DiagCtxHandle) -> Result<CompiledExecutable> {
+    pub fn build_package(root: &Path, config: Config<IO>, dcx: DiagCtxHandle) -> Result<CompiledExecutable> {
         let driver = Self::from_root(root, config, dcx.clone())?;
 
         driver.build()
@@ -84,46 +87,5 @@ impl Driver {
         Ok(CompiledExecutable {
             binary: output_file_path,
         })
-    }
-}
-
-/// Determines whether the given package needs to be compiled or re-compiled.
-///
-/// This takes the state of the current package metadata into account, as well
-/// as if anything has changed within it' source code.
-#[tracing::instrument(level = "DEBUG", skip_all, fields(package = %package.name), ret)]
-pub(crate) fn needs_compilation(gcx: &Arc<GlobalCtx>, package: &Package) -> bool {
-    // If incremental compilation is disabled, we should alwas re-compile.
-    if !gcx.session.options.enable_incremental {
-        tracing::debug!("re-compilation required: incremental compilation disabled");
-        return true;
-    }
-
-    let metadata_directory = gcx.obj_metadata_path();
-    let metadata_filename = lume_metadata::metadata_filename_of(&package.name);
-    let metadata_path = metadata_directory.join(metadata_filename);
-
-    // If no metadata file could be found, the package has likely not been built
-    // yet - in which case it obviously needs to be built.
-    let Ok(Some(metadata)) = lume_metadata::read_metadata_header(metadata_path) else {
-        tracing::debug!("re-compilation required: could not read metadata header");
-        return true;
-    };
-
-    let current_hash = package.package_hash();
-
-    #[allow(clippy::needless_bool, reason = "lint only raised when tracing is disabled")]
-    if metadata.hash == current_hash {
-        tracing::debug!("hash matched, compilation not required");
-
-        false
-    } else {
-        tracing::debug!(
-            message = "hash mismatch between packages",
-            current = %current_hash,
-            build = %metadata.hash
-        );
-
-        true
     }
 }

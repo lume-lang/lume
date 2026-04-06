@@ -1,5 +1,6 @@
 pub mod deps;
 mod errors;
+pub mod io;
 pub mod stdlib;
 
 use std::fmt::Display;
@@ -9,6 +10,7 @@ use std::sync::Arc;
 pub use deps::*;
 use error_snippet::{IntoDiagnostic, Result};
 use indexmap::IndexMap;
+pub use io::*;
 use lume_architect::{Database, DatabaseContext};
 use lume_errors::DiagCtx;
 use lume_span::{FileName, PackageId, SourceFile};
@@ -21,6 +23,12 @@ pub struct Options {
     /// Defines whether the type context should be printed to `stdio`, after
     /// it's been inferred and type checked.
     pub print_type_context: bool,
+
+    /// Whether to also export private HIR nodes. Only used when checking
+    /// packages.
+    ///
+    /// By default, only public HIR nodes are exported.
+    pub export_private_nodes: bool,
 
     /// Defines the optimization level for the generated LLVM IR.
     pub optimize: OptimizationLevel,
@@ -63,6 +71,7 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             print_type_context: false,
+            export_private_nodes: false,
             optimize: OptimizationLevel::default(),
             linker: None,
             debug_info: DebugInfo::default(),
@@ -167,76 +176,15 @@ pub enum LinkerPreference {
 }
 
 /// Represents a compilation session, invoked by the driver.
+#[derive(Default)]
 pub struct Session {
     pub options: Options,
-    pub loader: Box<dyn FileLoader>,
     pub workspace_root: PathBuf,
     pub dep_graph: DependencyMap,
 }
 
-impl Default for Session {
-    fn default() -> Self {
-        Self {
-            options: Options::default(),
-            loader: Box::new(FileSystemLoader),
-            workspace_root: PathBuf::new(),
-            dep_graph: DependencyMap::default(),
-        }
-    }
-}
-
 unsafe impl Send for Session {}
 unsafe impl Sync for Session {}
-
-pub trait FileLoader: Send + Sync {
-    /// Determines whether a file exists at the given path.
-    fn exists(&self, path: &Path) -> bool;
-
-    /// Reads the contents of a file at the given path into memory.
-    fn read(&self, path: &Path) -> std::io::Result<String>;
-
-    /// Reads the contents of a directory at the given path into memory.
-    fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>>;
-}
-
-pub struct FileSystemLoader;
-
-impl FileLoader for FileSystemLoader {
-    fn exists(&self, path: &Path) -> bool {
-        path.exists()
-    }
-
-    fn read(&self, path: &Path) -> std::io::Result<String> {
-        std::fs::read_to_string(path)
-    }
-
-    fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
-        let mut entries = Vec::new();
-
-        if !path.is_dir() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::IsADirectory,
-                format!("cannot read directory: {}", path.display()),
-            ));
-        }
-
-        for entry in std::fs::read_dir(path)? {
-            let entry = entry?;
-            let meta = entry.metadata()?;
-
-            if meta.is_dir() && !meta.is_symlink() {
-                let mut subdir = self.read_dir(&entry.path())?;
-                entries.append(&mut subdir);
-            }
-
-            if meta.is_file() {
-                entries.push(entry.path());
-            }
-        }
-
-        Ok(entries)
-    }
-}
 
 /// Global context for all compiler operations and is used to pass around data
 /// to segmented stages of the compiler processs, such as parsing, analysis,
@@ -426,7 +374,7 @@ impl Package {
     ///
     /// This method will return `Err` if the current path to the `Arcfile`
     /// exists outside of any directory.
-    pub fn add_package_sources(&mut self, loader: &dyn FileLoader) -> Result<()> {
+    pub fn add_package_sources<L: FileLoader>(&mut self, loader: &L) -> Result<()> {
         for source_file in self.locate_source_files(loader)? {
             // We get the relative path of the file within the project,
             // so error messages don't use the full path to a file.
@@ -451,7 +399,7 @@ impl Package {
     ///
     /// This method will return `Err` if the current path to the `Arcfile`
     /// exists outside of any directory.
-    pub fn locate_source_files(&self, loader: &dyn FileLoader) -> Result<Vec<PathBuf>> {
+    pub fn locate_source_files<L: FileLoader>(&self, loader: &L) -> Result<Vec<PathBuf>> {
         match loader.read_dir(self.root()) {
             Ok(paths) => Ok(paths
                 .into_iter()

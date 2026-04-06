@@ -19,6 +19,6 @@ pub use crate::fetch::{clean_local_cache_dir, local_cache_dir};
 /// This method may fail if:
 /// - the given path has no `Arcfile` stored within it
 /// - or the located `Arcfile` doesn't refer to a file.
-pub fn locate_package(root: &Path, loader: &dyn FileLoader, dcx: DiagCtxHandle) -> Result<DependencyMap> {
+pub fn locate_package<L: FileLoader>(root: &Path, loader: &L, dcx: DiagCtxHandle) -> Result<DependencyMap> {
     deps::build_dependency_tree(root, loader, dcx)
 }
