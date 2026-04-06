@@ -33,7 +33,11 @@ impl Display for Dependency {
 }
 
 /// Builds a dependency from the root package, found at `root`.
-pub(crate) fn build_dependency_tree(root: &Path, loader: &dyn FileLoader, dcx: DiagCtxHandle) -> Result<DependencyMap> {
+pub(crate) fn build_dependency_tree<L: FileLoader>(
+    root: &Path,
+    loader: &L,
+    dcx: DiagCtxHandle,
+) -> Result<DependencyMap> {
     let manifest = PackageParser::locate(root, loader)?;
     let root_id = manifest.package_id();
 
@@ -116,17 +120,17 @@ pub(crate) fn build_dependency_tree(root: &Path, loader: &dyn FileLoader, dcx: D
     Ok(map)
 }
 
-struct DependencyResolver<'fs> {
+struct DependencyResolver<'io, IO: FileLoader> {
     dcx: DiagCtxHandle,
     metadata: RefCell<HashMap<ManifestDependencySource, Arc<PackageMetadata>>>,
-    loader: &'fs dyn FileLoader,
+    io: &'io IO,
 }
 
-impl<'fs> DependencyResolver<'fs> {
-    pub fn new(loader: &'fs dyn FileLoader, dcx: DiagCtxHandle) -> Self {
+impl<'io, IO: FileLoader> DependencyResolver<'io, IO> {
+    pub fn new(io: &'io IO, dcx: DiagCtxHandle) -> Self {
         Self {
             dcx,
-            loader,
+            io,
             metadata: RefCell::new(HashMap::new()),
         }
     }
@@ -138,7 +142,7 @@ impl<'fs> DependencyResolver<'fs> {
             return Ok(existing.clone());
         }
 
-        let metadata = Arc::new(source.get_metadata(self.loader)?);
+        let metadata = Arc::new(source.get_metadata(self.io)?);
         let inserted = self
             .metadata
             .borrow_mut()
@@ -157,7 +161,7 @@ impl<'fs> DependencyResolver<'fs> {
     }
 }
 
-impl pubgrub::DependencyProvider for DependencyResolver<'_> {
+impl<IO: FileLoader> pubgrub::DependencyProvider for DependencyResolver<'_, IO> {
     type Err = DependencyError;
     type M = DependencyError;
     type P = Dependency;

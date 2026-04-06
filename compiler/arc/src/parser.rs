@@ -176,7 +176,7 @@ impl PackageParser {
     ///
     /// This method may fail if the given path is unreadable or
     /// otherwise inaccessible.
-    fn new(path: &Path, loader: &dyn FileLoader) -> Result<Self> {
+    fn new<L: FileLoader>(path: &Path, loader: &L) -> Result<Self> {
         let content = match loader.read(path) {
             Ok(content) => content,
             Err(err) => {
@@ -218,7 +218,7 @@ impl PackageParser {
     /// - the given path has no `Arcfile` stored within it,
     /// - the located `Arcfile` doesn't refer to a file
     /// - or if the given `Arcfile` is otherwise invalid
-    pub fn locate(root: &Path, loader: &dyn FileLoader) -> Result<Manifest> {
+    pub fn locate<L: FileLoader>(root: &Path, loader: &L) -> Result<Manifest> {
         let url = normalize_path_url(root)?;
 
         if url.scheme() != "file" {

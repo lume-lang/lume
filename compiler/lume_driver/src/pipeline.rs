@@ -38,14 +38,13 @@ pub fn pipeline(gcx: Arc<GlobalCtx>) -> Pipeline {
     Pipeline(gcx)
 }
 
-impl Driver {
+impl<IO> Driver<IO> {
     /// Creates a new pipeline from the current driver instance.
     pub fn to_pipeline(self) -> Pipeline {
         let session = Session {
-            dep_graph: self.dependencies.clone(),
-            workspace_root: self.package.path.clone(),
+            dep_graph: self.dependencies,
+            workspace_root: self.package.path,
             options: self.config.options,
-            loader: self.config.loader,
         };
 
         let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
@@ -90,11 +89,13 @@ pub struct LoweredToMir {
 }
 
 /// Compiler stage: codegen
+#[cfg(feature = "codegen")]
 pub struct GeneratedCode {
     pub gcx: Arc<GlobalCtx>,
     pub objects: IndexMap<PackageId, StageResult<GeneratedObject>>,
 }
 
+#[cfg(feature = "codegen")]
 pub struct GeneratedObject {
     pub name: String,
     pub object: Vec<u8>,
@@ -124,7 +125,7 @@ impl Pipeline {
                 dependency.path.display()
             );
 
-            let has_hash_changed = crate::build::needs_compilation(&gcx, &dependency);
+            let has_hash_changed = needs_compilation(&gcx, &dependency);
             let bc_path = gcx.obj_bc_path_of(&dependency.name);
 
             // We can skip recompilation of a package if *all* the following circumstances
@@ -173,7 +174,12 @@ impl Pipeline {
                 Ok(ticx)
             })?;
 
-            let public_hir = lume_metadata::partition_public_nodes(&tcx);
+            let public_hir = if gcx.session.options.export_private_nodes {
+                tcx.hir().clone()
+            } else {
+                lume_metadata::partition_public_nodes(&tcx)
+            };
+
             public_hir.merge_into(&mut dependency_hir);
 
             maps.insert(dependency.id, StageResult::value(tcx));
@@ -206,7 +212,7 @@ impl LoweredToHir {
             // Then, make sure they're all valid.
             let tcx = tracing::info_span!("type_checking").in_scope(|| -> Result<TyCheckCtx> {
                 let mut tcx = lume_typech::TyCheckCtx::new(*tcx);
-                tcx.typecheck()?;
+                let _ = tcx.typecheck();
 
                 Ok(tcx)
             })?;
@@ -280,6 +286,7 @@ impl LoweredToTir {
 }
 
 impl LoweredToMir {
+    #[cfg(feature = "codegen")]
     #[tracing::instrument(level = "INFO", skip_all)]
     pub fn codegen(self) -> Result<GeneratedCode> {
         let LoweredToMir { gcx, mir } = self;
@@ -310,5 +317,46 @@ impl LoweredToMir {
         }
 
         Ok(GeneratedCode { gcx, objects })
+    }
+}
+
+/// Determines whether the given package needs to be compiled or re-compiled.
+///
+/// This takes the state of the current package metadata into account, as well
+/// as if anything has changed within it' source code.
+#[tracing::instrument(level = "DEBUG", skip_all, fields(package = %package.name), ret)]
+pub(crate) fn needs_compilation(gcx: &Arc<GlobalCtx>, package: &Package) -> bool {
+    // If incremental compilation is disabled, we should alwas re-compile.
+    if !gcx.session.options.enable_incremental {
+        tracing::debug!("re-compilation required: incremental compilation disabled");
+        return true;
+    }
+
+    let metadata_directory = gcx.obj_metadata_path();
+    let metadata_filename = lume_metadata::metadata_filename_of(&package.name);
+    let metadata_path = metadata_directory.join(metadata_filename);
+
+    // If no metadata file could be found, the package has likely not been built
+    // yet - in which case it obviously needs to be built.
+    let Ok(Some(metadata)) = lume_metadata::read_metadata_header(metadata_path) else {
+        tracing::debug!("re-compilation required: could not read metadata header");
+        return true;
+    };
+
+    let current_hash = package.package_hash();
+
+    #[allow(clippy::needless_bool, reason = "lint only raised when tracing is disabled")]
+    if metadata.hash == current_hash {
+        tracing::debug!("hash matched, compilation not required");
+
+        false
+    } else {
+        tracing::debug!(
+            message = "hash mismatch between packages",
+            current = %current_hash,
+            build = %metadata.hash
+        );
+
+        true
     }
 }

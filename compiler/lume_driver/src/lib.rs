@@ -5,7 +5,7 @@ use std::sync::Arc;
 use arc::locate_package;
 use indexmap::IndexMap;
 use lume_errors::{DiagCtxHandle, Result};
-use lume_session::{DependencyMap, FileLoader, GlobalCtx, Options, Package, Session};
+use lume_session::{DependencyMap, FileLoader, Options, Package, Session};
 use lume_span::{FileName, PackageId, SourceFile};
 use lume_typech::TyCheckCtx;
 
@@ -27,7 +27,7 @@ pub struct CompiledExecutable {
 }
 
 /// Compiler configuration
-pub struct Config {
+pub struct Config<IO> {
     /// Command-line input options.
     pub options: Options,
 
@@ -35,13 +35,7 @@ pub struct Config {
     pub dry_run: bool,
 
     /// Abstract loader for loading source files.
-    pub loader: Box<dyn FileLoader>,
-
-    /// Whether to also export private HIR nodes. Only used when checking
-    /// packages.
-    ///
-    /// By default, only public HIR nodes are exported.
-    pub export_private_nodes: bool,
+    pub io: IO,
 
     /// Defines an optional list of overrides for source files.
     ///
@@ -51,30 +45,32 @@ pub struct Config {
     pub source_overrides: Option<IndexMap<FileName, String>>,
 }
 
-impl Default for Config {
+impl<IO: Default> Default for Config<IO> {
     fn default() -> Self {
         Self {
             options: Options::default(),
             dry_run: false,
-            loader: Box::new(lume_session::FileSystemLoader),
-            export_private_nodes: false,
+            io: IO::default(),
             source_overrides: None,
         }
     }
 }
 
-pub struct Driver {
+pub struct Driver<IO> {
     /// Defines the structure of the Arcfile within the package.
     pub package: Package,
 
-    config: Config,
+    config: Config<IO>,
     dependencies: DependencyMap,
 
     /// Defines the diagnostics context for reporting errors during compilation.
     dcx: DiagCtxHandle,
 }
 
-impl Driver {
+impl<IO> Driver<IO>
+where
+    IO: FileLoader,
+{
     /// Creates a new compilation driver from the given package root.
     ///
     /// This function will look for Arcfiles within the given root folder, and
@@ -84,9 +80,9 @@ impl Driver {
     /// # Errors
     ///
     /// Returns `Err` if the given path has no `Arcfile` within it.
-    pub fn from_root(root: &Path, config: Config, dcx: DiagCtxHandle) -> Result<Self> {
-        let mut dependencies = dcx.with(|handle| locate_package(root, config.loader.as_ref(), handle))?;
-        dependencies.add_package_sources_recursive(config.loader.as_ref())?;
+    pub fn from_root(root: &Path, config: Config<IO>, dcx: DiagCtxHandle) -> Result<Self> {
+        let mut dependencies = dcx.with(|handle| locate_package(root, &config.io, handle))?;
+        dependencies.add_package_sources_recursive(&config.io)?;
 
         Ok(Driver {
             package: dependencies.root_package().clone(),

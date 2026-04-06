@@ -122,6 +122,7 @@ impl BuildOptions {
     pub fn options(&self) -> lume_session::Options {
         lume_session::Options {
             print_type_context: self.dev.print_type_ctx,
+            export_private_nodes: false,
             enable_incremental: !self.no_incremental,
             optimize: match self.optimize.as_str() {
                 "0" => OptimizationLevel::O0,

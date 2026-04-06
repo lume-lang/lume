@@ -13,7 +13,7 @@ use crate::parser::{ManifestDependencySource, PackageParser};
 pub struct FileDependencyFetcher;
 
 impl DependencyFetcher for FileDependencyFetcher {
-    fn metadata(&self, loader: &dyn FileLoader, dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
+    fn metadata<L: FileLoader>(&self, loader: &L, dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
         let ManifestDependencySource::Local { path } = dependency else {
             unreachable!();
         };

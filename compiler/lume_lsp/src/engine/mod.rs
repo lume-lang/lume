@@ -1,21 +1,23 @@
 mod diagnostics;
-mod io;
 mod reporter;
 
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crossbeam::channel::Sender;
 use diagnostics::Diagnostics;
-use io::IO;
 use lsp_types::Uri;
 use lume_errors::{Result, SimpleDiagnostic};
+use lume_session::{FileLoader, FileSystemLoader, VirtualFileSystem};
 use lume_span::{Internable, Location, PackageId, SourceFile};
 
 use crate::engine::reporter::Reporter;
 use crate::listener::{Completion, FileLocation};
 use crate::symbols::lookup::{NodeEntry, SymbolEntry, SymbolLookup};
+
+pub(crate) type IO = VirtualFileSystem<FileSystemLoader>;
 
 pub(crate) struct Engine {
     /// Defines the root directory of the project.
@@ -39,11 +41,12 @@ impl Engine {
     pub fn new(root: PathBuf, sender: Sender<lsp_server::Message>) -> Self {
         let reporter = Reporter::new(sender.clone());
         let diagnostics = Diagnostics::new(root.clone());
+        let io = IO::new(root.clone(), FileSystemLoader);
 
         Self {
             root,
             sender,
-            io: IO::default(),
+            io,
             reporter,
             diagnostics,
             symbols: SymbolLookup::default(),
@@ -57,14 +60,19 @@ impl Engine {
         self.reporter.check_started();
 
         let result = self.with_result(|engine| {
-            let source_overrides = engine.io.build_source_overrides(&engine.root);
             let config = lume_driver::Config {
-                // The language client may still perform go-to requests on
-                // non-public symbols from other crates.
-                export_private_nodes: true,
+                options: lume_session::Options {
+                    // The language client may still perform go-to requests on
+                    // non-public symbols from other crates.
+                    export_private_nodes: true,
 
-                source_overrides: Some(source_overrides),
-                ..Default::default()
+                    ..Default::default()
+                },
+
+                io: engine.io.clone(),
+
+                dry_run: false,
+                source_overrides: None,
             };
 
             let driver = lume_driver::Driver::from_root(&engine.root, config, engine.diagnostics.dcx.handle())?;
@@ -127,10 +135,13 @@ impl Engine {
     }
 
     /// Gets the source file content which exists to the given path.
-    pub(crate) fn content_of_uri(&self, path: &PathBuf) -> Option<&str> {
-        self.io
-            .read(path)
-            .or_else(|| self.source_of_uri(path).map(|file| file.content.as_str()))
+    pub(crate) fn content_of_uri(&self, path: &Path) -> Option<Cow<'_, str>> {
+        match self.io.read(path) {
+            Ok(content) => Some(Cow::Owned(content)),
+            Err(_) => self
+                .source_of_uri(path)
+                .map(|file| Cow::Borrowed(file.content.as_str())),
+        }
     }
 
     /// Gets the location of an LSP location as a range within a source file.
@@ -178,21 +189,21 @@ impl Engine {
         let path = crate::uri_to_path(&uri);
         tracing::info!("added document {} to vfs", path.display());
 
-        self.io.map(path, content);
+        self.io.write_mapped(path, content);
     }
 
     pub(crate) fn close_document(&mut self, uri: Uri) {
         let path = crate::uri_to_path(&uri);
         tracing::info!("removed document {} from vfs", path.display());
 
-        self.io.unmap(&path);
+        self.io.delete_mapped(&path);
     }
 
     pub(crate) fn save_document(&mut self, uri: Uri) {
         let path = crate::uri_to_path(&uri);
         tracing::debug!("updated document {} (via save)", path.display());
 
-        self.io.unmap(&path);
+        self.io.delete_mapped(&path);
         self.compile();
     }
 
@@ -200,7 +211,7 @@ impl Engine {
         let path = crate::uri_to_path(&uri);
         tracing::debug!("updated document {} (via change)", path.display());
 
-        self.io.map(path, content);
+        self.io.write_mapped(path, content);
     }
 }
 
@@ -254,7 +265,7 @@ impl Engine {
             return Err(SimpleDiagnostic::new(format!("could not find source file: {}", path.display())).into());
         };
 
-        let text_edits = crate::symbols::format::formatted_file(content, config).unwrap_or_else(|err| {
+        let text_edits = crate::symbols::format::formatted_file(&content, config).unwrap_or_else(|err| {
             tracing::error!("could not format file: {err}");
             Vec::new()
         });

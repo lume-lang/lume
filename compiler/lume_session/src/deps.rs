@@ -43,7 +43,7 @@ impl DependencyMap {
 
     /// Adds all expected source files to all the [`Package`]s inside
     /// the dependency tree.
-    pub fn add_package_sources_recursive(&mut self, loader: &dyn FileLoader) -> Result<()> {
+    pub fn add_package_sources_recursive<IO: FileLoader>(&mut self, loader: &IO) -> Result<()> {
         for dependency in self.packages.values_mut() {
             dependency.add_package_sources(loader)?;
         }
