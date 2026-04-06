@@ -1927,6 +1927,7 @@ dependencies = [
  "indexmap",
  "lsp-server",
  "lsp-types",
+ "lume_assets",
  "lume_driver",
  "lume_errors",
  "lume_fmt",
