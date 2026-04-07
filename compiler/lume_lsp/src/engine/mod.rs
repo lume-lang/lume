@@ -17,6 +17,9 @@ use crate::engine::reporter::Reporter;
 use crate::listener::{Completion, FileLocation};
 use crate::symbols::lookup::{NodeEntry, SymbolEntry, SymbolLookup};
 
+#[cfg(test)]
+pub(crate) mod test;
+
 pub(crate) type IO = VirtualFileSystem<FileSystemLoader>;
 
 pub(crate) struct Engine {

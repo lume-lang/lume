@@ -1,10 +1,12 @@
 mod compile;
+mod hover;
 
 use crossbeam::channel::Receiver;
 use lsp_types::notification::Notification as _;
 use lsp_types::request::Request as _;
 
 use crate::engine::Engine;
+use crate::listener::FileLocation;
 use crate::*;
 
 type MessageFilter = fn(&lsp_server::Message) -> bool;
@@ -90,4 +92,29 @@ fn compile_empty_directory() {
 
     let params: lsp_types::ShowMessageParams = serde_json::from_value(notification.params).unwrap();
     assert!(params.message.starts_with("missing Arcfile within /"));
+}
+
+#[test]
+fn location_same_package() {
+    let mut fixture = EngineFixture::new();
+    fixture.set_filter(filter_ignore_progress);
+
+    fixture.add_arcfile("hello-world");
+    fixture.add_document("src/main.lm", "fn main() { }");
+
+    fixture.engine.compile();
+
+    let root = fixture.engine.root.display();
+    let uri = Uri::from_str(&format!("file://{root}/src/main.lm")).unwrap();
+
+    let location = fixture
+        .engine
+        .location_from_lsp(&FileLocation {
+            uri,
+            position: Position { line: 0, character: 13 },
+        })
+        .expect("expected file location, found None");
+
+    assert!(location.file.name.to_pathbuf().ends_with("src/main.lm"));
+    assert_eq!(location.index, 13..14);
 }

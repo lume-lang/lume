@@ -1,0 +1,11 @@
+---
+source: compiler/lume_lsp/src/engine/test/hover.rs
+assertion_line: 24
+expression: hover.contents
+---
+Markup(
+    MarkupContent {
+        kind: Markdown,
+        value: "```lm\npriv fn main() -> Void\n```\n",
+    },
+)

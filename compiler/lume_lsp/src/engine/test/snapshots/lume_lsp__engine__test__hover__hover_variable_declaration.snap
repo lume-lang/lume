@@ -1,0 +1,11 @@
+---
+source: compiler/lume_lsp/src/engine/test/hover.rs
+assertion_line: 53
+expression: hover.contents
+---
+Markup(
+    MarkupContent {
+        kind: Markdown,
+        value: "```lm\nlet a: std::Int32;\n```",
+    },
+)

@@ -28,5 +28,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 tracing = { workspace = true }
 
+[dev-dependencies]
+insta = { version = "1.42.2" }
+
 [lints]
 workspace = true
