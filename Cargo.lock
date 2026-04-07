@@ -1925,6 +1925,7 @@ dependencies = [
  "crossbeam",
  "error_snippet",
  "indexmap",
+ "insta",
  "lsp-server",
  "lsp-types",
  "lume_assets",
