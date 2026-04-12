@@ -18,6 +18,7 @@ lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 lume_tracing = { path = "../../crates/lume_tracing" }
 
+askama = { version = "0.15.6" }
 clap = { workspace = true }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }

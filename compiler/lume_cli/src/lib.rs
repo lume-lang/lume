@@ -30,6 +30,7 @@ pub enum LumeSubcommands {
     Check(commands::CheckCommand),
     Build(commands::BuildCommand),
     Format(commands::FormatCommand),
+    New(commands::NewCommand),
     Run(commands::RunCommand),
 
     #[cfg(feature = "lsp")]
@@ -92,6 +93,11 @@ pub fn lume_cli_entry() {
         LumeSubcommands::Check(cmd) => cmd.run(dcx),
         LumeSubcommands::Build(cmd) => cmd.run(dcx),
         LumeSubcommands::Format(cmd) => cmd.run(dcx),
+        LumeSubcommands::New(cmd) => {
+            if let Err(err) = cmd.run() {
+                dcx.emit_and_push(err);
+            }
+        }
         LumeSubcommands::Run(cmd) => cmd.run(dcx),
 
         #[cfg(feature = "lsp")]

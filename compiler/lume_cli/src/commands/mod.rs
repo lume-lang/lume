@@ -4,6 +4,7 @@ pub(crate) mod check;
 pub(crate) mod fmt;
 #[cfg(feature = "lsp")]
 pub(crate) mod lsp;
+pub(crate) mod new;
 pub(crate) mod run;
 
 use std::env::current_dir;
@@ -16,6 +17,7 @@ pub(crate) use fmt::FormatCommand;
 #[cfg(feature = "lsp")]
 pub(crate) use lsp::LanguageServerCommand;
 use lume_errors::{IntoDiagnostic, Result};
+pub(crate) use new::NewCommand;
 pub(crate) use run::RunCommand;
 
 use crate::error::*;
