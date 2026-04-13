@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
@@ -6,6 +7,7 @@ use error_snippet::{IntoDiagnostic, Result, SimpleDiagnostic};
 use lume_errors::MapDiagnostic;
 use lume_session::FileLoader;
 use semver::VersionReq;
+use serde::Deserialize;
 use url::Url;
 
 use crate::fetch::{DependencyFetcher, LOCAL_CACHE_DIR, PackageMetadata};
@@ -20,13 +22,42 @@ fn is_git_installed() -> bool {
     output.status.success()
 }
 
+#[derive(Deserialize, Hash, Debug, Clone, PartialEq, Eq)]
+pub struct GitDependency {
+    /// Defines the URL of the Git repository.
+    ///
+    /// The URL can be both local and remote.
+    #[serde(rename = "git")]
+    pub repository: String,
+
+    /// Optional. Defines the branch name to fetch the dependency from.
+    pub branch: Option<String>,
+
+    /// Optional. Defines the tag to fetch the dependency from.
+    pub tag: Option<String>,
+
+    /// Optional. Defines the revision to fetch the dependency from.
+    pub rev: Option<String>,
+
+    /// Optional. Defines a sub-path to use within the repository.
+    pub dir: Option<String>,
+}
+
+impl Display for GitDependency {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.repository)
+    }
+}
+
 /// Defines a [`DependencyFetcher`] which handles dependencies which live
 /// inside of a Git repository, either local or remote.
 pub struct GitDependencyFetcher;
 
 impl DependencyFetcher for GitDependencyFetcher {
-    fn metadata<L: FileLoader>(&self, loader: &L, dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
-        let path = clone_repository(dependency)?;
+    type Source = GitDependency;
+
+    fn metadata<L: FileLoader>(&self, source: &Self::Source, loader: &L) -> Result<PackageMetadata> {
+        let path = clone_repository(source)?;
         let manifest = PackageParser::locate(&path, loader)?;
 
         let package_id = manifest.package_id();
@@ -48,27 +79,20 @@ impl DependencyFetcher for GitDependencyFetcher {
         })
     }
 
-    fn fetch(&self, source: &ManifestDependencySource) -> Result<PathBuf> {
+    fn fetch(&self, source: &Self::Source) -> Result<PathBuf> {
         clone_repository(source)
     }
 }
 
 /// Clones the repository defined in `dependency` to a local folder
 /// and returns it's path.
-fn clone_repository(dependency: &ManifestDependencySource) -> Result<PathBuf> {
-    let ManifestDependencySource::Git { repository, dir, .. } = dependency else {
-        return Err(SimpleDiagnostic::new(format!(
-            "unsupported path scheme: only Git URLs are supported, found {dependency}"
-        ))
-        .into());
-    };
-
+fn clone_repository(source: &GitDependency) -> Result<PathBuf> {
     if !is_git_installed() {
         return Err(SimpleDiagnostic::new("failed to clone repository: git is not installed").into());
     }
 
-    let repository_url = Url::parse(repository).map_diagnostic()?;
-    let git_clone_args = git_clone_dependency_filter(dependency)?;
+    let repository_url = Url::parse(&source.repository).map_diagnostic()?;
+    let git_clone_args = git_clone_dependency_filter(source)?;
 
     let repository_path = PathBuf::from(repository_url.path());
     let repository_name = match repository_path.components().next_back() {
@@ -94,7 +118,7 @@ fn clone_repository(dependency: &ManifestDependencySource) -> Result<PathBuf> {
 
     let local_directory = LOCAL_CACHE_DIR.join(repository_name);
 
-    let requested_path = if let Some(sub_directory) = dir {
+    let requested_path = if let Some(sub_directory) = &source.dir {
         local_directory.join(sub_directory)
     } else {
         local_directory.clone()
@@ -146,7 +170,7 @@ fn clone_repository(dependency: &ManifestDependencySource) -> Result<PathBuf> {
         .into());
     }
 
-    if let Some(sub_directory) = dir {
+    if let Some(sub_directory) = &source.dir {
         if !requested_path.exists() {
             return Err(SimpleDiagnostic::new(format!(
                 "failed to clone repository: no sub-directory named {sub_directory} exists in repository"
@@ -166,10 +190,8 @@ fn clone_repository(dependency: &ManifestDependencySource) -> Result<PathBuf> {
 /// # Errors
 ///
 /// This function will return an error if more than one filter is applied.
-fn git_clone_dependency_filter(dependency: &ManifestDependencySource) -> Result<Vec<String>> {
-    let ManifestDependencySource::Git { rev, tag, branch, .. } = dependency else {
-        return Ok(Vec::new());
-    };
+fn git_clone_dependency_filter(source: &GitDependency) -> Result<Vec<String>> {
+    let GitDependency { rev, tag, branch, .. } = source;
 
     match (rev, tag, branch) {
         (Some(rev), None, None) => Ok(vec![String::from("--revision"), rev.clone()]),

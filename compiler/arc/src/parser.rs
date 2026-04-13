@@ -14,6 +14,7 @@ use toml::Spanned;
 use url::Url;
 
 use crate::errors::*;
+use crate::fetch::{FileDependency, GitDependency};
 
 pub const DEFAULT_ARCFILE: &str = "Arcfile";
 
@@ -118,41 +119,20 @@ pub enum ManifestDependencySource {
     ///
     /// Local dependencies cannot define a version requirement, since
     /// only a single version can exist in a folder at any given time.
-    Local {
-        /// Defines the path to the dependency root on the file system.
-        path: String,
-    },
+    Local(FileDependency),
 
     /// Defines a local or remote Git repository.
     ///
     /// Git repository dependencies can be reference using branch name,
     /// revision or tag.
-    Git {
-        /// Defines the URL of the Git repository.
-        ///
-        /// The URL can be both local and remote.
-        #[serde(rename = "git")]
-        repository: String,
-
-        /// Optional. Defines the branch name to fetch the dependency from.
-        branch: Option<String>,
-
-        /// Optional. Defines the tag to fetch the dependency from.
-        tag: Option<String>,
-
-        /// Optional. Defines the revision to fetch the dependency from.
-        rev: Option<String>,
-
-        /// Optional. Defines a sub-path to use within the repository.
-        dir: Option<String>,
-    },
+    Git(GitDependency),
 }
 
 impl Display for ManifestDependencySource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Local { path } => write!(f, "{path}"),
-            Self::Git { repository, .. } => write!(f, "{repository}"),
+            Self::Local(dep) => write!(f, "{dep}"),
+            Self::Git(dep) => write!(f, "{dep}"),
         }
     }
 }
@@ -262,9 +242,9 @@ impl PackageParser {
             };
 
             manifest.dependencies.insert(String::from("std"), ManifestDependency {
-                source: ManifestDependencySource::Local {
+                source: ManifestDependencySource::Local(FileDependency {
                     path: std_path.display().to_string(),
-                },
+                }),
                 required_version,
             });
         }
@@ -291,7 +271,7 @@ impl PackageParser {
 
         for dependency in manifest.dependencies.values_mut() {
             match &mut dependency.source {
-                ManifestDependencySource::Local { path } => {
+                ManifestDependencySource::Local(FileDependency { path }) => {
                     let pathbuf = PathBuf::from(path.clone());
 
                     if pathbuf.is_relative() {
