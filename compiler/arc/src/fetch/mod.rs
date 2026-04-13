@@ -19,33 +19,24 @@ pub const ARC_CACHE_ENVKEY: &str = "ARC_CACHE_DIR";
 
 /// Defines which subfolder to place Arc caches inside, when the cache directory
 /// is some existing directory, such as the current directory or home directory.
-pub const ARC_CACHE_FOLDER: &str = ".arc";
-
-static LOCAL_CACHE_DIR: std::sync::LazyLock<PathBuf> = std::sync::LazyLock::new(|| {
-    // Prioritize the user-defined location for the caching directory.
-    if let Some(dir) = std::env::var_os(ARC_CACHE_ENVKEY) {
-        return PathBuf::from(dir.to_string_lossy().to_string());
-    }
-
-    // Otherwise, attempt to create a new folder in the current working directory.
-    if let Ok(cwd) = std::env::current_dir() {
-        return cwd.join(ARC_CACHE_FOLDER);
-    }
-
-    // Or attempt to place it witin the home directory...
-    if let Some(home) = std::env::home_dir() {
-        return home.join(ARC_CACHE_FOLDER);
-    }
-
-    // If all hope fails, create a temporary directory.
-    std::env::temp_dir()
-});
+pub const ARC_CACHE_FOLDER: &str = "arc";
 
 /// Returns the current local cache directory for saving caches and/or clones
 /// of remote dependency packages.
 #[tracing::instrument(level = "TRACE", skip_all, ret)]
 pub fn local_cache_dir() -> PathBuf {
-    LOCAL_CACHE_DIR.to_path_buf()
+    // Prioritize the user-defined location for the caching directory.
+    if let Some(dir) = std::env::var_os(ARC_CACHE_ENVKEY) {
+        return PathBuf::from(dir.to_string_lossy().to_string());
+    }
+
+    match lume_assets::determine_lume_home() {
+        // Otherwise, attempt to create a new folder in the Lume data directory
+        Some(data_dir) => data_dir.join(ARC_CACHE_FOLDER),
+
+        // If all hope fails, create a temporary directory.
+        None => std::env::temp_dir(),
+    }
 }
 
 /// Clears the local cache directory for all caches and clones of remote

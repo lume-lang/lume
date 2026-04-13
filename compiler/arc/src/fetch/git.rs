@@ -10,7 +10,7 @@ use semver::VersionReq;
 use serde::Deserialize;
 use url::Url;
 
-use crate::fetch::{DependencyFetcher, LOCAL_CACHE_DIR, PackageMetadata};
+use crate::fetch::{DependencyFetcher, PackageMetadata, local_cache_dir};
 use crate::parser::{ManifestDependencySource, PackageParser};
 
 /// Determines if Git is installed on the system.
@@ -106,8 +106,17 @@ fn clone_repository(source: &GitDependency) -> Result<PathBuf> {
         }
     };
 
-    if !LOCAL_CACHE_DIR.exists()
-        && let Err(err) = std::fs::create_dir_all(LOCAL_CACHE_DIR.as_path())
+    let repository_suffix = source.rev.as_ref().or(source.tag.as_ref()).or(source.branch.as_ref());
+    let repository_folder_name = format!("{repository_name}{}", match repository_suffix {
+        Some(suffix) => suffix,
+        None => "-git",
+    });
+
+    let local_cache_dir = local_cache_dir();
+    let local_directory = local_cache_dir.join(repository_folder_name);
+
+    if !local_cache_dir.exists()
+        && let Err(err) = std::fs::create_dir_all(&local_cache_dir)
     {
         return Err(
             SimpleDiagnostic::new("failed to clone repository: could not create local directory for clone")
@@ -115,8 +124,6 @@ fn clone_repository(source: &GitDependency) -> Result<PathBuf> {
                 .into(),
         );
     }
-
-    let local_directory = LOCAL_CACHE_DIR.join(repository_name);
 
     let requested_path = if let Some(sub_directory) = &source.dir {
         local_directory.join(sub_directory)
