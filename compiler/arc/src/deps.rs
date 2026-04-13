@@ -11,7 +11,7 @@ use pubgrub::{Dependencies, PackageResolutionStatistics, VersionSet as _};
 use semver::Version;
 
 use crate::PackageParser;
-use crate::fetch::PackageMetadata;
+use crate::fetch::{FileDependency, PackageMetadata};
 use crate::parser::ManifestDependencySource;
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
@@ -44,9 +44,9 @@ pub(crate) fn build_dependency_tree<L: FileLoader>(
     let package = Dependency {
         id: root_id,
         name: manifest.package.name.into_inner(),
-        source: ManifestDependencySource::Local {
+        source: ManifestDependencySource::Local(FileDependency {
             path: root.as_os_str().to_string_lossy().into(),
-        },
+        }),
     };
 
     let version = manifest.package.version.into_inner();

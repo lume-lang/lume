@@ -100,6 +100,8 @@ pub struct PackageMetadata {
 }
 
 pub trait DependencyFetcher {
+    type Source;
+
     /// Gets the metadata of the given dependency, optionally without
     /// fetching it from the source.
     ///
@@ -110,7 +112,7 @@ pub trait DependencyFetcher {
     /// - the dependency was found, but inaccessible or invalid,
     /// - the dependency was found, but had no matching versions,
     /// - or some other implementation-dependent error.
-    fn metadata<L: FileLoader>(&self, loader: &L, source: &ManifestDependencySource) -> Result<PackageMetadata>;
+    fn metadata<L: FileLoader>(&self, source: &Self::Source, loader: &L) -> Result<PackageMetadata>;
 
     /// Fetches the package defined at the given path and returns
     /// the path to a local copy of the dependency root.
@@ -122,21 +124,21 @@ pub trait DependencyFetcher {
     /// - the dependency was found, but inaccessible or invalid,
     /// - the dependency was found, but had no matching versions,
     /// - or some other implementation-dependent error.
-    fn fetch(&self, source: &ManifestDependencySource) -> Result<PathBuf>;
+    fn fetch(&self, source: &Self::Source) -> Result<PathBuf>;
 }
 
 impl ManifestDependencySource {
     pub fn get_metadata<L: FileLoader>(&self, loader: &L) -> Result<PackageMetadata> {
         match self {
-            ManifestDependencySource::Local { .. } => FileDependencyFetcher.metadata(loader, self),
-            ManifestDependencySource::Git { .. } => GitDependencyFetcher.metadata(loader, self),
+            ManifestDependencySource::Local(dep) => FileDependencyFetcher.metadata(dep, loader),
+            ManifestDependencySource::Git(dep) => GitDependencyFetcher.metadata(dep, loader),
         }
     }
 
     pub fn fetch(&self) -> Result<PathBuf> {
         match &self {
-            ManifestDependencySource::Local { .. } => FileDependencyFetcher.fetch(self),
-            ManifestDependencySource::Git { .. } => GitDependencyFetcher.fetch(self),
+            ManifestDependencySource::Local(dep) => FileDependencyFetcher.fetch(dep),
+            ManifestDependencySource::Git(dep) => GitDependencyFetcher.fetch(dep),
         }
     }
 }

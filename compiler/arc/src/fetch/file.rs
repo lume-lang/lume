@@ -1,23 +1,35 @@
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::path::PathBuf;
 
-use error_snippet::{Result, SimpleDiagnostic};
+use error_snippet::Result;
 use lume_session::FileLoader;
 use semver::VersionReq;
+use serde::Deserialize;
 
 use crate::fetch::{DependencyFetcher, PackageMetadata};
 use crate::parser::{ManifestDependencySource, PackageParser};
+
+#[derive(Deserialize, Hash, Debug, Clone, PartialEq, Eq)]
+pub struct FileDependency {
+    /// Defines the path to the dependency root on the file system.
+    pub path: String,
+}
+
+impl Display for FileDependency {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.path)
+    }
+}
 
 /// Defines a [`DependencyFetcher`] which handles dependencies
 /// defined on the current filesystem.
 pub struct FileDependencyFetcher;
 
 impl DependencyFetcher for FileDependencyFetcher {
-    fn metadata<L: FileLoader>(&self, loader: &L, dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
-        let ManifestDependencySource::Local { path } = dependency else {
-            unreachable!();
-        };
+    type Source = FileDependency;
 
+    fn metadata<L: FileLoader>(&self, FileDependency { path }: &Self::Source, loader: &L) -> Result<PackageMetadata> {
         let path = PathBuf::from(path);
         let manifest = PackageParser::locate(&path, loader)?;
 
@@ -40,15 +52,7 @@ impl DependencyFetcher for FileDependencyFetcher {
         })
     }
 
-    fn fetch(&self, source: &ManifestDependencySource) -> Result<PathBuf> {
-        #[allow(clippy::match_wildcard_for_single_variants)]
-        match source {
-            ManifestDependencySource::Local { path } => Ok(PathBuf::from(path)),
-
-            _ => Err(SimpleDiagnostic::new(format!(
-                "unsupported path scheme: only local paths are supported, found {source}"
-            ))
-            .into()),
-        }
+    fn fetch(&self, source: &Self::Source) -> Result<PathBuf> {
+        Ok(PathBuf::from(&source.path))
     }
 }
