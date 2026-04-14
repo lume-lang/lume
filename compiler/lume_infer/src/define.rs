@@ -1,156 +1,11 @@
-use std::collections::{BTreeMap, HashSet};
-use std::sync::LazyLock;
+use std::collections::BTreeMap;
 
-use error_snippet::Result;
+use lume_errors::Result;
 use lume_hir::{NodeType, Path, PathSegment};
 use lume_span::*;
 use lume_types::TypeKind;
 
 use crate::TyInferCtx;
-
-static INTRINSIC_METHODS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
-    HashSet::from([
-        "std::Boolean::eq",
-        "std::Boolean::ne",
-        "std::Boolean::and",
-        "std::Boolean::or",
-        "std::Boolean::not",
-        "std::Int8::eq",
-        "std::Int8::ne",
-        "std::Int8::lt",
-        "std::Int8::le",
-        "std::Int8::gt",
-        "std::Int8::ge",
-        "std::Int8::add",
-        "std::Int8::sub",
-        "std::Int8::mul",
-        "std::Int8::div",
-        "std::Int8::band",
-        "std::Int8::bor",
-        "std::Int8::bxor",
-        "std::Int8::negate",
-        "std::Int16::eq",
-        "std::Int16::ne",
-        "std::Int16::lt",
-        "std::Int16::le",
-        "std::Int16::gt",
-        "std::Int16::ge",
-        "std::Int16::add",
-        "std::Int16::sub",
-        "std::Int16::mul",
-        "std::Int16::div",
-        "std::Int16::band",
-        "std::Int16::bor",
-        "std::Int16::bxor",
-        "std::Int16::negate",
-        "std::Int32::eq",
-        "std::Int32::ne",
-        "std::Int32::lt",
-        "std::Int32::le",
-        "std::Int32::gt",
-        "std::Int32::ge",
-        "std::Int32::add",
-        "std::Int32::sub",
-        "std::Int32::mul",
-        "std::Int32::div",
-        "std::Int32::band",
-        "std::Int32::bor",
-        "std::Int32::bxor",
-        "std::Int32::negate",
-        "std::Int64::eq",
-        "std::Int64::ne",
-        "std::Int64::lt",
-        "std::Int64::le",
-        "std::Int64::gt",
-        "std::Int64::ge",
-        "std::Int64::add",
-        "std::Int64::sub",
-        "std::Int64::mul",
-        "std::Int64::div",
-        "std::Int64::band",
-        "std::Int64::bor",
-        "std::Int64::bxor",
-        "std::Int64::negate",
-        "std::UInt8::eq",
-        "std::UInt8::ne",
-        "std::UInt8::lt",
-        "std::UInt8::le",
-        "std::UInt8::gt",
-        "std::UInt8::ge",
-        "std::UInt8::add",
-        "std::UInt8::sub",
-        "std::UInt8::mul",
-        "std::UInt8::div",
-        "std::UInt8::band",
-        "std::UInt8::bor",
-        "std::UInt8::bxor",
-        "std::UInt8::negate",
-        "std::UInt16::eq",
-        "std::UInt16::ne",
-        "std::UInt16::lt",
-        "std::UInt16::le",
-        "std::UInt16::gt",
-        "std::UInt16::ge",
-        "std::UInt16::add",
-        "std::UInt16::sub",
-        "std::UInt16::mul",
-        "std::UInt16::div",
-        "std::UInt16::band",
-        "std::UInt16::bor",
-        "std::UInt16::bxor",
-        "std::UInt16::negate",
-        "std::UInt32::eq",
-        "std::UInt32::ne",
-        "std::UInt32::lt",
-        "std::UInt32::le",
-        "std::UInt32::gt",
-        "std::UInt32::ge",
-        "std::UInt32::add",
-        "std::UInt32::sub",
-        "std::UInt32::mul",
-        "std::UInt32::div",
-        "std::UInt32::band",
-        "std::UInt32::bor",
-        "std::UInt32::bxor",
-        "std::UInt32::negate",
-        "std::UInt64::eq",
-        "std::UInt64::ne",
-        "std::UInt64::lt",
-        "std::UInt64::le",
-        "std::UInt64::gt",
-        "std::UInt64::ge",
-        "std::UInt64::add",
-        "std::UInt64::sub",
-        "std::UInt64::mul",
-        "std::UInt64::div",
-        "std::UInt64::band",
-        "std::UInt64::bor",
-        "std::UInt64::bxor",
-        "std::UInt64::negate",
-        "std::Float::eq",
-        "std::Float::ne",
-        "std::Float::lt",
-        "std::Float::le",
-        "std::Float::gt",
-        "std::Float::ge",
-        "std::Float::add",
-        "std::Float::sub",
-        "std::Float::mul",
-        "std::Float::div",
-        "std::Float::negate",
-        "std::Double::eq",
-        "std::Double::ne",
-        "std::Double::lt",
-        "std::Double::le",
-        "std::Double::gt",
-        "std::Double::ge",
-        "std::Double::add",
-        "std::Double::sub",
-        "std::Double::mul",
-        "std::Double::div",
-        "std::Double::negate",
-    ])
-});
 
 fn std_type_id(name: &Path) -> Option<NodeId> {
     match name {
@@ -319,7 +174,7 @@ impl TyInferCtx {
 
             qualified_name.location = method.signature.name.location();
 
-            let method_kind = if INTRINSIC_METHODS.contains(format!("{qualified_name:+}").as_str()) {
+            let method_kind = if self.hir_is_instrinsic(method.id) {
                 lume_types::MethodKind::Intrinsic
             } else {
                 lume_types::MethodKind::TraitImplementation
@@ -357,8 +212,7 @@ impl TyInferCtx {
                 PathSegment::callable(method_name.clone()),
             );
 
-            let method_kind = if is_type_intrinsic && INTRINSIC_METHODS.contains(format!("{qualified_name:+}").as_str())
-            {
+            let method_kind = if is_type_intrinsic && self.hir_is_instrinsic(method.id) {
                 lume_types::MethodKind::Intrinsic
             } else {
                 lume_types::MethodKind::Implementation
