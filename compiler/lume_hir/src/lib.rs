@@ -1,4 +1,3 @@
-use std::fmt::Display;
 use std::sync::LazyLock;
 
 use lume_macros::Location;
@@ -676,38 +675,18 @@ std_type_paths! {
     boolean => Boolean
 }
 
-/// Represents a shared pathing of a function or method, which can be either
-/// the full path or a single segment.
-#[derive(Hash, Debug, PartialEq, Eq)]
-pub enum Pathing<'p> {
-    Full(&'p Path),
-    Segment(&'p PathSegment),
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
+pub struct Attribute {
+    pub name: Identifier,
+    pub arguments: Vec<AttrArgument>,
+    pub location: Location,
 }
 
-impl Display for Pathing<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Full(p) => Display::fmt(p, f),
-            Self::Segment(p) => Display::fmt(p, f),
-        }
-    }
-}
-
-/// Represents a mutable pathing of a function or method, which can be either
-/// the full path or a single segment.
-#[derive(Hash, Debug, PartialEq, Eq)]
-pub enum PathingMut<'p> {
-    Full(&'p mut Path),
-    Segment(&'p mut PathSegment),
-}
-
-impl Display for PathingMut<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Full(p) => Display::fmt(p, f),
-            Self::Segment(p) => Display::fmt(p, f),
-        }
-    }
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
+pub struct AttrArgument {
+    pub name: Identifier,
+    pub value: Literal,
+    pub location: Location,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -813,6 +792,7 @@ pub struct FunctionDefinition {
     #[serde(skip)]
     pub doc_comment: Option<String>,
 
+    pub attrs: Vec<Attribute>,
     pub visibility: Visibility,
     pub signature: FnSignature,
 
@@ -921,6 +901,7 @@ pub struct EnumDefinition {
     #[serde(skip)]
     pub doc_comment: Option<String>,
 
+    pub attrs: Vec<Attribute>,
     pub name: Path,
     pub type_parameters: Vec<NodeId>,
     pub visibility: Visibility,
@@ -953,6 +934,7 @@ pub struct StructDefinition {
     #[serde(skip)]
     pub doc_comment: Option<String>,
 
+    pub attrs: Vec<Attribute>,
     pub name: Path,
     pub visibility: Visibility,
     pub fields: Vec<Field>,
@@ -977,6 +959,7 @@ impl StructDefinition {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct Implementation {
     pub id: NodeId,
+    pub attrs: Vec<Attribute>,
     pub target: Box<Type>,
     pub methods: Vec<MethodDefinition>,
     pub type_parameters: Vec<NodeId>,
@@ -993,6 +976,7 @@ pub struct Field {
     #[serde(skip)]
     pub doc_comment: Option<String>,
 
+    pub attrs: Vec<Attribute>,
     pub visibility: Visibility,
     pub name: Identifier,
     pub field_type: Type,
@@ -1007,6 +991,7 @@ pub struct MethodDefinition {
     #[serde(skip)]
     pub doc_comment: Option<String>,
 
+    pub attrs: Vec<Attribute>,
     pub visibility: Visibility,
     pub signature: FnSignature,
 
@@ -1022,6 +1007,7 @@ pub struct TraitDefinition {
     #[serde(skip)]
     pub doc_comment: Option<String>,
 
+    pub attrs: Vec<Attribute>,
     pub name: Path,
     pub visibility: Visibility,
     pub type_parameters: Vec<NodeId>,
@@ -1042,6 +1028,7 @@ pub struct TraitMethodDefinition {
     #[serde(skip)]
     pub doc_comment: Option<String>,
 
+    pub attrs: Vec<Attribute>,
     pub signature: FnSignature,
 
     #[serde(skip)]
@@ -1063,6 +1050,7 @@ impl TraitMethodDefinition {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitImplementation {
     pub id: NodeId,
+    pub attrs: Vec<Attribute>,
     pub name: Box<Type>,
     pub target: Box<Type>,
     pub methods: Vec<TraitMethodImplementation>,
@@ -1087,6 +1075,7 @@ pub struct TraitMethodImplementation {
     #[serde(skip)]
     pub doc_comment: Option<String>,
 
+    pub attrs: Vec<Attribute>,
     pub signature: FnSignature,
 
     #[serde(skip)]
@@ -1699,14 +1688,14 @@ pub struct Is {
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Literal {
     pub id: NodeId,
     pub kind: LiteralKind,
     pub location: Location,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq)]
 pub enum LiteralKind {
     Int(Box<IntLiteral>),
     Float(Box<FloatLiteral>),
@@ -1714,14 +1703,14 @@ pub enum LiteralKind {
     Boolean(Box<BooleanLiteral>),
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq)]
 pub struct IntLiteral {
     pub id: NodeId,
     pub value: i128,
     pub kind: Option<IntKind>,
 }
 
-#[derive(Hash, Debug, Copy, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Copy, Clone, PartialEq)]
 pub enum IntKind {
     I8,
     U8,
@@ -1748,7 +1737,7 @@ impl From<lume_ast::IntKind> for IntKind {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct FloatLiteral {
     pub id: NodeId,
     pub value: f64,
@@ -1763,7 +1752,7 @@ impl std::hash::Hash for FloatLiteral {
     }
 }
 
-#[derive(Hash, Debug, Copy, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Copy, Clone, PartialEq)]
 pub enum FloatKind {
     F32,
     F64,
@@ -1778,13 +1767,13 @@ impl From<lume_ast::FloatKind> for FloatKind {
     }
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq)]
 pub struct StringLiteral {
     pub id: NodeId,
     pub value: String,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq)]
 pub struct BooleanLiteral {
     pub id: NodeId,
     pub value: bool,
