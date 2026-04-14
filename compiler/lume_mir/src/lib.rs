@@ -154,7 +154,7 @@ impl std::fmt::Display for Signature {
                 })
                 .collect::<Vec<String>>()
                 .join(", "),
-            self.return_type
+            with_flags(f, &self.return_type)
         )
     }
 }
@@ -1004,7 +1004,7 @@ impl std::fmt::Display for BasicBlock {
                 "({})",
                 self.parameters
                     .iter()
-                    .map(std::string::ToString::to_string)
+                    .map(|param| format!("{}", with_flags(f, param)))
                     .collect::<Vec<_>>()
                     .join(", ")
             )?;
@@ -1015,7 +1015,7 @@ impl std::fmt::Display for BasicBlock {
             ":  {}",
             self.predecessors
                 .iter()
-                .map(std::string::ToString::to_string)
+                .map(|id| format!("{}", with_flags(f, id)))
                 .collect::<Vec<_>>()
                 .join(", ")
         )?;
@@ -2170,12 +2170,12 @@ impl std::fmt::Display for TypeKind {
             Self::String => write!(f, "string"),
             Self::Box { elemental } => {
                 if f.alternate() {
-                    write!(f, "box {elemental}")
+                    write!(f, "box {}", with_flags(f, elemental))
                 } else {
-                    write!(f, "ptr {elemental}")
+                    write!(f, "ptr {}", with_flags(f, elemental))
                 }
             }
-            Self::Pointer { elemental } => write!(f, "ptr {elemental}"),
+            Self::Pointer { elemental } => write!(f, "ptr {}", with_flags(f, elemental)),
             Self::Metadata { inner } => write!(f, "metadata {}", inner.full_name),
             Self::Void => write!(f, "void"),
             Self::Never => write!(f, "never"),
