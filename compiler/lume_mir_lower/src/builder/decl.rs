@@ -93,9 +93,18 @@ impl Builder<'_, '_> {
 
     /// Declares a new register with the given register as untagged.
     pub(crate) fn declare_untagged(&mut self, id: RegisterId) -> RegisterId {
-        let value = Operand::untagged_of(id);
+        let current_block = self.func.current_block().id;
 
-        self.declare_operand(value, OperandRef::Implicit)
+        if let Some(untagged_id) = self.untagged_registers.get(&(self.func.current_block().id, id)) {
+            return *untagged_id;
+        }
+
+        let value = Operand::untagged_of(id);
+        let untagged = self.declare_operand(value, OperandRef::Implicit);
+
+        self.untagged_registers.insert((current_block, id), untagged);
+
+        untagged
     }
 }
 
