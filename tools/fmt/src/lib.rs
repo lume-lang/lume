@@ -572,8 +572,10 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
 
     fn enum_definition<'a>(&mut self, def: Enum) -> Document<'a> {
         let doc_comment = self.doc_comments(def.documentation());
+        let attributes = self.attributes(def.attr());
 
         let header = doc_comment
+            .append(attributes)
             .append(visibility(def.visibility()))
             .append("enum ")
             .append(def.name())
@@ -615,8 +617,10 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
 
     fn trait_implementation<'a>(&mut self, trait_impl: TraitImpl) -> Document<'a> {
         let doc_comment = self.doc_comments(trait_impl.documentation());
+        let attributes = self.attributes(trait_impl.attr());
 
         let header = doc_comment
+            .append(attributes)
             .append("use")
             .append(self.type_parameters(trait_impl.bound_types()))
             .space()
@@ -644,6 +648,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
 
     fn trait_method_implementation<'a>(&mut self, method: Method) -> Document<'a> {
         let doc_comment = self.doc_comments(method.documentation());
+        let attributes = self.attributes(method.attr());
 
         let Some(signature) = method.sig() else {
             return method.as_text().as_doc();
@@ -656,13 +661,15 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             None => empty(),
         };
 
-        doc_comment.append(signature).append(body)
+        doc_comment.append(attributes).append(signature).append(body)
     }
 
     fn implementation<'a>(&mut self, implementation: Impl) -> Document<'a> {
         let doc_comment = self.doc_comments(implementation.documentation());
+        let attributes = self.attributes(implementation.attr());
 
         let header = doc_comment
+            .append(attributes)
             .append("impl")
             .append(self.type_parameters(implementation.bound_types()))
             .space()

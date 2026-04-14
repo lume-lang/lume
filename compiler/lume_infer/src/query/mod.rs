@@ -6,6 +6,7 @@ use lume_types::{Function, Method, TypeRef};
 
 use crate::{TyInferCtx, *};
 
+pub mod attr;
 pub mod callable;
 mod diagnostics;
 pub mod hir;

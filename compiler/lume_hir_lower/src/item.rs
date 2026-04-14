@@ -134,7 +134,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn function_definition(&mut self, expr: lume_ast::Fn) -> lume_hir::Node {
         let id = self.next_node_id();
-        self.handle_attributes(expr.attr());
+        let attrs = self.attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
             let visibility = visibility(expr.visibility());
@@ -151,6 +151,7 @@ impl LoweringContext<'_> {
             lume_hir::Node::Function(lume_hir::FunctionDefinition {
                 id,
                 doc_comment,
+                attrs,
                 visibility,
                 signature,
                 block,
@@ -270,7 +271,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn struct_definition(&mut self, expr: lume_ast::Struct) -> lume_hir::Node {
         let id = self.next_node_id();
-        self.handle_attributes(expr.attr());
+        let attrs = self.attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
             let type_parameters = match expr.bound_types() {
@@ -305,6 +306,7 @@ impl LoweringContext<'_> {
             lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(Box::new(lume_hir::StructDefinition {
                 id,
                 doc_comment,
+                attrs,
                 name,
                 visibility,
                 type_parameters,
@@ -317,6 +319,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn struct_field_definition(&mut self, index: usize, expr: lume_ast::Field) -> lume_hir::Field {
         let id = self.next_node_id();
+        let attrs = self.attributes(expr.attr());
 
         let doc_comment = documentation(expr.doc_comments());
         let visibility = visibility(expr.visibility());
@@ -329,6 +332,7 @@ impl LoweringContext<'_> {
             id,
             index,
             doc_comment,
+            attrs,
             name,
             visibility,
             field_type,
@@ -344,6 +348,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn implementation(&mut self, expr: lume_ast::Impl) -> lume_hir::Node {
         let id = self.next_node_id();
+        let attrs = self.attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
             let type_parameters = match expr.bound_types() {
@@ -375,6 +380,7 @@ impl LoweringContext<'_> {
 
             lume_hir::Node::Impl(lume_hir::Implementation {
                 id,
+                attrs,
                 target: Box::new(target),
                 methods,
                 type_parameters,
@@ -386,7 +392,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn implementation_method(&mut self, expr: lume_ast::Method) -> lume_hir::MethodDefinition {
         let id = self.next_node_id();
-        self.handle_attributes(expr.attr());
+        let attrs = self.attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
             let visibility = visibility(expr.visibility());
@@ -403,6 +409,7 @@ impl LoweringContext<'_> {
             lume_hir::MethodDefinition {
                 id,
                 doc_comment,
+                attrs,
                 signature,
                 visibility,
                 block,
@@ -414,7 +421,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn trait_definition(&mut self, expr: lume_ast::Trait) -> lume_hir::Node {
         let id = self.next_node_id();
-        self.handle_attributes(expr.attr());
+        let attrs = self.attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
             // Must be defined first, so any type arguments in the trait name can be
@@ -455,6 +462,7 @@ impl LoweringContext<'_> {
             lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(Box::new(lume_hir::TraitDefinition {
                 id,
                 doc_comment,
+                attrs,
                 name,
                 visibility,
                 type_parameters,
@@ -467,6 +475,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn trait_definition_method(&mut self, expr: lume_ast::Method) -> lume_hir::TraitMethodDefinition {
         let id = self.next_node_id();
+        let attrs = self.attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
             let signature = self.signature_opt(expr.sig(), true);
@@ -477,6 +486,7 @@ impl LoweringContext<'_> {
             lume_hir::TraitMethodDefinition {
                 id,
                 doc_comment,
+                attrs,
                 signature,
                 block,
                 location,
@@ -487,6 +497,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn enum_definition(&mut self, expr: lume_ast::Enum) -> lume_hir::Node {
         let id = self.next_node_id();
+        let attrs = self.attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
             let type_parameters = match expr.bound_types() {
@@ -518,6 +529,7 @@ impl LoweringContext<'_> {
             lume_hir::Node::Type(lume_hir::TypeDefinition::Enum(Box::new(lume_hir::EnumDefinition {
                 id,
                 doc_comment,
+                attrs,
                 name,
                 type_parameters,
                 visibility,
@@ -553,6 +565,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn trait_implementation(&mut self, expr: lume_ast::TraitImpl) -> lume_hir::Node {
         let id = self.next_node_id();
+        let attrs = self.attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
             let type_parameters = match expr.bound_types() {
@@ -587,6 +600,7 @@ impl LoweringContext<'_> {
 
             lume_hir::Node::TraitImpl(lume_hir::TraitImplementation {
                 id,
+                attrs,
                 name: Box::new(name),
                 target: Box::new(target),
                 methods,
@@ -599,6 +613,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn trait_implementation_method(&mut self, expr: lume_ast::Method) -> lume_hir::TraitMethodImplementation {
         let id = self.next_node_id();
+        let attrs = self.attributes(expr.attr());
 
         lume_hir::with_frame!(self.current_type_params, || {
             let signature = self.signature_opt(expr.sig(), true);
@@ -612,6 +627,7 @@ impl LoweringContext<'_> {
             lume_hir::TraitMethodImplementation {
                 id,
                 doc_comment,
+                attrs,
                 signature,
                 block,
                 location,

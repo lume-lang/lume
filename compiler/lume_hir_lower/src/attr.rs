@@ -5,29 +5,46 @@ impl LoweringContext<'_> {
     ///
     /// Since this methods uses the current node, ensure that this method is
     /// called before any other node IDs are assigned.
-    pub(crate) fn handle_attributes<I>(&mut self, attrs: I)
+    pub(crate) fn attributes<I>(&mut self, attrs: I) -> Vec<lume_hir::Attribute>
     where
         I: IntoIterator<Item = lume_ast::Attr>,
     {
         let current_node = self.current_node;
+        let mut hir_attrs = Vec::new();
 
         for attr in attrs {
             let Some(name) = attr.name() else { continue };
 
-            match name.as_text().as_ref() {
-                "lang_item" => {
-                    let Some(argument_list) = attr.arg_list() else {
-                        continue;
-                    };
+            let name = self.ident(name);
+            let arguments = if let Some(arg_list) = attr.arg_list() {
+                arg_list
+                    .args()
+                    .map(|arg| {
+                        let name = self.ident_opt(arg.name());
+                        let value = self.literal_opt(arg.value());
+                        let location = self.location(arg.location());
 
-                    let Some(name_arg) = argument_list
-                        .args()
-                        .find(|arg| arg.name().is_some_and(|n| n.syntax().text() == "name"))
-                    else {
+                        lume_hir::AttrArgument { name, value, location }
+                    })
+                    .collect::<Vec<_>>()
+            } else {
+                Vec::new()
+            };
+
+            let location = self.location(attr.location());
+
+            let attr = lume_hir::Attribute {
+                name,
+                arguments,
+                location,
+            };
+
+            match attr.name.as_str() {
+                "lang_item" => {
+                    let Some(name_arg) = attr.arguments.iter().find(|arg| arg.name.as_str() == "name") else {
                         self.dcx.emit_and_push(
                             errors::LangItemMissingName {
-                                source: self.current_file().clone(),
-                                range: attr.range(),
+                                location: attr.location,
                             }
                             .into(),
                         );
@@ -35,11 +52,10 @@ impl LoweringContext<'_> {
                         continue;
                     };
 
-                    let Some(lang_name) = name_arg.syntax().descendants().find_map(lume_ast::StringLit::cast) else {
+                    let lume_hir::LiteralKind::String(lit_value) = &name_arg.value.kind else {
                         self.dcx.emit_and_push(
                             errors::LangItemInvalidNameType {
-                                source: self.current_file().clone(),
-                                range: attr.range(),
+                                location: name_arg.value.location,
                             }
                             .into(),
                         );
@@ -47,24 +63,26 @@ impl LoweringContext<'_> {
                         continue;
                     };
 
-                    if let Err(err) = self
-                        .map
-                        .lang_items
-                        .add_name(lang_name.as_text().trim_matches('"'), current_node)
-                    {
+                    if let Err(err) = self.map.lang_items.add_name(&lit_value.value, current_node) {
                         self.dcx.emit_and_push(err);
                     }
                 }
+
+                "external" | "intrinsic" => {
+                    hir_attrs.push(attr);
+                }
+
                 _ => {
                     self.dcx.emit_and_push(
                         errors::UnknownAttribute {
-                            source: self.current_file().clone(),
-                            range: attr.range(),
+                            location: attr.location,
                         }
                         .into(),
                     );
                 }
             }
         }
+
+        hir_attrs
     }
 }
