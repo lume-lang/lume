@@ -1,7 +1,10 @@
+pub mod fmt;
+
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::hash::Hash;
 
+pub use fmt::*;
 use indexmap::{IndexMap, IndexSet};
 use lume_session::{Options, Package};
 use lume_span::{Interned, Location, NodeId, SourceFile};
@@ -94,14 +97,8 @@ impl ModuleMap {
 
 impl std::fmt::Display for ModuleMap {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            for func in self.functions.values() {
-                write!(f, "{func:#}")?;
-            }
-        } else {
-            for func in self.functions.values() {
-                write!(f, "{func}")?;
-            }
+        for func in self.functions.values() {
+            write!(f, "{}", with_flags(f, func))?;
         }
 
         Ok(())
@@ -148,7 +145,12 @@ impl std::fmt::Display for Signature {
                 .map(|(idx, param)| {
                     let is_last = idx == self.parameters.len() - 1;
 
-                    format!("{}{param} #{idx}", if is_last && self.vararg { "..." } else { "" })
+                    format!(
+                        "{}{} {}",
+                        if is_last && self.vararg { "..." } else { "" },
+                        with_flags(f, param),
+                        RegisterId::new(idx)
+                    )
                 })
                 .collect::<Vec<String>>()
                 .join(", "),
@@ -169,7 +171,7 @@ pub struct Parameter {
 
 impl std::fmt::Display for Parameter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{}: {}", self.name, self.ty))
+        f.write_fmt(format_args!("{}: {}", self.name, with_flags(f, &self.ty)))
     }
 }
 
@@ -455,20 +457,14 @@ impl Function {
 impl std::fmt::Display for Function {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.signature.external {
-            writeln!(f, "extern fn {:?} {}", self.name, self.signature)?;
+            writeln!(f, "extern fn {:?} {}", self.name, with_flags(f, &self.signature))?;
             return writeln!(f);
         }
 
-        writeln!(f, "fn {:?} {} {{", self.name, self.signature)?;
+        writeln!(f, "fn {:?} {} {{", self.name, with_flags(f, &self.signature))?;
 
-        if f.alternate() {
-            for block in self.blocks.values() {
-                write!(f, "{block:#}")?;
-            }
-        } else {
-            for block in self.blocks.values() {
-                write!(f, "{block}")?;
-            }
+        for block in self.blocks.values() {
+            write!(f, "{}", with_flags(f, block))?;
         }
 
         writeln!(f, "}}")?;
@@ -1029,11 +1025,11 @@ impl std::fmt::Display for BasicBlock {
                 continue;
             }
 
-            writeln!(f, "    {stmt}")?;
+            writeln!(f, "    {}", with_flags(f, stmt))?;
         }
 
         if let Some(terminator) = &self.terminator {
-            writeln!(f, "    {terminator}")?;
+            writeln!(f, "    {}", with_flags(f, terminator))?;
         }
 
         Ok(())
@@ -1269,7 +1265,9 @@ impl Instruction {
 impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.kind {
-            InstructionKind::Let { register, decl, ty } => write!(f, "let {register}: {ty} = {decl}"),
+            InstructionKind::Let { register, decl, ty } => {
+                write!(f, "let {register}: {} = {}", with_flags(f, ty), with_flags(f, decl))
+            }
             InstructionKind::CreateSlot { slot, ty } => write!(
                 f,
                 "{slot} = slot ({} bytes)",
@@ -1279,10 +1277,14 @@ impl std::fmt::Display for Instruction {
                     ty.bytesize()
                 }
             ),
-            InstructionKind::Allocate { register, ty, .. } => write!(f, "{register} = alloc {ty}"),
-            InstructionKind::Store { target, value } => write!(f, "*{target} = {value}"),
-            InstructionKind::StoreSlot { target, value, offset } => write!(f, "*{target}[+x{offset:X}] = {value}"),
-            InstructionKind::StoreField { target, offset, value } => write!(f, "*{target}[+x{offset:X}] = {value}"),
+            InstructionKind::Allocate { register, ty, .. } => write!(f, "{register} = alloc {}", with_flags(f, ty)),
+            InstructionKind::Store { target, value } => write!(f, "*{target} = {}", with_flags(f, value)),
+            InstructionKind::StoreSlot { target, value, offset } => {
+                write!(f, "*{target}[+x{offset:X}] = {}", with_flags(f, value))
+            }
+            InstructionKind::StoreField { target, offset, value } => {
+                write!(f, "*{target}[+x{offset:X}] = {}", with_flags(f, value))
+            }
             InstructionKind::ObjectRegister { register } => write!(f, "mark object({register})"),
         }
     }
@@ -1347,17 +1349,26 @@ impl std::fmt::Display for Declaration {
             DeclarationKind::Intrinsic { name, args } => write!(
                 f,
                 "{name}({})",
-                args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
+                args.iter()
+                    .map(|arg| format!("{}", with_flags(f, arg)))
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ),
             DeclarationKind::Call { name, args, .. } => write!(
                 f,
                 "call {name}({})",
-                args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
+                args.iter()
+                    .map(|arg| format!("{}", with_flags(f, arg)))
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ),
             DeclarationKind::IndirectCall { ptr, args, .. } => write!(
                 f,
                 "call indirect {ptr}({})",
-                args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
+                args.iter()
+                    .map(|arg| format!("{}", with_flags(f, arg)))
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ),
         }
     }
@@ -1718,7 +1729,7 @@ impl std::fmt::Display for Terminator {
         match &self.kind {
             TerminatorKind::Return(value) => {
                 if let Some(value) = value {
-                    write!(f, "return {value}")
+                    write!(f, "return {}", with_flags(f, value))
                 } else {
                     write!(f, "return")
                 }
@@ -1775,7 +1786,7 @@ impl std::fmt::Display for BlockBranchSite {
                 "({})",
                 self.arguments
                     .iter()
-                    .map(|arg| format!("{arg}"))
+                    .map(|arg| format!("{}", with_flags(f, arg)))
                     .collect::<Vec<_>>()
                     .join(", ")
             )?;
@@ -2127,29 +2138,43 @@ impl std::fmt::Display for TypeKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
             Self::Struct { name, .. } => write!(f, "{name}"),
-            Self::Union { cases } => write!(
-                f,
-                "(u8, {})",
-                cases
-                    .iter()
-                    .map(std::string::ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
-            Self::Tuple { items } => write!(
-                f,
-                "({})",
-                items
-                    .iter()
-                    .map(std::string::ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
+            Self::Union { cases } => {
+                write!(f, "(u8, ")?;
+
+                for (idx, item) in cases.iter().enumerate() {
+                    write!(f, "{}", with_flags(f, item))?;
+
+                    if idx < cases.len() - 1 {
+                        write!(f, ", ")?;
+                    }
+                }
+
+                write!(f, ")")
+            }
+            Self::Tuple { items } => {
+                write!(f, "(")?;
+
+                for (idx, item) in items.iter().enumerate() {
+                    write!(f, "{}", with_flags(f, item))?;
+
+                    if idx < items.len() - 1 {
+                        write!(f, ", ")?;
+                    }
+                }
+
+                write!(f, ")")
+            }
             Self::Integer { bits, signed } => write!(f, "{}{bits}", if *signed { "i" } else { "u" }),
             Self::Float { bits } => write!(f, "f{bits}"),
             Self::Boolean => write!(f, "bool"),
             Self::String => write!(f, "string"),
-            Self::Box { elemental } => write!(f, "box {elemental}"),
+            Self::Box { elemental } => {
+                if f.alternate() {
+                    write!(f, "box {elemental}")
+                } else {
+                    write!(f, "ptr {elemental}")
+                }
+            }
             Self::Pointer { elemental } => write!(f, "ptr {elemental}"),
             Self::Metadata { inner } => write!(f, "metadata {}", inner.full_name),
             Self::Void => write!(f, "void"),
