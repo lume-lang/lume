@@ -8,34 +8,46 @@ import std::ops (Equal, Compare, Negate)
 pub struct Float {}
 
 use Add: Float {
+    ![intrinsic]
     fn external add(self, other: Float) -> Float
 }
 
 use Sub: Float {
+    ![intrinsic]
     fn external sub(self, other: Float) -> Float
 }
 
 use Mul: Float {
+    ![intrinsic]
     fn external mul(self, other: Float) -> Float
 }
 
 use Div: Float {
+    ![intrinsic]
     fn external div(self, other: Float) -> Float
 }
 
 use Equal: Float {
+    ![intrinsic]
     fn external eq(self, other: Float) -> Boolean
 }
 
 use Compare: Float {
+    ![intrinsic]
     fn external lt(self, other: Float) -> Boolean
+
+    ![intrinsic]
     fn external le(self, other: Float) -> Boolean
 
+    ![intrinsic]
     fn external gt(self, other: Float) -> Boolean
+
+    ![intrinsic]
     fn external ge(self, other: Float) -> Boolean
 }
 
 use Negate: Float {
+    ![intrinsic]
     fn external negate(self) -> Float
 }
 
@@ -44,33 +56,45 @@ use Negate: Float {
 pub struct Double {}
 
 use Add: Double {
+    ![intrinsic]
     fn external add(self, other: Double) -> Double
 }
 
 use Sub: Double {
+    ![intrinsic]
     fn external sub(self, other: Double) -> Double
 }
 
 use Mul: Double {
+    ![intrinsic]
     fn external mul(self, other: Double) -> Double
 }
 
 use Div: Double {
+    ![intrinsic]
     fn external div(self, other: Double) -> Double
 }
 
 use Equal: Double {
+    ![intrinsic]
     fn external eq(self, other: Double) -> Boolean
 }
 
 use Compare: Double {
+    ![intrinsic]
     fn external lt(self, other: Double) -> Boolean
+
+    ![intrinsic]
     fn external le(self, other: Double) -> Boolean
 
+    ![intrinsic]
     fn external gt(self, other: Double) -> Boolean
+
+    ![intrinsic]
     fn external ge(self, other: Double) -> Boolean
 }
 
 use Negate: Double {
+    ![intrinsic]
     fn external negate(self) -> Double
 }

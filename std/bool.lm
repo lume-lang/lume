@@ -6,17 +6,21 @@ import std::ops (Equal, Not, And, Or)
 pub struct Boolean {}
 
 use Equal: Boolean {
+    ![intrinsic]
     fn external eq(self, other: Boolean) -> Boolean
 }
 
 use And: Boolean {
+    ![intrinsic]
     fn external and(self, other: Boolean) -> Boolean
 }
 
 use Or: Boolean {
+    ![intrinsic]
     fn external or(self, other: Boolean) -> Boolean
 }
 
 use Not: Boolean {
+    ![intrinsic]
     fn external not(self) -> Boolean
 }

@@ -7,46 +7,61 @@ import std::ops (Equal, Compare, Negate)
 pub struct Int8 {}
 
 use Add: Int8 {
+    ![intrinsic]
     fn external add(self, other: Int8) -> Int8
 }
 
 use Sub: Int8 {
+    ![intrinsic]
     fn external sub(self, other: Int8) -> Int8
 }
 
 use Mul: Int8 {
+    ![intrinsic]
     fn external mul(self, other: Int8) -> Int8
 }
 
 use Div: Int8 {
+    ![intrinsic]
     fn external div(self, other: Int8) -> Int8
 }
 
 use BitAnd: Int8 {
+    ![intrinsic]
     fn external band(self, other: Int8) -> Int8
 }
 
 use BitOr: Int8 {
+    ![intrinsic]
     fn external bor(self, other: Int8) -> Int8
 }
 
 use BitXor: Int8 {
+    ![intrinsic]
     fn external bxor(self, other: Int8) -> Int8
 }
 
 use Equal: Int8 {
+    ![intrinsic]
     fn external eq(self, other: Int8) -> Boolean
 }
 
 use Compare: Int8 {
+    ![intrinsic]
     fn external lt(self, other: Int8) -> Boolean
+
+    ![intrinsic]
     fn external le(self, other: Int8) -> Boolean
 
+    ![intrinsic]
     fn external gt(self, other: Int8) -> Boolean
+
+    ![intrinsic]
     fn external ge(self, other: Int8) -> Boolean
 }
 
 use Negate: Int8 {
+    ![intrinsic]
     fn external negate(self) -> Int8
 }
 
@@ -54,46 +69,61 @@ use Negate: Int8 {
 pub struct Int16 {}
 
 use Add: Int16 {
+    ![intrinsic]
     fn external add(self, other: Int16) -> Int16
 }
 
 use Sub: Int16 {
+    ![intrinsic]
     fn external sub(self, other: Int16) -> Int16
 }
 
 use Mul: Int16 {
+    ![intrinsic]
     fn external mul(self, other: Int16) -> Int16
 }
 
 use Div: Int16 {
+    ![intrinsic]
     fn external div(self, other: Int16) -> Int16
 }
 
 use BitAnd: Int16 {
+    ![intrinsic]
     fn external band(self, other: Int16) -> Int16
 }
 
 use BitOr: Int16 {
+    ![intrinsic]
     fn external bor(self, other: Int16) -> Int16
 }
 
 use BitXor: Int16 {
+    ![intrinsic]
     fn external bxor(self, other: Int16) -> Int16
 }
 
 use Equal: Int16 {
+    ![intrinsic]
     fn external eq(self, other: Int16) -> Boolean
 }
 
 use Compare: Int16 {
+    ![intrinsic]
     fn external lt(self, other: Int16) -> Boolean
+
+    ![intrinsic]
     fn external le(self, other: Int16) -> Boolean
 
+    ![intrinsic]
     fn external gt(self, other: Int16) -> Boolean
+
+    ![intrinsic]
     fn external ge(self, other: Int16) -> Boolean
 }
 
 use Negate: Int16 {
+    ![intrinsic]
     fn external negate(self) -> Int16
 }
 
@@ -101,46 +131,61 @@ use Negate: Int16 {
 pub struct Int32 {}
 
 use Add: Int32 {
+    ![intrinsic]
     fn external add(self, other: Int32) -> Int32
 }
 
 use Sub: Int32 {
+    ![intrinsic]
     fn external sub(self, other: Int32) -> Int32
 }
 
 use Mul: Int32 {
+    ![intrinsic]
     fn external mul(self, other: Int32) -> Int32
 }
 
 use Div: Int32 {
+    ![intrinsic]
     fn external div(self, other: Int32) -> Int32
 }
 
 use BitAnd: Int32 {
+    ![intrinsic]
     fn external band(self, other: Int32) -> Int32
 }
 
 use BitOr: Int32 {
+    ![intrinsic]
     fn external bor(self, other: Int32) -> Int32
 }
 
 use BitXor: Int32 {
+    ![intrinsic]
     fn external bxor(self, other: Int32) -> Int32
 }
 
 use Equal: Int32 {
+    ![intrinsic]
     fn external eq(self, other: Int32) -> Boolean
 }
 
 use Compare: Int32 {
+    ![intrinsic]
     fn external lt(self, other: Int32) -> Boolean
+
+    ![intrinsic]
     fn external le(self, other: Int32) -> Boolean
 
+    ![intrinsic]
     fn external gt(self, other: Int32) -> Boolean
+
+    ![intrinsic]
     fn external ge(self, other: Int32) -> Boolean
 }
 
 use Negate: Int32 {
+    ![intrinsic]
     fn external negate(self) -> Int32
 }
 
@@ -148,46 +193,61 @@ use Negate: Int32 {
 pub struct Int64 {}
 
 use Add: Int64 {
+    ![intrinsic]
     fn external add(self, other: Int64) -> Int64
 }
 
 use Sub: Int64 {
+    ![intrinsic]
     fn external sub(self, other: Int64) -> Int64
 }
 
 use Mul: Int64 {
+    ![intrinsic]
     fn external mul(self, other: Int64) -> Int64
 }
 
 use Div: Int64 {
+    ![intrinsic]
     fn external div(self, other: Int64) -> Int64
 }
 
 use BitAnd: Int64 {
+    ![intrinsic]
     fn external band(self, other: Int64) -> Int64
 }
 
 use BitOr: Int64 {
+    ![intrinsic]
     fn external bor(self, other: Int64) -> Int64
 }
 
 use BitXor: Int64 {
+    ![intrinsic]
     fn external bxor(self, other: Int64) -> Int64
 }
 
 use Equal: Int64 {
+    ![intrinsic]
     fn external eq(self, other: Int64) -> Boolean
 }
 
 use Compare: Int64 {
+    ![intrinsic]
     fn external lt(self, other: Int64) -> Boolean
+
+    ![intrinsic]
     fn external le(self, other: Int64) -> Boolean
 
+    ![intrinsic]
     fn external gt(self, other: Int64) -> Boolean
+
+    ![intrinsic]
     fn external ge(self, other: Int64) -> Boolean
 }
 
 use Negate: Int64 {
+    ![intrinsic]
     fn external negate(self) -> Int64
 }
 
@@ -195,46 +255,61 @@ use Negate: Int64 {
 pub struct UInt8 {}
 
 use Add: UInt8 {
+    ![intrinsic]
     fn external add(self, other: UInt8) -> UInt8
 }
 
 use Sub: UInt8 {
+    ![intrinsic]
     fn external sub(self, other: UInt8) -> UInt8
 }
 
 use Mul: UInt8 {
+    ![intrinsic]
     fn external mul(self, other: UInt8) -> UInt8
 }
 
 use Div: UInt8 {
+    ![intrinsic]
     fn external div(self, other: UInt8) -> UInt8
 }
 
 use BitAnd: UInt8 {
+    ![intrinsic]
     fn external band(self, other: UInt8) -> UInt8
 }
 
 use BitOr: UInt8 {
+    ![intrinsic]
     fn external bor(self, other: UInt8) -> UInt8
 }
 
 use BitXor: UInt8 {
+    ![intrinsic]
     fn external bxor(self, other: UInt8) -> UInt8
 }
 
 use Equal: UInt8 {
+    ![intrinsic]
     fn external eq(self, other: UInt8) -> Boolean
 }
 
 use Compare: UInt8 {
+    ![intrinsic]
     fn external lt(self, other: UInt8) -> Boolean
+
+    ![intrinsic]
     fn external le(self, other: UInt8) -> Boolean
 
+    ![intrinsic]
     fn external gt(self, other: UInt8) -> Boolean
+
+    ![intrinsic]
     fn external ge(self, other: UInt8) -> Boolean
 }
 
 use Negate: UInt8 {
+    ![intrinsic]
     fn external negate(self) -> UInt8
 }
 
@@ -242,46 +317,61 @@ use Negate: UInt8 {
 pub struct UInt16 {}
 
 use Add: UInt16 {
+    ![intrinsic]
     fn external add(self, other: UInt16) -> UInt16
 }
 
 use Sub: UInt16 {
+    ![intrinsic]
     fn external sub(self, other: UInt16) -> UInt16
 }
 
 use Mul: UInt16 {
+    ![intrinsic]
     fn external mul(self, other: UInt16) -> UInt16
 }
 
 use Div: UInt16 {
+    ![intrinsic]
     fn external div(self, other: UInt16) -> UInt16
 }
 
 use BitAnd: UInt16 {
+    ![intrinsic]
     fn external band(self, other: UInt16) -> UInt16
 }
 
 use BitOr: UInt16 {
+    ![intrinsic]
     fn external bor(self, other: UInt16) -> UInt16
 }
 
 use BitXor: UInt16 {
+    ![intrinsic]
     fn external bxor(self, other: UInt16) -> UInt16
 }
 
 use Equal: UInt16 {
+    ![intrinsic]
     fn external eq(self, other: UInt16) -> Boolean
 }
 
 use Compare: UInt16 {
+    ![intrinsic]
     fn external lt(self, other: UInt16) -> Boolean
+
+    ![intrinsic]
     fn external le(self, other: UInt16) -> Boolean
 
+    ![intrinsic]
     fn external gt(self, other: UInt16) -> Boolean
+
+    ![intrinsic]
     fn external ge(self, other: UInt16) -> Boolean
 }
 
 use Negate: UInt16 {
+    ![intrinsic]
     fn external negate(self) -> UInt16
 }
 
@@ -289,46 +379,61 @@ use Negate: UInt16 {
 pub struct UInt32 {}
 
 use Add: UInt32 {
+    ![intrinsic]
     fn external add(self, other: UInt32) -> UInt32
 }
 
 use Sub: UInt32 {
+    ![intrinsic]
     fn external sub(self, other: UInt32) -> UInt32
 }
 
 use Mul: UInt32 {
+    ![intrinsic]
     fn external mul(self, other: UInt32) -> UInt32
 }
 
 use Div: UInt32 {
+    ![intrinsic]
     fn external div(self, other: UInt32) -> UInt32
 }
 
 use BitAnd: UInt32 {
+    ![intrinsic]
     fn external band(self, other: UInt32) -> UInt32
 }
 
 use BitOr: UInt32 {
+    ![intrinsic]
     fn external bor(self, other: UInt32) -> UInt32
 }
 
 use BitXor: UInt32 {
+    ![intrinsic]
     fn external bxor(self, other: UInt32) -> UInt32
 }
 
 use Equal: UInt32 {
+    ![intrinsic]
     fn external eq(self, other: UInt32) -> Boolean
 }
 
 use Compare: UInt32 {
+    ![intrinsic]
     fn external lt(self, other: UInt32) -> Boolean
+
+    ![intrinsic]
     fn external le(self, other: UInt32) -> Boolean
 
+    ![intrinsic]
     fn external gt(self, other: UInt32) -> Boolean
+
+    ![intrinsic]
     fn external ge(self, other: UInt32) -> Boolean
 }
 
 use Negate: UInt32 {
+    ![intrinsic]
     fn external negate(self) -> UInt32
 }
 
@@ -336,45 +441,60 @@ use Negate: UInt32 {
 pub struct UInt64 {}
 
 use Add: UInt64 {
+    ![intrinsic]
     fn external add(self, other: UInt64) -> UInt64
 }
 
 use Sub: UInt64 {
+    ![intrinsic]
     fn external sub(self, other: UInt64) -> UInt64
 }
 
 use Mul: UInt64 {
+    ![intrinsic]
     fn external mul(self, other: UInt64) -> UInt64
 }
 
 use Div: UInt64 {
+    ![intrinsic]
     fn external div(self, other: UInt64) -> UInt64
 }
 
 use BitAnd: UInt64 {
+    ![intrinsic]
     fn external band(self, other: UInt64) -> UInt64
 }
 
 use BitOr: UInt64 {
+    ![intrinsic]
     fn external bor(self, other: UInt64) -> UInt64
 }
 
 use BitXor: UInt64 {
+    ![intrinsic]
     fn external bxor(self, other: UInt64) -> UInt64
 }
 
 use Equal: UInt64 {
+    ![intrinsic]
     fn external eq(self, other: UInt64) -> Boolean
 }
 
 use Compare: UInt64 {
+    ![intrinsic]
     fn external lt(self, other: UInt64) -> Boolean
+
+    ![intrinsic]
     fn external le(self, other: UInt64) -> Boolean
 
+    ![intrinsic]
     fn external gt(self, other: UInt64) -> Boolean
+
+    ![intrinsic]
     fn external ge(self, other: UInt64) -> Boolean
 }
 
 use Negate: UInt64 {
+    ![intrinsic]
     fn external negate(self) -> UInt64
 }
