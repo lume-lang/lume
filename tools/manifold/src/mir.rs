@@ -21,6 +21,7 @@ fn build_mir(path: &TestPath, content: String) -> Result<String> {
 
     let pipeline = lume_driver::test_support::workspace(&*path.root)
         .with_option(|opts| opts.enable_incremental = false)
+        .with_option(|opts| opts.dump_mir_full = false)
         .with_file(
             "Arcfile",
             r#"
@@ -58,7 +59,7 @@ fn build_mir(path: &TestPath, content: String) -> Result<String> {
         .functions
         .values()
         .filter(|func| func.location.file.name.to_pathbuf().ends_with(file_name))
-        .map(ToString::to_string)
+        .map(|func| format!("{func:#}"))
         .collect();
 
     Ok(filtered_functions.join(""))

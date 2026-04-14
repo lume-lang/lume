@@ -7,7 +7,7 @@ fn "main" () -> void {
 B0:
     let #0: metadata std::Int32 = metadata std::Int32()
     @0 = slot (12 bytes)
-    let #2: ptr i32 = untagged @0[+x0]
+    let #2: ptr i32 = @0[+x0]
     *#2 = 42_i32
     let #3: void = call foo(@0[+x0], #0)
     return
