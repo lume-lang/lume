@@ -98,7 +98,7 @@ fn variant_pattern(
     variant: &lume_tir::VariantPattern,
     location: Location,
 ) -> lume_mir::Operand {
-    let untagged_op = builder.declare_untagged(lume_mir::Operand::reference_of(loaded_op));
+    let untagged_op = builder.declare_untagged(loaded_op);
 
     let discriminant_value = builder
         .tcx()
@@ -169,7 +169,7 @@ fn load_variant_subpattern(
     subpattern: &lume_tir::Pattern,
     field_idx: usize,
 ) -> lume_mir::Operand {
-    let untagged_op = builder.declare_untagged(lume_mir::Operand::reference_of(parent_operand));
+    let untagged_op = builder.declare_untagged(parent_operand);
 
     let field_offset = variant_field_offset(builder, parent_pattern.id, field_idx);
     let field_type = variant_field_type(builder, parent_pattern.id, field_idx);

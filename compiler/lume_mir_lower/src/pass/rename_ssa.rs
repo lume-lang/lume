@@ -235,7 +235,7 @@ impl RenameSsaVariables {
 
     fn update_regs_decl(decl: &mut Declaration, block: BasicBlockId, mapping: &mut RegisterMapping) {
         match decl.kind.as_mut() {
-            DeclarationKind::Operand(operand) | DeclarationKind::Untagged { operand } => {
+            DeclarationKind::Operand(operand) => {
                 Self::update_regs_op(operand, block, mapping);
             }
             DeclarationKind::Cast { operand, .. } => {
@@ -258,7 +258,7 @@ impl RenameSsaVariables {
 
     fn update_regs_op(op: &mut Operand, block: BasicBlockId, mapping: &mut RegisterMapping) {
         match &mut op.kind {
-            OperandKind::Load { id, .. } | OperandKind::Reference { id } => {
+            OperandKind::Load { id, .. } | OperandKind::Reference { id } | OperandKind::Untagged { id } => {
                 *id = mapping.get(block, *id);
             }
             OperandKind::LoadField { target, .. } => {

@@ -91,31 +91,11 @@ impl Builder<'_, '_> {
         }
     }
 
-    /// Declares a new register with the given value as untagged.
-    pub(crate) fn declare_untagged(&mut self, value: Operand) -> RegisterId {
-        let current_block = self.func.current_block().id;
+    /// Declares a new register with the given register as untagged.
+    pub(crate) fn declare_untagged(&mut self, id: RegisterId) -> RegisterId {
+        let value = Operand::untagged_of(id);
 
-        let tagged_register = if let &OperandKind::Reference { id } = &value.kind {
-            if let Some(untagged_id) = self.untagged_registers.get(&(self.func.current_block().id, id)) {
-                return *untagged_id;
-            }
-
-            Some(id)
-        } else {
-            None
-        };
-
-        let untagged_register = self.declare(Declaration {
-            location: value.location,
-            kind: Box::new(DeclarationKind::Untagged { operand: value }),
-        });
-
-        if let Some(tagged_register) = tagged_register {
-            self.untagged_registers
-                .insert((current_block, tagged_register), untagged_register);
-        }
-
-        untagged_register
+        self.declare_operand(value, OperandRef::Implicit)
     }
 }
 
@@ -352,21 +332,16 @@ impl Builder<'_, '_> {
                 location: vararg_loc,
             });
 
-        let vararg_arr_reg = self.declare_untagged(lume_mir::Operand::reference_of(vararg_arr_reg));
+        let vararg_arr_op = Operand::untagged_of(vararg_arr_reg);
 
         for arg in args {
-            self.call(
-                array_push_func_id,
-                vec![
-                    lume_mir::Operand::reference_of(vararg_arr_reg),
-                    arg,
-                    lume_mir::Operand::reference_of(metadata_reg),
-                ],
-                vararg_loc,
-            );
+            let vararg_arg = vararg_arr_op.clone();
+            let metadata_op = lume_mir::Operand::reference_of(metadata_reg);
+
+            self.call(array_push_func_id, vec![vararg_arg, arg, metadata_op], vararg_loc);
         }
 
-        new_args.push(lume_mir::Operand::reference_of(vararg_arr_reg));
+        new_args.push(vararg_arr_op);
         new_args
     }
 }
@@ -422,7 +397,8 @@ impl Builder<'_, '_> {
             lume_mir::OperandKind::Bitcast { source: id, .. }
             | lume_mir::OperandKind::Load { id, .. }
             | lume_mir::OperandKind::LoadField { target: id, .. }
-            | lume_mir::OperandKind::Reference { id } => self
+            | lume_mir::OperandKind::Reference { id }
+            | lume_mir::OperandKind::Untagged { id } => self
                 .mcx
                 .does_register_escape(&self.func, self.func.current_block().id, *id)
                 .escapes(),
@@ -461,6 +437,7 @@ impl Builder<'_, '_> {
         let location = value.location;
         let return_type = self.lower_type(expected_type);
 
+        let value = self.declare_operand(value, OperandRef::Implicit);
         let untagged_operand = self.declare_untagged(value);
         let loaded_operand = self.load_as(return_type, untagged_operand, location);
 

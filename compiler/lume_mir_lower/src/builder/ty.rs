@@ -26,7 +26,9 @@ impl Builder<'_, '_> {
 
                 lume_mir::Type::pointer(slot_ty.to_owned())
             }
-            lume_mir::OperandKind::Reference { id } => self.func.registers.register_ty(*id).clone(),
+            lume_mir::OperandKind::Reference { id } | lume_mir::OperandKind::Untagged { id } => {
+                self.func.registers.register_ty(*id).clone()
+            }
         }
     }
 
@@ -82,7 +84,6 @@ impl Builder<'_, '_> {
             }
             lume_mir::DeclarationKind::Call { func_id, .. } => self.function_ret_type(*func_id),
             lume_mir::DeclarationKind::IndirectCall { signature, .. } => signature.return_type.clone(),
-            lume_mir::DeclarationKind::Untagged { operand } => self.type_of_value(operand),
         }
     }
 

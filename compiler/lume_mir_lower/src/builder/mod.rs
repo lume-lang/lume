@@ -25,12 +25,6 @@ pub(crate) struct Builder<'mir, 'tcx> {
     /// Map of all metadata declarations within the current function, mapping
     /// each type to the containing register.
     metadata_registers: HashMap<(BasicBlockId, TypeMetadataId), RegisterId>,
-
-    /// Map of all untagging declarations within the current function, mapping
-    /// each tagged register to an already-untagged register.
-    ///
-    /// This is used to avoid re-untagging the same register multiple times.
-    untagged_registers: HashMap<(BasicBlockId, RegisterId), RegisterId>,
 }
 
 impl<'mir, 'tcx> Builder<'mir, 'tcx> {
@@ -39,7 +33,6 @@ impl<'mir, 'tcx> Builder<'mir, 'tcx> {
             mcx,
             func,
             metadata_registers: HashMap::new(),
-            untagged_registers: HashMap::new(),
         }
     }
 
@@ -205,7 +198,7 @@ impl Builder<'_, '_> {
         let operand_type = self.type_of_value(&value);
 
         let alloc = self.alloca(operand_type, ty, location);
-        let untagged = self.declare_untagged(lume_mir::Operand::reference_of(alloc));
+        let untagged = self.declare_untagged(alloc);
         self.func.current_block_mut().store(untagged, value, location);
 
         lume_mir::Operand {

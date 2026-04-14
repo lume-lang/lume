@@ -1319,9 +1319,6 @@ pub enum DeclarationKind {
         signature: Signature,
         args: Vec<Operand>,
     },
-
-    /// Represents an untagged operand.
-    Untagged { operand: Operand },
 }
 
 impl Declaration {
@@ -1338,7 +1335,6 @@ impl Declaration {
 
                 args
             }
-            DeclarationKind::Untagged { operand } => operand.register_refs(),
         }
     }
 }
@@ -1363,7 +1359,6 @@ impl std::fmt::Display for Declaration {
                 "call indirect {ptr}({})",
                 args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
             ),
-            DeclarationKind::Untagged { operand } => write!(f, "untagged {operand}"),
         }
     }
 }
@@ -1447,6 +1442,13 @@ impl Operand {
         }
     }
 
+    pub fn untagged_of(register: RegisterId) -> Self {
+        Self {
+            kind: OperandKind::Untagged { id: register },
+            location: Location::empty(),
+        }
+    }
+
     pub fn integer(bits: u8, signed: bool, value: i128) -> Self {
         Self {
             kind: OperandKind::Integer { bits, signed, value },
@@ -1459,9 +1461,10 @@ impl Operand {
         match &self.kind {
             OperandKind::Boolean { .. } => 1_usize,
             OperandKind::Integer { bits, .. } | OperandKind::Float { bits, .. } => usize::from(*bits) / 8,
-            OperandKind::Reference { .. } | OperandKind::SlotAddress { .. } | OperandKind::String { .. } => {
-                POINTER_SIZE
-            }
+            OperandKind::Reference { .. }
+            | OperandKind::Untagged { .. }
+            | OperandKind::SlotAddress { .. }
+            | OperandKind::String { .. } => POINTER_SIZE,
             OperandKind::Bitcast { target: ty, .. }
             | OperandKind::Load { loaded_type: ty, .. }
             | OperandKind::LoadField { field_type: ty, .. }
@@ -1509,6 +1512,9 @@ pub enum OperandKind {
 
     /// Represents a reference to an existing register.
     Reference { id: RegisterId },
+
+    /// Represents an untagged register.
+    Untagged { id: RegisterId },
 }
 
 impl Operand {
@@ -1518,7 +1524,9 @@ impl Operand {
         match &self.kind {
             OperandKind::Boolean { .. } => 1,
             OperandKind::Integer { bits, .. } | OperandKind::Float { bits, .. } => *bits,
-            OperandKind::Reference { .. } | OperandKind::String { .. } => std::mem::size_of::<*const u32>() as u8 * 8,
+            OperandKind::Reference { .. } | OperandKind::Untagged { .. } | OperandKind::String { .. } => {
+                std::mem::size_of::<*const u32>() as u8 * 8
+            }
             OperandKind::Bitcast { .. } => panic!("cannot get bitsize of bitcast operand"),
             OperandKind::Load { .. }
             | OperandKind::LoadField { .. }
@@ -1531,7 +1539,7 @@ impl Operand {
 
     pub fn register_refs(&self) -> Vec<RegisterId> {
         match &self.kind {
-            OperandKind::Load { id, .. } | OperandKind::Reference { id } => {
+            OperandKind::Load { id, .. } | OperandKind::Reference { id } | OperandKind::Untagged { id } => {
                 vec![*id]
             }
             OperandKind::LoadField { target, .. } => {
@@ -1559,7 +1567,9 @@ impl Operand {
             | OperandKind::Bitcast { .. }
             | OperandKind::LoadSlot { .. }
             | OperandKind::SlotAddress { .. } => false,
-            OperandKind::Reference { id } | OperandKind::Load { id, .. } => *id == register,
+            OperandKind::Reference { id } | OperandKind::Load { id, .. } | OperandKind::Untagged { id } => {
+                *id == register
+            }
             OperandKind::LoadField { target, .. } => *target == register,
         }
     }
@@ -1574,7 +1584,9 @@ impl Operand {
             | OperandKind::Bitcast { .. }
             | OperandKind::LoadSlot { .. }
             | OperandKind::SlotAddress { .. } => false,
-            OperandKind::Reference { id } | OperandKind::Load { id, .. } => *id == register,
+            OperandKind::Reference { id } | OperandKind::Load { id, .. } | OperandKind::Untagged { id } => {
+                *id == register
+            }
             OperandKind::LoadField { target, field_type, .. } => *target == register && field_type.is_reference_type(),
         }
     }
@@ -1595,6 +1607,13 @@ impl std::fmt::Display for Operand {
             OperandKind::LoadSlot { target, offset, .. } => write!(f, "*{target}[+x{offset:X}]"),
             OperandKind::SlotAddress { id, offset } => write!(f, "{id}[+x{offset:X}]"),
             OperandKind::String { value } => write!(f, "\"{value}\""),
+            OperandKind::Untagged { id } => {
+                if f.alternate() {
+                    write!(f, "untagged {id}")
+                } else {
+                    write!(f, "{id}")
+                }
+            }
         }
     }
 }
