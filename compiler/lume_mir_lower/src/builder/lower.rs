@@ -236,6 +236,7 @@ fn assignment(builder: &mut Builder<'_, '_>, expr: &lume_tir::Assignment) -> lum
 
                 target_operand
             }
+            lume_mir::OperandKind::Untagged { .. } => panic!("bug!: attempted to assign untagged pointer"),
             lume_mir::OperandKind::Bitcast { .. } => panic!("bug!: attempted to assign bitcast"),
             lume_mir::OperandKind::SlotAddress { .. } => panic!("bug!: attempted to assign slot-address"),
             lume_mir::OperandKind::Boolean { .. }
@@ -319,14 +320,14 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
         let struct_type = lume_mir::Type::structure(struct_name, field_types);
 
         let struct_alloc_reg = builder.alloca(struct_type.clone(), &expr.ty, expr.location);
-        let struct_untagged_reg = builder.declare_untagged(lume_mir::Operand::reference_of(struct_alloc_reg));
+        let struct_untagged_op = builder.declare_untagged(struct_alloc_reg);
 
         let mut offset = 0;
         for (field, size) in field_exprs.iter().zip(prop_sizes) {
             let (value_reg, _) = builder.use_value(&field.value);
             let value_op = builder.use_register(value_reg, field.value.location());
 
-            builder.store_field(struct_untagged_reg, value_op, offset, expr.location);
+            builder.store_field(struct_untagged_op, value_op, offset, expr.location);
 
             offset += size;
         }
@@ -365,7 +366,9 @@ fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume
             // If the argument is passed whilst tagged, the pointer would point to an
             // incorrect memory location.
             if is_ffi_call && builder.type_of_value(&arg_operand).requires_stack_map() {
-                arg_operand = lume_mir::Operand::reference_of(builder.declare_untagged(arg_operand));
+                let arg_register = builder.declare_operand(arg_operand, OperandRef::Implicit);
+
+                arg_operand = lume_mir::Operand::untagged_of(arg_register);
             }
 
             // Generic parameters are lowering into accepting pointer types, so all
@@ -568,7 +571,7 @@ fn literal(builder: &mut Builder<'_, '_>, expr: &lume_tir::Literal) -> lume_mir:
             let string_type = builder.tcx().type_of(expr.id).unwrap();
 
             let alloc_ptr = builder.alloca(lume_mir::Type::string(), &string_type, expr.location);
-            let untagged_ptr = builder.declare_untagged(lume_mir::Operand::reference_of(alloc_ptr));
+            let untagged_ptr = builder.declare_untagged(alloc_ptr);
 
             builder.store(untagged_ptr, string_operand, expr.location);
 
@@ -600,8 +603,10 @@ fn logical(builder: &mut Builder<'_, '_>, expr: &lume_tir::Logical) -> lume_mir:
 
 fn member_field(builder: &mut Builder<'_, '_>, expr: &lume_tir::Member) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
-        let callee = expression(builder, &expr.callee);
-        let callee = builder.declare_untagged(callee);
+        let callee_expr = expression(builder, &expr.callee);
+        let callee_reg = builder.declare_operand(callee_expr, OperandRef::Implicit);
+
+        let callee = builder.declare_untagged(callee_reg);
 
         let field = builder.tcx().hir_expect_field(expr.field);
         let (offset, field_type) = builder.field_offset(field);
@@ -713,7 +718,7 @@ fn variant_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Variant) -
 
         let enum_union_type = builder.union_of(&expr.ty);
         let variant_alloc = builder.alloca(enum_union_type, &expr.ty, expr.location);
-        let variant_untagged_reg = builder.declare_untagged(lume_mir::Operand::reference_of(variant_alloc));
+        let variant_untagged_reg = builder.declare_untagged(variant_alloc);
 
         let mut offset = 0;
 

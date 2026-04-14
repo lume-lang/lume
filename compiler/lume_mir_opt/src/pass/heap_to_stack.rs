@@ -91,7 +91,7 @@ fn replace_reg_with_slot(
                 debug_assert_ne!(*id, register, "declaration instruction should have been skipped");
 
                 match decl.kind.as_mut() {
-                    DeclarationKind::Operand(operand) | DeclarationKind::Untagged { operand } => {
+                    DeclarationKind::Operand(operand) => {
                         replace_reg_in_op(operand, register, slot);
                     }
                     DeclarationKind::Cast { .. } => unreachable!("can't cast stack-slot"),
@@ -202,7 +202,7 @@ fn replace_reg_in_op(operand: &mut Operand, register: RegisterId, slot: SlotId) 
                 }
             }
         }
-        OperandKind::Reference { id } => {
+        OperandKind::Reference { id } | OperandKind::Untagged { id } => {
             if *id == register {
                 operand.kind = OperandKind::SlotAddress { id: slot, offset: 0 }
             }

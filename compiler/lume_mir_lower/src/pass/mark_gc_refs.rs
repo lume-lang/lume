@@ -121,9 +121,7 @@ impl MarkObjectReferences {
                                     );
                                 }
                             }
-                            DeclarationKind::Cast { .. }
-                            | DeclarationKind::Intrinsic { .. }
-                            | DeclarationKind::Untagged { .. } => {}
+                            DeclarationKind::Cast { .. } | DeclarationKind::Intrinsic { .. } => {}
                         }
 
                         self.register_gc_object(func, block.id, inst_id, *register, Placement::After, location);
@@ -162,7 +160,7 @@ impl MarkObjectReferences {
         location: Location,
     ) {
         match &op.kind {
-            OperandKind::Load { id, .. } | OperandKind::Reference { id } => {
+            OperandKind::Load { id, .. } | OperandKind::Reference { id } | OperandKind::Untagged { id } => {
                 self.register_gc_object(func, block, inst_id, *id, placement, location);
             }
             OperandKind::LoadField { target, .. } => {

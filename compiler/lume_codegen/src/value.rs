@@ -107,13 +107,6 @@ impl LowerFunction<'_> {
                         .load(self.backend.cl_ptr_type(), MemFlags::trusted(), value, 0)
                 }
             },
-            lume_mir::DeclarationKind::Untagged { operand } => {
-                let value = self.cg_operand(operand);
-
-                self.builder
-                    .ins()
-                    .band_imm(value, !lume_tagged::TAG_MASK.cast_signed() as i64)
-            }
         }
     }
 
@@ -182,6 +175,13 @@ impl LowerFunction<'_> {
                 self.builder.ins().stack_addr(self.backend.cl_ptr_type(), slot, offset)
             }
             lume_mir::OperandKind::Reference { id } => self.use_var(*id),
+            lume_mir::OperandKind::Untagged { id } => {
+                let value = self.use_var(*id);
+
+                self.builder
+                    .ins()
+                    .band_imm(value, !lume_tagged::TAG_MASK.cast_signed() as i64)
+            }
         }
     }
 }
