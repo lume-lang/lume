@@ -1,3 +1,5 @@
+#![allow(clippy::struct_excessive_bools)]
+
 pub(crate) mod commands;
 pub(crate) mod error;
 pub(crate) mod opts;

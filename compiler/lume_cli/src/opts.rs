@@ -112,6 +112,13 @@ pub struct DevelopmentBuildOptions {
     #[cfg_attr(not(debug_assertions), arg(hide = true))]
     pub dump_mir_func: Vec<String>,
 
+    /// Dumps all MIR instructions.
+    ///
+    /// Forces MIR dumps to include GC references, untagging, etc.
+    #[arg(long)]
+    #[cfg_attr(not(debug_assertions), arg(hide = true))]
+    pub dump_mir_full: bool,
+
     /// Dumps the generated codegen IR
     #[arg(long)]
     #[cfg_attr(not(debug_assertions), arg(hide = true))]
@@ -149,6 +156,7 @@ impl BuildOptions {
             dump_hir: self.dev.dump_hir,
             dump_mir: self.dev.dump_mir.clone(),
             dump_mir_func: self.dev.dump_mir_func.clone(),
+            dump_mir_full: self.dev.dump_mir_full,
             dump_codegen_ir: self.dev.dump_codegen_ir,
         }
     }

@@ -63,6 +63,9 @@ pub struct Options {
     /// Defines which MIR functions to dump, if any.
     pub dump_mir_func: Vec<String>,
 
+    /// Defines whether the dumped MIR should include *all* instructions.
+    pub dump_mir_full: bool,
+
     /// Defines whether the generated codegen IR should be printed to `stdio`.
     pub dump_codegen_ir: bool,
 }
@@ -82,6 +85,7 @@ impl Default for Options {
             dump_hir: false,
             dump_mir: None,
             dump_mir_func: Vec::new(),
+            dump_mir_full: false,
             dump_codegen_ir: false,
         }
     }

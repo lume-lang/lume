@@ -94,8 +94,14 @@ impl ModuleMap {
 
 impl std::fmt::Display for ModuleMap {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for func in self.functions.values() {
-            write!(f, "{func}")?;
+        if f.alternate() {
+            for func in self.functions.values() {
+                write!(f, "{func:#}")?;
+            }
+        } else {
+            for func in self.functions.values() {
+                write!(f, "{func}")?;
+            }
         }
 
         Ok(())
@@ -455,8 +461,14 @@ impl std::fmt::Display for Function {
 
         writeln!(f, "fn {:?} {} {{", self.name, self.signature)?;
 
-        for block in self.blocks.values() {
-            write!(f, "{block}")?;
+        if f.alternate() {
+            for block in self.blocks.values() {
+                write!(f, "{block:#}")?;
+            }
+        } else {
+            for block in self.blocks.values() {
+                write!(f, "{block}")?;
+            }
         }
 
         writeln!(f, "}}")?;
@@ -1013,6 +1025,10 @@ impl std::fmt::Display for BasicBlock {
         )?;
 
         for stmt in self.instructions() {
+            if !f.alternate() && stmt.is_auxiliary() {
+                continue;
+            }
+
             writeln!(f, "    {stmt}")?;
         }
 
@@ -1243,6 +1259,10 @@ impl Instruction {
             | InstructionKind::Allocate { .. }
             | InstructionKind::StoreSlot { .. } => Vec::new(),
         }
+    }
+
+    pub fn is_auxiliary(&self) -> bool {
+        matches!(&self.kind, InstructionKind::ObjectRegister { .. })
     }
 }
 

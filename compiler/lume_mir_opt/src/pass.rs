@@ -43,6 +43,10 @@ pub(crate) fn run_all_passes(mcx: &mut MirQueryCtx, func_id: NodeId) {
 
     #[allow(clippy::disallowed_macros, reason = "only used in debugging")]
     if mcx.should_dump_func(func, None) {
-        println!("{func}");
+        if mcx.gcx().session.options.dump_mir_full {
+            println!("{func:#}");
+        } else {
+            println!("{func}");
+        }
     }
 }

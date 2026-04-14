@@ -41,7 +41,11 @@ impl Builder<'_, '_> {
 
         #[allow(clippy::disallowed_macros, reason = "only used in debugging")]
         if self.mcx.should_dump_func(&self.func, Some(name)) {
-            println!("{}", self.func);
+            if self.mcx.gcx().session.options.dump_mir_full {
+                println!("{:#}", self.func);
+            } else {
+                println!("{}", self.func);
+            }
         }
 
         let mut pass = P::new();
