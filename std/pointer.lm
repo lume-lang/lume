@@ -16,20 +16,23 @@ pub struct Void {}
 pub struct Pointer<T> {}
 
 impl<T> Pointer<T> {
+    /// Creates a null pointer of type `T`.
+    ![external(name = "std::mem::ptr_null")]
+    pub fn unsafe external null() -> Pointer<T>
+
     /// Gets the pointer as a reference, pointing to the same address as the
     /// pointer itself.
-    pub fn as_ref(self) -> T {
-        return ptr_ref<T>(self);
-    }
+    ![external(name = "std::mem::ptr_ref")]
+    pub fn external as_ref(self) -> T
 
     /// Reads the value from the memory location, which the current pointer is pointing to.
-    pub fn read(self) -> T {
-        return ptr_read<T>(self, 0_u64);
+    pub fn unsafe read(self) -> T {
+        self.read_offset(0_u64)
     }
 
     /// Writes a new value to the memory location the current pointer is pointing to.
-    pub fn write(self, value: T) {
-        ptr_write<T>(self, value, 0_u64);
+    pub fn unsafe write(self, value: T) {
+        self.write_offset(value, 0_u64);
     }
 
     /// Reads the value from the memory location the current pointer is pointing to,
@@ -37,16 +40,14 @@ impl<T> Pointer<T> {
     ///
     /// This method does not read with a byte offset. The byte offset of this method
     /// will be `ptr + (size_of<T> * offset)`.
-    pub fn read_offset(self, offset: UInt64) -> T {
-        return ptr_read<T>(self, offset);
-    }
+    ![external(name = "std::mem::ptr_read")]
+    pub fn external read_offset(self, offset: UInt64) -> T
 
     /// Writes a new value to the memory location the current pointer is pointing to,
     /// offset by the given amount of items.
     ///
     /// This method does not write with a byte offset. The byte offset of this method
     /// will be `ptr + (size_of<T> * offset)`.
-    pub fn write_offset(self, value: T, offset: UInt64) {
-        ptr_write<T>(self, value, offset);
-    }
+    ![external(name = "std::mem::ptr_write")]
+    pub fn external write_offset(self, value: T, offset: UInt64)
 }

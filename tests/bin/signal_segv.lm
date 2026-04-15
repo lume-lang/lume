@@ -1,7 +1,9 @@
 //# test-return = 139
 
 fn main() -> Int32 {
-    std::mem::ptr_null<UInt8>().read();
+    unsafe {
+        std::Pointer<UInt8>::null().read();
+    };
 
     0
 }
