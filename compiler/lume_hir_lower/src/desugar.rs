@@ -154,7 +154,7 @@ impl LoweringContext<'_> {
                     };
 
                     let some_branch =
-                        { hir.alloc_within_scope(|hir| hir.block_opt(stmt.block()).statements, block_location) };
+                        { hir.alloc_within_scope(|hir| hir.block_opt(stmt.block()).statements, false, block_location) };
 
                     lume_hir::SwitchCase {
                         pattern: some_pattern,
@@ -169,7 +169,8 @@ impl LoweringContext<'_> {
                     let none_pattern = { hir.alloc_pat_variant(OPTIONAL_NONE_PATH.clone(), vec![], location) };
 
                     // `{ break; }`
-                    let none_branch = { hir.alloc_within_scope(|hir| vec![hir.alloc_break(location)], location) };
+                    let none_branch =
+                        { hir.alloc_within_scope(|hir| vec![hir.alloc_break(location)], false, location) };
 
                     lume_hir::SwitchCase {
                         pattern: none_pattern,
@@ -194,6 +195,7 @@ impl LoweringContext<'_> {
 
                 vec![collection_variable_decl, iter_variable_decl, loop_stmt]
             },
+            false,
             location,
         );
 

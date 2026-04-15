@@ -52,6 +52,7 @@ impl Parser {
             SyntaxKind::LEFT_BRACE => self.parse_scope_expression(),
             Token![if] => self.parse_if_conditional(),
             Token![switch] => self.parse_switch_expression(),
+            Token![unsafe] => self.parse_unsafe_expression(),
             SyntaxKind::IDENT | Token![self] | Token![Self] => self.parse_named_expression(),
 
             k if k.is_literal() => self.parse_literal_expr(),
@@ -190,6 +191,16 @@ impl Parser {
         self.finish_node();
 
         SyntaxKind::SWITCH_EXPR
+    }
+
+    /// Parses a unsafe block expression on the current cursor position.
+    pub(super) fn parse_unsafe_expression(&mut self) -> SyntaxKind {
+        self.start_node(SyntaxKind::UNSAFE_EXPR);
+        self.consume(Token![unsafe]);
+        self.parse_block();
+        self.finish_node();
+
+        SyntaxKind::UNSAFE_EXPR
     }
 
     /// Parses a range expression on the current cursor position.

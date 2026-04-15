@@ -44,6 +44,7 @@ impl LoweringContext<'_> {
             lume_ast::Expr::RangeExpr(e) => self.expr_range(e),
             lume_ast::Expr::ScopeExpr(e) => self.expr_scope(e),
             lume_ast::Expr::SwitchExpr(e) => self.expr_switch(e),
+            lume_ast::Expr::UnsafeExpr(e) => self.expr_unsafe(e),
             lume_ast::Expr::VariableExpr(e) => self.expr_variable(e),
             lume_ast::Expr::VariantExpr(e) => self.expr_variant(e),
             lume_ast::Expr::ParenExpr(e) => match e.expr() {
@@ -129,6 +130,7 @@ impl LoweringContext<'_> {
             kind: lume_hir::ExpressionKind::Scope(lume_hir::Scope {
                 id: scope_id,
                 body,
+                unsafe_: false,
                 location,
             }),
         })
@@ -592,6 +594,7 @@ impl LoweringContext<'_> {
 
         self.alloc_within_scope(
             |hir| expr.block().map_or_else(Vec::new, |block| hir.statements(block.stmt())),
+            false,
             location,
         )
     }
@@ -613,6 +616,17 @@ impl LoweringContext<'_> {
             }),
             location,
         })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn expr_unsafe(&mut self, expr: lume_ast::UnsafeExpr) -> NodeId {
+        let location = self.location(expr.location());
+
+        self.alloc_within_scope(
+            |hir| expr.block().map_or_else(Vec::new, |block| hir.statements(block.stmt())),
+            true,
+            location,
+        )
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]

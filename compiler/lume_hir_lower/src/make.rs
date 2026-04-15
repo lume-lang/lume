@@ -209,7 +209,7 @@ impl LoweringContext<'_> {
         })
     }
 
-    pub(crate) fn alloc_within_scope<I, F>(&mut self, body: F, location: Location) -> NodeId
+    pub(crate) fn alloc_within_scope<I, F>(&mut self, body: F, unsafe_: bool, location: Location) -> NodeId
     where
         I: IntoIterator<Item = NodeId>,
         F: FnOnce(&mut Self) -> I,
@@ -224,7 +224,12 @@ impl LoweringContext<'_> {
         self.alloc_expr(lume_hir::Expression {
             id,
             location,
-            kind: lume_hir::ExpressionKind::Scope(lume_hir::Scope { id, body, location }),
+            kind: lume_hir::ExpressionKind::Scope(lume_hir::Scope {
+                id,
+                body,
+                unsafe_,
+                location,
+            }),
         })
     }
 }

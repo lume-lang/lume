@@ -594,6 +594,7 @@ fn as_parser_token(token: Token<'_>) -> (SyntaxKind, TextSpan) {
         TokenKind::Switch => SyntaxKind::SWITCH_KW,
         TokenKind::Trait => SyntaxKind::TRAIT_KW,
         TokenKind::True => SyntaxKind::TRUE_KW,
+        TokenKind::Unsafe => SyntaxKind::UNSAFE_KW,
         TokenKind::Use => SyntaxKind::USE_KW,
         TokenKind::While => SyntaxKind::WHILE_KW,
         TokenKind::Whitespace(_) => SyntaxKind::WHITESPACE,

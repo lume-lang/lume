@@ -186,6 +186,7 @@ Expr =
 | ScopeExpr
 | SwitchExpr
 | ParenExpr
+| UnsafeExpr
 | VariableExpr
 | VariantExpr
 | BinExpr
@@ -233,6 +234,9 @@ SwitchExpr =
 
 ParenExpr =
     '(' Expr ')'
+
+UnsafeExpr =
+    'unsafe' Block
 
 VariableExpr =
     Name

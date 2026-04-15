@@ -797,6 +797,7 @@ pub enum Expr {
     ScopeExpr(ScopeExpr),
     SwitchExpr(SwitchExpr),
     ParenExpr(ParenExpr),
+    UnsafeExpr(UnsafeExpr),
     VariableExpr(VariableExpr),
     VariantExpr(VariantExpr),
     BinExpr(BinExpr),
@@ -842,6 +843,9 @@ impl AstNode for Expr {
             SyntaxKind::PAREN_EXPR => {
                 Some(Self::ParenExpr(ParenExpr::cast(syntax).unwrap()))
             }
+            SyntaxKind::UNSAFE_EXPR => {
+                Some(Self::UnsafeExpr(UnsafeExpr::cast(syntax).unwrap()))
+            }
             SyntaxKind::VARIABLE_EXPR => {
                 Some(Self::VariableExpr(VariableExpr::cast(syntax).unwrap()))
             }
@@ -874,6 +878,7 @@ impl AstNode for Expr {
             Self::ScopeExpr(it) => it.syntax(),
             Self::SwitchExpr(it) => it.syntax(),
             Self::ParenExpr(it) => it.syntax(),
+            Self::UnsafeExpr(it) => it.syntax(),
             Self::VariableExpr(it) => it.syntax(),
             Self::VariantExpr(it) => it.syntax(),
             Self::BinExpr(it) => it.syntax(),
@@ -1663,6 +1668,29 @@ impl AstNode for ParenExpr {
     fn cast(syntax: SyntaxNode) -> Option<Self> {
         match syntax.kind() {
             SyntaxKind::PAREN_EXPR => Some(ParenExpr { syntax }),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode {
+        &self.syntax
+    }
+}
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct UnsafeExpr {
+    syntax: SyntaxNode,
+}
+impl UnsafeExpr {
+    pub fn unsafe_kw(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::UNSAFE_KW)
+    }
+    pub fn block(&self) -> Option<Block> {
+        crate::support::child(self.syntax())
+    }
+}
+impl AstNode for UnsafeExpr {
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        match syntax.kind() {
+            SyntaxKind::UNSAFE_EXPR => Some(UnsafeExpr { syntax }),
             _ => None,
         }
     }

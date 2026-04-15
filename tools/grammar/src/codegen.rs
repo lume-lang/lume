@@ -28,6 +28,7 @@ const TOKEN_NAMES: &[(&str, &str)] = &[
     ("in", "in_kw"),
     ("is", "is_kw"),
     ("switch", "switch_kw"),
+    ("unsafe", "unsafe_kw"),
     // Symbols
     ("+", "add"),
     ("-", "sub"),
