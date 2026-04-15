@@ -1,0 +1,73 @@
+Map {
+    items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: unsafe_trait_method_def.lm:6:9,
+                    },
+                    bound_types: [],
+                    location: unsafe_trait_method_def.lm:6:9,
+                },
+                location: unsafe_trait_method_def.lm:6:9,
+            },
+            methods: [
+                TraitMethodDefinition {
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "Foo",
+                                    location: unsafe_trait_method_def.lm:6:9,
+                                },
+                                bound_types: [],
+                                location: unsafe_trait_method_def.lm:6:9,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "foo",
+                                location: unsafe_trait_method_def.lm:26:29,
+                            },
+                            bound_types: [],
+                            location: unsafe_trait_method_def.lm:26:29,
+                        },
+                        location: unsafe_trait_method_def.lm:6:9,
+                    },
+                    unsafe: true,
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: <internal>:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Void",
+                                    location: <internal>:0:0,
+                                },
+                                bound_types: [],
+                                location: <internal>:0:0,
+                            },
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    block: None,
+                    location: unsafe_trait_method_def.lm:16:32,
+                },
+            ],
+            type_parameters: [],
+            location: unsafe_trait_method_def.lm:0:34,
+        },
+    ],
+}

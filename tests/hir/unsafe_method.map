@@ -1,0 +1,108 @@
+Map {
+    items: [
+        StructDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: unsafe_method.lm:7:10,
+                    },
+                    bound_types: [],
+                    location: unsafe_method.lm:7:10,
+                },
+                location: unsafe_method.lm:7:10,
+            },
+            fields: [],
+            type_parameters: [],
+            location: unsafe_method.lm:0:14,
+        },
+        Implementation {
+            target: Type {
+                id: TypeId(
+                    NodeId {
+                        package: PackageId(
+                            10850729242277675618,
+                        ),
+                        index: Idx(
+                            259,
+                        ),
+                    },
+                ),
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Foo",
+                            location: unsafe_method.lm:21:24,
+                        },
+                        bound_types: [],
+                        location: unsafe_method.lm:21:25,
+                    },
+                    location: unsafe_method.lm:21:25,
+                },
+                self_type: false,
+                location: unsafe_method.lm:21:25,
+            },
+            methods: [
+                MethodDefinition {
+                    visibility: Private,
+                    unsafe: true,
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "Foo",
+                                    location: unsafe_method.lm:21:24,
+                                },
+                                bound_types: [],
+                                location: unsafe_method.lm:21:25,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "foo",
+                                location: unsafe_method.lm:41:44,
+                            },
+                            bound_types: [],
+                            location: unsafe_method.lm:41:44,
+                        },
+                        location: unsafe_method.lm:21:25,
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: <internal>:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Void",
+                                    location: <internal>:0:0,
+                                },
+                                bound_types: [],
+                                location: <internal>:0:0,
+                            },
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: unsafe_method.lm:47:49,
+                    },
+                    location: unsafe_method.lm:31:49,
+                },
+            ],
+            type_parameters: [],
+            location: unsafe_method.lm:16:51,
+        },
+    ],
+}

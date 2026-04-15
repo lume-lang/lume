@@ -177,6 +177,7 @@ Map {
                         },
                         location: use_trait_generic.lm:34:40,
                     },
+                    unsafe: false,
                     parameters: [
                         Parameter {
                             name: Identifier {

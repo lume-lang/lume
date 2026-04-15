@@ -37,6 +37,7 @@ Map {
                         },
                         location: trait_method_no_ret.lm:6:9,
                     },
+                    unsafe: false,
                     parameters: [
                         Parameter {
                             name: Identifier {

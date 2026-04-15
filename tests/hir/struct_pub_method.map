@@ -48,6 +48,7 @@ Map {
             methods: [
                 MethodDefinition {
                     visibility: Public,
+                    unsafe: false,
                     name: Path {
                         root: [
                             Type {

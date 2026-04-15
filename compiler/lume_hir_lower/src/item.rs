@@ -88,6 +88,8 @@ impl LoweringContext<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn signature(&mut self, sig: lume_ast::Sig, allow_self: bool) -> lume_hir::FnSignature {
+        let unsafe_ = sig.unsafe_kw().is_some();
+
         // Must be defined first, so any type arguments in the method name can be
         // resolved correctly.
         let type_parameters = match sig.bound_types() {
@@ -108,6 +110,7 @@ impl LoweringContext<'_> {
         let location = self.location(sig.location());
 
         lume_hir::FnSignature {
+            flags: lume_hir::FnFlags { unsafe_ },
             name,
             parameters,
             type_parameters,
@@ -123,6 +126,7 @@ impl LoweringContext<'_> {
         }
 
         lume_hir::FnSignature {
+            flags: lume_hir::FnFlags { unsafe_: false },
             name: lume_hir::Path::missing(),
             parameters: Vec::new(),
             type_parameters: Vec::new(),

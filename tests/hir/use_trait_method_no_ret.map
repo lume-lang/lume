@@ -107,6 +107,7 @@ Map {
                         },
                         location: use_trait_method_no_ret.lm:24:30,
                     },
+                    unsafe: false,
                     parameters: [
                         Parameter {
                             name: Identifier {

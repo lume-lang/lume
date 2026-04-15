@@ -93,6 +93,8 @@ impl Parser {
         self.start_node(SyntaxKind::SIG);
 
         self.consume(Token![fn]);
+
+        self.check(Token![unsafe]);
         let is_external = self.check(Token![external]);
 
         self.parse_callable_ident();

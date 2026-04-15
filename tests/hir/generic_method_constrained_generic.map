@@ -66,6 +66,7 @@ Map {
             methods: [
                 MethodDefinition {
                     visibility: Private,
+                    unsafe: false,
                     name: Path {
                         root: [
                             Type {

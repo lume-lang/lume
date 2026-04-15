@@ -104,6 +104,7 @@ impl PrettyPrint for FunctionDefinition {
 
         f.debug_struct("FunctionDefinition")
             .field("visibility", &self.visibility)
+            .field("unsafe", &self.signature.flags.unsafe_)
             .field("name", &self.signature.name)
             .field("parameters", &parameters)
             .field("type_parameters", &pretty_list!(self.signature.type_parameters, map))
@@ -207,6 +208,7 @@ impl PrettyPrint for MethodDefinition {
 
         f.debug_struct("MethodDefinition")
             .field("visibility", &self.visibility)
+            .field("unsafe", &self.signature.flags.unsafe_)
             .field("name", &self.signature.name)
             .field("parameters", &parameters)
             .field("type_parameters", &pretty_list!(self.signature.type_parameters, map))
@@ -237,6 +239,7 @@ impl PrettyPrint for TraitMethodDefinition {
 
         f.debug_struct("TraitMethodDefinition")
             .field("name", &self.signature.name)
+            .field("unsafe", &self.signature.flags.unsafe_)
             .field("parameters", &parameters)
             .field("type_parameters", &pretty_list!(self.signature.type_parameters, map))
             .field("return_type", pretty_item!(self.signature.return_type, map))
@@ -266,6 +269,7 @@ impl PrettyPrint for TraitMethodImplementation {
 
         f.debug_struct("TraitMethodImplementation")
             .field("name", &self.signature.name)
+            .field("unsafe", &self.signature.flags.unsafe_)
             .field("parameters", &parameters)
             .field("type_parameters", &pretty_list!(self.signature.type_parameters, map))
             .field("return_type", pretty_item!(self.signature.return_type, map))

@@ -2,6 +2,7 @@ Map {
     items: [
         FunctionDefinition {
             visibility: Public,
+            unsafe: false,
             name: Path {
                 root: [],
                 name: Callable {

@@ -265,6 +265,7 @@ Map {
                         },
                         location: use_trait_generic_trait.lm:68:78,
                     },
+                    unsafe: false,
                     parameters: [],
                     type_parameters: [],
                     return_type: Type {
