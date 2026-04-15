@@ -408,11 +408,11 @@ impl LoweringContext<'_> {
                     rhs_id,
                     lume_hir::Node::Expression(lume_hir::Expression::lit(
                         rhs_id,
-                        lume_hir::LiteralKind::Int(Box::new(lume_hir::IntLiteral {
+                        lume_hir::LiteralKind::Int(lume_hir::IntLiteral {
                             id: rhs_id,
                             value: 1,
                             kind: None,
-                        })),
+                        }),
                     )),
                 );
 
@@ -451,11 +451,11 @@ impl LoweringContext<'_> {
                     rhs_id,
                     lume_hir::Node::Expression(lume_hir::Expression::lit(
                         rhs_id,
-                        lume_hir::LiteralKind::Int(Box::new(lume_hir::IntLiteral {
+                        lume_hir::LiteralKind::Int(lume_hir::IntLiteral {
                             id: rhs_id,
                             value: 1,
                             kind: None,
-                        })),
+                        }),
                     )),
                 );
 

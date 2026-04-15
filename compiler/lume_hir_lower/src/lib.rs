@@ -331,10 +331,10 @@ impl Sentinal for lume_hir::Literal {
     fn missing() -> Self {
         Self {
             id: NodeId::default(),
-            kind: lume_hir::LiteralKind::Boolean(Box::new(lume_hir::BooleanLiteral {
+            kind: lume_hir::LiteralKind::Boolean(lume_hir::BooleanLiteral {
                 id: NodeId::default(),
                 value: false,
-            })),
+            }),
             location: Location::empty(),
         }
     }
