@@ -326,6 +326,11 @@ impl TyCheckCtx {
                 self.member_expression(expr)
             }
             lume_hir::ExpressionKind::Scope(expr) => {
+                if expr.unsafe_ && !self.is_unsafe_allowed(expr.id.package) {
+                    self.dcx()
+                        .emit(UnsafeCodeInSafePackage { source: expr.location }.into());
+                }
+
                 for stmt in &expr.body {
                     self.statement(*stmt)?;
                 }
