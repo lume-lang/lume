@@ -434,6 +434,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         };
 
         let signature = str("fn ")
+            .append(if sig.unsafe_kw().is_some() { "unsafe " } else { "" })
             .append(if sig.extern_kw().is_some() { "external " } else { "" })
             .append(sig.name().as_doc())
             .append(self.type_parameters(sig.bound_types()))
