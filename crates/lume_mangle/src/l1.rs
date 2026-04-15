@@ -149,7 +149,10 @@ fn mangled_name_of_type_parameter(tcx: &TyCheckCtx, type_param: &lume_hir::TypeP
 
 fn mangled_name_of_method(tcx: &TyCheckCtx, method: &lume_hir::MethodDefinition) -> String {
     if method.block.is_none() {
-        return format!("{:+}", tcx.hir_path_of_node(method.id));
+        return match tcx.hir_external_name(method.id) {
+            Some(ext_name) => ext_name.to_string(),
+            None => format!("{:+}", tcx.hir_path_of_node(method.id)),
+        };
     }
 
     let parent = tcx.hir_parent_of(method.id).unwrap();
@@ -173,24 +176,24 @@ fn mangled_name_of_trait_method_def(tcx: &TyCheckCtx, method_def: &lume_hir::Tra
     format!("{MANGLED_PREFIX}{TRAIT_METHOD_DEF_SYM}{package_segment}{path_segment}")
 }
 
-fn mangled_name_of_trait_method_impl(
-    tcx: &TyCheckCtx,
-    method_impl: &lume_hir::TraitMethodImplementation,
-) -> Result<String> {
-    if method_impl.block.is_none() {
-        return Ok(format!("{:+}", tcx.hir_path_of_node(method_impl.id)));
+fn mangled_name_of_trait_method_impl(tcx: &TyCheckCtx, method: &lume_hir::TraitMethodImplementation) -> Result<String> {
+    if method.block.is_none() {
+        return match tcx.hir_external_name(method.id) {
+            Some(ext_name) => Ok(ext_name.to_string()),
+            None => Ok(format!("{:+}", tcx.hir_path_of_node(method.id))),
+        };
     }
 
-    let parent = tcx.hir_parent_of(method_impl.id).unwrap();
+    let parent = tcx.hir_parent_of(method.id).unwrap();
     let lume_hir::Node::TraitImpl(trait_impl) = tcx.hir_expect_node(parent) else {
         unreachable!();
     };
 
-    let trait_def = tcx.trait_definition_of_method_impl(method_impl)?;
+    let trait_def = tcx.trait_definition_of_method_impl(method)?;
 
-    let package_segment = mangled_package_segment(tcx, method_impl.id.package);
+    let package_segment = mangled_package_segment(tcx, method.id.package);
     let path_segment = mangled_path_segment(&trait_def.name);
-    let name_segment = mangled_name_segment(method_impl.signature.name.name().as_str());
+    let name_segment = mangled_name_segment(method.signature.name.name().as_str());
     let impl_segment = mangled_impl_segment(tcx, &trait_impl.target);
 
     Ok(format!(
