@@ -953,6 +953,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             Expr::RangeExpr(expr) => self.range(expr),
             Expr::ScopeExpr(expr) => self.scope(expr),
             Expr::SwitchExpr(expr) => self.switch(expr),
+            Expr::UnsafeExpr(expr) => self.unsafe_block(expr),
             Expr::VariableExpr(expr) => expr.name().as_doc(),
             Expr::VariantExpr(expr) => self.variant(expr),
             Expr::ParenExpr(expr) => match expr.expr() {
@@ -1152,9 +1153,6 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             _ if expr.gequal().is_some() => ">=",
 
             _ => return expr.as_text().as_doc(),
-            // IntrinsicKind::Decrement { .. } => "--",
-            // IntrinsicKind::Increment { .. } => "++",
-            // IntrinsicKind::Not { .. } => "!",
         };
 
         let block = lhs
@@ -1167,53 +1165,6 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         } else {
             block.nest_if_broken(self.indent())
         }
-
-        /*
-        match &expr.kind {
-            IntrinsicKind::Add { lhs, rhs }
-            | IntrinsicKind::Sub { lhs, rhs }
-            | IntrinsicKind::Mul { lhs, rhs }
-            | IntrinsicKind::Div { lhs, rhs }
-            | IntrinsicKind::And { lhs, rhs }
-            | IntrinsicKind::Or { lhs, rhs }
-            | IntrinsicKind::BinaryAnd { lhs, rhs }
-            | IntrinsicKind::BinaryOr { lhs, rhs }
-            | IntrinsicKind::BinaryXor { lhs, rhs }
-            | IntrinsicKind::Equal { lhs, rhs }
-            | IntrinsicKind::NotEqual { lhs, rhs }
-            | IntrinsicKind::Less { lhs, rhs }
-            | IntrinsicKind::LessEqual { lhs, rhs }
-            | IntrinsicKind::Greater { lhs, rhs }
-            | IntrinsicKind::GreaterEqual { lhs, rhs } => {
-                let lhs = match lhs.as_ref() {
-                    Expression::IntrinsicCall(lhs) => self.bin_expr(lhs, true),
-                    _ => self.expression(lhs),
-                };
-
-                let rhs = match rhs.as_ref() {
-                    Expression::IntrinsicCall(rhs) => self.bin_expr(rhs, true),
-                    _ => self.expression(rhs),
-                };
-
-                let block = lhs
-                    .append(break_("", " "))
-                    .append(str(operator).space().append(rhs))
-                    .group();
-
-                if nested {
-                    block
-                } else {
-                    block.nest_if_broken(self.indent())
-                }
-            }
-            IntrinsicKind::Decrement { target } | IntrinsicKind::Increment { target } => {
-                self.expression(target).append(operator)
-            }
-            IntrinsicKind::Negate { target } | IntrinsicKind::Not { target } => {
-                operator.as_doc().append(self.expression(target))
-            }
-        }
-         */
     }
 
     fn postfix_expr<'a>(&mut self, expr: PostfixExpr) -> Document<'a> {
@@ -1348,6 +1299,15 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             .append("}");
 
         header.append(body)
+    }
+
+    fn unsafe_block<'a>(&mut self, expr: UnsafeExpr) -> Document<'a> {
+        match expr.block() {
+            Some(block) => str("unsafe")
+                .space()
+                .append(self.statements(block.stmt(), expr.location())),
+            None => string(expr.as_text()),
+        }
     }
 
     fn variant<'a>(&mut self, expr: VariantExpr) -> Document<'a> {

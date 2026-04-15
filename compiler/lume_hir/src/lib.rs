@@ -1799,6 +1799,7 @@ pub struct PatternField {
 pub struct Scope {
     pub id: NodeId,
     pub body: Vec<NodeId>,
+    pub unsafe_: bool,
     pub location: Location,
 }
 

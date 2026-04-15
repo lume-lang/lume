@@ -65,6 +65,7 @@ macro_rules! Token {
     [switch] => { $crate::SyntaxKind::SWITCH_KW };
     [trait] => { $crate::SyntaxKind::TRAIT_KW };
     [true] => { $crate::SyntaxKind::TRUE_KW };
+    [unsafe] => { $crate::SyntaxKind::UNSAFE_KW };
     [use] => { $crate::SyntaxKind::USE_KW };
     [while] => { $crate::SyntaxKind::WHILE_KW };
 }
@@ -143,8 +144,9 @@ pub enum SyntaxKind {
     SWITCH_EXPR,
     VARIABLE_EXPR,
     VARIANT_EXPR,
-    SELF_EXPR,
     PAREN_EXPR,
+    SELF_EXPR,
+    UNSAFE_EXPR,
 
     BIN_EXPR,
     POSTFIX_EXPR,
@@ -254,6 +256,7 @@ pub enum SyntaxKind {
     SWITCH_KW,
     TRAIT_KW,
     TRUE_KW,
+    UNSAFE_KW,
     USE_KW,
     WHILE_KW,
 

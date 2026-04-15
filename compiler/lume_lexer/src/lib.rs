@@ -352,6 +352,9 @@ pub enum TokenKind<'source> {
     #[token("true")]
     True,
 
+    #[token("unsafe")]
+    Unsafe,
+
     #[token("use")]
     Use,
 
@@ -438,6 +441,7 @@ impl TokenKind<'_> {
             TokenKind::Switch => TokenType::Switch,
             TokenKind::Trait => TokenType::Trait,
             TokenKind::True => TokenType::True,
+            TokenKind::Unsafe => TokenType::Unsafe,
             TokenKind::Use => TokenType::Use,
             TokenKind::While => TokenType::While,
             TokenKind::Whitespace(_) => TokenType::Whitespace,
@@ -472,6 +476,7 @@ impl TokenKind<'_> {
                 | TokenKind::Switch
                 | TokenKind::Trait
                 | TokenKind::True
+                | TokenKind::Unsafe
                 | TokenKind::Use
                 | TokenKind::While
         )
@@ -619,6 +624,7 @@ pub enum TokenType {
     Switch,
     Trait,
     True,
+    Unsafe,
     Use,
     While,
     Whitespace,
@@ -700,6 +706,7 @@ impl Display for TokenType {
             TokenType::Switch => f.write_str("switch"),
             TokenType::Trait => f.write_str("trait"),
             TokenType::True => f.write_str("true"),
+            TokenType::Unsafe => f.write_str("unsafe"),
             TokenType::Use => f.write_str("use"),
             TokenType::While => f.write_str("while"),
             TokenType::Whitespace => f.write_str("whitespace"),
@@ -949,6 +956,7 @@ mod tests {
         assert_lex("false", &[(Ok(TokenKind::False), "false", 0..5)]);
         assert_lex("priv", &[(Ok(TokenKind::Priv), "priv", 0..4)]);
         assert_lex("pub", &[(Ok(TokenKind::Pub), "pub", 0..3)]);
+        assert_lex("unsafe", &[(Ok(TokenKind::Unsafe), "unsafe", 0..6)]);
         assert_lex("use", &[(Ok(TokenKind::Use), "use", 0..3)]);
         assert_lex("while", &[(Ok(TokenKind::While), "while", 0..5)]);
     }
