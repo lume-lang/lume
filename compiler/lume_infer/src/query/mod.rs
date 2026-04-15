@@ -1203,6 +1203,15 @@ impl TyInferCtx {
         Ok(self.fields_on(id)?.iter().find(|field| field.name.as_str() == name))
     }
 
+    /// Determines whether unsafe code is allowed in the given package.
+    #[cached_query]
+    #[tracing::instrument(level = "Trace", skip_all)]
+    pub fn is_unsafe_allowed(&self, package_id: PackageId) -> bool {
+        self.gcx()
+            .package(package_id)
+            .is_some_and(|package| package.allow_unsafe)
+    }
+
     /// Gets the visibility of the given node, if one can be applied to it.
     ///
     /// If the type of node cannot have a visibility modifier, returns [`None`].

@@ -229,6 +229,17 @@ pub struct InaccessibleField {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "unsafe code not allowed in package",
+    code = "LM4397",
+    help = "consider adding `allow_unsafe = true` to the package's Arcfile"
+)]
+pub struct UnsafeCodeInSafePackage {
+    #[label(source, "unsafe code is not allowed in this package")]
+    pub source: Location,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "call to unsafe function outside `unsafe` block", code = "LM4398")]
 pub struct UnsafeFunctionCallOutside {
     #[label(source, "call to unsafe function {function_name} requires `unsafe` block")]
