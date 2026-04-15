@@ -57,6 +57,7 @@ impl From<Manifest> for Package {
             description: manifest.package.description,
             license: manifest.package.license,
             repository: manifest.package.repository,
+            allow_unsafe: manifest.package.allow_unsafe,
             files: IndexMap::new(),
             dependencies: Dependencies {
                 no_std: manifest.package.no_std,
@@ -91,6 +92,11 @@ pub struct ManifestPackage {
     /// the standard library. Defaults to [`false`].
     #[serde(default)]
     pub no_std: bool,
+
+    /// Defines whether the parent package allows declaring and using unsafe
+    /// code.
+    #[serde(default)]
+    pub allow_unsafe: bool,
 }
 
 #[derive(Deserialize, Hash, Debug, Clone, PartialEq, Eq)]
