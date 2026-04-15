@@ -162,6 +162,7 @@ pub enum SyntaxKind {
     NAMED_TYPE,
     ARRAY_TYPE,
     SELF_TYPE,
+    POINTER_TYPE,
 
     // Symbols
     ADD,

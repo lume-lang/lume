@@ -9,6 +9,7 @@ impl LoweringContext<'_> {
             lume_ast::Type::NamedType(t) => self.named_type(t),
             lume_ast::Type::ArrayType(t) => self.array_type(t),
             lume_ast::Type::SelfType(t) => self.alloc_self_type(self.location(t.location())),
+            lume_ast::Type::PointerType(t) => self.pointer_type(t),
         }
     }
 
@@ -92,6 +93,25 @@ impl LoweringContext<'_> {
             name,
             self_type: true,
             location,
+        };
+
+        self.map.types.insert(hir_type.id, hir_type.clone());
+        hir_type
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn pointer_type(&mut self, ty: lume_ast::PointerType) -> lume_hir::Type {
+        let id = self.next_node_id();
+
+        let mut name = lume_hir::hir_std_type_path!(Pointer);
+        let elemental_type = self.type_or_void(ty.elemental());
+        name.name.place_bound_types(vec![elemental_type]);
+
+        let hir_type = lume_hir::Type {
+            id: lume_hir::TypeId::from(id),
+            name,
+            self_type: false,
+            location: self.location(ty.location()),
         };
 
         self.map.types.insert(hir_type.id, hir_type.clone());

@@ -1372,6 +1372,10 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
                 Some(elemental) => concat(vec![str("["), self.ty(elemental), str("]")]),
                 None => string(ty.as_text()),
             },
+            Type::PointerType(ty) => match ty.elemental() {
+                Some(elemental) => str("*").append(self.ty(elemental)),
+                None => string(ty.as_text()),
+            },
         }
     }
 

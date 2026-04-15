@@ -328,6 +328,7 @@ Type =
   NamedType
 | ArrayType
 | SelfType
+| PointerType
 
 NamedType =
   Path
@@ -337,6 +338,9 @@ ArrayType =
 
 SelfType =
   'Self'
+
+PointerType =
+  '*' elemental:Type
 
 //
 // Paths

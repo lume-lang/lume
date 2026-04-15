@@ -7,6 +7,7 @@ impl Parser {
             SyntaxKind::IDENT => self.parse_named_type(),
             SyntaxKind::LEFT_BRACKET => self.parse_array_type(),
             SyntaxKind::SELF_TYPE => self.parse_self_type(),
+            SyntaxKind::MUL => self.parse_pointer_type(),
             _ => {
                 self.error_and_skip("expected type");
             }
@@ -35,6 +36,16 @@ impl Parser {
     fn parse_self_type(&mut self) {
         self.start_node(SyntaxKind::SELF_TYPE);
         self.consume(SyntaxKind::SELF_TYPE);
+        self.finish_node();
+    }
+
+    /// Parses a pointer type at the current cursor position.
+    fn parse_pointer_type(&mut self) {
+        self.start_node(SyntaxKind::POINTER_TYPE);
+
+        self.consume(SyntaxKind::MUL);
+        self.parse_type();
+
         self.finish_node();
     }
 

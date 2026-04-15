@@ -716,6 +716,7 @@ pub enum Type {
     NamedType(NamedType),
     ArrayType(ArrayType),
     SelfType(SelfType),
+    PointerType(PointerType),
 }
 impl AstNode for Type {
     fn cast(syntax: SyntaxNode) -> Option<Self> {
@@ -729,6 +730,9 @@ impl AstNode for Type {
             SyntaxKind::SELF_TYPE => {
                 Some(Self::SelfType(SelfType::cast(syntax).unwrap()))
             }
+            SyntaxKind::POINTER_TYPE => {
+                Some(Self::PointerType(PointerType::cast(syntax).unwrap()))
+            }
             _ => None,
         }
     }
@@ -737,6 +741,7 @@ impl AstNode for Type {
             Self::NamedType(it) => it.syntax(),
             Self::ArrayType(it) => it.syntax(),
             Self::SelfType(it) => it.syntax(),
+            Self::PointerType(it) => it.syntax(),
         }
     }
 }
@@ -2306,6 +2311,29 @@ impl AstNode for SelfType {
     fn cast(syntax: SyntaxNode) -> Option<Self> {
         match syntax.kind() {
             SyntaxKind::SELF_TYPE => Some(SelfType { syntax }),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode {
+        &self.syntax
+    }
+}
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct PointerType {
+    syntax: SyntaxNode,
+}
+impl PointerType {
+    pub fn mul(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::MUL)
+    }
+    pub fn elemental(&self) -> Option<Type> {
+        crate::support::child(self.syntax())
+    }
+}
+impl AstNode for PointerType {
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        match syntax.kind() {
+            SyntaxKind::POINTER_TYPE => Some(PointerType { syntax }),
             _ => None,
         }
     }
