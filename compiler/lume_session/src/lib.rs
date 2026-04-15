@@ -306,6 +306,9 @@ pub struct Package {
     /// Defines the URL of the source code repository for the package.
     pub repository: Option<String>,
 
+    /// Defines whether the package allows declaring and using unsafe code.
+    pub allow_unsafe: bool,
+
     /// Defines the source files defined within the [`Package`].
     pub files: IndexMap<FileName, Arc<SourceFile>>,
 
@@ -433,6 +436,7 @@ impl Default for Package {
             description: None,
             license: None,
             repository: None,
+            allow_unsafe: false,
             files: IndexMap::new(),
             dependencies: Dependencies::default(),
             runtime: lume_options::RuntimeOptions::default(),
