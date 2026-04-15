@@ -469,6 +469,28 @@ impl TyCheckCtx {
             }
         }
 
+        if !self.hir_in_unsafe_block(expr.id()) && self.is_callable_unsafe(callable)? {
+            if let lume_infer::query::Callable::Function(_) = callable {
+                self.dcx().emit(
+                    UnsafeFunctionCallOutside {
+                        source: expr.location(),
+                        function_location: callable.name().location,
+                        function_name: callable.name().to_wide_string(),
+                    }
+                    .into(),
+                );
+            } else {
+                self.dcx().emit(
+                    UnsafeMethodCallOutside {
+                        source: expr.location(),
+                        method_location: callable.name().location,
+                        method_name: callable.name().to_wide_string(),
+                    }
+                    .into(),
+                );
+            }
+        }
+
         Ok(())
     }
 

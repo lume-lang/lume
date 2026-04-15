@@ -418,7 +418,7 @@ impl TyInferCtx {
         type_parameter_id: lume_hir::TypeId,
         owner: NodeId,
     ) -> Result<Option<lume_hir::TypeId>> {
-        tracing::error!(
+        tracing::trace!(
             "{:+} => {:+}",
             self.hir_path_of_node(type_parameter_id.as_node_id()),
             self.hir_path_of_node(owner),
@@ -475,5 +475,20 @@ impl TyInferCtx {
             }
             _ => panic!("invalid owner node; expected item"),
         }
+    }
+
+    /// Determines whether the given node is a child of an unsafe scope block.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub fn hir_in_unsafe_block(&self, id: NodeId) -> bool {
+        self.hir_parent_iter(id).any(|node| {
+            if let lume_hir::Node::Expression(expr) = node
+                && let lume_hir::ExpressionKind::Scope(scope_expr) = &expr.kind
+            {
+                scope_expr.unsafe_
+            } else {
+                false
+            }
+        })
     }
 }

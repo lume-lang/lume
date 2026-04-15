@@ -45,7 +45,7 @@ impl CallReference {
 /// This structure contains a lifetime reference to the referenced callable -
 /// for a data type which only references the callable with it's [`NodeId`], see
 /// [`CallReference`].
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Hash, Debug, Copy, Clone, PartialEq)]
 pub enum Callable<'a> {
     /// The call refers to a function.
     Function(&'a Function),
