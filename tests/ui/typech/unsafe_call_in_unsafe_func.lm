@@ -1,0 +1,9 @@
+//# test-outcome=success
+
+fn unsafe foo() -> Int8 {
+    4_i8
+}
+
+fn unsafe bar() -> Int8 {
+    12_i8 + foo()
+}

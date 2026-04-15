@@ -1,0 +1,11 @@
+× error[LM4398]: call to unsafe function outside `unsafe` block
+   ╭─[unsafe_call_in_safe_func.lm:6:13]
+ 5 │ fn bar() -> Int8 {
+ 6 │     12_i8 + foo()
+   ∶             ^^^^^ call to unsafe function foo requires `unsafe` block
+ 7 │ }
+   ∶
+ 1 │ fn unsafe foo() -> Int8 {
+   ∶           ^^^ function defined here
+ 2 │     4_i8
+   ╰──
