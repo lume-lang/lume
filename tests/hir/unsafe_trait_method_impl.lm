@@ -1,0 +1,6 @@
+trait Foo {}
+struct Bar {}
+
+use Foo: Bar {
+    fn unsafe baz() { }
+}

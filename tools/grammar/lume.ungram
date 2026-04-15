@@ -60,7 +60,7 @@ Method =
   Visibility? Sig Block?
 
 Sig =
-  'fn' 'external'?
+  'fn' 'unsafe'? 'external'?
   name:Name BoundTypes? ParamList ReturnType?
 
 ParamList =

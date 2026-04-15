@@ -777,12 +777,18 @@ impl std::fmt::Display for Visibility {
 
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct FnSignature {
+    pub flags: FnFlags,
     pub name: Path,
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<NodeId>,
     pub return_type: Type,
 
     pub location: Location,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct FnFlags {
+    pub unsafe_: bool,
 }
 
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]

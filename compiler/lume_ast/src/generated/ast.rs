@@ -516,6 +516,9 @@ impl Sig {
     pub fn fn_kw(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::FN_KW)
     }
+    pub fn unsafe_kw(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::UNSAFE_KW)
+    }
     pub fn extern_kw(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::EXTERN_KW)
     }

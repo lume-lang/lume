@@ -244,6 +244,7 @@ Map {
                         },
                         location: use_trait_generics.lm:46:52,
                     },
+                    unsafe: false,
                     parameters: [
                         Parameter {
                             name: Identifier {

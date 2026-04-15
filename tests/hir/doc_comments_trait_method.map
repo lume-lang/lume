@@ -37,6 +37,7 @@ Map {
                         },
                         location: doc_comments_trait_method.lm:6:9,
                     },
+                    unsafe: false,
                     parameters: [],
                     type_parameters: [],
                     return_type: Type {

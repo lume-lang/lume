@@ -107,6 +107,7 @@ Map {
                         },
                         location: use_trait_methods.lm:26:32,
                     },
+                    unsafe: false,
                     parameters: [],
                     type_parameters: [],
                     return_type: Type {
@@ -165,6 +166,7 @@ Map {
                         },
                         location: use_trait_methods.lm:26:32,
                     },
+                    unsafe: false,
                     parameters: [],
                     type_parameters: [],
                     return_type: Type {

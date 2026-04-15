@@ -1,0 +1,49 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            unsafe: true,
+            name: Path {
+                root: [],
+                name: Callable {
+                    name: Identifier {
+                        name: "foo",
+                        location: unsafe_func.lm:10:13,
+                    },
+                    bound_types: [],
+                    location: unsafe_func.lm:10:13,
+                },
+                location: unsafe_func.lm:10:13,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [
+                        Namespace {
+                            name: Identifier {
+                                name: "std",
+                                location: <internal>:0:0,
+                            },
+                        },
+                    ],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        bound_types: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [],
+                location: unsafe_func.lm:16:18,
+            },
+            location: unsafe_func.lm:0:18,
+        },
+    ],
+}

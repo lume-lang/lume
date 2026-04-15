@@ -1,0 +1,5 @@
+struct Foo { }
+
+impl Foo {
+    fn unsafe foo() {}
+}

@@ -1,0 +1,151 @@
+Map {
+    items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: unsafe_trait_method_impl.lm:6:9,
+                    },
+                    bound_types: [],
+                    location: unsafe_trait_method_impl.lm:6:9,
+                },
+                location: unsafe_trait_method_impl.lm:6:9,
+            },
+            methods: [],
+            type_parameters: [],
+            location: unsafe_trait_method_impl.lm:0:12,
+        },
+        StructDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Bar",
+                        location: unsafe_trait_method_impl.lm:20:23,
+                    },
+                    bound_types: [],
+                    location: unsafe_trait_method_impl.lm:20:23,
+                },
+                location: unsafe_trait_method_impl.lm:20:23,
+            },
+            fields: [],
+            type_parameters: [],
+            location: unsafe_trait_method_impl.lm:13:26,
+        },
+        TraitImplementation {
+            name: Type {
+                id: TypeId(
+                    NodeId {
+                        package: PackageId(
+                            10850729242277675618,
+                        ),
+                        index: Idx(
+                            260,
+                        ),
+                    },
+                ),
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Foo",
+                            location: unsafe_trait_method_impl.lm:32:35,
+                        },
+                        bound_types: [],
+                        location: unsafe_trait_method_impl.lm:32:35,
+                    },
+                    location: unsafe_trait_method_impl.lm:32:35,
+                },
+                self_type: false,
+                location: unsafe_trait_method_impl.lm:32:35,
+            },
+            target: Type {
+                id: TypeId(
+                    NodeId {
+                        package: PackageId(
+                            10850729242277675618,
+                        ),
+                        index: Idx(
+                            261,
+                        ),
+                    },
+                ),
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Bar",
+                            location: unsafe_trait_method_impl.lm:37:40,
+                        },
+                        bound_types: [],
+                        location: unsafe_trait_method_impl.lm:37:41,
+                    },
+                    location: unsafe_trait_method_impl.lm:37:41,
+                },
+                self_type: false,
+                location: unsafe_trait_method_impl.lm:37:41,
+            },
+            methods: [
+                TraitMethodImplementation {
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "Bar",
+                                    location: unsafe_trait_method_impl.lm:37:40,
+                                },
+                                bound_types: [],
+                                location: unsafe_trait_method_impl.lm:37:41,
+                            },
+                        ],
+                        name: Callable {
+                            name: Identifier {
+                                name: "baz",
+                                location: unsafe_trait_method_impl.lm:57:60,
+                            },
+                            bound_types: [],
+                            location: unsafe_trait_method_impl.lm:57:60,
+                        },
+                        location: unsafe_trait_method_impl.lm:37:41,
+                    },
+                    unsafe: true,
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: <internal>:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Void",
+                                    location: <internal>:0:0,
+                                },
+                                bound_types: [],
+                                location: <internal>:0:0,
+                            },
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: unsafe_trait_method_impl.lm:63:66,
+                    },
+                    location: unsafe_trait_method_impl.lm:47:66,
+                },
+            ],
+            type_parameters: [],
+            location: unsafe_trait_method_impl.lm:28:68,
+        },
+    ],
+}
