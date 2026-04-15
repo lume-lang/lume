@@ -42,6 +42,8 @@ pub(crate) fn run_test(path: TestPath, dcx: DiagCtx) -> Result<TestResult> {
                 name = "{file_base}"
                 version = "1.0.0"
                 lume_version = "^0"
+
+                allow_unsafe = true
             "#
             ),
         )

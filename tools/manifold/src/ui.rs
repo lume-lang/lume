@@ -110,6 +110,8 @@ fn build_test_file(test_case: &TestCase) -> String {
                 name = "<manifold-test>"
                 version = "1.0.0"
                 lume_version = "^0"
+
+                allow_unsafe = true
             "#,
         );
 
