@@ -481,14 +481,25 @@ impl TyInferCtx {
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn hir_in_unsafe_block(&self, id: NodeId) -> bool {
-        self.hir_parent_iter(id).any(|node| {
-            if let lume_hir::Node::Expression(expr) = node
-                && let lume_hir::ExpressionKind::Scope(scope_expr) = &expr.kind
-            {
-                scope_expr.unsafe_
-            } else {
-                false
+        self.hir_parent_iter(id).any(|node| match node {
+            lume_hir::Node::Expression(expr) => {
+                if let lume_hir::ExpressionKind::Scope(scope_expr) = &expr.kind {
+                    scope_expr.unsafe_
+                } else {
+                    false
+                }
             }
+            lume_hir::Node::Function(_)
+            | lume_hir::Node::Method(_)
+            | lume_hir::Node::TraitMethodDef(_)
+            | lume_hir::Node::TraitMethodImpl(_) => {
+                let Some(callable) = self.callable_with_id(node.id()) else {
+                    return false;
+                };
+
+                self.is_callable_unsafe(callable).is_ok_and(|r| r)
+            }
+            _ => false,
         })
     }
 }
