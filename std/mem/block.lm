@@ -1,6 +1,5 @@
 namespace std::mem
 
-import std (Pointer)
 import std::ops (Dispose)
 
 /// A contiguous region of heap-allocated memory.
@@ -9,13 +8,13 @@ pub struct Block<T> {
     size: UInt64;
 
     /// Pointer to the start of the memory block, which exists within the heap.
-    ptr: Pointer<T>;
+    ptr: *T;
 }
 
 impl<T> Block<T> {
     /// Allocates a new `Block<T>`, with enough space for `count` items of type `T`.
     pub fn new(count: UInt64) -> Block<T> {
-        let elemental_size = std::type_of<Pointer<T>>().size;
+        let elemental_size = std::type_of<*T>().size;
         let total_size = elemental_size * count;
 
         let ptr = unsafe {
@@ -32,17 +31,17 @@ impl<T> Block<T> {
 
     /// Gets the amount of items that can be stored in the memory block.
     pub fn count(self) -> UInt64 {
-        self.size / std::type_of<Pointer<T>>().size
+        self.size / std::type_of<*T>().size
     }
 
     /// Gets the pointer of the memory block in bytes.
-    pub fn ptr(self) -> Pointer<T> {
+    pub fn ptr(self) -> *T {
         self.ptr
     }
 
     /// Re-allocates the `Block<T>` to have enough space for `new_count` items of type `T`.
     pub fn expand(self, new_count: UInt64) {
-        let elemental_size = std::type_of<Pointer<T>>().size;
+        let elemental_size = std::type_of<*T>().size;
         let total_size = elemental_size * new_count;
 
         self.ptr = unsafe {
@@ -53,7 +52,7 @@ impl<T> Block<T> {
 
     /// Reads the value from the block, placed at the given index.
     pub fn get(self, index: UInt64) -> T {
-        let offset = std::type_of<Pointer<T>>().size * index;
+        let offset = std::type_of<*T>().size * index;
         if offset >= self.size {
             std::process::bail("index out of bounds");
         }
@@ -65,7 +64,7 @@ impl<T> Block<T> {
 
     /// Writes a new value to the block, placed at the given index.
     pub fn set(self, value: T, index: UInt64) {
-        let offset = std::type_of<Pointer<T>>().size * index;
+        let offset = std::type_of<*T>().size * index;
         if offset >= self.size {
             std::process::bail("index out of bounds");
         }

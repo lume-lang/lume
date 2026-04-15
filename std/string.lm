@@ -14,5 +14,5 @@ namespace std
 /// "Hello world!"
 /// ```
 pub struct String {
-    inner: Pointer<UInt8>;
+    inner: *UInt8;
 }
