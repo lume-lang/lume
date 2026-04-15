@@ -1227,10 +1227,10 @@ impl Expression {
     pub fn lit_bool(id: NodeId, value: bool) -> Self {
         Self::lit(
             id,
-            LiteralKind::Boolean(Box::new(BooleanLiteral {
+            LiteralKind::Boolean(BooleanLiteral {
                 id: NodeId::default(),
                 value,
-            })),
+            }),
         )
     }
 
@@ -1238,10 +1238,10 @@ impl Expression {
     pub fn lit_string(id: NodeId, value: impl Into<String>) -> Self {
         Self::lit(
             id,
-            LiteralKind::String(Box::new(StringLiteral {
+            LiteralKind::String(StringLiteral {
                 id: NodeId::default(),
                 value: value.into(),
-            })),
+            }),
         )
     }
 
@@ -1253,11 +1253,11 @@ impl Expression {
     pub fn lit_u64(id: NodeId, value: u64) -> error_snippet::Result<Self> {
         Ok(Self::lit(
             id,
-            LiteralKind::Int(Box::new(IntLiteral {
+            LiteralKind::Int(IntLiteral {
                 id,
                 value: i128::from(value),
                 kind: Some(IntKind::U64),
-            })),
+            }),
         ))
     }
 
@@ -1316,11 +1316,11 @@ macro_rules! expr_lit_int {
             pub fn $func(id: NodeId, value: $ty) -> Self {
                 Self::lit(
                     id,
-                    LiteralKind::Int(Box::new(IntLiteral {
+                    LiteralKind::Int(IntLiteral {
                         id,
                         value: value.into(),
                         kind: Some(IntKind::$kind),
-                    })),
+                    }),
                 )
             }
         }
@@ -1697,10 +1697,10 @@ pub struct Literal {
 
 #[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq)]
 pub enum LiteralKind {
-    Int(Box<IntLiteral>),
-    Float(Box<FloatLiteral>),
-    String(Box<StringLiteral>),
-    Boolean(Box<BooleanLiteral>),
+    Int(IntLiteral),
+    Float(FloatLiteral),
+    String(StringLiteral),
+    Boolean(BooleanLiteral),
 }
 
 #[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq)]

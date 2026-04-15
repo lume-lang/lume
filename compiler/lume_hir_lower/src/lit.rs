@@ -44,7 +44,7 @@ impl LoweringContext<'_> {
         lume_hir::Literal {
             id,
             location,
-            kind: lume_hir::LiteralKind::Int(Box::new(lume_hir::IntLiteral { id, value, kind })),
+            kind: lume_hir::LiteralKind::Int(lume_hir::IntLiteral { id, value, kind }),
         }
     }
 
@@ -73,7 +73,7 @@ impl LoweringContext<'_> {
         lume_hir::Literal {
             id,
             location,
-            kind: lume_hir::LiteralKind::Float(Box::new(lume_hir::FloatLiteral { id, value, kind })),
+            kind: lume_hir::LiteralKind::Float(lume_hir::FloatLiteral { id, value, kind }),
         }
     }
 
@@ -86,7 +86,7 @@ impl LoweringContext<'_> {
         lume_hir::Literal {
             id,
             location,
-            kind: lume_hir::LiteralKind::String(Box::new(lume_hir::StringLiteral { id, value })),
+            kind: lume_hir::LiteralKind::String(lume_hir::StringLiteral { id, value }),
         }
     }
 
@@ -99,7 +99,7 @@ impl LoweringContext<'_> {
         lume_hir::Literal {
             id,
             location,
-            kind: lume_hir::LiteralKind::Boolean(Box::new(lume_hir::BooleanLiteral { id, value })),
+            kind: lume_hir::LiteralKind::Boolean(lume_hir::BooleanLiteral { id, value }),
         }
     }
 }

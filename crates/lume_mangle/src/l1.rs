@@ -96,7 +96,10 @@ pub fn mangled_name_of(tcx: &TyCheckCtx, id: NodeId) -> Result<String> {
 
 fn mangled_name_of_function(tcx: &TyCheckCtx, func: &lume_hir::FunctionDefinition) -> String {
     if func.block.is_none() {
-        return format!("{:+}", func.path());
+        return match tcx.hir_external_name(func.id) {
+            Some(ext_name) => ext_name.to_string(),
+            None => format!("{:+}", func.path()),
+        };
     }
 
     let package_segment = mangled_package_segment(tcx, func.id.package);
