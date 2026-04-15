@@ -108,13 +108,13 @@ impl FunctionSigOwned {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Function {
     pub id: NodeId,
     pub name: Path,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MethodKind {
     Implementation,
     Intrinsic,
@@ -122,7 +122,7 @@ pub enum MethodKind {
     TraitDefinition,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Method {
     pub id: NodeId,
     pub kind: MethodKind,

@@ -227,3 +227,27 @@ pub struct InaccessibleField {
 
     pub field_name: String,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "call to unsafe function outside `unsafe` block", code = "LM4398")]
+pub struct UnsafeFunctionCallOutside {
+    #[label(source, "call to unsafe function {function_name} requires `unsafe` block")]
+    pub source: Location,
+
+    #[label(source, help, "function defined here")]
+    pub function_location: Location,
+
+    pub function_name: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "call to unsafe method outside `unsafe` block", code = "LM4398")]
+pub struct UnsafeMethodCallOutside {
+    #[label(source, "call to unsafe method {method_name} requires `unsafe` block")]
+    pub source: Location,
+
+    #[label(source, help, "method defined here")]
+    pub method_location: Location,
+
+    pub method_name: String,
+}

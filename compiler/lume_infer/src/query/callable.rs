@@ -1138,6 +1138,28 @@ impl TyInferCtx {
 
         Ok(signature.type_params.contains(&type_parameter))
     }
+
+    /// Determines whether the given type parameter ID is bound to the given
+    /// method callable.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub fn is_callable_unsafe(&self, callable: Callable<'_>) -> Result<bool> {
+        match callable {
+            Callable::Method(method) => match self.hir_expect_node(method.id) {
+                lume_hir::Node::Method(method) => Ok(method.signature.flags.unsafe_),
+                lume_hir::Node::TraitMethodDef(method) => Ok(method.signature.flags.unsafe_),
+                lume_hir::Node::TraitMethodImpl(method) => Ok(method.signature.flags.unsafe_),
+                _ => panic!("bug!: invalid Callable::Method reference node"),
+            },
+            Callable::Function(function) => {
+                let lume_hir::Node::Function(func) = self.hir_expect_node(function.id) else {
+                    panic!("bug!: invalid Callable::Function reference node")
+                };
+
+                Ok(func.signature.flags.unsafe_)
+            }
+        }
+    }
 }
 
 fn param_of(tcx: &TyInferCtx, parent: NodeId, param: &lume_hir::Parameter) -> Result<lume_types::Parameter> {
