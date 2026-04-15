@@ -13,12 +13,18 @@ pub struct Void {}
 ///
 /// Pointers cannot be created manually - they can only be created by the compiler itself, as a result
 /// of creating a built-in type or some other memory allocation.
+///
+/// Pointers can be typed using either the fully-qualifed path, `Pointer<T>`, or the same syntax as in
+/// other C-like languages, `*T`:
+/// ```lm
+/// let ptr: *UInt8 = std::Pointer<UInt8>::null();
+/// ```
 pub struct Pointer<T> {}
 
 impl<T> Pointer<T> {
     /// Creates a null pointer of type `T`.
     ![external(name = "std::mem::ptr_null")]
-    pub fn unsafe external null() -> Pointer<T>
+    pub fn unsafe external null() -> *T
 
     /// Gets the pointer as a reference, pointing to the same address as the
     /// pointer itself.

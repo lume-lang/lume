@@ -28,7 +28,7 @@ pub struct ReadOnlyArray<T> {
     length: UInt64;
 
     /// Pointer to the memory allocated for the array items.
-    ptr: Pointer<T>;
+    ptr: *T;
 }
 
 impl<T> ReadOnlyArray<T> {
@@ -40,7 +40,7 @@ impl<T> ReadOnlyArray<T> {
             return Optional<T>::None;
         }
 
-        let offset = std::type_of<Pointer<T>>().size * index;
+        let offset = std::type_of<*T>().size * index;
         let value = self.ptr.read_offset(offset);
 
         Optional<T>::Some(value)
