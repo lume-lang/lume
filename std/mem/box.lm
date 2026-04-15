@@ -12,9 +12,13 @@ impl<T> Box<T> {
     /// Allocates a new `Box<T>`, then places `value` into it.
     pub fn new(value: T) -> Box<T> {
         let size = std::type_of<T>().size;
-        let ptr = std::mem::alloc<T>(size);
 
-        ptr.write(value);
+        let ptr = unsafe {
+            let ptr = std::mem::alloc<T>(size);
+            ptr.write(value);
+
+            ptr
+        };
 
         Box<T> { ptr }
     }
@@ -27,6 +31,8 @@ impl<T> Box<T> {
 
 use<T> Dispose: Box<T> {
     fn dispose(self) {
-        std::mem::dealloc<T>(self.ptr);
+        unsafe {
+            std::mem::dealloc<T>(self.ptr);
+        }
     }
 }

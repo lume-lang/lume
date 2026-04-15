@@ -18,7 +18,9 @@ impl<T> Block<T> {
         let elemental_size = std::type_of<Pointer<T>>().size;
         let total_size = elemental_size * count;
 
-        let ptr = std::mem::alloc<T>(total_size);
+        let ptr = unsafe {
+            std::mem::alloc<T>(total_size)
+        };
 
         Block<T> { size: total_size, ptr }
     }
@@ -43,7 +45,9 @@ impl<T> Block<T> {
         let elemental_size = std::type_of<Pointer<T>>().size;
         let total_size = elemental_size * new_count;
 
-        self.ptr = std::mem::realloc<T>(self.ptr, total_size);
+        self.ptr = unsafe {
+            std::mem::realloc<T>(self.ptr, total_size)
+        };
         self.size = total_size;
     }
 
@@ -54,7 +58,9 @@ impl<T> Block<T> {
             std::process::bail("index out of bounds");
         }
 
-        std::mem::ptr_read<T>(self.ptr, offset)
+        unsafe {
+            self.ptr.read_offset(offset)
+        }
     }
 
     /// Writes a new value to the block, placed at the given index.
@@ -64,12 +70,16 @@ impl<T> Block<T> {
             std::process::bail("index out of bounds");
         }
 
-        std::mem::ptr_write<T>(self.ptr, value, offset);
+        unsafe {
+            self.ptr.write_offset(value, offset);
+        }
     }
 }
 
 use<T> Dispose: Block<T> {
     fn dispose(self) {
-        std::mem::dealloc<T>(self.ptr);
+        unsafe {
+            std::mem::dealloc<T>(self.ptr);
+        }
     }
 }
