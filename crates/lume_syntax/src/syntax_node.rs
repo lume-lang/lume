@@ -18,11 +18,9 @@ macro_rules! Token {
     [!=] => { $crate::SyntaxKind::NEQUAL };
     [=] => { $crate::SyntaxKind::ASSIGN };
     [!] => { $crate::SyntaxKind::NOT };
-    [&&] => { $crate::SyntaxKind::AND };
-    [||] => { $crate::SyntaxKind::OR };
-    [&] => { $crate::SyntaxKind::BINARY_AND };
-    [|] => { $crate::SyntaxKind::BINARY_OR };
-    [^] => { $crate::SyntaxKind::BINARY_XOR };
+    [&] => { $crate::SyntaxKind::AND };
+    [|] => { $crate::SyntaxKind::OR };
+    [^] => { $crate::SyntaxKind::XOR };
     [_] => { $crate::SyntaxKind::UNDERSCORE };
 
     // Punctuation
@@ -187,9 +185,7 @@ pub enum SyntaxKind {
     NOT,
     AND,
     OR,
-    BINARY_AND,
-    BINARY_OR,
-    BINARY_XOR,
+    XOR,
     UNDERSCORE,
 
     // Brackets
@@ -359,10 +355,8 @@ pub const OPERATOR_PRECEDENCE: &[(SyntaxKind, u8)] = &[
     (Token![as], 2),
     (Token![is], 2),
     (Token![&], 3),
-    (Token![^], 3),
     (Token![|], 3),
-    (Token![&&], 3),
-    (Token![||], 3),
+    (Token![^], 3),
     (Token![==], 4),
     (Token![!=], 4),
     (Token![<], 5),
@@ -393,8 +387,6 @@ pub const INFIX_OPERATORS: &[SyntaxKind] = &[
     Token![-],
     Token![*],
     Token![/],
-    Token![&&],
-    Token![||],
     Token![==],
     Token![!=],
     Token![<],
@@ -405,9 +397,6 @@ pub const INFIX_OPERATORS: &[SyntaxKind] = &[
 
 /// Defines all the operators which are used in binary contexts.
 pub const BINARY_OPERATORS: &[SyntaxKind] = &[Token![&], Token![|], Token![^]];
-
-/// Defines all the operators which are used in boolean contexts.
-pub const BOOLEAN_OPERATORS: &[SyntaxKind] = &[Token![&&], Token![||]];
 
 /// Defines all the operators which are used in comparison contexts.
 pub const COMPARISON_OPERATORS: &[SyntaxKind] = &[Token![==], Token![!=], Token![<], Token![<=], Token![>], Token![>=]];
