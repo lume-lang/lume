@@ -144,6 +144,10 @@ impl TyInferCtx {
 
                 instantiated.clone()
             }
+            lume_hir::ExpressionKind::Ref(expr) => {
+                let target_type = self.type_of(expr.target)?;
+                self.std_ref_pointer(target_type)
+            }
             lume_hir::ExpressionKind::Deref(expr) => {
                 let mut target_type = self.type_of(expr.target)?;
 
@@ -804,6 +808,7 @@ impl TyInferCtx {
             | lume_hir::ExpressionKind::Literal(_)
             | lume_hir::ExpressionKind::Switch(_)
             | lume_hir::ExpressionKind::Variant(_)
+            | lume_hir::ExpressionKind::Ref(_)
             | lume_hir::ExpressionKind::Missing => false,
             lume_hir::ExpressionKind::Member(_) | lume_hir::ExpressionKind::Variable(_) => true,
             lume_hir::ExpressionKind::Deref(expr) => expr.place == lume_hir::Place::LValue,
@@ -969,6 +974,7 @@ impl TyInferCtx {
                 }
 
                 lume_hir::ExpressionKind::Cast(_)
+                | lume_hir::ExpressionKind::Ref(_)
                 | lume_hir::ExpressionKind::Deref(_)
                 | lume_hir::ExpressionKind::Member(_)
                 | lume_hir::ExpressionKind::Missing => Ok(None),

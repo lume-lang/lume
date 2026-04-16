@@ -15,6 +15,7 @@ impl LowerFunction<'_> {
             lume_hir::ExpressionKind::Assignment(expr) => self.assignment_expression(expr)?,
             lume_hir::ExpressionKind::Cast(expr) => self.cast_expression(expr)?,
             lume_hir::ExpressionKind::Construct(expr) => self.construct_expression(expr)?,
+            lume_hir::ExpressionKind::Ref(expr) => self.ref_expression(expr)?,
             lume_hir::ExpressionKind::Deref(expr) => self.deref_expression(expr)?,
             lume_hir::ExpressionKind::InstanceCall(expr) => {
                 self.call_expression(lume_hir::CallExpression::Instanced(expr))?
@@ -204,6 +205,17 @@ impl LowerFunction<'_> {
             return_type: instantiated_signature.ret_ty,
             uninst_return_type: Some(uninst_ret_ty),
             location: expr.location(),
+        })))
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn ref_expression(&mut self, expr: &lume_hir::RefExpr) -> Result<lume_tir::ExpressionKind> {
+        let target = self.expression(expr.target)?;
+
+        Ok(lume_tir::ExpressionKind::Ref(Box::new(lume_tir::Ref {
+            id: expr.id,
+            target,
+            location: expr.location,
         })))
     }
 

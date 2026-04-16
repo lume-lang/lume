@@ -1350,6 +1350,7 @@ pub enum ExpressionKind {
     Cast(Cast),
     Construct(Construct),
     Deref(DerefExpr),
+    Ref(RefExpr),
 
     /// Defines a call which was invoked without any callee or receiver.
     ///
@@ -1518,6 +1519,13 @@ pub struct DerefExpr {
     pub id: NodeId,
     pub target: NodeId,
     pub place: Place,
+    pub location: Location,
+}
+
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
+pub struct RefExpr {
+    pub id: NodeId,
+    pub target: NodeId,
     pub location: Location,
 }
 

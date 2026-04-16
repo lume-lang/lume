@@ -30,6 +30,7 @@ impl LoweringContext<'_> {
         match expr {
             lume_ast::Expr::ArrayExpr(e) => self.expr_array(e),
             lume_ast::Expr::AssignmentExpr(e) => self.expr_assignment(e),
+            lume_ast::Expr::RefExpr(e) => self.expr_ref(e),
             lume_ast::Expr::DerefExpr(e) => self.expr_deref(e, place),
             lume_ast::Expr::InstanceCallExpr(e) => self.instance_expr_call(e),
             lume_ast::Expr::StaticCallExpr(e) => self.static_expr_call(e),
@@ -153,6 +154,19 @@ impl LoweringContext<'_> {
                 value,
                 location,
             }),
+        })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn expr_ref(&mut self, expr: lume_ast::RefExpr) -> NodeId {
+        let id = self.next_node_id();
+        let location = self.location(expr.location());
+        let target = self.opt_expression(expr.expr(), Place::RValue);
+
+        self.alloc_expr(lume_hir::Expression {
+            id,
+            location,
+            kind: lume_hir::ExpressionKind::Ref(lume_hir::RefExpr { id, target, location }),
         })
     }
 

@@ -240,6 +240,13 @@ pub struct UnsafeCodeInSafePackage {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "reference-of outside `unsafe` block", code = "LM4398")]
+pub struct PointerRefOutsideUnsafe {
+    #[label(source, "reference-of requires `unsafe` block")]
+    pub source: Location,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "pointer dereference outside `unsafe` block", code = "LM4398")]
 pub struct PointerDerefOutsideUnsafe {
     #[label(source, "pointer-dereference requires `unsafe` block")]

@@ -184,6 +184,7 @@ pub(crate) fn expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Express
         lume_tir::ExpressionKind::Bitcast(expr) => bitcast(builder, expr),
         lume_tir::ExpressionKind::Construct(expr) => construct(builder, expr),
         lume_tir::ExpressionKind::Call(expr) => call_expression(builder, expr),
+        lume_tir::ExpressionKind::Ref(expr) => ref_expression(builder, expr),
         lume_tir::ExpressionKind::Deref(expr) => deref_expression(builder, expr),
         lume_tir::ExpressionKind::If(expr) => if_condition(builder, expr),
         lume_tir::ExpressionKind::Is(expr) => is_condition(builder, expr),
@@ -387,6 +388,15 @@ fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume
         let return_value = builder.call_with_signature(expr.function, &signature, call_arguments, expr.location);
 
         builder.use_register(return_value, expr.location)
+    })
+}
+
+fn ref_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Ref) -> lume_mir::Operand {
+    builder.with_current_block(|builder, _| {
+        let expr_type = builder.tcx().type_of(expr.id).unwrap();
+        let (_, target_op) = builder.use_value(&expr.target);
+
+        builder.store_on_stack(target_op, &expr_type, expr.location)
     })
 }
 
