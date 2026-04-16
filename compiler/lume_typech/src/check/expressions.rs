@@ -268,6 +268,11 @@ impl TyCheckCtx {
 
                 self.construct_expression(expr)
             }
+            lume_hir::ExpressionKind::Ref(expr) => {
+                self.expression(expr.target)?;
+
+                self.ref_expression(expr)
+            }
             lume_hir::ExpressionKind::Deref(expr) => {
                 self.expression(expr.target)?;
 
@@ -589,7 +594,19 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    /// Asserts that the target type being dereferenced is a pointer type.
+    /// Asserts that the reference-of expression exists within an `unsafe`
+    /// block.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn ref_expression(&self, expr: &lume_hir::RefExpr) -> Result<()> {
+        if !self.hir_in_unsafe_block(expr.id) {
+            self.dcx()
+                .emit(PointerRefOutsideUnsafe { source: expr.location }.into());
+        }
+
+        Ok(())
+    }
+
+    /// Asserts that the dereference expression exists within an `unsafe` block.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn deref_expression(&self, expr: &lume_hir::DerefExpr) -> Result<()> {
         if !self.hir_in_unsafe_block(expr.id) {

@@ -116,6 +116,9 @@ fn traverse_expr<V: Visitor>(visitor: &mut V, expr: &mut Expression) -> Result<(
                 traverse_expr(visitor, argument)?;
             }
         }
+        ExpressionKind::Ref(expr) => {
+            traverse_expr(visitor, &mut expr.target)?;
+        }
         ExpressionKind::Deref(expr) => match &mut expr.op {
             DerefOp::Read { target, .. } => {
                 traverse_expr(visitor, target)?;

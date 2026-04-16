@@ -252,6 +252,9 @@ fn traverse_expr<V: Visitor>(hir: &Map, visitor: &mut V, expr: &Expression) -> R
                 traverse_expr(hir, visitor, hir.expect_expression(field.value)?)?;
             }
         }
+        ExpressionKind::Ref(expr) => {
+            traverse_expr(hir, visitor, hir.expect_expression(expr.target)?)?;
+        }
         ExpressionKind::Deref(expr) => {
             traverse_expr(hir, visitor, hir.expect_expression(expr.target)?)?;
         }

@@ -298,6 +298,7 @@ impl Visitor for LocationVisitor {
             }
             lume_hir::ExpressionKind::Assignment(_)
             | lume_hir::ExpressionKind::Cast(_)
+            | lume_hir::ExpressionKind::Ref(_)
             | lume_hir::ExpressionKind::Deref(_)
             | lume_hir::ExpressionKind::If(_)
             | lume_hir::ExpressionKind::Is(_)
