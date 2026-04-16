@@ -1,0 +1,3 @@
+fn foo(val: UInt64) {
+    let _ = &val;
+}

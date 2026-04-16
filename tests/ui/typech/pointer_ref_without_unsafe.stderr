@@ -1,0 +1,7 @@
+× error[LM4398]: reference-of outside `unsafe` block
+   ╭─[pointer_ref_without_unsafe.lm:2:13]
+ 1 │ fn foo(val: UInt64) {
+ 2 │     let _ = &val;
+   ∶             ^^^^ reference-of requires `unsafe` block
+ 3 │ }
+   ╰──
