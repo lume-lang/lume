@@ -1,0 +1,10 @@
+//# test-return = 9
+
+fn unsafe main() -> UInt64 {
+    let val = 5_u64;
+    let ptr = &val;
+
+    *ptr = 9_u64;
+
+    *ptr
+}

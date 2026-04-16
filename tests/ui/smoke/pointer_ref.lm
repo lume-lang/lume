@@ -1,0 +1,5 @@
+//# test-outcome=success
+
+fn unsafe addr_of(val: UInt64) -> *UInt64 {
+    &val
+}

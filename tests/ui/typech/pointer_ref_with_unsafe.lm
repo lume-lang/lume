@@ -1,0 +1,5 @@
+//# test-outcome=success
+
+fn unsafe foo(val: UInt64) {
+    let _ = &val;
+}
