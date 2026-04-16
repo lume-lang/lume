@@ -22,7 +22,7 @@ impl Parser {
     fn parse_expression_with_precedence(&mut self, c: Option<Checkpoint>, precedence: u8) -> Option<SyntaxKind> {
         let c = c.unwrap_or_else(|| self.checkpoint());
 
-        let mut kind = self.parse_prefix_expression(c);
+        let mut kind = self.parse_prefix_expression(c, precedence);
 
         // If a semicolon is present, consider the expression finished.
         if self.peek(Token![;]) {
@@ -41,7 +41,7 @@ impl Parser {
     /// Prefix expressions are expressions which appear at the start of an
     /// expression, such as literals of prefix operators. In Pratt Parsing,
     /// this is also called "Nud" or "Null Denotation".
-    fn parse_prefix_expression(&mut self, c: Checkpoint) -> Option<SyntaxKind> {
+    fn parse_prefix_expression(&mut self, c: Checkpoint, precedence: u8) -> Option<SyntaxKind> {
         let kind = self.token();
 
         tracing::trace!("expression kind: {kind:?}");
@@ -53,7 +53,8 @@ impl Parser {
             Token![if] => self.parse_if_conditional(),
             Token![switch] => self.parse_switch_expression(),
             Token![unsafe] => self.parse_unsafe_expression(),
-            SyntaxKind::IDENT | Token![self] | Token![Self] => self.parse_named_expression(),
+            SyntaxKind::IDENT | Token![self] | Token![Self] => self.parse_named_expression(precedence),
+            Token![*] => self.parse_deref_expression(c),
 
             k if k.is_literal() => self.parse_literal_expr(),
             k if k.is_unary() => self.parse_unary(c),
@@ -219,7 +220,7 @@ impl Parser {
 
     /// Parses an expression on the current cursor position, which is preceded
     /// by some identifier.
-    fn parse_named_expression(&mut self) -> SyntaxKind {
+    fn parse_named_expression(&mut self, precedence: u8) -> SyntaxKind {
         assert!(
             matches!(
                 self.token(),
@@ -237,14 +238,14 @@ impl Parser {
             SyntaxKind::LEFT_PAREN => self.parse_static_call(c),
 
             // If the next token is a dot, it's some form of member access
-            Token![.] => {
+            tok @ Token![.] if precedence < tok.precedence() => {
                 let cp_varref = self.checkpoint();
                 self.parse_variable_reference(cp_varref);
                 self.parse_member(c)
             }
 
             // If the next token is an equal sign, it's an assignment expression
-            Token![=] => {
+            tok @ Token![=] if precedence < tok.precedence() => {
                 let cp_varref = self.checkpoint();
                 self.parse_variable_reference(cp_varref);
                 self.parse_assignment(c)
@@ -446,6 +447,18 @@ impl Parser {
         SyntaxKind::ASSIGNMENT_EXPR
     }
 
+    /// Parses a pointer-dereference expression on the current cursor position.
+    fn parse_deref_expression(&mut self, c: Checkpoint) -> SyntaxKind {
+        self.start_node_at(SyntaxKind::DEREF_EXPR, c);
+
+        self.consume(Token![*]);
+        self.parse_expression_with_precedence(None, lume_syntax::DEREF_PRECEDENCE);
+
+        self.finish_node();
+
+        SyntaxKind::DEREF_EXPR
+    }
+
     /// Parses a path expression on the current cursor position.
     fn parse_path_expression(&mut self, c: Checkpoint) -> SyntaxKind {
         let path_kind = self.parse_path();
@@ -550,7 +563,7 @@ impl Parser {
     fn parse_unary(&mut self, c: Checkpoint) -> SyntaxKind {
         self.start_node_at(SyntaxKind::UNARY_EXPR, c);
 
-        if !self.check_any(&[Token![!], Token![-]]) {
+        if !self.check_any(&[Token![!], Token![-], Token![*]]) {
             self.error("expected unary expression");
         }
 

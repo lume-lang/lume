@@ -793,6 +793,7 @@ impl AstNode for Field {
 pub enum Expr {
     ArrayExpr(ArrayExpr),
     AssignmentExpr(AssignmentExpr),
+    DerefExpr(DerefExpr),
     InstanceCallExpr(InstanceCallExpr),
     StaticCallExpr(StaticCallExpr),
     CastExpr(CastExpr),
@@ -820,6 +821,9 @@ impl AstNode for Expr {
             }
             SyntaxKind::ASSIGNMENT_EXPR => {
                 Some(Self::AssignmentExpr(AssignmentExpr::cast(syntax).unwrap()))
+            }
+            SyntaxKind::DEREF_EXPR => {
+                Some(Self::DerefExpr(DerefExpr::cast(syntax).unwrap()))
             }
             SyntaxKind::INSTANCE_CALL_EXPR => {
                 Some(Self::InstanceCallExpr(InstanceCallExpr::cast(syntax).unwrap()))
@@ -874,6 +878,7 @@ impl AstNode for Expr {
         match self {
             Self::ArrayExpr(it) => it.syntax(),
             Self::AssignmentExpr(it) => it.syntax(),
+            Self::DerefExpr(it) => it.syntax(),
             Self::InstanceCallExpr(it) => it.syntax(),
             Self::StaticCallExpr(it) => it.syntax(),
             Self::CastExpr(it) => it.syntax(),
@@ -1367,6 +1372,29 @@ impl AstNode for AssignmentExpr {
     fn cast(syntax: SyntaxNode) -> Option<Self> {
         match syntax.kind() {
             SyntaxKind::ASSIGNMENT_EXPR => Some(AssignmentExpr { syntax }),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode {
+        &self.syntax
+    }
+}
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct DerefExpr {
+    syntax: SyntaxNode,
+}
+impl DerefExpr {
+    pub fn mul(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::MUL)
+    }
+    pub fn expr(&self) -> Option<Expr> {
+        crate::support::child(self.syntax())
+    }
+}
+impl AstNode for DerefExpr {
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        match syntax.kind() {
+            SyntaxKind::DEREF_EXPR => Some(DerefExpr { syntax }),
             _ => None,
         }
     }
