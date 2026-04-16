@@ -144,6 +144,27 @@ impl TyInferCtx {
 
                 instantiated.clone()
             }
+            lume_hir::ExpressionKind::Deref(expr) => {
+                let mut target_type = self.type_of(expr.target)?;
+
+                if !self.is_std_pointer(&target_type) {
+                    return Err(crate::errors::DerefNonPointer {
+                        source: expr.location,
+                        type_name: self.ty_stringifier(&target_type).stringify()?,
+                    }
+                    .into());
+                }
+
+                let Some(elemental_type) = target_type.bound_types.pop() else {
+                    return Err(crate::errors::DerefNonPointer {
+                        source: expr.location,
+                        type_name: self.ty_stringifier(&target_type).stringify()?,
+                    }
+                    .into());
+                };
+
+                elemental_type
+            }
             lume_hir::ExpressionKind::StaticCall(call) => self.type_of_call(lume_hir::CallExpression::Static(call))?,
             lume_hir::ExpressionKind::InstanceCall(call) => {
                 self.type_of_call(lume_hir::CallExpression::Instanced(call))?
@@ -785,6 +806,7 @@ impl TyInferCtx {
             | lume_hir::ExpressionKind::Variant(_)
             | lume_hir::ExpressionKind::Missing => false,
             lume_hir::ExpressionKind::Member(_) | lume_hir::ExpressionKind::Variable(_) => true,
+            lume_hir::ExpressionKind::Deref(expr) => expr.place == lume_hir::Place::LValue,
         }
     }
 
@@ -947,6 +969,7 @@ impl TyInferCtx {
                 }
 
                 lume_hir::ExpressionKind::Cast(_)
+                | lume_hir::ExpressionKind::Deref(_)
                 | lume_hir::ExpressionKind::Member(_)
                 | lume_hir::ExpressionKind::Missing => Ok(None),
             },

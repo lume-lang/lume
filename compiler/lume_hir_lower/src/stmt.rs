@@ -81,7 +81,7 @@ impl LoweringContext<'_> {
     fn stmt_variable(&mut self, statement: lume_ast::LetStmt) -> NodeId {
         let name = self.ident_opt(statement.name());
         let declared_type = statement.ty().map(|t| self.hir_type(t));
-        let value = self.opt_expression(statement.expr());
+        let value = self.opt_expression(statement.expr(), Place::RValue);
         let location = self.location(statement.location());
 
         self.alloc_variable_decl(name, value, declared_type, location)
@@ -114,7 +114,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_final(&mut self, statement: lume_ast::FinalStmt) -> NodeId {
         let id = self.next_node_id();
-        let value = self.opt_expression(statement.expr());
+        let value = self.opt_expression(statement.expr(), Place::RValue);
         let location = self.location(statement.location());
 
         self.alloc_stmt(lume_hir::Statement {
@@ -127,7 +127,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_return(&mut self, statement: lume_ast::ReturnStmt) -> NodeId {
         let id = self.next_node_id();
-        let value = statement.expr().map(|expr| self.expression(expr));
+        let value = statement.expr().map(|expr| self.expression(expr, Place::default()));
         let location = self.location(statement.location());
 
         self.alloc_stmt(lume_hir::Statement {
@@ -152,7 +152,7 @@ impl LoweringContext<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_predicate_loop(&mut self, expr: lume_ast::WhileStmt) -> NodeId {
-        let condition = self.opt_expression(expr.condition());
+        let condition = self.opt_expression(expr.condition(), Place::RValue);
         let block = self.block_opt(expr.block());
         let location = self.location(expr.location());
 
@@ -161,7 +161,7 @@ impl LoweringContext<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_expression(&mut self, expr: lume_ast::ExprStmt) -> NodeId {
-        let expr = self.opt_expression(expr.expr());
+        let expr = self.opt_expression(expr.expr(), Place::RValue);
 
         self.alloc_expr_stmt(expr)
     }

@@ -240,8 +240,15 @@ pub struct UnsafeCodeInSafePackage {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "pointer dereference outside `unsafe` block", code = "LM4398")]
+pub struct PointerDerefOutsideUnsafe {
+    #[label(source, "pointer-dereference requires `unsafe` block")]
+    pub source: Location,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "call to unsafe function outside `unsafe` block", code = "LM4398")]
-pub struct UnsafeFunctionCallOutside {
+pub struct UnsafeFunctionCallOutsideUnsafe {
     #[label(source, "call to unsafe function {function_name} requires `unsafe` block")]
     pub source: Location,
 
@@ -253,7 +260,7 @@ pub struct UnsafeFunctionCallOutside {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "call to unsafe method outside `unsafe` block", code = "LM4398")]
-pub struct UnsafeMethodCallOutside {
+pub struct UnsafeMethodCallOutsideUnsafe {
     #[label(source, "call to unsafe method {method_name} requires `unsafe` block")]
     pub source: Location,
 

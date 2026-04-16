@@ -1349,6 +1349,7 @@ pub enum ExpressionKind {
     Assignment(Assignment),
     Cast(Cast),
     Construct(Construct),
+    Deref(DerefExpr),
 
     /// Defines a call which was invoked without any callee or receiver.
     ///
@@ -1502,6 +1503,21 @@ pub struct ConstructorField {
     pub name: Identifier,
     pub value: NodeId,
     pub is_default: bool,
+    pub location: Location,
+}
+
+#[derive(Hash, Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Place {
+    LValue,
+    #[default]
+    RValue,
+}
+
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
+pub struct DerefExpr {
+    pub id: NodeId,
+    pub target: NodeId,
+    pub place: Place,
     pub location: Location,
 }
 

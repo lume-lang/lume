@@ -184,6 +184,7 @@ pub(crate) fn expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Express
         lume_tir::ExpressionKind::Bitcast(expr) => bitcast(builder, expr),
         lume_tir::ExpressionKind::Construct(expr) => construct(builder, expr),
         lume_tir::ExpressionKind::Call(expr) => call_expression(builder, expr),
+        lume_tir::ExpressionKind::Deref(expr) => deref_expression(builder, expr),
         lume_tir::ExpressionKind::If(expr) => if_condition(builder, expr),
         lume_tir::ExpressionKind::Is(expr) => is_condition(builder, expr),
         lume_tir::ExpressionKind::IntrinsicCall(expr) => intrinsic_expression(builder, expr),
@@ -386,6 +387,30 @@ fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume
         let return_value = builder.call_with_signature(expr.function, &signature, call_arguments, expr.location);
 
         builder.use_register(return_value, expr.location)
+    })
+}
+
+fn deref_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Deref) -> lume_mir::Operand {
+    builder.with_current_block(|builder, _| match &expr.op {
+        lume_tir::DerefOp::Read { target, type_ } => {
+            let (target_id, _) = builder.use_value(target);
+
+            let loaded_type = builder.lower_type(type_);
+            let loaded_id = builder.load_as(loaded_type, target_id, expr.location);
+
+            lume_mir::Operand {
+                kind: lume_mir::OperandKind::Reference { id: loaded_id },
+                location: expr.location,
+            }
+        }
+        lume_tir::DerefOp::Write { target, value } => {
+            let (target_id, target_op) = builder.use_value(target);
+            let (_, value_op) = builder.use_value(value);
+
+            builder.store(target_id, value_op, expr.location);
+
+            target_op
+        }
     })
 }
 

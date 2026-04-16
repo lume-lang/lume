@@ -20,7 +20,7 @@ use lume_ast::AstNode;
 use lume_errors::{DiagCtxHandle, Result};
 pub use lume_hir::WithLocation as _;
 use lume_hir::symbols::SymbolTable;
-use lume_hir::{Map, Path, PathSegment};
+use lume_hir::{Map, Path, PathSegment, Place};
 use lume_session::Package;
 use lume_span::{Internable, Location, NodeId, SourceFile, SourceFileId};
 
