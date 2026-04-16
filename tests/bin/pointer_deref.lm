@@ -1,0 +1,12 @@
+//# test-return = 54
+
+fn unsafe main() -> UInt64 {
+    let ptr = std::mem::alloc<UInt64>(8);
+    *ptr = 54_u64;
+
+    let value = *ptr;
+
+    std::mem::dealloc(ptr);
+
+    value
+}

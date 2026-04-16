@@ -1,0 +1,5 @@
+//# test-outcome=success
+
+fn unsafe foo(ptr: *UInt64) {
+    *ptr = 1_u64;
+}
