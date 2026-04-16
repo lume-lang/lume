@@ -54,6 +54,7 @@ impl Parser {
             Token![switch] => self.parse_switch_expression(),
             Token![unsafe] => self.parse_unsafe_expression(),
             SyntaxKind::IDENT | Token![self] | Token![Self] => self.parse_named_expression(precedence),
+            Token![&] => self.parse_ref_expression(c),
             Token![*] => self.parse_deref_expression(c),
 
             k if k.is_literal() => self.parse_literal_expr(),
@@ -445,6 +446,18 @@ impl Parser {
         self.finish_node();
 
         SyntaxKind::ASSIGNMENT_EXPR
+    }
+
+    /// Parses an address-reference expression on the current cursor position.
+    fn parse_ref_expression(&mut self, c: Checkpoint) -> SyntaxKind {
+        self.start_node_at(SyntaxKind::REF_EXPR, c);
+
+        self.consume(Token![&]);
+        self.parse_expression_with_precedence(None, lume_syntax::DEREF_PRECEDENCE);
+
+        self.finish_node();
+
+        SyntaxKind::REF_EXPR
     }
 
     /// Parses a pointer-dereference expression on the current cursor position.

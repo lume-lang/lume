@@ -937,6 +937,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         let doc = match expr {
             Expr::ArrayExpr(expr) => self.array(expr),
             Expr::AssignmentExpr(expr) => self.assignment(expr),
+            Expr::RefExpr(expr) => self.ref_(expr),
             Expr::DerefExpr(expr) => self.deref(expr),
             Expr::InstanceCallExpr(expr) => self.instance_call(expr),
             Expr::StaticCallExpr(expr) => self.static_call(expr),
@@ -1024,6 +1025,14 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         };
 
         str("*").append(self.expression(target))
+    }
+
+    fn ref_<'a>(&mut self, expr: RefExpr) -> Document<'a> {
+        let Some(target) = expr.expr() else {
+            return expr.as_text().as_doc();
+        };
+
+        str("&").append(self.expression(target))
     }
 
     fn instance_call<'a>(&mut self, expr: InstanceCallExpr) -> Document<'a> {
