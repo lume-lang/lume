@@ -793,6 +793,7 @@ impl AstNode for Field {
 pub enum Expr {
     ArrayExpr(ArrayExpr),
     AssignmentExpr(AssignmentExpr),
+    RefExpr(RefExpr),
     DerefExpr(DerefExpr),
     InstanceCallExpr(InstanceCallExpr),
     StaticCallExpr(StaticCallExpr),
@@ -822,6 +823,7 @@ impl AstNode for Expr {
             SyntaxKind::ASSIGNMENT_EXPR => {
                 Some(Self::AssignmentExpr(AssignmentExpr::cast(syntax).unwrap()))
             }
+            SyntaxKind::REF_EXPR => Some(Self::RefExpr(RefExpr::cast(syntax).unwrap())),
             SyntaxKind::DEREF_EXPR => {
                 Some(Self::DerefExpr(DerefExpr::cast(syntax).unwrap()))
             }
@@ -878,6 +880,7 @@ impl AstNode for Expr {
         match self {
             Self::ArrayExpr(it) => it.syntax(),
             Self::AssignmentExpr(it) => it.syntax(),
+            Self::RefExpr(it) => it.syntax(),
             Self::DerefExpr(it) => it.syntax(),
             Self::InstanceCallExpr(it) => it.syntax(),
             Self::StaticCallExpr(it) => it.syntax(),
@@ -1372,6 +1375,29 @@ impl AstNode for AssignmentExpr {
     fn cast(syntax: SyntaxNode) -> Option<Self> {
         match syntax.kind() {
             SyntaxKind::ASSIGNMENT_EXPR => Some(AssignmentExpr { syntax }),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode {
+        &self.syntax
+    }
+}
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct RefExpr {
+    syntax: SyntaxNode,
+}
+impl RefExpr {
+    pub fn binary_and(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::BINARY_AND)
+    }
+    pub fn expr(&self) -> Option<Expr> {
+        crate::support::child(self.syntax())
+    }
+}
+impl AstNode for RefExpr {
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        match syntax.kind() {
+            SyntaxKind::REF_EXPR => Some(RefExpr { syntax }),
             _ => None,
         }
     }

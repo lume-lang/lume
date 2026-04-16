@@ -131,6 +131,7 @@ pub enum SyntaxKind {
     // Expressions
     ARRAY_EXPR,
     ASSIGNMENT_EXPR,
+    REF_EXPR,
     DEREF_EXPR,
     INSTANCE_CALL_EXPR,
     STATIC_CALL_EXPR,
