@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_parse/src/tests.rs
+source: compiler/lume_parser/src/tests.rs
 expression: "parse(Target :: Statement, \"0 == 0 || 0 == 0;\")"
 ---
 SOURCE_FILE@0..17
@@ -16,7 +16,8 @@ SOURCE_FILE@0..17
           INTEGER_LIT@5..6
             INTEGER_LIT@5..6 "0"
       WHITESPACE@6..7 " "
-      OR@7..9 "||"
+      OR@7..8 "|"
+      OR@8..9 "|"
       WHITESPACE@9..10 " "
       BIN_EXPR@10..16
         LIT_EXPR@10..11
