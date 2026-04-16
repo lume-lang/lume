@@ -1,0 +1,7 @@
+× error[LM4398]: pointer dereference outside `unsafe` block
+   ╭─[pointer_deref_without_unsafe.lm:2:5]
+ 1 │ fn foo(ptr: *UInt64) {
+ 2 │     *ptr = 1_u64;
+   ∶     ^^^^ pointer-dereference requires `unsafe` block
+ 3 │ }
+   ╰──
