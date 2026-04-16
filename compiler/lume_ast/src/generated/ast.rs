@@ -1387,8 +1387,8 @@ pub struct RefExpr {
     syntax: SyntaxNode,
 }
 impl RefExpr {
-    pub fn binary_and(&self) -> Option<SyntaxToken> {
-        crate::support::token(self.syntax(), SyntaxKind::BINARY_AND)
+    pub fn and(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::AND)
     }
     pub fn expr(&self) -> Option<Expr> {
         crate::support::child(self.syntax())
@@ -1808,14 +1808,14 @@ pub struct BinExpr {
     syntax: SyntaxNode,
 }
 impl BinExpr {
-    pub fn binary_and(&self) -> Option<SyntaxToken> {
-        crate::support::token(self.syntax(), SyntaxKind::BINARY_AND)
+    pub fn and(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::AND)
     }
-    pub fn binary_or(&self) -> Option<SyntaxToken> {
-        crate::support::token(self.syntax(), SyntaxKind::BINARY_OR)
+    pub fn or(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::OR)
     }
-    pub fn binary_xor(&self) -> Option<SyntaxToken> {
-        crate::support::token(self.syntax(), SyntaxKind::BINARY_XOR)
+    pub fn xor(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::XOR)
     }
     pub fn add(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::ADD)
@@ -1828,12 +1828,6 @@ impl BinExpr {
     }
     pub fn div(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::DIV)
-    }
-    pub fn and(&self) -> Option<SyntaxToken> {
-        crate::support::token(self.syntax(), SyntaxKind::AND)
-    }
-    pub fn or(&self) -> Option<SyntaxToken> {
-        crate::support::token(self.syntax(), SyntaxKind::OR)
     }
     pub fn equal(&self) -> Option<SyntaxToken> {
         crate::support::token(self.syntax(), SyntaxKind::EQUAL)

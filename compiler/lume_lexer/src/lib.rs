@@ -13,37 +13,6 @@ use crate::errors::*;
 
 mod errors;
 
-pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
-    (TokenKind::Assign, 1),
-    (TokenKind::AddAssign, 1),
-    (TokenKind::SubAssign, 1),
-    (TokenKind::MulAssign, 1),
-    (TokenKind::DivAssign, 1),
-    (TokenKind::As, 2),
-    (TokenKind::Is, 2),
-    (TokenKind::BinaryAnd, 3),
-    (TokenKind::BinaryXor, 3),
-    (TokenKind::BinaryOr, 3),
-    (TokenKind::And, 3),
-    (TokenKind::Or, 3),
-    (TokenKind::Equal, 4),
-    (TokenKind::NotEqual, 4),
-    (TokenKind::Greater, 5),
-    (TokenKind::Less, 5),
-    (TokenKind::GreaterEqual, 6),
-    (TokenKind::LessEqual, 6),
-    (TokenKind::Add, 7),
-    (TokenKind::Sub, 7),
-    (TokenKind::Mul, 8),
-    (TokenKind::Div, 8),
-    (TokenKind::Exclamation, 9),
-    (TokenKind::Increment, 9),
-    (TokenKind::Decrement, 9),
-    (TokenKind::Dot, 10),
-    (TokenKind::DotDot, 10),
-    (TokenKind::PathSeparator, 11),
-];
-
 /// Defines the precedence for unary operators, such as `-` or `!`.
 ///
 /// They cannot be defined within [`OPERATOR_PRECEDENCE`], as unary operators
@@ -59,9 +28,6 @@ pub const POSTFIX_OPERATORS: &[TokenKind] = &[TokenKind::Increment, TokenKind::D
 
 /// Defines all the operators which are notated as infix, as opposed to postfix.
 pub const INFIX_OPERATORS: &[TokenKind] = &[
-    TokenKind::BinaryAnd,
-    TokenKind::BinaryOr,
-    TokenKind::BinaryXor,
     TokenKind::Add,
     TokenKind::Sub,
     TokenKind::Mul,
@@ -74,13 +40,11 @@ pub const INFIX_OPERATORS: &[TokenKind] = &[
     TokenKind::LessEqual,
     TokenKind::Greater,
     TokenKind::GreaterEqual,
+    TokenKind::Xor,
 ];
 
-/// Defines all the operators which are used in binary contexts.
-pub const BINARY_OPERATORS: &[TokenKind] = &[TokenKind::BinaryAnd, TokenKind::BinaryOr, TokenKind::BinaryXor];
-
 /// Defines all the operators which are used in boolean contexts.
-pub const BOOLEAN_OPERATORS: &[TokenKind] = &[TokenKind::And, TokenKind::Or];
+pub const BOOLEAN_OPERATORS: &[TokenKind] = &[TokenKind::And, TokenKind::Or, TokenKind::Xor];
 
 /// Defines all the operators which are used in comparison contexts.
 pub const COMPARISON_OPERATORS: &[TokenKind] = &[
@@ -133,7 +97,7 @@ pub enum TokenKind<'source> {
     #[token("+=")]
     AddAssign,
 
-    #[token("&&")]
+    #[token("&")]
     And,
 
     #[token("->")]
@@ -147,15 +111,6 @@ pub enum TokenKind<'source> {
 
     #[regex("///", lex_comment)]
     DocComment(&'source str),
-
-    #[token("&")]
-    BinaryAnd,
-
-    #[token("|")]
-    BinaryOr,
-
-    #[token("^")]
-    BinaryXor,
 
     #[token("break")]
     Break,
@@ -307,7 +262,7 @@ pub enum TokenKind<'source> {
     #[token("?")]
     Question,
 
-    #[token("||")]
+    #[token("|")]
     Or,
 
     #[token("return")]
@@ -363,6 +318,9 @@ pub enum TokenKind<'source> {
 
     #[regex(r"\s+")]
     Whitespace(&'source str),
+
+    #[token("^")]
+    Xor,
 }
 
 impl TokenKind<'_> {
@@ -376,9 +334,6 @@ impl TokenKind<'_> {
             TokenKind::ArrowBig => TokenType::ArrowBig,
             TokenKind::Assign => TokenType::Assign,
             TokenKind::DocComment(_) => TokenType::DocComment,
-            TokenKind::BinaryAnd => TokenType::BinaryAnd,
-            TokenKind::BinaryOr => TokenType::BinaryOr,
-            TokenKind::BinaryXor => TokenType::BinaryXor,
             TokenKind::Break => TokenType::Break,
             TokenKind::Colon => TokenType::Colon,
             TokenKind::Comma => TokenType::Comma,
@@ -445,6 +400,7 @@ impl TokenKind<'_> {
             TokenKind::Use => TokenType::Use,
             TokenKind::While => TokenType::While,
             TokenKind::Whitespace(_) => TokenType::Whitespace,
+            TokenKind::Xor => TokenType::Xor,
         }
     }
 
@@ -503,9 +459,6 @@ impl TokenKind<'_> {
                 | TokenKind::AddAssign
                 | TokenKind::And
                 | TokenKind::Assign
-                | TokenKind::BinaryAnd
-                | TokenKind::BinaryOr
-                | TokenKind::BinaryXor
                 | TokenKind::Decrement
                 | TokenKind::Div
                 | TokenKind::DivAssign
@@ -521,19 +474,8 @@ impl TokenKind<'_> {
                 | TokenKind::Or
                 | TokenKind::Sub
                 | TokenKind::SubAssign
+                | TokenKind::Xor
         )
-    }
-
-    /// Gets the precedence of the token kind.
-    ///
-    /// Returns the precedence of the token kind, or 0 if the token kind is not
-    /// an operator.
-    #[inline]
-    pub fn precedence(&self) -> u8 {
-        OPERATOR_PRECEDENCE
-            .iter()
-            .find(|(k, _)| k == self)
-            .map_or(0, |(_, p)| *p)
     }
 
     /// Determines whether the token is a postfix operator.
@@ -559,9 +501,6 @@ pub enum TokenType {
     ArrowBig,
     Assign,
     DocComment,
-    BinaryAnd,
-    BinaryOr,
-    BinaryXor,
     Break,
     Colon,
     Comma,
@@ -628,6 +567,7 @@ pub enum TokenType {
     Use,
     While,
     Whitespace,
+    Xor,
 }
 
 impl Display for TokenType {
@@ -641,9 +581,6 @@ impl Display for TokenType {
             TokenType::ArrowBig => f.write_str("=>"),
             TokenType::Assign => f.write_str("="),
             TokenType::DocComment => f.write_str("doc comment"),
-            TokenType::BinaryAnd => f.write_str("&"),
-            TokenType::BinaryOr => f.write_str("|"),
-            TokenType::BinaryXor => f.write_str("^"),
             TokenType::Break => f.write_str("break"),
             TokenType::Colon => f.write_str(":"),
             TokenType::Comma => f.write_str(","),
@@ -710,6 +647,7 @@ impl Display for TokenType {
             TokenType::Use => f.write_str("use"),
             TokenType::While => f.write_str("while"),
             TokenType::Whitespace => f.write_str("whitespace"),
+            TokenType::Xor => f.write_str("^"),
         }
     }
 }
@@ -966,7 +904,10 @@ mod tests {
         assert_lex("...", &[(Ok(TokenKind::DotDotDot), "...", 0..3)]);
 
         assert_lex("+=", &[(Ok(TokenKind::AddAssign), "+=", 0..2)]);
-        assert_lex("&&", &[(Ok(TokenKind::And), "&&", 0..2)]);
+        assert_lex("&&", &[
+            (Ok(TokenKind::And), "&", 0..1),
+            (Ok(TokenKind::And), "&", 1..2),
+        ]);
         assert_lex("->", &[(Ok(TokenKind::Arrow), "->", 0..2)]);
         assert_lex("=>", &[(Ok(TokenKind::ArrowBig), "=>", 0..2)]);
         assert_lex("==", &[(Ok(TokenKind::Equal), "==", 0..2)]);
@@ -978,13 +919,10 @@ mod tests {
         assert_lex("<=", &[(Ok(TokenKind::LessEqual), "<=", 0..2)]);
         assert_lex("*=", &[(Ok(TokenKind::MulAssign), "*=", 0..2)]);
         assert_lex("!=", &[(Ok(TokenKind::NotEqual), "!=", 0..2)]);
-        assert_lex("||", &[(Ok(TokenKind::Or), "||", 0..2)]);
+        assert_lex("||", &[(Ok(TokenKind::Or), "|", 0..1), (Ok(TokenKind::Or), "|", 1..2)]);
         assert_lex("::", &[(Ok(TokenKind::PathSeparator), "::", 0..2)]);
         assert_lex("-=", &[(Ok(TokenKind::SubAssign), "-=", 0..2)]);
 
-        assert_lex("&", &[(Ok(TokenKind::BinaryAnd), "&", 0..1)]);
-        assert_lex("|", &[(Ok(TokenKind::BinaryOr), "|", 0..1)]);
-        assert_lex("^", &[(Ok(TokenKind::BinaryXor), "^", 0..1)]);
         assert_lex("=", &[(Ok(TokenKind::Assign), "=", 0..1)]);
         assert_lex(":", &[(Ok(TokenKind::Colon), ":", 0..1)]);
         assert_lex(",", &[(Ok(TokenKind::Comma), ",", 0..1)]);
@@ -1002,6 +940,7 @@ mod tests {
         assert_lex(")", &[(Ok(TokenKind::RightParen), ")", 0..1)]);
         assert_lex(";", &[(Ok(TokenKind::Semicolon), ";", 0..1)]);
         assert_lex("-", &[(Ok(TokenKind::Sub), "-", 0..1)]);
+        assert_lex("^", &[(Ok(TokenKind::Xor), "^", 0..1)]);
     }
 
     #[test]

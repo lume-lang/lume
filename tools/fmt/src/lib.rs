@@ -1149,27 +1149,27 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
             None => return expr.as_text().as_doc(),
         };
 
-        let operator = match expr {
+        let operator = match expr.op() {
             // Arithmetic intrinsics
-            _ if expr.add().is_some() => "+",
-            _ if expr.sub().is_some() => "-",
-            _ if expr.mul().is_some() => "*",
-            _ if expr.div().is_some() => "/",
-            _ if expr.and().is_some() => "&&",
-            _ if expr.or().is_some() => "||",
+            Some(lume_ast::support::BinaryOp::Add) if expr.add().is_some() => "+",
+            Some(lume_ast::support::BinaryOp::Sub) if expr.sub().is_some() => "-",
+            Some(lume_ast::support::BinaryOp::Mul) if expr.mul().is_some() => "*",
+            Some(lume_ast::support::BinaryOp::Div) if expr.div().is_some() => "/",
+            Some(lume_ast::support::BinaryOp::And) if expr.and().is_some() => "&&",
+            Some(lume_ast::support::BinaryOp::Or) if expr.or().is_some() => "||",
 
             // Logical intrinsics
-            _ if expr.binary_and().is_some() => "&",
-            _ if expr.binary_or().is_some() => "|",
-            _ if expr.binary_xor().is_some() => "^",
+            Some(lume_ast::support::BinaryOp::BinaryAnd) => "&",
+            Some(lume_ast::support::BinaryOp::BinaryOr) => "|",
+            Some(lume_ast::support::BinaryOp::BinaryXor) => "^",
 
             // Comparison intrinsics
-            _ if expr.equal().is_some() => "==",
-            _ if expr.nequal().is_some() => "!=",
-            _ if expr.less().is_some() => "<",
-            _ if expr.lequal().is_some() => "<=",
-            _ if expr.greater().is_some() => ">",
-            _ if expr.gequal().is_some() => ">=",
+            Some(lume_ast::support::BinaryOp::Equal) => "==",
+            Some(lume_ast::support::BinaryOp::NotEqual) => "!=",
+            Some(lume_ast::support::BinaryOp::Less) => ">",
+            Some(lume_ast::support::BinaryOp::LessEqual) => ">=",
+            Some(lume_ast::support::BinaryOp::Greater) => "<",
+            Some(lume_ast::support::BinaryOp::GreaterEqual) => "<=",
 
             _ => return expr.as_text().as_doc(),
         };

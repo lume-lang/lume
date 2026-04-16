@@ -346,69 +346,69 @@ impl LoweringContext<'_> {
         let id = self.next_node_id();
         let location = self.location(expr.location());
 
-        let kind = match expr {
+        let kind = match expr.op() {
             // Arithmetic intrinsics
-            _ if expr.add().is_some() => lume_hir::IntrinsicKind::Add {
+            Some(lume_ast::support::BinaryOp::Add) => lume_hir::IntrinsicKind::Add {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.sub().is_some() => lume_hir::IntrinsicKind::Sub {
+            Some(lume_ast::support::BinaryOp::Sub) => lume_hir::IntrinsicKind::Sub {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.mul().is_some() => lume_hir::IntrinsicKind::Mul {
+            Some(lume_ast::support::BinaryOp::Mul) => lume_hir::IntrinsicKind::Mul {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.div().is_some() => lume_hir::IntrinsicKind::Div {
+            Some(lume_ast::support::BinaryOp::Div) => lume_hir::IntrinsicKind::Div {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.and().is_some() => lume_hir::IntrinsicKind::And {
+            Some(lume_ast::support::BinaryOp::And) => lume_hir::IntrinsicKind::And {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.or().is_some() => lume_hir::IntrinsicKind::Or {
+            Some(lume_ast::support::BinaryOp::Or) => lume_hir::IntrinsicKind::Or {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
 
             // Logical intrinsics
-            _ if expr.binary_and().is_some() => lume_hir::IntrinsicKind::BinaryAnd {
+            Some(lume_ast::support::BinaryOp::BinaryAnd) => lume_hir::IntrinsicKind::BinaryAnd {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.binary_or().is_some() => lume_hir::IntrinsicKind::BinaryOr {
+            Some(lume_ast::support::BinaryOp::BinaryOr) => lume_hir::IntrinsicKind::BinaryOr {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.binary_xor().is_some() => lume_hir::IntrinsicKind::BinaryXor {
+            Some(lume_ast::support::BinaryOp::BinaryXor) => lume_hir::IntrinsicKind::BinaryXor {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
 
             // Comparison intrinsics
-            _ if expr.equal().is_some() => lume_hir::IntrinsicKind::Equal {
+            Some(lume_ast::support::BinaryOp::Equal) => lume_hir::IntrinsicKind::Equal {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.nequal().is_some() => lume_hir::IntrinsicKind::NotEqual {
+            Some(lume_ast::support::BinaryOp::NotEqual) => lume_hir::IntrinsicKind::NotEqual {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.less().is_some() => lume_hir::IntrinsicKind::Less {
+            Some(lume_ast::support::BinaryOp::LessEqual) => lume_hir::IntrinsicKind::LessEqual {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.lequal().is_some() => lume_hir::IntrinsicKind::LessEqual {
+            Some(lume_ast::support::BinaryOp::Less) => lume_hir::IntrinsicKind::Less {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.greater().is_some() => lume_hir::IntrinsicKind::Greater {
+            Some(lume_ast::support::BinaryOp::GreaterEqual) => lume_hir::IntrinsicKind::GreaterEqual {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
-            _ if expr.gequal().is_some() => lume_hir::IntrinsicKind::GreaterEqual {
+            Some(lume_ast::support::BinaryOp::Greater) => lume_hir::IntrinsicKind::Greater {
                 lhs: self.opt_expression(expr.lhs(), Place::RValue),
                 rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },

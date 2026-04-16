@@ -529,9 +529,6 @@ fn as_parser_token(token: Token<'_>) -> (SyntaxKind, TextSpan) {
         TokenKind::ArrowBig => SyntaxKind::BIG_ARROW,
         TokenKind::Assign => SyntaxKind::ASSIGN,
         TokenKind::DocComment(_) => SyntaxKind::DOC_COMMENT,
-        TokenKind::BinaryAnd => SyntaxKind::BINARY_AND,
-        TokenKind::BinaryOr => SyntaxKind::BINARY_OR,
-        TokenKind::BinaryXor => SyntaxKind::BINARY_XOR,
         TokenKind::Break => SyntaxKind::BREAK_KW,
         TokenKind::Colon => SyntaxKind::COLON,
         TokenKind::Comma => SyntaxKind::COMMA,
@@ -598,6 +595,7 @@ fn as_parser_token(token: Token<'_>) -> (SyntaxKind, TextSpan) {
         TokenKind::Use => SyntaxKind::USE_KW,
         TokenKind::While => SyntaxKind::WHILE_KW,
         TokenKind::Whitespace(_) => SyntaxKind::WHITESPACE,
+        TokenKind::Xor => SyntaxKind::XOR,
     };
 
     (kind, TextSpan(token.index.start, token.index.end))

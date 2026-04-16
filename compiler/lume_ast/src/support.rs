@@ -1,3 +1,5 @@
+use lume_syntax::Token;
+
 use crate::*;
 
 #[inline]
@@ -87,6 +89,32 @@ impl crate::AssignmentExpr {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BinaryOp {
+    // Arithmetic intrinsics
+    Add,
+    Sub,
+    Mul,
+    Div,
+    And,
+    Or,
+    Negate,
+
+    // Logical intrinsics
+    BinaryAnd,
+    BinaryOr,
+    BinaryXor,
+    Not,
+
+    // Comparison intrinsics
+    Equal,
+    NotEqual,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
+}
+
 impl crate::BinExpr {
     pub fn lhs(&self) -> Option<crate::Expr> {
         children(self.syntax()).nth(0)
@@ -94,6 +122,43 @@ impl crate::BinExpr {
 
     pub fn rhs(&self) -> Option<crate::Expr> {
         children(self.syntax()).nth(1)
+    }
+
+    pub fn op(&self) -> Option<BinaryOp> {
+        let op = self
+            .syntax()
+            .children_with_tokens()
+            .filter_map(|child| child.into_token())
+            .filter(|tok| !tok.kind().is_trivia())
+            .collect::<Vec<_>>();
+
+        let tok1 = op.first().map(|tok| tok.kind());
+        let tok2 = op.get(1).map(|tok| tok.kind());
+
+        match (tok1, tok2) {
+            // Arithmetic intrinsics
+            (Some(Token![+]), _) => Some(BinaryOp::Add),
+            (Some(Token![-]), _) => Some(BinaryOp::Sub),
+            (Some(Token![*]), _) => Some(BinaryOp::Mul),
+            (Some(Token![/]), _) => Some(BinaryOp::Div),
+            (Some(Token![&]), Some(Token![&])) => Some(BinaryOp::And),
+            (Some(Token![|]), Some(Token![|])) => Some(BinaryOp::Or),
+
+            // Logical intrinsics
+            (Some(Token![&]), _) => Some(BinaryOp::BinaryAnd),
+            (Some(Token![|]), _) => Some(BinaryOp::BinaryOr),
+            (Some(Token![^]), _) => Some(BinaryOp::BinaryXor),
+
+            // Comparison intrinsics
+            (Some(Token![==]), _) => Some(BinaryOp::Equal),
+            (Some(Token![!=]), _) => Some(BinaryOp::NotEqual),
+            (Some(Token![<=]), _) => Some(BinaryOp::LessEqual),
+            (Some(Token![<]), _) => Some(BinaryOp::Less),
+            (Some(Token![>=]), _) => Some(BinaryOp::GreaterEqual),
+            (Some(Token![>]), _) => Some(BinaryOp::Greater),
+
+            _ => None,
+        }
     }
 }
 

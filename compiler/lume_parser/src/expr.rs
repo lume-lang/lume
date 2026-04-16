@@ -118,6 +118,8 @@ impl Parser {
         if self.check_any(lume_syntax::POSTFIX_OPERATORS) {
             Some(self.complete_node(SyntaxKind::POSTFIX_EXPR, c))
         } else if self.check_any(lume_syntax::INFIX_OPERATORS) {
+            self.check_any(lume_syntax::INFIX_OPERATORS);
+
             self.start_node_at(SyntaxKind::BIN_EXPR, c);
             self.parse_expression_with_precedence(None, operator.precedence());
             self.finish_node();
@@ -576,7 +578,7 @@ impl Parser {
     fn parse_unary(&mut self, c: Checkpoint) -> SyntaxKind {
         self.start_node_at(SyntaxKind::UNARY_EXPR, c);
 
-        if !self.check_any(&[Token![!], Token![-], Token![*]]) {
+        if !self.check_any(&[Token![!], Token![-]]) {
             self.error("expected unary expression");
         }
 
