@@ -131,6 +131,7 @@ pub enum SyntaxKind {
     // Expressions
     ARRAY_EXPR,
     ASSIGNMENT_EXPR,
+    DEREF_EXPR,
     INSTANCE_CALL_EXPR,
     STATIC_CALL_EXPR,
     CAST_EXPR,
@@ -344,6 +345,9 @@ impl SyntaxKind {
 /// it's own expression before a number expression, it'd mean "the negative of
 /// the following expression".
 pub const UNARY_PRECEDENCE: u8 = 3;
+
+/// Defines the precedence for the dereference operator, `*`.
+pub const DEREF_PRECEDENCE: u8 = 9;
 
 pub const OPERATOR_PRECEDENCE: &[(SyntaxKind, u8)] = &[
     (Token![=], 1),
