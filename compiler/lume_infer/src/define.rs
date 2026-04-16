@@ -679,6 +679,7 @@ impl TyInferCtx {
 
                 Ok(())
             }
+            lume_hir::ExpressionKind::Deref(s) => self.define_expr_scope(tree, s.target, expr_id),
             lume_hir::ExpressionKind::InstanceCall(s) => {
                 self.define_expr_scope(tree, s.callee, expr_id)?;
 

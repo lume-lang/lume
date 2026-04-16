@@ -373,6 +373,7 @@ impl PrettyPrint for ExpressionKind {
             Self::Assignment(e) => e.pretty_fmt(map, f),
             Self::Cast(e) => e.pretty_fmt(map, f),
             Self::Construct(e) => e.pretty_fmt(map, f),
+            Self::Deref(e) => e.pretty_fmt(map, f),
             Self::StaticCall(e) => e.pretty_fmt(map, f),
             Self::InstanceCall(e) => e.pretty_fmt(map, f),
             Self::IntrinsicCall(e) => e.pretty_fmt(map, f),
@@ -425,6 +426,16 @@ impl PrettyPrint for ConstructorField {
         f.debug_struct("ConstructorField")
             .field("name", &self.name.as_str())
             .field("value", pretty_item!(self.value, map))
+            .field("location", &self.location)
+            .finish()
+    }
+}
+
+impl PrettyPrint for DerefExpr {
+    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Deref")
+            .field("target", pretty_item!(self.target, map))
+            .field("place", &self.place)
             .field("location", &self.location)
             .finish()
     }

@@ -329,7 +329,7 @@ impl LoweringContext<'_> {
         let visibility = visibility(expr.visibility());
         let name = self.ident_opt(expr.name());
         let field_type = self.type_or_void(expr.field_type());
-        let default_value = expr.default_value().map(|def| self.expression(def));
+        let default_value = expr.default_value().map(|def| self.expression(def, Place::default()));
         let location = self.location(expr.location());
 
         let field = lume_hir::Field {

@@ -101,6 +101,15 @@ pub struct MissingField {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "cannot dereference non-pointer type", code = "LM4118")]
+pub struct DerefNonPointer {
+    #[label(source, "the type {type_name} cannot be dereferenced")]
+    pub source: Location,
+
+    pub type_name: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "type constraint not satisfied", code = "LM4120")]
 pub(crate) struct TypeParameterConstraintUnsatisfied {
     #[label(source, "type {type_name} does not implement {constraint_name}...")]

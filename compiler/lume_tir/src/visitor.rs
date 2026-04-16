@@ -116,6 +116,15 @@ fn traverse_expr<V: Visitor>(visitor: &mut V, expr: &mut Expression) -> Result<(
                 traverse_expr(visitor, argument)?;
             }
         }
+        ExpressionKind::Deref(expr) => match &mut expr.op {
+            DerefOp::Read { target, .. } => {
+                traverse_expr(visitor, target)?;
+            }
+            DerefOp::Write { target, value } => {
+                traverse_expr(visitor, target)?;
+                traverse_expr(visitor, value)?;
+            }
+        },
         ExpressionKind::If(expr) => {
             for case in &mut expr.cases {
                 if let Some(condition) = &mut case.condition {

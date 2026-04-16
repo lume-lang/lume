@@ -268,6 +268,11 @@ impl TyCheckCtx {
 
                 self.construct_expression(expr)
             }
+            lume_hir::ExpressionKind::Deref(expr) => {
+                self.expression(expr.target)?;
+
+                self.deref_expression(expr)
+            }
             lume_hir::ExpressionKind::StaticCall(call) => {
                 for arg in &call.arguments {
                     self.expression(*arg)?;
@@ -477,7 +482,7 @@ impl TyCheckCtx {
         if !self.hir_in_unsafe_block(expr.id()) && self.is_callable_unsafe(callable)? {
             if let lume_infer::query::Callable::Function(_) = callable {
                 self.dcx().emit(
-                    UnsafeFunctionCallOutside {
+                    UnsafeFunctionCallOutsideUnsafe {
                         source: expr.location(),
                         function_location: callable.name().location,
                         function_name: callable.name().to_wide_string(),
@@ -486,7 +491,7 @@ impl TyCheckCtx {
                 );
             } else {
                 self.dcx().emit(
-                    UnsafeMethodCallOutside {
+                    UnsafeMethodCallOutsideUnsafe {
                         source: expr.location(),
                         method_location: callable.name().location,
                         method_name: callable.name().to_wide_string(),
@@ -579,6 +584,17 @@ impl TyCheckCtx {
                 }
                 .into(),
             );
+        }
+
+        Ok(())
+    }
+
+    /// Asserts that the target type being dereferenced is a pointer type.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn deref_expression(&self, expr: &lume_hir::DerefExpr) -> Result<()> {
+        if !self.hir_in_unsafe_block(expr.id) {
+            self.dcx()
+                .emit(PointerDerefOutsideUnsafe { source: expr.location }.into());
         }
 
         Ok(())

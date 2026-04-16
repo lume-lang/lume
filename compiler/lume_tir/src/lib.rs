@@ -408,6 +408,7 @@ impl Expression {
             ExpressionKind::Bitcast(e) => e.location,
             ExpressionKind::Construct(e) => e.location,
             ExpressionKind::Call(e) => e.location,
+            ExpressionKind::Deref(e) => e.location,
             ExpressionKind::If(e) => e.location,
             ExpressionKind::Is(e) => e.location,
             ExpressionKind::IntrinsicCall(e) => e.location,
@@ -438,6 +439,7 @@ pub enum ExpressionKind {
     Bitcast(Box<Bitcast>),
     Construct(Box<Construct>),
     Call(Box<Call>),
+    Deref(Box<Deref>),
     If(Box<If>),
     IntrinsicCall(Box<IntrinsicCall>),
     Is(Box<Is>),
@@ -505,6 +507,19 @@ pub struct Call {
     pub type_arguments: Vec<TypeRef>,
     pub return_type: TypeRef,
     pub uninst_return_type: Option<TypeRef>,
+    pub location: Location,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub enum DerefOp {
+    Read { target: Expression, type_: TypeRef },
+    Write { target: Expression, value: Expression },
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Deref {
+    pub id: NodeId,
+    pub op: DerefOp,
     pub location: Location,
 }
 

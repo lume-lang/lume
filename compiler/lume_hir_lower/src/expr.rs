@@ -21,15 +21,16 @@ impl LoweringContext<'_> {
     {
         expressions
             .into_iter()
-            .map(|expr| self.expression(expr))
+            .map(|expr| self.expression(expr, Place::default()))
             .collect::<Vec<_>>()
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(crate) fn expression(&mut self, statement: lume_ast::Expr) -> NodeId {
-        match statement {
+    pub(crate) fn expression(&mut self, expr: lume_ast::Expr, place: Place) -> NodeId {
+        match expr {
             lume_ast::Expr::ArrayExpr(e) => self.expr_array(e),
             lume_ast::Expr::AssignmentExpr(e) => self.expr_assignment(e),
+            lume_ast::Expr::DerefExpr(e) => self.expr_deref(e, place),
             lume_ast::Expr::InstanceCallExpr(e) => self.instance_expr_call(e),
             lume_ast::Expr::StaticCallExpr(e) => self.static_expr_call(e),
             lume_ast::Expr::CastExpr(e) => self.expr_cast(e),
@@ -48,16 +49,16 @@ impl LoweringContext<'_> {
             lume_ast::Expr::VariableExpr(e) => self.expr_variable(e),
             lume_ast::Expr::VariantExpr(e) => self.expr_variant(e),
             lume_ast::Expr::ParenExpr(e) => match e.expr() {
-                Some(inner) => self.expression(inner),
+                Some(inner) => self.expression(inner, Place::default()),
                 None => self.missing_expr(None),
             },
         }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn opt_expression(&mut self, expr: Option<lume_ast::Expr>) -> NodeId {
+    pub(super) fn opt_expression(&mut self, expr: Option<lume_ast::Expr>, place: Place) -> NodeId {
         if let Some(expr) = expr {
-            self.expression(expr)
+            self.expression(expr, place)
         } else {
             self.missing_expr(None)
         }
@@ -94,7 +95,7 @@ impl LoweringContext<'_> {
         let mut body = vec![array_id];
 
         for value in expr.items() {
-            let value = self.expression(value);
+            let value = self.expression(value, Place::default());
 
             let var_ref_id = self.next_node_id();
             let var_ref = lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), array_id, location);
@@ -140,8 +141,8 @@ impl LoweringContext<'_> {
     fn expr_assignment(&mut self, expr: lume_ast::AssignmentExpr) -> NodeId {
         let id = self.next_node_id();
         let location = self.location(expr.location());
-        let target = self.opt_expression(expr.lhs());
-        let value = self.opt_expression(expr.rhs());
+        let target = self.opt_expression(expr.lhs(), Place::LValue);
+        let value = self.opt_expression(expr.rhs(), Place::RValue);
 
         self.alloc_expr(lume_hir::Expression {
             id,
@@ -156,9 +157,27 @@ impl LoweringContext<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn expr_deref(&mut self, expr: lume_ast::DerefExpr, place: Place) -> NodeId {
+        let id = self.next_node_id();
+        let location = self.location(expr.location());
+        let target = self.opt_expression(expr.expr(), Place::RValue);
+
+        self.alloc_expr(lume_hir::Expression {
+            id,
+            location,
+            kind: lume_hir::ExpressionKind::Deref(lume_hir::DerefExpr {
+                id,
+                target,
+                place,
+                location,
+            }),
+        })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn instance_expr_call(&mut self, expr: lume_ast::InstanceCallExpr) -> NodeId {
         let id = self.next_node_id();
-        let callee = self.opt_expression(expr.callee());
+        let callee = self.opt_expression(expr.callee(), Place::RValue);
         let location = self.location(expr.location());
 
         let bound_types = if let Some(bound_types) = expr.generic_args() {
@@ -218,7 +237,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_cast(&mut self, expr: lume_ast::CastExpr) -> NodeId {
         let id = self.next_node_id();
-        let source = self.opt_expression(expr.expr());
+        let source = self.opt_expression(expr.expr(), Place::RValue);
         let target = self.type_or_void(expr.ty());
         let location = self.location(expr.location());
 
@@ -261,10 +280,10 @@ impl LoweringContext<'_> {
     fn expr_constructor_field(&mut self, expr: lume_ast::ConstructorField) -> lume_hir::ConstructorField {
         let name = self.ident_opt(expr.name());
         let value = if let Some(value) = expr.value() {
-            self.expression(value)
+            self.expression(value, Place::default())
         } else {
             let ast_expr: lume_ast::Expr = crate::make::parse_from_text(name.as_str(), Target::Statement);
-            let expr_id = self.expression(ast_expr);
+            let expr_id = self.expression(ast_expr, Place::default());
 
             self.map.expression_mut(expr_id).unwrap().location = name.location;
 
@@ -297,7 +316,7 @@ impl LoweringContext<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_condition(&mut self, expr: lume_ast::Condition) -> lume_hir::Condition {
-        let condition = expr.condition().map(|expr| self.expression(expr));
+        let condition = expr.condition().map(|expr| self.expression(expr, Place::default()));
         let block = self.block_opt(expr.block());
         let location = self.location(expr.location());
 
@@ -316,68 +335,68 @@ impl LoweringContext<'_> {
         let kind = match expr {
             // Arithmetic intrinsics
             _ if expr.add().is_some() => lume_hir::IntrinsicKind::Add {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.sub().is_some() => lume_hir::IntrinsicKind::Sub {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.mul().is_some() => lume_hir::IntrinsicKind::Mul {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.div().is_some() => lume_hir::IntrinsicKind::Div {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.and().is_some() => lume_hir::IntrinsicKind::And {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.or().is_some() => lume_hir::IntrinsicKind::Or {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
 
             // Logical intrinsics
             _ if expr.binary_and().is_some() => lume_hir::IntrinsicKind::BinaryAnd {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.binary_or().is_some() => lume_hir::IntrinsicKind::BinaryOr {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.binary_xor().is_some() => lume_hir::IntrinsicKind::BinaryXor {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
 
             // Comparison intrinsics
             _ if expr.equal().is_some() => lume_hir::IntrinsicKind::Equal {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.nequal().is_some() => lume_hir::IntrinsicKind::NotEqual {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.less().is_some() => lume_hir::IntrinsicKind::Less {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.lequal().is_some() => lume_hir::IntrinsicKind::LessEqual {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.greater().is_some() => lume_hir::IntrinsicKind::Greater {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
             _ if expr.gequal().is_some() => lume_hir::IntrinsicKind::GreaterEqual {
-                lhs: self.opt_expression(expr.lhs()),
-                rhs: self.opt_expression(expr.rhs()),
+                lhs: self.opt_expression(expr.lhs(), Place::RValue),
+                rhs: self.opt_expression(expr.rhs(), Place::RValue),
             },
 
             _ => unreachable!(),
@@ -402,8 +421,8 @@ impl LoweringContext<'_> {
 
         match expr {
             _ if expr.increment().is_some() => {
-                let dst = self.opt_expression(expr.expr());
-                let src = self.opt_expression(expr.expr());
+                let dst = self.opt_expression(expr.expr(), Place::LValue);
+                let src = self.opt_expression(expr.expr(), Place::RValue);
 
                 let rhs_id = self.next_node_id();
                 self.map.nodes.insert(
@@ -445,8 +464,8 @@ impl LoweringContext<'_> {
                 })
             }
             _ if expr.decrement().is_some() => {
-                let dst = self.opt_expression(expr.expr());
-                let src = self.opt_expression(expr.expr());
+                let dst = self.opt_expression(expr.expr(), Place::LValue);
+                let src = self.opt_expression(expr.expr(), Place::RValue);
 
                 let rhs_id = self.next_node_id();
                 self.map.nodes.insert(
@@ -498,10 +517,10 @@ impl LoweringContext<'_> {
 
         let kind = match expr {
             _ if expr.sub().is_some() => lume_hir::IntrinsicKind::Negate {
-                target: self.opt_expression(expr.expr()),
+                target: self.opt_expression(expr.expr(), Place::RValue),
             },
             _ if expr.not().is_some() => lume_hir::IntrinsicKind::Not {
-                target: self.opt_expression(expr.expr()),
+                target: self.opt_expression(expr.expr(), Place::RValue),
             },
             _ => unreachable!(),
         };
@@ -521,7 +540,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_is(&mut self, expr: lume_ast::IsExpr) -> NodeId {
         let id = self.next_node_id();
-        let target = self.opt_expression(expr.expr());
+        let target = self.opt_expression(expr.expr(), Place::RValue);
         let pattern = self.pattern_opt(expr.pat());
         let location = self.location(expr.location());
 
@@ -551,7 +570,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_member(&mut self, expr: lume_ast::MemberExpr) -> NodeId {
         let id = self.next_node_id();
-        let callee = self.opt_expression(expr.expr());
+        let callee = self.opt_expression(expr.expr(), Place::RValue);
         let name = self.ident_opt(expr.name());
         let location = self.location(expr.location());
 
@@ -581,8 +600,8 @@ impl LoweringContext<'_> {
             )
         };
 
-        let lower = self.opt_expression(expr.lower());
-        let upper = self.opt_expression(expr.upper());
+        let lower = self.opt_expression(expr.lower(), Place::RValue);
+        let upper = self.opt_expression(expr.upper(), Place::RValue);
         let location = self.location(expr.location());
 
         self.alloc_static_call(range_new_name, vec![lower, upper], location)
@@ -602,7 +621,7 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_switch(&mut self, expr: lume_ast::SwitchExpr) -> NodeId {
         let id = self.next_node_id();
-        let operand = self.opt_expression(expr.expr());
+        let operand = self.opt_expression(expr.expr(), Place::RValue);
         let cases = expr.arms().map(|arm| self.expr_switch_case(arm)).collect::<Vec<_>>();
         let location = self.location(expr.location());
 
@@ -634,7 +653,7 @@ impl LoweringContext<'_> {
         self.current_locals.push_frame();
 
         let pattern = self.pattern_opt(expr.pat());
-        let branch = self.opt_expression(expr.expr());
+        let branch = self.opt_expression(expr.expr(), Place::RValue);
         let location = self.location(expr.location());
 
         self.current_locals.pop_frame();

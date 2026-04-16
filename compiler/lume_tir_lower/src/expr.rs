@@ -15,6 +15,7 @@ impl LowerFunction<'_> {
             lume_hir::ExpressionKind::Assignment(expr) => self.assignment_expression(expr)?,
             lume_hir::ExpressionKind::Cast(expr) => self.cast_expression(expr)?,
             lume_hir::ExpressionKind::Construct(expr) => self.construct_expression(expr)?,
+            lume_hir::ExpressionKind::Deref(expr) => self.deref_expression(expr)?,
             lume_hir::ExpressionKind::InstanceCall(expr) => {
                 self.call_expression(lume_hir::CallExpression::Instanced(expr))?
             }
@@ -39,6 +40,17 @@ impl LowerFunction<'_> {
     }
 
     fn assignment_expression(&mut self, expr: &lume_hir::Assignment) -> Result<lume_tir::ExpressionKind> {
+        if let lume_hir::ExpressionKind::Deref(deref_expr) = &self.lower.tcx.hir_expect_expr(expr.target).kind {
+            let target = self.expression(deref_expr.target)?;
+            let value = self.expression(expr.value)?;
+
+            return Ok(lume_tir::ExpressionKind::Deref(Box::new(lume_tir::Deref {
+                id: expr.id,
+                op: lume_tir::DerefOp::Write { target, value },
+                location: expr.location,
+            })));
+        }
+
         let target = self.expression(expr.target)?;
         let value = self.expression(expr.value)?;
 
@@ -193,6 +205,23 @@ impl LowerFunction<'_> {
             uninst_return_type: Some(uninst_ret_ty),
             location: expr.location(),
         })))
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn deref_expression(&mut self, expr: &lume_hir::DerefExpr) -> Result<lume_tir::ExpressionKind> {
+        match expr.place {
+            lume_hir::Place::LValue => Err(crate::diagnostics::InvalidLvalue { source: expr.location }.into()),
+            lume_hir::Place::RValue => {
+                let type_ = self.lower.tcx.type_of(expr.id)?;
+                let target = self.expression(expr.target)?;
+
+                Ok(lume_tir::ExpressionKind::Deref(Box::new(lume_tir::Deref {
+                    id: expr.id,
+                    op: lume_tir::DerefOp::Read { target, type_ },
+                    location: expr.location,
+                })))
+            }
+        }
     }
 
     fn if_expression(&mut self, expr: &lume_hir::If) -> Result<lume_tir::ExpressionKind> {

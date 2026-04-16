@@ -119,7 +119,7 @@ impl LoweringContext<'_> {
             |hir| {
                 // `let $collection = <collection>;`
                 let collection_variable_decl = {
-                    let collection_expr = hir.opt_expression(stmt.collection());
+                    let collection_expr = hir.opt_expression(stmt.collection(), Place::RValue);
 
                     hir.alloc_variable_decl(VAR_COLLECTION_NAME, collection_expr, None, location)
                 };
