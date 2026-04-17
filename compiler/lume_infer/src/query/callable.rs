@@ -1066,6 +1066,20 @@ impl TyInferCtx {
         !self.is_instanced_method(id)
     }
 
+    /// Attempts to find the function which is the entrypoint associated with
+    /// the current package.
+    #[tracing::instrument(level = "Trace", skip_all)]
+    pub fn entrypoint(&self) -> Option<&lume_hir::FunctionDefinition> {
+        let main_path = lume_hir::hir_func_path!(main);
+        let main_fn = self.probe_functions(&main_path).first()?.id;
+
+        let lume_hir::Node::Function(fn_def) = self.hir_node(main_fn)? else {
+            return None;
+        };
+
+        Some(fn_def)
+    }
+
     /// Determines whether the given function is an entrypoint.
     #[cached_query]
     #[tracing::instrument(level = "Trace", skip_all)]
