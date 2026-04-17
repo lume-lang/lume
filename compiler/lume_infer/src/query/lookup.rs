@@ -124,6 +124,23 @@ impl TyInferCtx {
         acc
     }
 
+    /// Determines whether the given node has any generic parameters within it's
+    /// reach.
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
+    pub fn is_node_generic(&self, id: NodeId) -> bool {
+        for parent in self.hir_parent_iter(id) {
+            let Ok(type_params) = self.type_params_of(parent.id()) else {
+                continue;
+            };
+
+            if !type_params.is_empty() {
+                return true;
+            }
+        }
+
+        false
+    }
+
     /// Gets the return type of the [`lume_hir::Node`] with the given ID.
     #[tracing::instrument(level = "Trace", skip_all)]
     pub fn return_type_of(&self, id: NodeId) -> Option<&lume_hir::Type> {
