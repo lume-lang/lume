@@ -7,14 +7,14 @@ B0:
     let #5: box void = *#2[+x1]
     let #6: bool = &&(#4, true)
     if #6 goto B1(#5) else B2
-B1(#8):  B0
-    let #9: box void = untagged #8
-    let #10: i32 = *#9
-    let #11: i32 = #10
-    return #10
+B1(#7):  B0
+    let #8: box void = untagged #7
+    let #9: i32 = *#8
+    let #10: i32 = #9
+    return #9
 B2:  B0
-    let #13: i32 = 0_i32
-    let #14: bool = false
+    let #11: i32 = 0_i32
+    let #12: bool = false
     return 0_i32
 }
 
