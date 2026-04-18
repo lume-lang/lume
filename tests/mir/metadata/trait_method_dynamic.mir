@@ -4,8 +4,8 @@ B0:
     let #2: bool = ==(#1, 0_u64)
     if #2 goto B2 else B1(#1)
 B1(#3):  B0
-    let #4: ptr void = call indirect #3()
     mark object(#3)
+    let #4: ptr void = call indirect #3()
     mark object(#4)
     return #4
 B2:  B0
