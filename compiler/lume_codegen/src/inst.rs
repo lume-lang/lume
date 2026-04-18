@@ -23,7 +23,7 @@ impl LowerFunction<'_> {
         let cg_block = self.builder.create_block();
 
         for reg_id in mir_block.parameters() {
-            let reg_ty = self.func.registers.register_ty(reg_id);
+            let reg_ty = self.func.registers.local_type(reg_id);
             let param_ty = self.backend.cl_type_of(reg_ty);
 
             let param_value = self.builder.append_block_param(cg_block, param_ty);

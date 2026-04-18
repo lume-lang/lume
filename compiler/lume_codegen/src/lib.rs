@@ -846,7 +846,7 @@ impl<'ctx> LowerFunction<'ctx> {
     }
 
     pub(crate) fn icast(&mut self, reg: RegisterId, to: u8) -> Value {
-        let lume_mir::TypeKind::Integer { bits: from, signed } = self.func.registers.register_ty(reg).kind else {
+        let lume_mir::TypeKind::Integer { bits: from, signed } = self.func.registers.local_type(reg).kind else {
             panic!("bug!: attempted to use icast on non-integer register");
         };
 
@@ -910,7 +910,7 @@ impl<'ctx> LowerFunction<'ctx> {
     }
 
     pub(crate) fn fcast(&mut self, reg: RegisterId, to: u8) -> Value {
-        let lume_mir::TypeKind::Float { bits: from } = self.func.registers.register_ty(reg).kind else {
+        let lume_mir::TypeKind::Float { bits: from } = self.func.registers.local_type(reg).kind else {
             panic!("bug!: attempted to use fcast on non-float register");
         };
 

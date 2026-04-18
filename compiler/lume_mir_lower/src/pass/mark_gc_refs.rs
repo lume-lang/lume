@@ -185,7 +185,7 @@ impl MarkObjectReferences {
         placement: Placement,
         location: Location,
     ) -> bool {
-        if self.marked.contains(&register) || !func.registers.register_ty(register).requires_stack_map() {
+        if self.marked.contains(&register) || !func.registers.local_type(register).requires_stack_map() {
             return false;
         }
 

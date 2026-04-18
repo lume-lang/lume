@@ -294,7 +294,7 @@ impl Function {
 
     /// Gets a reference to the register with the given ID.
     pub fn register(&self, id: RegisterId) -> &Register {
-        self.registers.register(id)
+        self.registers.local(id)
     }
 
     /// Gets a reference to the block that the register with the given ID is
@@ -631,7 +631,7 @@ pub struct BasicBlock {
 
     /// Defines all the input registers, which the block takes
     /// as input from predecessor blocks.
-    parameters: IndexSet<RegisterId>,
+    pub parameters: IndexSet<RegisterId>,
 
     /// Defines all non-terminator instructions in the block.
     pub instructions: IndexMap<InstructionId, Instruction>,
@@ -1062,6 +1062,12 @@ pub struct LocalRegister {
     pub register: RegisterId,
 }
 
+impl std::fmt::Display for LocalRegister {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}.{}", self.block, self.register)
+    }
+}
+
 /// Defines a register within a block, which can hold a value of a specific
 /// type.
 ///
@@ -1072,9 +1078,7 @@ pub struct LocalRegister {
 #[derive(Serialize, Deserialize, Default, Debug, Hash, Clone, PartialEq, Eq)]
 pub struct Register {
     pub id: RegisterId,
-
-    /// Defines the type of the register.
-    pub ty: Type,
+    pub value_type: Type,
 
     /// Defines which block the register belongs to.
     pub block: Option<BasicBlockId>,
@@ -1082,43 +1086,44 @@ pub struct Register {
 
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct Registers {
-    regs: Vec<Register>,
+    pub locals: IndexMap<RegisterId, Register>,
 }
 
 impl Registers {
     /// Gets a reference to the [`Register`] with the given ID.
     #[track_caller]
     pub fn next_id(&self) -> RegisterId {
-        let next = self.regs.iter().map(|reg| reg.id.as_usize() + 1).max().unwrap_or(0);
+        let next = self.locals.values().map(|reg| reg.id.as_usize() + 1).max().unwrap_or(0);
 
         RegisterId(next)
     }
 
     /// Gets a reference to the [`Register`] with the given ID.
     #[track_caller]
-    pub fn register(&self, id: RegisterId) -> &Register {
-        &self.regs[id.0]
+    pub fn local(&self, id: RegisterId) -> &Register {
+        self.locals.get(&id).unwrap()
     }
 
     /// Gets a mutable reference to the [`Register`] with the given ID.
     #[track_caller]
-    pub fn register_mut(&mut self, id: RegisterId) -> &mut Register {
-        &mut self.regs[id.0]
+    pub fn local_mut(&mut self, id: RegisterId) -> &mut Register {
+        self.locals.get_mut(&id).unwrap()
     }
 
     /// Gets a reference to the type of the [`Register`] with the given ID.
     #[track_caller]
-    pub fn register_ty(&self, id: RegisterId) -> &Type {
-        &self.register(id).ty
+    pub fn local_type(&self, id: RegisterId) -> &Type {
+        &self.local(id).value_type
     }
 
     /// Allocates a new register with the given type and block.
-    #[tracing::instrument(level = "TRACE", skip_all, fields(%ty, %block), ret)]
-    pub fn allocate(&mut self, ty: Type, block: BasicBlockId) -> RegisterId {
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%value_type, %block), ret)]
+    pub fn allocate(&mut self, value_type: Type, block: BasicBlockId) -> RegisterId {
         let id = self.next_id();
-        self.regs.push(Register {
+
+        self.locals.insert(id, Register {
             id,
-            ty,
+            value_type,
             block: Some(block),
         });
 
@@ -1126,27 +1131,27 @@ impl Registers {
     }
 
     /// Allocates a new parameter register with the given type.
-    #[tracing::instrument(level = "TRACE", skip_all, fields(%ty), ret)]
-    pub fn allocate_param(&mut self, ty: Type) -> RegisterId {
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%value_type), ret)]
+    pub fn allocate_param(&mut self, value_type: Type) -> RegisterId {
         let id = self.next_id();
-        self.regs.push(Register { id, ty, block: None });
+
+        self.locals.insert(id, Register {
+            id,
+            value_type,
+            block: None,
+        });
 
         id
     }
 
-    /// Iterates over all registers.
-    pub fn iter(&self) -> impl Iterator<Item = &Register> {
-        self.regs.iter()
-    }
-
     /// Iterates over all parameter registers.
     pub fn iter_params(&self) -> impl Iterator<Item = &Register> {
-        self.regs.iter().filter(|reg| reg.block.is_none())
+        self.locals.values().filter(|reg| reg.block.is_none())
     }
 
-    /// Replaces all the existing registers within the function.
-    pub fn replace_all(&mut self, replacement: impl Iterator<Item = Register>) {
-        self.regs = replacement.collect();
+    /// Iterates over all registers.
+    pub fn locals(&self) -> impl Iterator<Item = &Register> {
+        self.locals.values()
     }
 }
 

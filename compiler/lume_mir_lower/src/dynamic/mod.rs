@@ -83,7 +83,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
             let mut arguments = Vec::with_capacity(self.parameters.len());
 
             for &param in &self.parameters {
-                let parameter_type = &builder.func.register(param).ty;
+                let parameter_type = &builder.func.register(param).value_type;
                 let parameter = builder.func.add_block_parameter(block_id, parameter_type.clone());
 
                 arguments.push(lume_mir::Operand::reference_of(parameter));

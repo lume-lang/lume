@@ -27,7 +27,7 @@ impl Builder<'_, '_> {
                 lume_mir::Type::pointer(slot_ty.to_owned())
             }
             lume_mir::OperandKind::Reference { id } | lume_mir::OperandKind::Untagged { id } => {
-                self.func.registers.register_ty(*id).clone()
+                self.func.registers.local_type(*id).clone()
             }
         }
     }
@@ -77,7 +77,7 @@ impl Builder<'_, '_> {
                 },
             },
             lume_mir::DeclarationKind::Cast { operand, bits } => {
-                let operand_ty = self.func.registers.register_ty(*operand);
+                let operand_ty = self.func.registers.local_type(*operand);
                 let signed = operand_ty.is_signed();
 
                 lume_mir::Type::integer(*bits, signed)
