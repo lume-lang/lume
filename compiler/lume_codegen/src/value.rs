@@ -8,7 +8,7 @@ impl LowerFunction<'_> {
         match decl.kind.as_ref() {
             lume_mir::DeclarationKind::Operand(op) => self.cg_operand(op),
             lume_mir::DeclarationKind::Cast { operand, bits } => {
-                let operand_ty = self.func.registers.register_ty(*operand);
+                let operand_ty = self.func.registers.local_type(*operand);
                 let is_int = matches!(operand_ty.kind, lume_mir::TypeKind::Integer { .. });
 
                 if is_int {
