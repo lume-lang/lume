@@ -41,9 +41,29 @@ impl RegisterMapping {
     }
 }
 
+/// Represents a placement within a basic block, relative to some instruction.
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RelativePlacement {
+    pub block_id: BasicBlockId,
+    pub relative: Placement,
+}
+
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Placement {
+    /// The target should be placed at the beginning of the block.
+    Beginning,
+
+    /// The reference should be placed before the target instruction.
+    Before { inst: InstructionId },
+
+    /// The reference should be placed after the target instruction.
+    After { inst: InstructionId },
+}
+
 pub struct Patcher<'mcx, 'tcx> {
-    mcx: &'mcx MirQueryCtx<'tcx>,
+    pub mcx: &'mcx MirQueryCtx<'tcx>,
     mapped_registers: RegisterMapping,
+    new_instructions: Vec<(RelativePlacement, InstructionKind)>,
 
     next_local: usize,
 }
@@ -53,6 +73,7 @@ impl<'mcx, 'tcx> Patcher<'mcx, 'tcx> {
         Self {
             mcx,
             mapped_registers: RegisterMapping::new(func.name),
+            new_instructions: Vec::new(),
             next_local: 0,
         }
     }
@@ -74,7 +95,26 @@ impl<'mcx, 'tcx> Patcher<'mcx, 'tcx> {
             .insert(LocalRegister { block, register: old }, new);
     }
 
-    pub fn apply(self, target: &mut Function) {
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub fn add_instruction(&mut self, placement: RelativePlacement, kind: InstructionKind) {
+        self.new_instructions.push((placement, kind));
+    }
+
+    pub fn apply(mut self, target: &mut Function) {
+        if !self.new_instructions.is_empty() {
+            add_instruction::apply(&mut self, target);
+        }
+
+        if !self.mapped_registers.mapping.is_empty() {
+            rename::apply(&mut self, target);
+        }
+    }
+}
+
+mod rename {
+    use super::*;
+
+    pub fn apply(p: &mut Patcher<'_, '_>, target: &mut Function) {
         // Handle cases where a renamed register crosses a block-boundary, causing two
         // blocks to use the same register:
         // ```mir
@@ -96,7 +136,7 @@ impl<'mcx, 'tcx> Patcher<'mcx, 'tcx> {
         // type of the source register.
         let mut new_registers = IndexMap::new();
 
-        for (&local_source, &dest_register) in &self.mapped_registers.mapping {
+        for (&local_source, &dest_register) in &p.mapped_registers.mapping {
             // If the function's register already exists in the correct block, skip over it.
             if let Some(register) = target.registers.locals.get(&local_source.register)
                 && register.block.is_some_and(|block| block == local_source.block)
@@ -117,16 +157,16 @@ impl<'mcx, 'tcx> Patcher<'mcx, 'tcx> {
         // instructions and terminator.
         for (&block_id, block) in &mut target.blocks {
             for parameter in std::mem::take(&mut block.parameters) {
-                let replacement_id = self.mapped_registers.get(block_id, parameter);
+                let replacement_id = p.mapped_registers.get(block_id, parameter);
                 assert!(block.parameters.insert(replacement_id));
             }
 
             for inst in block.instructions_mut() {
-                rename::rename_inst(inst, block_id, &self.mapped_registers);
+                rename::rename_inst(inst, block_id, &p.mapped_registers);
             }
 
             if let Some(term) = block.terminator_mut() {
-                rename::rename_term(term, block_id, &self.mapped_registers);
+                rename::rename_term(term, block_id, &p.mapped_registers);
             }
         }
 
@@ -134,7 +174,7 @@ impl<'mcx, 'tcx> Patcher<'mcx, 'tcx> {
         // still look them up in later passes.
         for (register_id, mut register) in std::mem::take(&mut target.registers.locals) {
             let block = register.block.unwrap_or_default();
-            let replacement_id = self.mapped_registers.get(block, register_id);
+            let replacement_id = p.mapped_registers.get(block, register_id);
             register.id = replacement_id;
 
             assert!(target.registers.locals.insert(replacement_id, register).is_none());
@@ -144,10 +184,6 @@ impl<'mcx, 'tcx> Patcher<'mcx, 'tcx> {
         // map, their position does not matter.
         target.registers.locals.extend(new_registers);
     }
-}
-
-mod rename {
-    use super::*;
 
     pub(super) fn rename_inst(inst: &mut Instruction, block: BasicBlockId, mapping: &RegisterMapping) {
         match &mut inst.kind {
@@ -258,6 +294,60 @@ mod rename {
             | OperandKind::String { .. }
             | OperandKind::LoadSlot { .. }
             | OperandKind::SlotAddress { .. } => {}
+        }
+    }
+}
+
+mod add_instruction {
+    use super::*;
+
+    pub fn apply(p: &mut Patcher<'_, '_>, target: &mut Function) {
+        for (placement, instruction_kind) in std::mem::take(&mut p.new_instructions) {
+            let block = target.block(placement.block_id);
+            let location = match placement.relative {
+                Placement::Beginning => target.location,
+                Placement::Before { inst } | Placement::After { inst } => {
+                    block.instructions.get(&inst).unwrap().location
+                }
+            };
+
+            let new_instruction_id = InstructionId(block.instructions.len());
+            let new_instruction = lume_mir::Instruction {
+                kind: instruction_kind,
+                location,
+            };
+
+            let block = target.block_mut(placement.block_id);
+
+            match placement.relative {
+                Placement::Beginning => {
+                    block.instructions.shift_insert(0, new_instruction_id, new_instruction);
+                }
+
+                Placement::Before { inst } | Placement::After { inst } => {
+                    let target_offset = block.instructions.get_index_of(&inst).unwrap_or(0);
+
+                    match placement.relative {
+                        Placement::Before { .. } => {
+                            block
+                                .instructions
+                                .insert_before(target_offset, new_instruction_id, new_instruction);
+                        }
+                        Placement::After { .. } => {
+                            if target_offset == block.instructions.len() {
+                                block.instructions.insert(new_instruction_id, new_instruction);
+                            } else {
+                                block.instructions.insert_before(
+                                    target_offset + 1,
+                                    new_instruction_id,
+                                    new_instruction,
+                                );
+                            }
+                        }
+                        Placement::Beginning => unreachable!(),
+                    }
+                }
+            }
         }
     }
 }
