@@ -2043,6 +2043,7 @@ name = "lume_mir"
 version = "0.1.3"
 dependencies = [
  "indexmap",
+ "lume_infer",
  "lume_session",
  "lume_span",
  "lume_type_metadata",

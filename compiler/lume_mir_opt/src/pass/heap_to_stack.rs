@@ -23,11 +23,11 @@ impl OptimizerPass for HeapToStack {
         level.speed_level() >= 2
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, fields(name = %mcx.mir().function(func_id).name))]
-    fn execute(&mut self, mcx: &mut MirQueryCtx, func_id: NodeId) {
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(name = %mcx.mir().instance(instance).name))]
+    fn execute(&mut self, mcx: &mut MirQueryCtx, instance: &Instance) {
         let mut replacements = Vec::new();
 
-        let func = mcx.mir().function(func_id);
+        let func = mcx.mir().instance(instance);
 
         for block in func.blocks.values() {
             for (&idx, inst) in &block.instructions {
@@ -43,7 +43,7 @@ impl OptimizerPass for HeapToStack {
             }
         }
 
-        let func = mcx.mir_mut().function_mut(func_id);
+        let func = mcx.mir_mut().instance_mut(instance);
 
         let mut slot_updates = Vec::new();
 
@@ -65,7 +65,7 @@ impl OptimizerPass for HeapToStack {
         }
 
         for (block_id, register, slot, offset) in slot_updates {
-            replace_reg_with_slot(mcx, func_id, block_id, register, slot, offset);
+            replace_reg_with_slot(mcx, instance, block_id, register, slot, offset);
         }
     }
 }
@@ -74,13 +74,13 @@ impl OptimizerPass for HeapToStack {
 /// instructions which utilize the slot `slot`.
 fn replace_reg_with_slot(
     mcx: &mut MirQueryCtx,
-    func_id: NodeId,
+    instance: &Instance,
     block_id: BasicBlockId,
     register: RegisterId,
     slot: SlotId,
     after: InstructionId,
 ) {
-    let func = mcx.mir_mut().function_mut(func_id);
+    let func = mcx.mir_mut().instance_mut(instance);
     let block = func.block_mut(block_id);
 
     let offset = block.instructions.get_index_of(&after).unwrap_or(0);

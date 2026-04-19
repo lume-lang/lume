@@ -6,6 +6,7 @@ use std::hash::Hash;
 
 pub use fmt::*;
 use indexmap::{IndexMap, IndexSet};
+use lume_infer::TyInferCtx;
 use lume_session::{Options, Package};
 use lume_span::{Interned, Location, NodeId, SourceFile};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
@@ -27,7 +28,7 @@ pub struct ModuleMap {
 
     pub options: Options,
     pub metadata: StaticMetadata,
-    pub functions: IndexMap<NodeId, Function>,
+    pub functions: IndexMap<Instance, Function>,
 }
 
 impl ModuleMap {
@@ -48,7 +49,7 @@ impl ModuleMap {
     ///
     /// Panics if the given ID is invalid or out of bounds.
     pub fn function(&self, id: NodeId) -> &Function {
-        self.functions.get(&id).unwrap()
+        self.functions.get(&Instance::from(id)).unwrap()
     }
 
     /// Returns a mutable reference to the function with the given ID.
@@ -57,7 +58,25 @@ impl ModuleMap {
     ///
     /// Panics if the given ID is invalid or out of bounds.
     pub fn function_mut(&mut self, id: NodeId) -> &mut Function {
-        self.functions.get_mut(&id).unwrap()
+        self.functions.get_mut(&Instance::from(id)).unwrap()
+    }
+
+    /// Returns a reference to the function with the given instance.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the given ID is invalid or out of bounds.
+    pub fn instance(&self, instance: &Instance) -> &Function {
+        self.functions.get(instance).unwrap()
+    }
+
+    /// Returns a mutable reference to the function with the given instance.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the given ID is invalid or out of bounds.
+    pub fn instance_mut(&'_ mut self, instance: &Instance) -> &'_ mut Function {
+        self.functions.get_mut(instance).unwrap()
     }
 
     /// Returns a reference to the entrypoint function.
@@ -102,6 +121,84 @@ impl std::fmt::Display for ModuleMap {
         }
 
         Ok(())
+    }
+}
+
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq, Eq)]
+pub struct Instance {
+    /// ID of the method or function which this instance represents.
+    pub id: NodeId,
+
+    /// Generic arguments for the callable instance
+    pub generics: Option<Generics>,
+}
+
+impl Instance {
+    pub fn display<'tcx>(&'tcx self, tcx: &'tcx TyInferCtx) -> InstanceDisplay<'tcx> {
+        InstanceDisplay(self, tcx)
+    }
+}
+
+impl From<NodeId> for Instance {
+    fn from(value: NodeId) -> Self {
+        Self {
+            id: value,
+            generics: None,
+        }
+    }
+}
+
+pub struct InstanceDisplay<'tcx>(&'tcx Instance, &'tcx TyInferCtx);
+
+impl std::fmt::Display for InstanceDisplay<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let InstanceDisplay(instance, tcx) = self;
+
+        write!(f, "{:+}", tcx.hir_path_of_node(instance.id))?;
+
+        if let Some(generics) = &instance.generics
+            && !generics.is_empty()
+        {
+            write!(
+                f,
+                "<{}>",
+                generics
+                    .iter()
+                    .filter_map(|(_id, generic)| tcx.ty_stringifier(generic).stringify().ok())
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            )?;
+        }
+
+        write!(f, "()")?;
+
+        Ok(())
+    }
+}
+
+#[derive(Serialize, Deserialize, Default, Hash, Debug, Clone, PartialEq, Eq)]
+pub struct Generics {
+    /// Node IDs of the type parameters which are populated by [`Self::types`]
+    pub ids: Vec<NodeId>,
+
+    /// Type arguments for the matching type parameters.
+    pub types: Vec<TypeRef>,
+}
+
+impl Generics {
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.ids.is_empty()
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        debug_assert_eq!(self.ids.len(), self.types.len());
+        self.ids.len()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (NodeId, &TypeRef)> {
+        self.ids.iter().copied().zip(self.types.iter())
     }
 }
 
@@ -195,6 +292,8 @@ pub enum ParameterKind {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Function {
     pub id: NodeId,
+    pub instance: Option<Instance>,
+
     pub name: Interned<String>,
     pub mangled_name: String,
     pub signature: Signature,
@@ -215,6 +314,7 @@ impl Function {
     pub fn new(id: NodeId, name: Interned<String>, mangled_name: String, location: Location) -> Self {
         Function {
             id,
+            instance: None,
             name,
             mangled_name,
             registers: Registers::default(),

@@ -3,6 +3,7 @@ pub(crate) mod dynamic;
 pub(crate) mod pass;
 pub(crate) mod ty;
 
+use indexmap::IndexMap;
 use lume_mir::{Function, ModuleMap};
 use lume_mir_queries::MirQueryCtx;
 use lume_session::{Options, Package};
@@ -36,6 +37,7 @@ impl<'tcx> ModuleTransformer<'tcx> {
         // This ensures that any functions called *before* they are defined
         // within the source file still resolve correctly.
         for func in functions {
+            let instance = lume_mir::Instance::from(func.id);
             let signature = self.signature_of(func);
 
             let mangle_version = lume_mangle::Version::default();
@@ -49,18 +51,43 @@ impl<'tcx> ModuleTransformer<'tcx> {
                 func.registers.allocate_param(parameter.ty.clone());
             }
 
-            self.mcx.mir_mut().functions.insert(func.id, func);
+            self.mcx.mir_mut().functions.insert(instance, func);
         }
 
         for func in functions {
-            let func_decl = self.mcx.mir().functions.get(&func.id).unwrap().clone();
+            let instance = lume_mir::Instance::from(func.id);
+            let func_decl = self.mcx.mir().functions.get(&instance).unwrap().clone();
             let builder = builder::Builder::create_from(&self.mcx, func_decl);
 
             let defined_func = builder::lower::lower_function(builder, func);
-            self.mcx.mir_mut().functions.insert(func.id, defined_func);
+            self.mcx.mir_mut().functions.insert(instance, defined_func);
         }
 
-        let _mono_items = lume_mono::collect(&self.mcx).unwrap();
+        let mono_items = lume_mono::collect(&self.mcx).unwrap();
+
+        for tir_func in functions {
+            if !mono_items.any_of(tir_func.id) {
+                continue;
+            }
+
+            let base_instance = lume_mir::Instance::from(tir_func.id);
+            let base_mir_func = self.mcx.mir().instance(&base_instance);
+            let mut mono_functions = IndexMap::new();
+
+            for instance in mono_items.all_of(tir_func.id) {
+                let Some(canon_mir_func) = lume_mono::canonicalize(&self.mcx, base_mir_func, instance) else {
+                    tracing::debug!("skipping canonicalization for {}", instance.display(self.mcx.tcx()));
+                    continue;
+                };
+
+                mono_functions.insert(instance.to_owned(), canon_mir_func);
+            }
+
+            if !mono_functions.is_empty() {
+                self.mcx.mir_mut().functions.shift_remove(&base_instance);
+                self.mcx.mir_mut().functions.extend(mono_functions);
+            }
+        }
 
         self.mcx.take_mir()
     }
