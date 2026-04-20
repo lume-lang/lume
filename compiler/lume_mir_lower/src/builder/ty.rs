@@ -1,4 +1,4 @@
-use lume_span::NodeId;
+use lume_mir::Instance;
 use lume_types::TypeRef;
 
 use crate::builder::Builder;
@@ -82,19 +82,19 @@ impl Builder<'_, '_> {
 
                 lume_mir::Type::integer(*bits, signed)
             }
-            lume_mir::DeclarationKind::Call { func_id, .. } => self.function_ret_type(*func_id),
+            lume_mir::DeclarationKind::Call { instance, .. } => self.function_ret_type(instance),
             lume_mir::DeclarationKind::IndirectCall { signature, .. } => signature.return_type.clone(),
         }
     }
 
     /// Gets the MIR signature of the function with the given ID.
-    pub(crate) fn signature_of(&self, func_id: NodeId) -> lume_mir::Signature {
-        self.function(func_id).signature.clone()
+    pub(crate) fn signature_of(&self, instance: &Instance) -> lume_mir::Signature {
+        self.instance(instance).signature.clone()
     }
 
     /// Gets the MIR return type of the function with the given ID.
-    pub(crate) fn function_ret_type(&self, func_id: NodeId) -> lume_mir::Type {
-        self.signature_of(func_id).return_type.clone()
+    pub(crate) fn function_ret_type(&self, instance: &Instance) -> lume_mir::Type {
+        self.signature_of(instance).return_type.clone()
     }
 
     /// Creates a MIR union type from the given enum type.

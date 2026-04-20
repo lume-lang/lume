@@ -1,4 +1,5 @@
 pub mod analysis;
+pub mod instance;
 pub mod lookup;
 pub mod opts;
 pub mod patch;

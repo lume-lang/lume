@@ -105,14 +105,14 @@ impl MirQueryCtx<'_> {
                         }
                     }
                     DeclarationKind::Call {
-                        func_id: callee_id,
+                        instance: callee_instance,
                         args,
                         ..
                     } => {
                         for (idx, arg) in args.iter().enumerate() {
                             if arg.stores_register(reg) {
                                 let param = RegisterId::new(idx);
-                                let callee = self.mir().function(*callee_id);
+                                let callee = self.mir().instance(callee_instance);
 
                                 self.does_register_escape_inner(callee, BasicBlockId(0), param, call_stack)?;
                             }
