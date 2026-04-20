@@ -1,4 +1,5 @@
 pub mod fmt;
+pub mod walk;
 
 use std::collections::HashMap;
 use std::fmt::Display;
@@ -6,7 +7,7 @@ use std::hash::Hash;
 
 pub use fmt::*;
 use indexmap::{IndexMap, IndexSet};
-use lume_infer::TyInferCtx;
+pub use lume_infer::instance::*;
 use lume_session::{Options, Package};
 use lume_span::{Interned, Location, NodeId, SourceFile};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
@@ -48,6 +49,7 @@ impl ModuleMap {
     /// # Panics
     ///
     /// Panics if the given ID is invalid or out of bounds.
+    #[track_caller]
     pub fn function(&self, id: NodeId) -> &Function {
         self.functions.get(&Instance::from(id)).unwrap()
     }
@@ -57,6 +59,7 @@ impl ModuleMap {
     /// # Panics
     ///
     /// Panics if the given ID is invalid or out of bounds.
+    #[track_caller]
     pub fn function_mut(&mut self, id: NodeId) -> &mut Function {
         self.functions.get_mut(&Instance::from(id)).unwrap()
     }
@@ -66,6 +69,7 @@ impl ModuleMap {
     /// # Panics
     ///
     /// Panics if the given ID is invalid or out of bounds.
+    #[track_caller]
     pub fn instance(&self, instance: &Instance) -> &Function {
         self.functions.get(instance).unwrap()
     }
@@ -75,6 +79,7 @@ impl ModuleMap {
     /// # Panics
     ///
     /// Panics if the given ID is invalid or out of bounds.
+    #[track_caller]
     pub fn instance_mut(&'_ mut self, instance: &Instance) -> &'_ mut Function {
         self.functions.get_mut(instance).unwrap()
     }
@@ -121,84 +126,6 @@ impl std::fmt::Display for ModuleMap {
         }
 
         Ok(())
-    }
-}
-
-#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Instance {
-    /// ID of the method or function which this instance represents.
-    pub id: NodeId,
-
-    /// Generic arguments for the callable instance
-    pub generics: Option<Generics>,
-}
-
-impl Instance {
-    pub fn display<'tcx>(&'tcx self, tcx: &'tcx TyInferCtx) -> InstanceDisplay<'tcx> {
-        InstanceDisplay(self, tcx)
-    }
-}
-
-impl From<NodeId> for Instance {
-    fn from(value: NodeId) -> Self {
-        Self {
-            id: value,
-            generics: None,
-        }
-    }
-}
-
-pub struct InstanceDisplay<'tcx>(&'tcx Instance, &'tcx TyInferCtx);
-
-impl std::fmt::Display for InstanceDisplay<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let InstanceDisplay(instance, tcx) = self;
-
-        write!(f, "{:+}", tcx.hir_path_of_node(instance.id))?;
-
-        if let Some(generics) = &instance.generics
-            && !generics.is_empty()
-        {
-            write!(
-                f,
-                "<{}>",
-                generics
-                    .iter()
-                    .filter_map(|(_id, generic)| tcx.ty_stringifier(generic).stringify().ok())
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            )?;
-        }
-
-        write!(f, "()")?;
-
-        Ok(())
-    }
-}
-
-#[derive(Serialize, Deserialize, Default, Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Generics {
-    /// Node IDs of the type parameters which are populated by [`Self::types`]
-    pub ids: Vec<NodeId>,
-
-    /// Type arguments for the matching type parameters.
-    pub types: Vec<TypeRef>,
-}
-
-impl Generics {
-    #[inline]
-    pub fn is_empty(&self) -> bool {
-        self.ids.is_empty()
-    }
-
-    #[inline]
-    pub fn len(&self) -> usize {
-        debug_assert_eq!(self.ids.len(), self.types.len());
-        self.ids.len()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = (NodeId, &TypeRef)> {
-        self.ids.iter().copied().zip(self.types.iter())
     }
 }
 
@@ -1415,9 +1342,10 @@ pub enum DeclarationKind {
 
     /// Represents a call to a function.
     Call {
-        func_id: NodeId,
+        instance: Instance,
         name: Interned<String>,
         args: Vec<Operand>,
+        type_args: Vec<TypeRef>,
     },
 
     /// Represents an indirect call to a function.

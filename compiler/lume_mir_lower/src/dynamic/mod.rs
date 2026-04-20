@@ -1,4 +1,4 @@
-use lume_mir::{RegisterId, Signature};
+use lume_mir::{Instance, RegisterId, Signature};
 use lume_span::{Location, NodeId};
 
 use crate::builder::Builder;
@@ -38,7 +38,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
     /// Returns the signature of the target function.
     fn target_signature(&self) -> Signature {
         let mut signature = self.signature.clone();
-        signature.return_type = self.builder.function_ret_type(self.function.id);
+        signature.return_type = self.builder.function_ret_type(&Instance::from(self.function.id));
 
         signature
     }
@@ -61,7 +61,12 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
             let method_id_arg = lume_mir::Operand::integer(64, false, method_id.as_usize().cast_signed() as i128);
             let metadata_arg = lume_mir::Operand::reference_of(type_metadata_reg);
 
-            let method_ptr = builder.call(lookup_method_id, vec![method_id_arg, metadata_arg], Location::empty());
+            let method_ptr = builder.call(
+                Instance::from(lookup_method_id),
+                vec![],
+                vec![method_id_arg, metadata_arg],
+                Location::empty(),
+            );
             let null_cmp = builder.ieq_imm(lume_mir::Operand::reference_of(method_ptr), 0, 64, false);
 
             let found_block_args = [&[method_ptr][..], &self.parameters[..]].concat();

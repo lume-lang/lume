@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use lume_mir::*;
 use lume_mir_queries::MirQueryCtx;
-use lume_span::{Location, NodeId};
+use lume_span::Location;
 use lume_type_metadata::TypeMetadataId;
 use lume_typech::TyCheckCtx;
 use lume_types::TypeRef;
@@ -48,9 +48,10 @@ impl<'mir, 'tcx> Builder<'mir, 'tcx> {
         self.mcx.tcx()
     }
 
-    /// Gets the MIR function with the given ID.
-    pub(crate) fn function(&self, func_id: NodeId) -> &Function {
-        self.mcx.mir().function(func_id)
+    /// Gets the MIR function with the given instance.
+    #[track_caller]
+    pub(crate) fn instance(&self, instance: &Instance) -> &Function {
+        self.mcx.mir().instance(instance)
     }
 
     /// Creates a new block in the function.
