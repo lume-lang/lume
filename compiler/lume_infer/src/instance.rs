@@ -50,8 +50,6 @@ impl std::fmt::Display for InstanceDisplay<'_> {
             )?;
         }
 
-        write!(f, "()")?;
-
         Ok(())
     }
 }
