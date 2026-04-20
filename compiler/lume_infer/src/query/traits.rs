@@ -49,7 +49,11 @@ impl TyInferCtx {
         #[cfg(debug_assertions)]
         self.hir_expect_trait(trait_id.instance_of);
 
-        if let Some(type_param) = self.as_type_parameter(ty)? {
+        if self.is_trait(ty) == Ok(true) && trait_id == ty {
+            return Ok(true);
+        }
+
+        if let Some(type_param) = self.as_type_parameter(ty.instance_of) {
             for constraint in &type_param.constraints {
                 let constraint_type = self.mk_type_ref_from(constraint, trait_id.instance_of)?;
 

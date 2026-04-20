@@ -136,7 +136,7 @@ impl Engine<'_, TyInferCtx> {
         let callable = self.ctx.probe_callable(call)?;
         let signature = self.ctx.signature_of(callable)?;
 
-        let type_parameters = self.ctx.available_type_params_at(callable.id());
+        let type_parameters = self.ctx.all_type_parameters_of(callable.id());
         let type_arguments = call.all_type_arguments();
 
         let mut arguments = call.arguments();
