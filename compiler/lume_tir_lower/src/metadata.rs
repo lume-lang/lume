@@ -67,7 +67,7 @@ impl<'tcx> MetadataBuilder<'tcx> {
                     // Take metadata pointer into account when calculating the size.
                     let mut size = PTR_SIZE;
 
-                    for prop in self.tcx.fields_on(struct_def.id)? {
+                    for prop in self.tcx.hir_fields_on(struct_def.id)? {
                         let prop_ty = self.tcx.mk_type_ref_from(&prop.field_type, struct_def.id)?;
 
                         size += if prop_ty.is_scalar_type() {
@@ -125,7 +125,7 @@ impl<'tcx> MetadataBuilder<'tcx> {
                     // We start at alignment 1, since an alignment of 0 is invalid.
                     let mut max_alignment = 1;
 
-                    for prop in self.tcx.fields_on(ty.instance_of)? {
+                    for prop in self.tcx.hir_fields_on(ty.instance_of)? {
                         let prop_ty = self.tcx.mk_type_ref_from(&prop.field_type, struct_def.id)?;
 
                         max_alignment = if self.tcx.tdb().is_reference_type(prop_ty.instance_of).unwrap() {
@@ -164,7 +164,7 @@ impl lume_type_metadata::visitor::Visitor for MetadataBuilder<'_> {
 
         let fields = self
             .tcx
-            .fields_on(type_ref.instance_of)?
+            .hir_fields_on(type_ref.instance_of)?
             .iter()
             .map(|field| field.id)
             .collect();
@@ -178,7 +178,7 @@ impl lume_type_metadata::visitor::Visitor for MetadataBuilder<'_> {
             .collect();
 
         let drop_method = self.find_drop_method(type_ref);
-        let type_parameters = self.tcx.available_type_params_at(type_id);
+        let type_parameters = self.tcx.all_type_parameters_of(type_id);
 
         let is_local = self.tcx.hir_is_local_node(type_id);
 

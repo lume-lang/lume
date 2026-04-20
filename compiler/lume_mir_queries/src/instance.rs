@@ -6,24 +6,26 @@ use crate::MirQueryCtx;
 
 impl MirQueryCtx<'_> {
     #[inline]
-    pub fn instance_of(&self, func: NodeId, type_arguments: Vec<TypeRef>) -> lume_mir::Instance {
-        let type_parameter_ids = self.tcx().available_type_params_at(func);
+    pub fn instance_of(&self, id: NodeId, type_arguments: Vec<TypeRef>) -> lume_mir::Instance {
+        let type_parameter_ids = self.tcx().all_type_parameters_of(id);
         // debug_assert_eq!(type_parameter_ids.len(), type_arguments.len());
 
         if type_arguments.is_empty() {
-            return lume_mir::Instance {
-                id: func,
-                generics: None,
-            };
+            return lume_mir::Instance { id, generics: None };
         }
 
         lume_mir::Instance {
-            id: func,
+            id,
             generics: Some(lume_mir::Generics {
                 ids: type_parameter_ids,
                 types: type_arguments,
             }),
         }
+    }
+
+    #[inline]
+    pub fn instance_of_type(&self, ty: TypeRef) -> lume_mir::Instance {
+        self.instance_of(ty.instance_of, ty.bound_types)
     }
 
     /// Attempts to instantiate a new [`Instance`] from an existing MIR call

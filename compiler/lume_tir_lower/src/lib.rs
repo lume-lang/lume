@@ -262,7 +262,7 @@ impl<'tcx> LowerFunction<'tcx> {
         location: Location,
     ) -> Result<lume_tir::Function> {
         let name = self.path_hir(name, id)?;
-        let hir_type_params = self.lower.tcx.available_type_params_at(id);
+        let hir_type_params = self.lower.tcx.all_type_parameters_of(id);
 
         let parameters = self.parameters(signature.params);
         let type_params = self.type_parameters(&hir_type_params);

@@ -7,13 +7,25 @@ use lume_types::{TypeKind, TypeRef};
 use crate::TyInferCtx;
 
 impl TyInferCtx {
+    /// Returns the parameters for the [`lume_hir::Node`] with the given ID.
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub fn parameters_of(&self, id: NodeId) -> &[lume_hir::Parameter] {
+        match self.hir_expect_node(id) {
+            lume_hir::Node::Function(func) => func.signature.parameters.as_slice(),
+            lume_hir::Node::Method(method) => method.signature.parameters.as_slice(),
+            lume_hir::Node::TraitMethodDef(method) => method.signature.parameters.as_slice(),
+            lume_hir::Node::TraitMethodImpl(method) => method.signature.parameters.as_slice(),
+            _ => &[],
+        }
+    }
+
     /// Gets a slice of the type parameters defined on the given node.
     ///
     /// # Errors
     ///
     /// If the given node is missing or cannot hold type parameters, [`Err`] is
     /// returned.
-    pub fn type_params_of(&self, id: NodeId) -> Result<&[NodeId]> {
+    pub fn type_parameters_of(&self, id: NodeId) -> Result<&[NodeId]> {
         let Some(node) = self.hir_node(id) else {
             return Ok(&[]);
         };
@@ -35,9 +47,51 @@ impl TyInferCtx {
         }
     }
 
+    /// Gets a vector of the type parameters defined on the given node, in
+    /// canonical form.
+    ///
+    /// # Errors
+    ///
+    /// If the given node is missing or cannot hold type parameters, [`Err`] is
+    /// returned.
+    pub fn canonical_type_parameters_of(&self, id: NodeId) -> Result<Vec<NodeId>> {
+        Ok(self
+            .type_parameters_of(id)?
+            .iter()
+            .map(|&type_parameter_id| {
+                let Some(owner) = self.hir_parent_node_of(id) else {
+                    return type_parameter_id;
+                };
+
+                match self.hir_canonical_type_of(TypeId::from(type_parameter_id), owner.id()) {
+                    Ok(Some(canonical)) => canonical.as_node_id(),
+                    _ => type_parameter_id,
+                }
+            })
+            .collect())
+    }
+
+    /// Returns all the type parameters available for the [`lume_hir::Node`]
+    /// with the given ID.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub fn all_type_parameters_of(&self, id: NodeId) -> Vec<NodeId> {
+        let mut acc = Vec::new();
+
+        for parent in self.hir_parent_iter(id) {
+            let Ok(type_params) = self.type_parameters_of(parent.id()) else {
+                continue;
+            };
+
+            acc.extend_from_slice(type_params);
+        }
+
+        acc
+    }
+
     /// Return the [`lume_hir::TypeParameter`], which correspond to the
     /// given ID, if it refers to a type parameter. Otherwise, returns [`None`].
-    pub fn as_type_param(&self, id: NodeId) -> Option<&lume_hir::TypeParameter> {
+    pub fn as_type_parameter(&self, id: NodeId) -> Option<&lume_hir::TypeParameter> {
         if let lume_hir::Node::Type(lume_hir::TypeDefinition::TypeParameter(type_param)) = self.hir_node(id)? {
             Some(type_param.as_ref())
         } else {
@@ -81,7 +135,7 @@ impl TyInferCtx {
 
     pub fn type_parameter_refs_of(&self, ty: &TypeRef) -> Result<Vec<TypeRef>> {
         Ok(if ty.bound_types.is_empty() {
-            self.type_params_of(ty.instance_of)?
+            self.type_parameters_of(ty.instance_of)?
                 .iter()
                 .map(|&param_id| TypeRef::new(param_id, self.hir_span_of_node(param_id)))
                 .collect()
@@ -117,18 +171,6 @@ impl TyInferCtx {
             self.tdb().type_(ty.instance_of).map(|t| t.kind),
             Some(TypeKind::TypeParameter)
         )
-    }
-
-    /// If the given [`TypeRef`] refers to a type parameter, returns a reference
-    /// to it's definition.
-    ///
-    /// Otherwise, returns [`None`].
-    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
-    pub fn as_type_parameter(&self, ty: &TypeRef) -> Result<Option<&lume_hir::TypeParameter>> {
-        match self.hir_expect_type(ty.instance_of) {
-            lume_hir::TypeDefinition::TypeParameter(type_param) => Ok(Some(type_param.as_ref())),
-            _ => Ok(None),
-        }
     }
 
     /// Determines whether the given [`TypeRef`] has any generic components.

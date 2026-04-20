@@ -122,7 +122,7 @@ pub(crate) fn verify_type_name(tcx: &TyInferCtx, path: &lume_hir::Path, location
         return;
     };
 
-    let expected_arg_count = tcx.type_params_of(matching_type.id).unwrap_or(&[]).len();
+    let expected_arg_count = tcx.type_parameters_of(matching_type.id).unwrap_or(&[]).len();
     let declared_arg_count = type_path.bound_types().len();
 
     if expected_arg_count != declared_arg_count {

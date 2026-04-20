@@ -227,7 +227,7 @@ impl Engine<'_, TyInferCtx> {
 
         let type_def_id = type_def.id;
         let declared_type_args = path.bound_types().len();
-        let type_params = self.ctx.type_params_of(type_def.id)?.to_vec();
+        let type_params = self.ctx.type_parameters_of(type_def.id)?.to_vec();
 
         for type_param_id in type_params.into_iter().skip(declared_type_args) {
             let type_variable = self.fresh_var(type_def_id, type_param_id, location);
@@ -270,7 +270,7 @@ impl Engine<'_, TyInferCtx> {
 
         tracing::trace!(callable = %callable.name().to_wide_string());
 
-        let type_params = self.ctx.available_type_params_at(callable.id());
+        let type_params = self.ctx.all_type_parameters_of(callable.id());
         let type_args = call.all_type_arguments();
 
         // All all the type arguments have already been declared, theres
