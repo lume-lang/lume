@@ -1,4 +1,4 @@
-use lume_mir::{BasicBlockId, RegisterId};
+use lume_mir::{BasicBlockId, Instance, RegisterId};
 use lume_span::Location;
 
 use crate::builder::Builder;
@@ -344,8 +344,9 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
 fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
         let is_ffi_call = builder.tcx().hir_is_callable_external(expr.function);
+        let call_instance = Instance::from(expr.function);
 
-        let mut signature = builder.signature_of(expr.function);
+        let mut signature = builder.signature_of(&call_instance);
         signature.return_type = builder.lower_type(&expr.return_type);
 
         let return_type = expr.uninst_return_type.as_ref().unwrap_or(&expr.return_type);
@@ -385,7 +386,13 @@ fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume
             call_arguments.push(arg_operand);
         }
 
-        let return_value = builder.call_with_signature(expr.function, &signature, call_arguments, expr.location);
+        let return_value = builder.call_with_signature(
+            call_instance,
+            &signature,
+            expr.type_arguments.clone(),
+            call_arguments,
+            expr.location,
+        );
 
         builder.use_register(return_value, expr.location)
     })

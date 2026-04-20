@@ -3,7 +3,6 @@ pub(crate) mod dynamic;
 pub(crate) mod pass;
 pub(crate) mod ty;
 
-use indexmap::IndexMap;
 use lume_mir::{Function, ModuleMap};
 use lume_mir_queries::MirQueryCtx;
 use lume_session::{Options, Package};
@@ -41,7 +40,8 @@ impl<'tcx> ModuleTransformer<'tcx> {
             let signature = self.signature_of(func);
 
             let mangle_version = lume_mangle::Version::default();
-            let mangled_name = lume_mangle::mangled(self.mcx.tcx(), func.id, mangle_version).unwrap();
+            let mangle_instance = lume_mangle::Instance::from(func.id);
+            let mangled_name = lume_mangle::mangled(self.mcx.tcx(), &mangle_instance, mangle_version).unwrap();
 
             let mut func = Function::new(func.id, func.name_as_str().intern(), mangled_name, func.location);
             func.signature = signature;
@@ -63,31 +63,7 @@ impl<'tcx> ModuleTransformer<'tcx> {
             self.mcx.mir_mut().functions.insert(instance, defined_func);
         }
 
-        let mono_items = lume_mono::collect(&self.mcx).unwrap();
-
-        for tir_func in functions {
-            if !mono_items.any_of(tir_func.id) {
-                continue;
-            }
-
-            let base_instance = lume_mir::Instance::from(tir_func.id);
-            let base_mir_func = self.mcx.mir().instance(&base_instance);
-            let mut mono_functions = IndexMap::new();
-
-            for instance in mono_items.all_of(tir_func.id) {
-                let Some(canon_mir_func) = lume_mono::canonicalize(&self.mcx, base_mir_func, instance) else {
-                    tracing::debug!("skipping canonicalization for {}", instance.display(self.mcx.tcx()));
-                    continue;
-                };
-
-                mono_functions.insert(instance.to_owned(), canon_mir_func);
-            }
-
-            if !mono_functions.is_empty() {
-                self.mcx.mir_mut().functions.shift_remove(&base_instance);
-                self.mcx.mir_mut().functions.extend(mono_functions);
-            }
-        }
+        lume_mono::canonicalize(&mut self.mcx);
 
         self.mcx.take_mir()
     }
