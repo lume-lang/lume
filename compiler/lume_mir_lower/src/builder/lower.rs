@@ -284,7 +284,7 @@ fn bitcast(builder: &mut Builder<'_, '_>, expr: &lume_tir::Bitcast) -> lume_mir:
 fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
         let struct_name = builder.tcx().new_named_type(&expr.ty, true).unwrap();
-        let type_fields = builder.tcx().fields_on(expr.ty.instance_of).unwrap();
+        let type_fields = builder.tcx().hir_fields_on(expr.ty.instance_of).unwrap();
 
         // Sort all the constructor expressions so they have the same order as
         // the fields within the type. If this isn't done, the value of a field may be

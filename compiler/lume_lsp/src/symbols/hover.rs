@@ -136,7 +136,7 @@ pub(crate) fn hover_content_of_method(package: &CheckedPackage, method: &lume_ty
 
 pub(crate) fn hover_content_of_member(package: &CheckedPackage, callee: NodeId, field: &Identifier) -> Result<String> {
     let callee_type = package.tcx.type_of(callee)?;
-    let Some(field) = package.tcx.field_on(callee_type.instance_of, &field.name)? else {
+    let Some(field) = package.tcx.hir_field_on(callee_type.instance_of, &field.name)? else {
         return Ok(String::new());
     };
 

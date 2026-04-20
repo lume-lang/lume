@@ -166,7 +166,7 @@ impl TyInferCtx {
     ///
     /// Methods returned by this method are not checked for validity within the
     /// current context, such as visibility, arguments or type arguments.
-    pub fn lookup_impl_methods_on(
+    fn lookup_impl_methods_on(
         &self,
         ty: &'_ lume_types::TypeRef,
         name: &'_ Identifier,
@@ -182,7 +182,7 @@ impl TyInferCtx {
     /// Methods returned by this method are not checked for validity within the
     /// current context, such as visibility, arguments or type arguments.
     #[tracing::instrument(level = "Trace", skip_all)]
-    pub fn lookup_trait_methods_on(
+    fn lookup_trait_methods_on(
         &self,
         ty: &'_ TypeRef,
         name: &'_ Identifier,
@@ -331,7 +331,7 @@ impl TyInferCtx {
     /// Methods returned by this method are not checked for validity within the
     /// current context, such as visibility, arguments or type arguments.
     #[tracing::instrument(level = "Trace", skip_all)]
-    pub fn lookup_method_suggestions(&self, ty: &lume_types::TypeRef, name: &Identifier) -> Vec<&'_ Method> {
+    fn lookup_method_suggestions(&self, ty: &lume_types::TypeRef, name: &Identifier) -> Vec<&'_ Method> {
         self.methods_defined_on(ty)
             .into_iter()
             .filter(|method| {
@@ -438,7 +438,7 @@ impl TyInferCtx {
     /// the current context, such as visibility, arguments or type
     /// arguments.
     #[tracing::instrument(level = "TRACE", skip_all, fields(%name))]
-    pub fn lookup_function_suggestions(&self, name: &Path) -> Vec<&'_ Function> {
+    fn lookup_function_suggestions(&self, name: &Path) -> Vec<&'_ Function> {
         self.tdb()
             .functions()
             .filter(|func| {
@@ -844,7 +844,7 @@ impl TyInferCtx {
     /// arguments defined on the callee of the exprssion, if any.
     #[tracing::instrument(level = "Trace", skip_all)]
     pub fn type_args_in_call(&self, expr: lume_hir::CallExpression) -> Result<Vec<TypeRef>> {
-        let type_parameters_id = self.available_type_params_at(expr.id());
+        let type_parameters_id = self.all_type_parameters_of(expr.id());
         let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         match &expr {
@@ -880,14 +880,14 @@ impl TyInferCtx {
         param_type: &TypeRef,
         arg_type: &TypeRef,
     ) -> Result<Option<TypeRef>> {
-        if let Some(type_param_ref) = self.as_type_parameter(param_type)?
+        if let Some(type_param_ref) = self.as_type_parameter(param_type.instance_of)
             && type_param_ref.id == type_param_id
         {
             return Ok(Some(arg_type.to_owned()));
         }
 
         for (param_type_arg, arg_type_arg) in param_type.bound_types.iter().zip(arg_type.bound_types.iter()) {
-            if let Some(type_param_ref) = self.as_type_parameter(param_type_arg)?
+            if let Some(type_param_ref) = self.as_type_parameter(param_type_arg.instance_of)
                 && type_param_ref.id == type_param_id
             {
                 return Ok(Some(arg_type_arg.to_owned()));
@@ -970,7 +970,7 @@ impl TyInferCtx {
 
                 // Append all the type parameters which are available on the method,
                 // such as the type parameters on the implementation.
-                let mut all_type_params = self.available_type_params_at(method.id);
+                let mut all_type_params = self.all_type_parameters_of(method.id);
                 all_type_params.append(&mut signature.type_params);
 
                 signature.type_params = all_type_params;
@@ -1032,7 +1032,7 @@ impl TyInferCtx {
             .filter(move |m| m.callee.instance_of == self_ty.instance_of)
             .collect();
 
-        if let Some(type_param) = self.as_type_param(self_ty.instance_of) {
+        if let Some(type_param) = self.as_type_parameter(self_ty.instance_of) {
             for constraint in &type_param.constraints {
                 let Ok(constraint_ty) = self.mk_type_ref_from(constraint, self_ty.instance_of) else {
                     continue;

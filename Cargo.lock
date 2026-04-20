@@ -1956,6 +1956,7 @@ dependencies = [
  "lume_session",
  "lume_span",
  "lume_types",
+ "serde",
  "tracing",
 ]
 
@@ -2093,6 +2094,7 @@ dependencies = [
  "lume_session",
  "lume_span",
  "lume_typech",
+ "lume_types",
  "tracing",
 ]
 
@@ -2104,6 +2106,7 @@ dependencies = [
  "lume_errors",
  "lume_hir",
  "lume_infer",
+ "lume_mangle",
  "lume_mir",
  "lume_mir_queries",
  "lume_session",

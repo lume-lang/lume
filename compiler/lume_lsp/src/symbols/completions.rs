@@ -63,7 +63,7 @@ pub(crate) fn completions_at(engine: &Engine, ctx: CompletionContext) -> Option<
 }
 
 fn field_completions_of(package: &CheckedPackage, node: NodeId) -> impl Iterator<Item = lsp_types::CompletionItem> {
-    let fields_on_node = package.tcx.fields_on(node).unwrap_or_default();
+    let fields_on_node = package.tcx.hir_fields_on(node).unwrap_or_default();
 
     fields_on_node.iter().map(|field| {
         let field_name = field.name.to_string();
