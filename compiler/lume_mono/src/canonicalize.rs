@@ -105,14 +105,10 @@ impl lume_mir::walk::VisitorMut for UpdateCallInstance<'_, '_> {
                 "update_call_site"
             );
 
-            let new_name = inst_instance
-                .display(self.mcx.tcx())
-                .to_string()
-                .trim_end_matches(['(', ')'])
-                .to_string();
+            let new_name = inst_instance.display(self.mcx.tcx()).to_string();
+            *name = new_name.intern();
 
             *instance = inst_instance;
-            *name = new_name.intern();
         }
     }
 }
