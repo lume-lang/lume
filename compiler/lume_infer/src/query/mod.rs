@@ -137,7 +137,7 @@ impl TyInferCtx {
                     return Err(self.missing_type_err(&e.path, e.path.location()));
                 };
 
-                let type_parameters = self.available_type_params_at(e.id);
+                let type_parameters = self.all_type_parameters_of(e.id);
 
                 let type_args = self.mk_type_refs_from(e.path.bound_types(), e.id)?;
                 let instantiated = self.instantiate_type_from(&ty_opt, &type_parameters, &type_args);
@@ -182,7 +182,7 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(expr.callee)?;
 
-                let Some(field) = self.field_on(callee_type.instance_of, &expr.name.name)? else {
+                let Some(field) = self.hir_field_on(callee_type.instance_of, &expr.name.name)? else {
                     let ty = self.tdb().type_(callee_type.instance_of).unwrap();
 
                     return Err(crate::errors::MissingField {
@@ -194,7 +194,7 @@ impl TyInferCtx {
                     .into());
                 };
 
-                let type_params = self.available_type_params_at(callee_type.instance_of);
+                let type_params = self.all_type_parameters_of(callee_type.instance_of);
                 let field_type = self.mk_type_ref_from(&field.field_type, callee_type.instance_of)?;
 
                 self.instantiate_type_from(&field_type, &type_params, &callee_type.bound_types)
@@ -394,7 +394,7 @@ impl TyInferCtx {
     /// [`lume_hir::If`] statement.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn type_of_if_conditional(&self, cond: &lume_hir::If) -> Result<TypeRef> {
+    fn type_of_if_conditional(&self, cond: &lume_hir::If) -> Result<TypeRef> {
         let primary_case = cond.cases.first().unwrap();
 
         self.type_of_condition(primary_case)
@@ -403,7 +403,7 @@ impl TyInferCtx {
     /// Returns the *type* of the given [`lume_hir::Condition`].
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn type_of_condition(&self, cond: &lume_hir::Condition) -> Result<TypeRef> {
+    fn type_of_condition(&self, cond: &lume_hir::Condition) -> Result<TypeRef> {
         self.type_of_block(&cond.block)
     }
 
@@ -428,7 +428,7 @@ impl TyInferCtx {
     /// Returns the *type* of the given [`lume_hir::Return`].
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn type_of_return(&self, stmt: &lume_hir::Return) -> Result<TypeRef> {
+    fn type_of_return(&self, stmt: &lume_hir::Return) -> Result<TypeRef> {
         if let Some(expr) = stmt.value {
             self.type_of(expr)
         } else {
@@ -460,7 +460,7 @@ impl TyInferCtx {
     /// Returns the return type of the given [`lume_hir::CallExpression`].
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip_all, fields(expr = %expr.name()), err, ret)]
-    pub fn type_of_call(&self, expr: lume_hir::CallExpression) -> Result<TypeRef> {
+    fn type_of_call(&self, expr: lume_hir::CallExpression) -> Result<TypeRef> {
         let callable = self.probe_callable(expr)?;
         let signature = self.instantiated_signature_of(callable, expr)?;
 
@@ -558,7 +558,7 @@ impl TyInferCtx {
     /// given name.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn type_of_variant_field(&self, variant_name: &Path, field: usize) -> Result<TypeRef> {
+    fn type_of_variant_field(&self, variant_name: &Path, field: usize) -> Result<TypeRef> {
         let enum_def = self.enum_def_with_name(&variant_name.clone().parent().unwrap())?;
         let enum_case_def = self.enum_case_with_name(variant_name)?;
 
@@ -684,36 +684,6 @@ impl TyInferCtx {
             name: variant.clone(),
         }
         .into())
-    }
-
-    /// Returns the enum case definitions, which is being referred to by the
-    /// given expression.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`Err`] if the no expression could be find with the given ID, or
-    /// if the expression type wasn't a reference to an enum definition.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn cases_of_enum_expr(&self, id: NodeId) -> Result<&[lume_hir::EnumDefinitionCase]> {
-        self.enum_cases_of(self.type_of(id)?.instance_of)
-    }
-
-    /// Returns the enum case definition, which is being referred to by the
-    /// given `Variant` expression.
-    ///
-    /// # Panics
-    ///
-    /// This method will panic if the given expression is not a `Variant`
-    /// expression.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn case_of_enum_expr(&self, id: NodeId) -> Result<&lume_hir::EnumDefinitionCase> {
-        let expr = self.hir_expect_expr(id);
-
-        if let lume_hir::ExpressionKind::Variant(var) = &expr.kind {
-            self.enum_case_with_name(&var.name)
-        } else {
-            panic!("bug!: attempted to find enum variant of non-variant expression")
-        }
     }
 
     /// Gets the case zero-indexed index of the variant within the given enum
@@ -1036,7 +1006,7 @@ impl TyInferCtx {
             return Ok(None);
         };
 
-        if let Some(type_field) = self.field_on(constructed_type.instance_of, &field.name.name)? {
+        if let Some(type_field) = self.hir_field_on(constructed_type.instance_of, &field.name.name)? {
             let field_type = self.mk_type_ref_from(&type_field.field_type, constructed_type.instance_of)?;
 
             return Ok(Some(field_type));
@@ -1206,30 +1176,6 @@ impl TyInferCtx {
             lume_hir::LiteralKind::Float(lit) => lit.kind.is_none(),
             _ => false,
         }
-    }
-
-    /// Returns a slice of all [`lume_hir::Field`]s on the `struct` definition
-    /// with the given ID.
-    ///
-    /// If the given ID does not refer to a struct definition, returns an empty
-    /// slice.
-    pub fn fields_on(&self, id: NodeId) -> Result<&[lume_hir::Field]> {
-        let Some(Node::Type(lume_hir::TypeDefinition::Struct(struct_def))) = self.hir_node(id) else {
-            return Ok(&[]);
-        };
-
-        Ok(&struct_def.fields)
-    }
-
-    /// Returns the [`lume_hir::Field`] on the `struct` definition
-    /// with the given ID, which has the name `name`.
-    ///
-    /// If the given ID does not refer to a struct definition, returns an empty
-    /// slice. If no such field was found on the `struct` definition, returns
-    /// [`None`].
-    #[tracing::instrument(level = "Trace", skip_all)]
-    pub fn field_on(&self, id: NodeId, name: &str) -> Result<Option<&lume_hir::Field>> {
-        Ok(self.fields_on(id)?.iter().find(|field| field.name.as_str() == name))
     }
 
     /// Determines whether unsafe code is allowed in the given package.

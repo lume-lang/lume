@@ -179,7 +179,7 @@ impl TyInferCtx {
     /// from the given definition.
     #[tracing::instrument(level = "DEBUG", skip_all, fields(ty = %ty.name, location = %ty.location, %def), err)]
     pub fn mk_type_ref_from(&self, ty: &lume_hir::Type, def: NodeId) -> Result<TypeRef> {
-        let type_parameters_id = self.available_type_params_at(def);
+        let type_parameters_id = self.all_type_parameters_of(def);
         let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.mk_type_ref_generic(ty, &type_parameters)
@@ -196,7 +196,7 @@ impl TyInferCtx {
     /// available from the given definition.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub fn mk_type_refs_from(&self, ty: &[lume_hir::Type], def: NodeId) -> Result<Vec<TypeRef>> {
-        let type_parameters_id = self.available_type_params_at(def);
+        let type_parameters_id = self.all_type_parameters_of(def);
         let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.mk_type_refs_generic(ty, &type_parameters)
@@ -293,7 +293,7 @@ impl TyInferCtx {
     /// references to type IDs.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub fn find_type_ref_from(&self, name: &Path, def: NodeId) -> Result<Option<TypeRef>> {
-        let type_parameters_id = self.available_type_params_at(def);
+        let type_parameters_id = self.all_type_parameters_of(def);
         let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.find_type_ref_generic(name, &type_parameters)
@@ -358,7 +358,7 @@ impl TyInferCtx {
 
         // If `to` refers to a type parameter, check if `from` satisfies the
         // constraints.
-        if let Some(to_arg) = self.as_type_parameter(to)? {
+        if let Some(to_arg) = self.as_type_parameter(to.instance_of) {
             tracing::debug!("checking type parameter constraints: {from:?} => {to:?}");
 
             for constraint in &to_arg.constraints {

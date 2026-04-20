@@ -112,7 +112,7 @@ impl LowerFunction<'_> {
             .map(|field| (field.name.name.clone(), field.clone()))
             .collect::<IndexMap<_, _>>();
 
-        let fields = self.lower.tcx.fields_on(constructed_type.instance_of)?;
+        let fields = self.lower.tcx.hir_fields_on(constructed_type.instance_of)?;
 
         for field in fields {
             if constructed.contains_key(&field.name.name) {
@@ -434,7 +434,7 @@ impl LowerFunction<'_> {
         let field = self
             .lower
             .tcx
-            .field_on(callee_ty.instance_of, expr.name.as_str())?
+            .hir_field_on(callee_ty.instance_of, expr.name.as_str())?
             .unwrap()
             .clone();
 

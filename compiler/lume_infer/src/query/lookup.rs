@@ -8,6 +8,7 @@ use crate::TyInferCtx;
 
 impl TyInferCtx {
     /// Gets the parent type of the given node.
+    #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip_all, fields(%id), err, ret)]
     pub fn parent_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         for parent in self.hir_parent_iter(id) {
@@ -36,7 +37,7 @@ impl TyInferCtx {
     }
 
     /// Gets the parent type of the given field.
-    #[tracing::instrument(level = "Trace", skip_all)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn owning_struct_of_field(&self, field_id: NodeId) -> Result<&lume_hir::StructDefinition> {
         for parent in self.hir_parent_iter(field_id) {
             if let lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(struct_def)) = parent {
@@ -53,7 +54,7 @@ impl TyInferCtx {
     /// Attempts to find the closest switch expression from the given
     /// definition.
     #[track_caller]
-    #[tracing::instrument(level = "Trace", skip_all)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn switch_expr_at(&self, source: NodeId) -> Option<&lume_hir::Switch> {
         for parent in self.hir_parent_iter(source) {
             let lume_hir::Node::Expression(expr) = parent else {
@@ -70,7 +71,7 @@ impl TyInferCtx {
 
     /// Attempts to find the closest loop from the given definition.
     #[track_caller]
-    #[tracing::instrument(level = "Trace", skip_all)]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn loop_target_at(&self, source: NodeId) -> Option<&lume_hir::Statement> {
         for parent in self.hir_parent_iter(source) {
             let lume_hir::Node::Statement(stmt) = parent else {
@@ -85,51 +86,12 @@ impl TyInferCtx {
         None
     }
 
-    /// Returns the parameters available for the [`lume_hir::Node`] with the
-    /// given ID.
-    #[cached_query]
-    #[tracing::instrument(level = "Trace", skip_all)]
-    pub fn available_params_at(&self, def: NodeId) -> Vec<lume_hir::Parameter> {
-        let mut acc = Vec::new();
-
-        for parent in self.hir_parent_iter(def) {
-            let params = match parent {
-                lume_hir::Node::Function(func) => &func.signature.parameters,
-                lume_hir::Node::Method(method) => &method.signature.parameters,
-                lume_hir::Node::TraitMethodDef(method) => &method.signature.parameters,
-                lume_hir::Node::TraitMethodImpl(method) => &method.signature.parameters,
-                _ => continue,
-            };
-
-            acc.extend_from_slice(params);
-        }
-
-        acc
-    }
-
-    /// Returns all the type parameters available for the [`lume_hir::Node`]
-    /// with the given ID.
-    #[tracing::instrument(level = "Trace", skip_all)]
-    pub fn available_type_params_at(&self, def: NodeId) -> Vec<NodeId> {
-        let mut acc = Vec::new();
-
-        for parent in self.hir_parent_iter(def) {
-            let Ok(type_params) = self.type_params_of(parent.id()) else {
-                continue;
-            };
-
-            acc.extend_from_slice(type_params);
-        }
-
-        acc
-    }
-
     /// Determines whether the given node has any generic parameters within it's
     /// reach.
     #[tracing::instrument(level = "TRACE", skip_all, ret)]
     pub fn is_node_generic(&self, id: NodeId) -> bool {
         for parent in self.hir_parent_iter(id) {
-            let Ok(type_params) = self.type_params_of(parent.id()) else {
+            let Ok(type_params) = self.type_parameters_of(parent.id()) else {
                 continue;
             };
 
@@ -162,7 +124,7 @@ impl TyInferCtx {
     /// If no matching ancestor is found, returns [`Err`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn return_type_within(&self, def: NodeId) -> Result<lume_types::TypeRef> {
-        let type_parameters_id = self.available_type_params_at(def);
+        let type_parameters_id = self.all_type_parameters_of(def);
         let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         for parent in self.hir_parent_iter(def) {
