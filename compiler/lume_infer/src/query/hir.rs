@@ -437,14 +437,10 @@ impl TyInferCtx {
     /// Returns the canonical type parameter ID of the given type parameter.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn hir_canonical_type_of(
-        &self,
-        type_parameter_id: lume_hir::TypeId,
-        owner: NodeId,
-    ) -> Result<Option<lume_hir::TypeId>> {
+    pub fn hir_canonical_type_of(&self, type_parameter_id: NodeId, owner: NodeId) -> Result<Option<lume_hir::TypeId>> {
         tracing::trace!(
             "{:+} => {:+}",
-            self.hir_path_of_node(type_parameter_id.as_node_id()),
+            self.hir_path_of_node(type_parameter_id),
             self.hir_path_of_node(owner),
         );
 
@@ -454,7 +450,7 @@ impl TyInferCtx {
                 | lume_hir::TypeDefinition::Enum(_)
                 | lume_hir::TypeDefinition::Trait(_),
             )
-            | Node::Function(_) => Ok(Some(type_parameter_id)),
+            | Node::Function(_) => Ok(Some(lume_hir::TypeId::from(type_parameter_id))),
             Node::Impl(implementation) => {
                 let Some(param_idx) = implementation
                     .target

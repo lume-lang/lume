@@ -63,7 +63,7 @@ impl TyInferCtx {
                     return type_parameter_id;
                 };
 
-                match self.hir_canonical_type_of(TypeId::from(type_parameter_id), owner.id()) {
+                match self.hir_canonical_type_of(type_parameter_id, owner.id()) {
                     Ok(Some(canonical)) => canonical.as_node_id(),
                     _ => type_parameter_id,
                 }
