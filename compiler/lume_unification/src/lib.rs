@@ -122,7 +122,7 @@ impl Context for TyInferCtx {
     fn fresh_var(&mut self, owner: Self::ID, binding: Self::ID, location: Location) -> TypeVar<Self> {
         let id = NodeId::from_usize(self.hir().package, self.hir().nodes.len() + (usize::MAX / 2));
         let canonical = self
-            .hir_canonical_type_of(binding.into(), owner)
+            .hir_canonical_type_of(binding, owner)
             .map(|type_id| type_id.map_or(binding, |id| id.as_node_id()))
             .unwrap();
 
