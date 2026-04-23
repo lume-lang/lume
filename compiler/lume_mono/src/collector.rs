@@ -31,10 +31,7 @@ fn collect_roots(mcx: &MirQueryCtx<'_>) -> Result<IndexSet<Instance>> {
     //
     // TODO: ensure the signature of the entrypoint is as expected.
     if let Some(main_fn) = tcx.entrypoint() {
-        worklist.insert(Instance {
-            id: main_fn.id,
-            generics: Some(Generics::default()),
-        });
+        worklist.insert(Instance::from(main_fn.id));
     }
 
     // Add all public, concrete (non-generic) functions and methods into the root
@@ -44,10 +41,7 @@ fn collect_roots(mcx: &MirQueryCtx<'_>) -> Result<IndexSet<Instance>> {
         .values()
         .filter(|func| !func.signature.internal && !func.signature.external && !tcx.is_node_generic(func.id))
     {
-        worklist.insert(Instance {
-            id: mir_func.id,
-            generics: Some(Generics::default()),
-        });
+        worklist.insert(Instance::from(mir_func.id));
     }
 
     let mut visitor = CallVisitor::new(tcx);
@@ -75,13 +69,10 @@ fn collect_roots(mcx: &MirQueryCtx<'_>) -> Result<IndexSet<Instance>> {
                 })
                 .collect::<Vec<_>>();
 
-            let call_instance = Instance {
-                id: callable_id,
-                generics: Some(Generics {
-                    ids: generic_params,
-                    types: generic_args,
-                }),
-            };
+            let call_instance = Instance::new(callable_id, Generics {
+                ids: generic_params,
+                types: generic_args,
+            });
 
             tracing::trace!(
                 from = tcx.hir_path_of_node(workitem.id).to_wide_string(),
