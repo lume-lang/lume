@@ -120,7 +120,7 @@ impl Builder<'_, '_> {
     pub(crate) fn declare_var(&mut self, block: BasicBlockId, variable: lume_tir::VariableId, register: RegisterId) {
         let variable = lume_mir::VariableId(variable.0);
 
-        tracing::debug!("[{}] declaring {variable} in {block}.{register}", self.func.name);
+        tracing::debug!("declaring {variable} in {block}.{register}");
 
         self.func.variables.define(block, register, variable);
     }
@@ -130,7 +130,7 @@ impl Builder<'_, '_> {
         let block = self.func.current_block().id;
         let var = lume_mir::VariableId(var.0);
 
-        tracing::debug!("[{}] referencing {var} in {block}", self.func.name);
+        tracing::debug!("referencing {var} in {block}");
 
         self.func.variables.reference(block, var)
     }
@@ -235,6 +235,8 @@ impl Builder<'_, '_> {
         if !self.func.current_block().has_terminator() {
             self.add_edge_from_current(block);
         }
+
+        tracing::debug!(%block, "branch_to");
 
         self.func.current_block_mut().branch(block, location);
     }

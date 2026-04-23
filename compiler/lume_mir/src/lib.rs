@@ -9,12 +9,13 @@ pub use fmt::*;
 use indexmap::{IndexMap, IndexSet};
 pub use lume_infer::instance::*;
 use lume_session::{Options, Package};
-use lume_span::{Interned, Location, NodeId, SourceFile};
-use lume_type_metadata::{StaticMetadata, TypeMetadata};
+use lume_span::{Internable, Interned, Location, NodeId, SourceFile};
+use lume_type_metadata::{StaticMetadata, TypeMetadata, TypeMetadataId};
 use lume_types::TypeRef;
 use serde::{Deserialize, Serialize};
 
 pub const POINTER_SIZE: usize = std::mem::size_of::<*const u32>();
+pub const POINTER_ALIGNMENT: usize = std::mem::align_of::<usize>();
 
 #[allow(clippy::cast_possible_truncation, reason = "infallible")]
 pub const POINTER_BITS: u8 = std::mem::size_of::<*const u32>() as u8 * 8;
@@ -219,7 +220,7 @@ pub enum ParameterKind {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Function {
     pub id: NodeId,
-    pub instance: Option<Instance>,
+    pub instance: Instance,
 
     pub name: Interned<String>,
     pub mangled_name: String,
@@ -241,7 +242,7 @@ impl Function {
     pub fn new(id: NodeId, name: Interned<String>, mangled_name: String, location: Location) -> Self {
         Function {
             id,
-            instance: None,
+            instance: Instance::from(id),
             name,
             mangled_name,
             registers: Registers::default(),

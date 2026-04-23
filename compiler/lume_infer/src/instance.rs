@@ -14,6 +14,17 @@ pub struct Instance {
 }
 
 impl Instance {
+    pub fn new(id: NodeId, generics: Generics) -> Self {
+        if generics.is_empty() {
+            return Instance::from(id);
+        }
+
+        Self {
+            id,
+            generics: Some(generics),
+        }
+    }
+
     #[inline]
     pub fn as_usize(&self) -> usize {
         lume_hash::portable_hash(self)

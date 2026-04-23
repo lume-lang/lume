@@ -2,11 +2,11 @@ use indexmap::IndexMap;
 use lume_mir_queries::MirQueryCtx;
 use lume_span::Internable;
 
-use crate::Instance;
+use crate::{Instance, MonoItems};
 
 #[tracing::instrument(level = "DEBUG", skip_all, fields(package = mcx.tcx().current_package().name))]
-pub fn canonicalize(mcx: &mut MirQueryCtx<'_>) {
-    let mono_items = crate::collect(mcx).unwrap();
+pub fn canonicalize(mcx: &mut MirQueryCtx<'_>) -> MonoItems {
+    let mono_items = crate::collect(mcx).expect("failed to collect mono items");
     let functions = mcx.mir().functions.values().map(|func| func.id).collect::<Vec<_>>();
 
     for func_id in functions {
@@ -28,6 +28,18 @@ pub fn canonicalize(mcx: &mut MirQueryCtx<'_>) {
         }
 
         if !mono_functions.is_empty() {
+            if tracing::enabled!(tracing::Level::DEBUG) {
+                tracing::debug!(
+                    base = %base_instance.display(mcx.tcx()),
+                    inst = %mono_functions
+                        .keys()
+                        .map(|inst| format!("{inst:?}").to_string())
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    "monomorphized_function",
+                );
+            }
+
             mcx.mir_mut().functions.shift_remove(&base_instance);
             mcx.mir_mut().functions.extend(mono_functions);
         }
@@ -39,12 +51,13 @@ pub fn canonicalize(mcx: &mut MirQueryCtx<'_>) {
     };
 
     let mut replacement_funcs = mcx.mir().functions.clone();
-
     for func in replacement_funcs.values_mut() {
         lume_mir::walk::walk_mut(func, &mut visitor);
     }
 
     mcx.mir_mut().functions.extend(replacement_funcs);
+
+    mono_items
 }
 
 fn canonicalize_body(
@@ -57,7 +70,7 @@ fn canonicalize_body(
     };
 
     let mut func = func.clone();
-    func.instance = Some(instance.to_owned());
+    func.instance = instance.clone();
 
     let mangle_version = lume_mangle::Version::default();
     let mangle_instance = lume_mangle::Instance {
@@ -79,7 +92,7 @@ struct UpdateCallInstance<'mcx, 'tcx> {
 
 impl lume_mir::walk::VisitorMut for UpdateCallInstance<'_, '_> {
     fn visit_function(&mut self, func: &mut lume_mir::Function) {
-        func.instance.clone_into(&mut self.function_instance);
+        self.function_instance = Some(func.instance.clone());
     }
 
     fn visit_declaration(&mut self, decl: &mut lume_mir::Declaration) {
