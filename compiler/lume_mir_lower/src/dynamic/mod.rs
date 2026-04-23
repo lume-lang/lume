@@ -38,7 +38,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
     /// Returns the signature of the target function.
     fn target_signature(&self) -> Signature {
         let mut signature = self.signature.clone();
-        signature.return_type = self.builder.function_ret_type(&Instance::from(self.function.id));
+        signature.return_type = self.builder.lower_type(&self.function.return_type);
 
         signature
     }
