@@ -11,12 +11,12 @@ pub enum Optional<T> {
 
 impl<T> Optional<T> {
     /// Returns `true` if the contained value is [`Some`].
-    pub fn is_some(self) -> Boolean {
+    pub fn is_some?(self) -> Boolean {
         self is Optional<T>::Some(..)
     }
 
     /// Returns `true` if the contained value is [`None`].
-    pub fn is_none(self) -> Boolean {
+    pub fn is_none?(self) -> Boolean {
         self is Optional<T>::None
     }
 
