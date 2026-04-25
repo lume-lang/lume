@@ -9,9 +9,9 @@ pub struct BuildOptions {
     #[arg(value_name = "DIR", value_hint = ValueHint::DirPath)]
     pub path: Option<PathBuf>,
 
-    /// Whether to disable incremental compilation.
+    /// Whether to allow incremental compilation.
     #[arg(long)]
-    pub no_incremental: bool,
+    pub incremental: bool,
 
     /// Generate source-level debug information
     #[arg(
@@ -130,7 +130,7 @@ impl BuildOptions {
         lume_session::Options {
             print_type_context: self.dev.print_type_ctx,
             export_private_nodes: false,
-            enable_incremental: !self.no_incremental,
+            enable_incremental: self.incremental,
             optimize: match self.optimize.as_str() {
                 "0" => OptimizationLevel::O0,
                 "1" => OptimizationLevel::O1,

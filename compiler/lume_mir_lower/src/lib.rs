@@ -36,28 +36,39 @@ impl<'tcx> ModuleTransformer<'tcx> {
         // This ensures that any functions called *before* they are defined
         // within the source file still resolve correctly.
         for func in functions {
-            let signature = self.signature_of(func);
+            let instance = lume_mir::Instance::from(func.id);
 
-            let mangle_version = lume_mangle::Version::default();
-            let mangled_name = lume_mangle::mangled(self.mcx.tcx(), func.id, mangle_version).unwrap();
+            tracing::debug_span!("declare_function", instance = %instance.display(self.mcx.tcx())).in_scope(|| {
+                let signature = self.signature_of(func);
 
-            let mut func = Function::new(func.id, func.name_as_str().intern(), mangled_name, func.location);
-            func.signature = signature;
+                let mangle_version = lume_mangle::Version::default();
+                let mangle_instance = lume_mangle::Instance::from(func.id);
+                let mangled_name = lume_mangle::mangled(self.mcx.tcx(), &mangle_instance, mangle_version).unwrap();
 
-            // Offset the register counter by the number of parameters.
-            for parameter in &func.signature.parameters {
-                func.registers.allocate_param(parameter.ty.clone());
-            }
+                let mut func = Function::new(func.id, func.name_as_str().intern(), mangled_name, func.location);
+                func.signature = signature;
 
-            self.mcx.mir_mut().functions.insert(func.id, func);
+                // Offset the register counter by the number of parameters.
+                for parameter in &func.signature.parameters {
+                    func.registers.allocate_param(parameter.ty.clone());
+                }
+
+                self.mcx.mir_mut().functions.insert(instance, func);
+            });
         }
 
-        for func in functions {
-            let func_decl = self.mcx.mir().functions.get(&func.id).unwrap().clone();
-            let builder = builder::Builder::create_from(&self.mcx, func_decl);
+        let mono_items = lume_mono::canonicalize(&mut self.mcx);
 
-            let defined_func = builder::lower::lower_function(builder, func);
-            self.mcx.mir_mut().functions.insert(func.id, defined_func);
+        for func in functions {
+            for instance in mono_items.all_of(func.id) {
+                tracing::debug_span!("lowering_mono", instance = %instance.display(self.mcx.tcx())).in_scope(|| {
+                    let func_decl = self.mcx.mir().functions.get(instance).unwrap().clone();
+                    let builder = builder::Builder::create_from(&self.mcx, func_decl);
+
+                    let defined_func = builder::lower::lower_function(builder, func);
+                    self.mcx.mir_mut().functions.insert(instance.clone(), defined_func);
+                });
+            }
         }
 
         self.mcx.take_mir()

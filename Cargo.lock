@@ -1951,11 +1951,13 @@ dependencies = [
  "lume_architect",
  "lume_errors",
  "lume_errors_test",
+ "lume_hash",
  "lume_hir",
  "lume_hir_lower",
  "lume_session",
  "lume_span",
  "lume_types",
+ "serde",
  "tracing",
 ]
 
@@ -2043,6 +2045,7 @@ name = "lume_mir"
 version = "0.1.3"
 dependencies = [
  "indexmap",
+ "lume_infer",
  "lume_session",
  "lume_span",
  "lume_type_metadata",
@@ -2060,6 +2063,7 @@ dependencies = [
  "lume_mangle",
  "lume_mir",
  "lume_mir_queries",
+ "lume_mono",
  "lume_session",
  "lume_span",
  "lume_tir",
@@ -2091,6 +2095,25 @@ dependencies = [
  "lume_session",
  "lume_span",
  "lume_typech",
+ "lume_types",
+ "tracing",
+]
+
+[[package]]
+name = "lume_mono"
+version = "0.1.3"
+dependencies = [
+ "indexmap",
+ "lume_errors",
+ "lume_hir",
+ "lume_infer",
+ "lume_mangle",
+ "lume_mir",
+ "lume_mir_queries",
+ "lume_session",
+ "lume_span",
+ "lume_typech",
+ "lume_types",
  "tracing",
 ]
 

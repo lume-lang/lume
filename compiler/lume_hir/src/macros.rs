@@ -51,12 +51,12 @@ macro_rules! hir_std_type_path {
     };
 }
 
-/// Creates a new HIR path to a HIR method, on a named HIR type.
+/// Creates a new HIR path to a HIR function, on a named HIR type.
 #[macro_export]
-macro_rules! hir_method_path {
+macro_rules! hir_func_path {
     ($name:ident) => {
         $crate::Path::rooted(
-            $crate::PathSegment::ty(stringify!($name)),
+            $crate::PathSegment::callable(stringify!($name)),
         )
     };
     ($($namespace:ident)::+, $name:ident) => {
@@ -66,7 +66,7 @@ macro_rules! hir_method_path {
                     $crate::PathSegment::namespace(stringify!($namespace)),
                 ),*
             ]),
-            $crate::PathSegment::ty(stringify!($name)),
+            $crate::PathSegment::callable(stringify!($name)),
         )
     };
 }

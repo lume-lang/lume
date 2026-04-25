@@ -133,7 +133,7 @@ struct LocationVisitor {
     symbols: IndexSet<SymbolEntry>,
 }
 
-impl Visitor for LocationVisitor {
+impl Visitor<'_> for LocationVisitor {
     fn visit_type(&mut self, ty: &lume_hir::Type) -> Result<()> {
         self.symbols.insert_sorted(SymbolEntry {
             kind: SymbolKind::Type { name: ty.name.clone() },

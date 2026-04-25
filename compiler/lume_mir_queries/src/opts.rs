@@ -12,14 +12,17 @@ impl MirQueryCtx<'_> {
     #[inline]
     pub fn should_dump_func(&self, func: &Function, pass: Option<&str>) -> bool {
         let opts = &self.gcx().session.options;
+        let func_name = func.name.clone_inner();
 
-        // Defines whether all functions should be dumped.
+        // Defines whether all functions should be dumped...
         let include_all_funcs = opts.dump_mir.is_some() && opts.dump_mir_func.is_empty();
+
+        // ...and whether this specific function should be dumped.
+        let include_this_func = opts.dump_mir_func.iter().any(|name| func_name.starts_with(name));
 
         // Determines whether the function should be dumped - but only if the
         // pass isn't rejected!
-        let func_name = func.name.clone_inner();
-        let should_dump_function = include_all_funcs || opts.dump_mir_func.contains(&func_name);
+        let should_dump_function = include_all_funcs || include_this_func;
 
         match (opts.dump_mir.as_ref(), pass) {
             // If `--dump-mir` was passed without any specific passes, return
@@ -47,7 +50,7 @@ impl MirQueryCtx<'_> {
 
             // If outside of any MIR pass when `--dump-mir-func` is passed,
             // only dump the requested functions.
-            (_, None) if !include_all_funcs => opts.dump_mir_func.contains(&func_name),
+            (_, None) if !include_all_funcs => include_this_func,
 
             // If neither `--dump-mir` nor `--dump-mir-func` was passed, dump nothing.
             (_, _) => false,

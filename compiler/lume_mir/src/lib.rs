@@ -1,4 +1,5 @@
 pub mod fmt;
+pub mod walk;
 
 use std::collections::HashMap;
 use std::fmt::Display;
@@ -6,13 +7,15 @@ use std::hash::Hash;
 
 pub use fmt::*;
 use indexmap::{IndexMap, IndexSet};
+pub use lume_infer::instance::*;
 use lume_session::{Options, Package};
-use lume_span::{Interned, Location, NodeId, SourceFile};
-use lume_type_metadata::{StaticMetadata, TypeMetadata};
+use lume_span::{Internable, Interned, Location, NodeId, SourceFile};
+use lume_type_metadata::{StaticMetadata, TypeMetadata, TypeMetadataId};
 use lume_types::TypeRef;
 use serde::{Deserialize, Serialize};
 
 pub const POINTER_SIZE: usize = std::mem::size_of::<*const u32>();
+pub const POINTER_ALIGNMENT: usize = std::mem::align_of::<usize>();
 
 #[allow(clippy::cast_possible_truncation, reason = "infallible")]
 pub const POINTER_BITS: u8 = std::mem::size_of::<*const u32>() as u8 * 8;
@@ -27,7 +30,7 @@ pub struct ModuleMap {
 
     pub options: Options,
     pub metadata: StaticMetadata,
-    pub functions: IndexMap<NodeId, Function>,
+    pub functions: IndexMap<Instance, Function>,
 }
 
 impl ModuleMap {
@@ -47,8 +50,9 @@ impl ModuleMap {
     /// # Panics
     ///
     /// Panics if the given ID is invalid or out of bounds.
+    #[track_caller]
     pub fn function(&self, id: NodeId) -> &Function {
-        self.functions.get(&id).unwrap()
+        self.functions.get(&Instance::from(id)).unwrap()
     }
 
     /// Returns a mutable reference to the function with the given ID.
@@ -56,8 +60,29 @@ impl ModuleMap {
     /// # Panics
     ///
     /// Panics if the given ID is invalid or out of bounds.
+    #[track_caller]
     pub fn function_mut(&mut self, id: NodeId) -> &mut Function {
-        self.functions.get_mut(&id).unwrap()
+        self.functions.get_mut(&Instance::from(id)).unwrap()
+    }
+
+    /// Returns a reference to the function with the given instance.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the given ID is invalid or out of bounds.
+    #[track_caller]
+    pub fn instance(&self, instance: &Instance) -> &Function {
+        self.functions.get(instance).unwrap()
+    }
+
+    /// Returns a mutable reference to the function with the given instance.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the given ID is invalid or out of bounds.
+    #[track_caller]
+    pub fn instance_mut(&'_ mut self, instance: &Instance) -> &'_ mut Function {
+        self.functions.get_mut(instance).unwrap()
     }
 
     /// Returns a reference to the entrypoint function.
@@ -195,6 +220,8 @@ pub enum ParameterKind {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Function {
     pub id: NodeId,
+    pub instance: Instance,
+
     pub name: Interned<String>,
     pub mangled_name: String,
     pub signature: Signature,
@@ -215,6 +242,7 @@ impl Function {
     pub fn new(id: NodeId, name: Interned<String>, mangled_name: String, location: Location) -> Self {
         Function {
             id,
+            instance: Instance::from(id),
             name,
             mangled_name,
             registers: Registers::default(),
@@ -1315,9 +1343,10 @@ pub enum DeclarationKind {
 
     /// Represents a call to a function.
     Call {
-        func_id: NodeId,
+        instance: Instance,
         name: Interned<String>,
         args: Vec<Operand>,
+        type_args: Vec<TypeRef>,
     },
 
     /// Represents an indirect call to a function.

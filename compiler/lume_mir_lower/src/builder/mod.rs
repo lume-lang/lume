@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use lume_mir::*;
 use lume_mir_queries::MirQueryCtx;
-use lume_span::{Location, NodeId};
+use lume_span::Location;
 use lume_type_metadata::TypeMetadataId;
 use lume_typech::TyCheckCtx;
 use lume_types::TypeRef;
@@ -48,9 +48,10 @@ impl<'mir, 'tcx> Builder<'mir, 'tcx> {
         self.mcx.tcx()
     }
 
-    /// Gets the MIR function with the given ID.
-    pub(crate) fn function(&self, func_id: NodeId) -> &Function {
-        self.mcx.mir().function(func_id)
+    /// Gets the MIR function with the given instance.
+    #[track_caller]
+    pub(crate) fn instance(&self, instance: &Instance) -> &Function {
+        self.mcx.mir().instance(instance)
     }
 
     /// Creates a new block in the function.
@@ -119,7 +120,7 @@ impl Builder<'_, '_> {
     pub(crate) fn declare_var(&mut self, block: BasicBlockId, variable: lume_tir::VariableId, register: RegisterId) {
         let variable = lume_mir::VariableId(variable.0);
 
-        tracing::debug!("[{}] declaring {variable} in {block}.{register}", self.func.name);
+        tracing::debug!("declaring {variable} in {block}.{register}");
 
         self.func.variables.define(block, register, variable);
     }
@@ -129,7 +130,7 @@ impl Builder<'_, '_> {
         let block = self.func.current_block().id;
         let var = lume_mir::VariableId(var.0);
 
-        tracing::debug!("[{}] referencing {var} in {block}", self.func.name);
+        tracing::debug!("referencing {var} in {block}");
 
         self.func.variables.reference(block, var)
     }
@@ -234,6 +235,8 @@ impl Builder<'_, '_> {
         if !self.func.current_block().has_terminator() {
             self.add_edge_from_current(block);
         }
+
+        tracing::debug!(%block, "branch_to");
 
         self.func.current_block_mut().branch(block, location);
     }

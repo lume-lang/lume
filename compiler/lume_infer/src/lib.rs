@@ -7,14 +7,17 @@ use error_snippet::Result;
 use lume_architect::DatabaseContext;
 use lume_errors::{DiagCtx, Error};
 use lume_hir::{Path, TypeParameter};
+use lume_session::Package;
 use lume_span::*;
 use lume_types::{FunctionSig, TyCtx, TypeDatabaseContext, TypeRef};
 
 mod define;
 pub mod errors;
+pub mod instance;
 pub mod query;
 pub mod stringify;
 
+pub use instance::*;
 pub use stringify::*;
 
 #[cfg(test)]
@@ -95,6 +98,11 @@ impl TyInferCtx {
         self.tcx.dcx()
     }
 
+    /// Returns a reference to the current package.
+    pub fn current_package(&self) -> &Package {
+        self.package(self.hir().package).unwrap()
+    }
+
     /// Defines all the different types, type parameters and type constraints
     /// within the HIR maps into the type database.
     ///
@@ -171,7 +179,7 @@ impl TyInferCtx {
     /// from the given definition.
     #[tracing::instrument(level = "DEBUG", skip_all, fields(ty = %ty.name, location = %ty.location, %def), err)]
     pub fn mk_type_ref_from(&self, ty: &lume_hir::Type, def: NodeId) -> Result<TypeRef> {
-        let type_parameters_id = self.available_type_params_at(def);
+        let type_parameters_id = self.all_type_parameters_of(def);
         let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.mk_type_ref_generic(ty, &type_parameters)
@@ -188,7 +196,7 @@ impl TyInferCtx {
     /// available from the given definition.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub fn mk_type_refs_from(&self, ty: &[lume_hir::Type], def: NodeId) -> Result<Vec<TypeRef>> {
-        let type_parameters_id = self.available_type_params_at(def);
+        let type_parameters_id = self.all_type_parameters_of(def);
         let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.mk_type_refs_generic(ty, &type_parameters)
@@ -285,7 +293,7 @@ impl TyInferCtx {
     /// references to type IDs.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub fn find_type_ref_from(&self, name: &Path, def: NodeId) -> Result<Option<TypeRef>> {
-        let type_parameters_id = self.available_type_params_at(def);
+        let type_parameters_id = self.all_type_parameters_of(def);
         let type_parameters = self.as_type_params(&type_parameters_id)?;
 
         self.find_type_ref_generic(name, &type_parameters)
@@ -350,7 +358,7 @@ impl TyInferCtx {
 
         // If `to` refers to a type parameter, check if `from` satisfies the
         // constraints.
-        if let Some(to_arg) = self.as_type_parameter(to)? {
+        if let Some(to_arg) = self.as_type_parameter(to.instance_of) {
             tracing::debug!("checking type parameter constraints: {from:?} => {to:?}");
 
             for constraint in &to_arg.constraints {

@@ -302,6 +302,30 @@ impl TyInferCtx {
         None
     }
 
+    /// Returns a slice of all [`lume_hir::Field`]s on the `struct` definition
+    /// with the given ID.
+    ///
+    /// If the given ID does not refer to a struct definition, returns an empty
+    /// slice.
+    pub fn hir_fields_on(&self, id: NodeId) -> Result<&[lume_hir::Field]> {
+        let Some(Node::Type(lume_hir::TypeDefinition::Struct(struct_def))) = self.hir_node(id) else {
+            return Ok(&[]);
+        };
+
+        Ok(&struct_def.fields)
+    }
+
+    /// Returns the [`lume_hir::Field`] on the `struct` definition
+    /// with the given ID, which has the name `name`.
+    ///
+    /// If the given ID does not refer to a struct definition, returns an empty
+    /// slice. If no such field was found on the `struct` definition, returns
+    /// [`None`].
+    #[tracing::instrument(level = "Trace", skip_all)]
+    pub fn hir_field_on(&self, id: NodeId, name: &str) -> Result<Option<&lume_hir::Field>> {
+        Ok(self.hir_fields_on(id)?.iter().find(|field| field.name.as_str() == name))
+    }
+
     /// Attempts to get the body of the given [`NodeId`], if it contains a body.
     ///
     /// Otherwise, returns [`None`].
@@ -413,14 +437,10 @@ impl TyInferCtx {
     /// Returns the canonical type parameter ID of the given type parameter.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn hir_canonical_type_of(
-        &self,
-        type_parameter_id: lume_hir::TypeId,
-        owner: NodeId,
-    ) -> Result<Option<lume_hir::TypeId>> {
+    pub fn hir_canonical_type_of(&self, type_parameter_id: NodeId, owner: NodeId) -> Result<Option<lume_hir::TypeId>> {
         tracing::trace!(
             "{:+} => {:+}",
-            self.hir_path_of_node(type_parameter_id.as_node_id()),
+            self.hir_path_of_node(type_parameter_id),
             self.hir_path_of_node(owner),
         );
 
@@ -430,7 +450,7 @@ impl TyInferCtx {
                 | lume_hir::TypeDefinition::Enum(_)
                 | lume_hir::TypeDefinition::Trait(_),
             )
-            | Node::Function(_) => Ok(Some(type_parameter_id)),
+            | Node::Function(_) => Ok(Some(lume_hir::TypeId::from(type_parameter_id))),
             Node::Impl(implementation) => {
                 let Some(param_idx) = implementation
                     .target
@@ -442,7 +462,7 @@ impl TyInferCtx {
                 };
 
                 let target_type = self.mk_type_ref_from(&implementation.target, owner)?;
-                let type_params = self.type_params_of(target_type.instance_of)?;
+                let type_params = self.type_parameters_of(target_type.instance_of)?;
 
                 Ok(type_params.get(param_idx).map(|ty| lume_hir::TypeId::from(*ty)))
             }
@@ -454,7 +474,7 @@ impl TyInferCtx {
                     .position(|ty| ty.id == type_parameter_id)
                 {
                     let target_type = self.mk_type_ref_from(&trait_impl.target, owner)?;
-                    let type_params = self.type_params_of(target_type.instance_of)?;
+                    let type_params = self.type_parameters_of(target_type.instance_of)?;
 
                     return Ok(type_params.get(param_idx).map(|ty| lume_hir::TypeId::from(*ty)));
                 }
@@ -466,7 +486,7 @@ impl TyInferCtx {
                     .position(|ty| ty.id == type_parameter_id)
                 {
                     let target_type = self.mk_type_ref_from(&trait_impl.name, owner)?;
-                    let type_params = self.type_params_of(target_type.instance_of)?;
+                    let type_params = self.type_parameters_of(target_type.instance_of)?;
 
                     return Ok(type_params.get(param_idx).map(|ty| lume_hir::TypeId::from(*ty)));
                 }
