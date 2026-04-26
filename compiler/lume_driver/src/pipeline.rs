@@ -175,12 +175,7 @@ impl Pipeline {
                 Ok(ticx)
             })?;
 
-            let public_hir = if gcx.session.options.export_private_nodes {
-                tcx.hir().clone()
-            } else {
-                lume_metadata::partition_public_nodes(&tcx)
-            };
-
+            let public_hir = lume_metadata::partition_public_nodes(&tcx);
             public_hir.merge_into(&mut dependency_hir);
 
             maps.insert(dependency.id, StageResult::value(tcx));
