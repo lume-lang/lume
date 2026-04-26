@@ -9,10 +9,6 @@ pub struct BuildOptions {
     #[arg(value_name = "DIR", value_hint = ValueHint::DirPath)]
     pub path: Option<PathBuf>,
 
-    /// Whether to disable incremental compilation.
-    #[arg(long)]
-    pub no_incremental: bool,
-
     /// Generate source-level debug information
     #[arg(
         long,
@@ -39,6 +35,9 @@ pub struct BuildOptions {
 
     #[clap(flatten, next_help_heading = "Codegen")]
     pub codegen: CodegenOptions,
+
+    #[clap(flatten, next_help_heading = "Experimental")]
+    pub exp: ExperimentalBuildOptions,
 
     #[clap(flatten, next_help_heading = "Development")]
     pub dev: DevelopmentBuildOptions,
@@ -125,12 +124,19 @@ pub struct DevelopmentBuildOptions {
     pub dump_codegen_ir: bool,
 }
 
+#[derive(Debug, clap::Parser)]
+pub struct ExperimentalBuildOptions {
+    /// Whether to allow incremental compilation (experimental)
+    #[arg(long)]
+    pub incremental: bool,
+}
+
 impl BuildOptions {
     pub fn options(&self) -> lume_session::Options {
         lume_session::Options {
             print_type_context: self.dev.print_type_ctx,
             export_private_nodes: false,
-            enable_incremental: !self.no_incremental,
+            enable_incremental: self.exp.incremental,
             optimize: match self.optimize.as_str() {
                 "0" => OptimizationLevel::O0,
                 "1" => OptimizationLevel::O1,
