@@ -79,6 +79,10 @@ impl PackageMetadata {
 /// not included. As a result of this function, a new HIR map is created
 /// with all public items cloned into it.
 pub fn partition_public_nodes(tcx: &TyInferCtx) -> Map {
+    if tcx.gcx().session.options.export_private_nodes {
+        return tcx.hir().clone();
+    }
+
     let mut pub_hir = Map::empty(tcx.hir().package);
 
     pub_hir.nodes = tcx
