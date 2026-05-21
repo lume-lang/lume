@@ -1,17 +1,6 @@
-pub mod file;
-pub mod git;
-
-use std::collections::HashMap;
 use std::path::PathBuf;
 
-pub use file::*;
-pub use git::*;
 use lume_errors::Result;
-use lume_session::FileLoader;
-use lume_span::PackageId;
-use semver::{Version, VersionReq};
-
-use crate::parser::ManifestDependencySource;
 
 /// Defines the name of the environment variable, which defines where
 /// Arc should place local clones and/or caches of remote dependencies.
@@ -81,55 +70,4 @@ pub fn clean_local_cache_dir(dry_run: bool) -> Result<()> {
     }
 
     Ok(())
-}
-
-#[derive(Debug, Default)]
-pub struct PackageMetadata {
-    pub package_id: PackageId,
-    pub name: String,
-    pub dependencies: HashMap<Version, HashMap<ManifestDependencySource, VersionReq>>,
-}
-
-pub trait DependencyFetcher {
-    type Source;
-
-    /// Gets the metadata of the given dependency, optionally without
-    /// fetching it from the source.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if:
-    /// - the path is invalid for the implementation,
-    /// - the dependency was found, but inaccessible or invalid,
-    /// - the dependency was found, but had no matching versions,
-    /// - or some other implementation-dependent error.
-    fn metadata<L: FileLoader>(&self, source: &Self::Source, loader: &L) -> Result<PackageMetadata>;
-
-    /// Fetches the package defined at the given path and returns
-    /// the path to a local copy of the dependency root.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if:
-    /// - the path is invalid for the implementation,
-    /// - the dependency was found, but inaccessible or invalid,
-    /// - the dependency was found, but had no matching versions,
-    /// - or some other implementation-dependent error.
-    fn fetch(&self, source: &Self::Source) -> Result<PathBuf>;
-}
-
-impl ManifestDependencySource {
-    pub fn get_metadata<L: FileLoader>(&self, loader: &L) -> Result<PackageMetadata> {
-        match self {
-            ManifestDependencySource::Local(dep) => FileDependencyFetcher.metadata(dep, loader),
-            ManifestDependencySource::Git(dep) => GitDependencyFetcher.metadata(dep, loader),
-        }
-    }
-
-    pub fn fetch(&self) -> Result<PathBuf> {
-        match &self {
-            ManifestDependencySource::Local(dep) => FileDependencyFetcher.fetch(dep),
-            ManifestDependencySource::Git(dep) => GitDependencyFetcher.fetch(dep),
-        }
-    }
 }
