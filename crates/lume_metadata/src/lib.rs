@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
@@ -42,7 +43,7 @@ impl PackageHeader {
 
 #[derive(Serialize, Deserialize)]
 pub struct PackageMetadata {
-    pub header: PackageHeader,
+    pub header: LazyData<PackageHeader>,
 
     /// Source file information for all the sources directly within the package
     /// source tree.
@@ -53,20 +54,21 @@ pub struct PackageMetadata {
     /// more in the [`lume_span::source::serialize`] module.
     ///
     /// [Location]: lume_span::Location
-    pub source_map: SourceMap,
-    pub hir: Map,
+    pub source_map: LazyData<SourceMap>,
+    pub hir: LazyData<Map>,
 }
 
 impl PackageMetadata {
     /// Creates a new [`PackageMetadata`] from the given [`Package`].
     pub fn create(pkg: &Package, tcx: &TyInferCtx) -> Self {
-        let public_hir = partition_public_nodes(tcx);
         let header = PackageHeader::create_from(pkg);
+        let source_map = tcx.gcx().session.source_map.clone();
+        let public_hir = partition_public_nodes(tcx);
 
         Self {
-            header,
-            source_map: tcx.gcx().session.source_map.clone(),
-            hir: public_hir,
+            header: LazyData::new(header),
+            source_map: LazyData::new(source_map),
+            hir: LazyData::new(public_hir),
         }
     }
 }
@@ -143,7 +145,7 @@ pub fn read_metadata_header<P: AsRef<Path>>(metadata_path: P) -> Result<Option<P
         Box::new(diag) as lume_errors::Error
     })?;
 
-    Ok(Some(header))
+    Ok(Some(header.inner))
 }
 
 /// Writes the serialized representation of `metadata` to disk within the given
@@ -182,37 +184,97 @@ pub fn write_metadata_object<P: AsRef<Path>>(metadata_directory: P, metadata: &P
     Ok(())
 }
 
+pub struct LazyData<T> {
+    inner: T,
+}
+
+impl<T> LazyData<T> {
+    pub(crate) fn new(inner: T) -> Self {
+        Self { inner }
+    }
+}
+
+impl<T: Serialize> LazyData<T> {
+    /// Serializes the instance to the given writer.
+    pub(crate) fn serialize_to<W: std::io::Write>(
+        &self,
+        writer: &mut W,
+    ) -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let mut encoded = Vec::<u8>::new();
+        ciborium::into_writer(&self.inner, &mut encoded)?;
+
+        writer.write_all(&usize::to_ne_bytes(encoded.len()))?;
+        writer.write_all(&encoded)?;
+
+        Ok(())
+    }
+}
+
+impl<T: serde::de::DeserializeOwned> LazyData<T> {
+    /// Deserialize a single "item" from the given reader.
+    ///
+    /// An "item" is just any length-prefixed (as `usize`) serialized blob
+    /// within the reader.
+    ///
+    /// This function assumes the file magic has already been read from the
+    /// reader.
+    pub(crate) fn deserialize_from<R: std::io::Read>(
+        reader: &mut R,
+    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+        let mut size_bytes: [u8; _] = [0x00; size_of::<usize>()];
+        reader.read_exact(&mut size_bytes)?;
+
+        let size = usize::from_ne_bytes(size_bytes);
+        let mut buffer = vec![0x00; size];
+        reader.read_exact(&mut buffer)?;
+
+        let section = ciborium::from_reader::<T, &[u8]>(buffer.as_ref())?;
+
+        Ok(LazyData { inner: section })
+    }
+}
+
+impl<T> Deref for LazyData<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl<T: Serialize> Serialize for LazyData<T> {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.inner.serialize(serializer)
+    }
+}
+
+impl<'de, T: Deserialize<'de>> Deserialize<'de> for LazyData<T> {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        T::deserialize(deserializer).map(LazyData::new)
+    }
+}
+
 fn serialize_metadata<W: std::io::Write>(
     writer: &mut W,
     metadata: &PackageMetadata,
 ) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let mut header = Vec::<u8>::with_capacity(64);
-    ciborium::into_writer(&metadata.header, &mut header)?;
-
-    let mut source_map = Vec::<u8>::new();
-    ciborium::into_writer(&metadata.source_map, &mut source_map)?;
-
-    let mut hir = Vec::<u8>::new();
-    ciborium::into_writer(&metadata.hir, &mut hir)?;
-
     writer.write_all(METADATA_FILE_MAGIC.as_bytes())?;
-
-    writer.write_all(&usize::to_ne_bytes(header.len()))?;
-    writer.write_all(&header)?;
-
-    writer.write_all(&usize::to_ne_bytes(source_map.len()))?;
-    writer.write_all(&source_map)?;
-
-    writer.write_all(&usize::to_ne_bytes(hir.len()))?;
-    writer.write_all(&hir)?;
+    metadata.header.serialize_to(writer)?;
+    metadata.source_map.serialize_to(writer)?;
+    metadata.hir.serialize_to(writer)?;
 
     Ok(())
 }
 
-/// Deserialize only the [`PackageHeader`] object from the given reader.
-fn deserialize_metadata_header<R: std::io::Read>(
-    reader: &mut R,
-) -> std::result::Result<PackageHeader, Box<dyn std::error::Error>> {
+/// Verify the header of the given reader, and ensure it matches the magic of
+/// the metadata file magic.
+fn verify_metadata_header<R: std::io::Read>(reader: &mut R) -> std::result::Result<(), Box<dyn std::error::Error>> {
     let mut magic: [u8; _] = [0x00; METADATA_FILE_MAGIC.len()];
     reader.read_exact(&mut magic)?;
 
@@ -220,41 +282,31 @@ fn deserialize_metadata_header<R: std::io::Read>(
         return Err(Box::new(std::io::Error::other("invalid magic")));
     }
 
-    deserialize_item::<R, PackageHeader>(reader)
+    Ok(())
+}
+
+/// Deserialize only the [`PackageHeader`] object from the given reader.
+fn deserialize_metadata_header<R: std::io::Read>(
+    reader: &mut R,
+) -> std::result::Result<LazyData<PackageHeader>, Box<dyn std::error::Error>> {
+    verify_metadata_header(reader)?;
+
+    LazyData::<PackageHeader>::deserialize_from(reader)
 }
 
 /// Deserialize the whole [`PackageMetadata`] object from the given reader.
 fn deserialize_metadata<R: std::io::Read>(
     reader: &mut R,
 ) -> std::result::Result<PackageMetadata, Box<dyn std::error::Error>> {
-    let header = deserialize_metadata_header(reader)?;
-    let source_map = deserialize_item::<R, SourceMap>(reader)?;
-    let hir = deserialize_item::<R, Map>(reader)?;
+    verify_metadata_header(reader)?;
+
+    let header = LazyData::deserialize_from(reader)?;
+    let source_map = LazyData::deserialize_from(reader)?;
+    let hir = LazyData::deserialize_from(reader)?;
 
     Ok(PackageMetadata {
         header,
         source_map,
         hir,
     })
-}
-
-/// Deserialize a single "item" from the given reader.
-///
-/// An "item" is just any length-prefixed (as `usize`) serialized blob within
-/// the reader.
-///
-/// This function assumes the file magic has already been read from the reader.
-fn deserialize_item<R: std::io::Read, T: serde::de::DeserializeOwned>(
-    reader: &mut R,
-) -> std::result::Result<T, Box<dyn std::error::Error>> {
-    let mut size_bytes: [u8; _] = [0x00; size_of::<usize>()];
-    reader.read_exact(&mut size_bytes)?;
-
-    let size = usize::from_ne_bytes(size_bytes);
-    let mut buffer = vec![0x00; size];
-    reader.read_exact(&mut buffer)?;
-
-    let section = ciborium::from_reader::<T, &[u8]>(buffer.as_ref())?;
-
-    Ok(section)
 }
