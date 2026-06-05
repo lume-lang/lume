@@ -1,6 +1,7 @@
 pub(crate) mod arc;
 pub(crate) mod build;
 pub(crate) mod check;
+pub(crate) mod clean;
 pub(crate) mod fmt;
 #[cfg(feature = "lsp")]
 pub(crate) mod lsp;
@@ -13,6 +14,7 @@ use std::path::PathBuf;
 pub(crate) use arc::ArcCommand;
 pub(crate) use build::BuildCommand;
 pub(crate) use check::CheckCommand;
+pub(crate) use clean::CleanCommand;
 pub(crate) use fmt::FormatCommand;
 #[cfg(feature = "lsp")]
 pub(crate) use lsp::LanguageServerCommand;

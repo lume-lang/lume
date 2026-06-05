@@ -31,6 +31,7 @@ pub enum LumeSubcommands {
     Arc(commands::ArcCommand),
     Check(commands::CheckCommand),
     Build(commands::BuildCommand),
+    Clean(commands::CleanCommand),
     Format(commands::FormatCommand),
     New(commands::NewCommand),
     Run(commands::RunCommand),
@@ -94,6 +95,7 @@ pub fn lume_cli_entry() {
         LumeSubcommands::Arc(cmd) => cmd.run(dcx),
         LumeSubcommands::Check(cmd) => cmd.run(dcx),
         LumeSubcommands::Build(cmd) => cmd.run(dcx),
+        LumeSubcommands::Clean(cmd) => cmd.run(dcx),
         LumeSubcommands::Format(cmd) => cmd.run(dcx),
         LumeSubcommands::New(cmd) => {
             if let Err(err) = cmd.run() {
