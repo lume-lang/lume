@@ -16,13 +16,7 @@ pub struct CheckCommand {
 impl CheckCommand {
     #[allow(clippy::needless_pass_by_value)]
     pub(crate) fn run(&self, dcx: DiagCtxHandle) {
-        let input = if let Some(v) = self.build.path.as_ref() {
-            project_or_cwd(Some(v))
-        } else {
-            project_or_cwd(None)
-        };
-
-        let project_path = match input {
+        let project_path = match project_or_cwd(self.build.path.as_ref()) {
             Ok(path) => path,
             Err(err) => {
                 dcx.emit(err);

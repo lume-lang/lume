@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -16,6 +17,14 @@ use crate::*;
 ///
 /// See [`pipeline()`].
 pub struct Pipeline(Arc<GlobalCtx>);
+
+impl Deref for Pipeline {
+    type Target = GlobalCtx;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 /// Compiler pipeline wrapper - functions as the entrypoint for any interactions
 /// with the compiler directly.
