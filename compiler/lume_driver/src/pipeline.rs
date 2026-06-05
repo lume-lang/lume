@@ -175,8 +175,7 @@ impl Pipeline {
                 Ok(ticx)
             })?;
 
-            let public_hir = lume_metadata::partition_public_nodes(&tcx);
-            public_hir.merge_into(&mut dependency_hir);
+            tcx.hir().clone().merge_into(&mut dependency_hir);
 
             maps.insert(dependency.id, StageResult::value(tcx));
         }

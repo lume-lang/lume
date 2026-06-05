@@ -64,14 +64,7 @@ impl Engine {
 
         let result = self.with_result(|engine| {
             let config = lume_driver::Config {
-                options: lume_session::Options {
-                    // The language client may still perform go-to requests on
-                    // non-public symbols from other crates.
-                    export_private_nodes: true,
-
-                    ..Default::default()
-                },
-
+                options: lume_session::Options::default(),
                 io: engine.io.clone(),
 
                 dry_run: false,

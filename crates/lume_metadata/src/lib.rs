@@ -63,38 +63,14 @@ impl PackageMetadata {
     pub fn create(pkg: &Package, tcx: &TyInferCtx) -> Self {
         let header = PackageHeader::create_from(pkg);
         let source_map = tcx.gcx().session.source_map.clone();
-        let public_hir = partition_public_nodes(tcx);
+        let hir = tcx.hir.clone();
 
         Self {
             header: LazyData::new(header),
             source_map: LazyData::new(source_map),
-            hir: LazyData::new(public_hir),
+            hir: LazyData::new(hir),
         }
     }
-}
-
-/// Partition the given HIR map into only public, exported items.
-///
-/// Any item or node which is not visible outside of the package is
-/// not included. As a result of this function, a new HIR map is created
-/// with all public items cloned into it.
-pub fn partition_public_nodes(tcx: &TyInferCtx) -> Map {
-    if tcx.gcx().session.options.export_private_nodes {
-        return tcx.hir().clone();
-    }
-
-    let mut pub_hir = Map::empty(tcx.hir().package);
-
-    pub_hir.nodes = tcx
-        .hir_local_nodes()
-        .filter(|node| tcx.should_export(node.id()).unwrap_or(false))
-        .map(|node| (node.id(), node.to_owned()))
-        .collect();
-
-    tcx.hir().types.clone_into(&mut pub_hir.types);
-    tcx.hir().lang_items.clone_into(&mut pub_hir.lang_items);
-
-    pub_hir
 }
 
 /// Reads the serialized representation of the metadata from the given package
@@ -192,6 +168,12 @@ pub fn write_metadata_object<P: AsRef<Path>>(metadata_directory: P, metadata: &P
         total_size = serialized.len(),
         path = %metadata_path.display(),
         "meta_serialized"
+    );
+
+    tracing::trace!(
+        nodes = metadata.hir.nodes.len(),
+        types = metadata.hir.types.len(),
+        bytes_per_item = serialized.len() / (metadata.hir.nodes.len() + metadata.hir.types.len())
     );
 
     std::fs::write(metadata_path, serialized).map_err(|err| {

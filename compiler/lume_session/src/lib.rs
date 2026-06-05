@@ -24,12 +24,6 @@ pub struct Options {
     /// it's been inferred and type checked.
     pub print_type_context: bool,
 
-    /// Whether to also export private HIR nodes. Only used when checking
-    /// packages.
-    ///
-    /// By default, only public HIR nodes are exported.
-    pub export_private_nodes: bool,
-
     /// Defines the optimization level for the generated LLVM IR.
     pub optimize: OptimizationLevel,
 
@@ -74,7 +68,6 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             print_type_context: false,
-            export_private_nodes: false,
             optimize: OptimizationLevel::default(),
             linker: None,
             debug_info: DebugInfo::default(),
