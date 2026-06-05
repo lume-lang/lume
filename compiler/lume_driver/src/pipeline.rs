@@ -44,6 +44,7 @@ impl<IO> Driver<IO> {
         let session = Session {
             dep_graph: self.dependencies,
             workspace_root: self.package.path,
+            source_map: self.source_map,
             options: self.config.options,
         };
 

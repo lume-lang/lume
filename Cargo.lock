@@ -2036,6 +2036,7 @@ dependencies = [
  "lume_hir",
  "lume_infer",
  "lume_session",
+ "lume_span",
  "serde",
 ]
 

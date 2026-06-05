@@ -13,7 +13,7 @@ use indexmap::IndexMap;
 pub use io::*;
 use lume_architect::{Database, DatabaseContext};
 use lume_errors::DiagCtx;
-use lume_span::{FileName, PackageId, SourceFile};
+use lume_span::{FileName, PackageId, SourceFile, SourceMap};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
@@ -185,6 +185,7 @@ pub struct Session {
     pub options: Options,
     pub workspace_root: PathBuf,
     pub dep_graph: DependencyMap,
+    pub source_map: SourceMap,
 }
 
 unsafe impl Send for Session {}

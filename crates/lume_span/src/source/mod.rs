@@ -5,6 +5,8 @@
 //! spans are required to print useful diagnostics to the user - at least if
 //! source code is needed.
 
+pub mod serialize;
+
 use std::hash::Hash;
 use std::ops::Range;
 use std::path::PathBuf;
@@ -157,7 +159,7 @@ impl error_snippet::Source for SourceFile {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Location {
     /// Defines the original source code.
     pub file: Arc<SourceFile>,
@@ -289,7 +291,7 @@ pub struct InvalidSourceFile {
 
 /// Defines a source map, which maps source file IDs to their corresponding
 /// source files.
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Debug)]
 pub struct SourceMap {
     /// Defines all the source files within the mapping.
     files: IndexMap<SourceFileId, Arc<SourceFile>>,
@@ -341,5 +343,13 @@ impl SourceMap {
     /// Iterates all the files within the map.
     pub fn iter(&self) -> impl Iterator<Item = &Arc<SourceFile>> {
         self.files.values()
+    }
+}
+
+impl FromIterator<Arc<SourceFile>> for SourceMap {
+    fn from_iter<T: IntoIterator<Item = Arc<SourceFile>>>(iter: T) -> Self {
+        Self {
+            files: iter.into_iter().map(|file| (file.id, file)).collect(),
+        }
     }
 }

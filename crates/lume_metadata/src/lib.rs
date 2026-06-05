@@ -4,6 +4,7 @@ use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 use lume_hir::map::Map;
 use lume_infer::TyInferCtx;
 use lume_session::{Package, PackageHash};
+use lume_span::SourceMap;
 use serde::{Deserialize, Serialize};
 
 /// Defines the file extension to use for metadata library files.
@@ -42,6 +43,17 @@ impl PackageHeader {
 #[derive(Serialize, Deserialize)]
 pub struct PackageMetadata {
     pub header: PackageHeader,
+
+    /// Source file information for all the sources directly within the package
+    /// source tree.
+    ///
+    /// NOTE: this field MUST appear before any [Location] fields, even nested
+    /// ones. The source map must be deserialized first, in order for
+    /// deduplicated [Location] keys to be resolved correctly. See
+    /// more in the [`lume_span::source::serialize`] module.
+    ///
+    /// [Location]: lume_span::Location
+    pub source_map: SourceMap,
     pub hir: Map,
 }
 
@@ -53,6 +65,7 @@ impl PackageMetadata {
 
         Self {
             header,
+            source_map: tcx.gcx().session.source_map.clone(),
             hir: public_hir,
         }
     }
@@ -133,9 +146,9 @@ pub fn read_metadata_header<P: AsRef<Path>>(metadata_path: P) -> Result<Option<P
     Ok(Some(header))
 }
 
-/// Writes the serialized representation of `metadata` to disk within the
-/// metadata directory defined by `gcx` (via
-/// [`GlobalCtx::obj_metadata_path()`]).
+/// Writes the serialized representation of `metadata` to disk within the given
+/// metadata directory. The name of the written file is determined by
+/// [`metadata_filename_of`].
 pub fn write_metadata_object<P: AsRef<Path>>(metadata_directory: P, metadata: &PackageMetadata) -> Result<()> {
     // Ensure the parent directory exists first.
     let metadata_directory = metadata_directory.as_ref();
@@ -176,6 +189,9 @@ fn serialize_metadata<W: std::io::Write>(
     let mut header = Vec::<u8>::with_capacity(64);
     ciborium::into_writer(&metadata.header, &mut header)?;
 
+    let mut source_map = Vec::<u8>::new();
+    ciborium::into_writer(&metadata.source_map, &mut source_map)?;
+
     let mut hir = Vec::<u8>::new();
     ciborium::into_writer(&metadata.hir, &mut hir)?;
 
@@ -183,6 +199,9 @@ fn serialize_metadata<W: std::io::Write>(
 
     writer.write_all(&usize::to_ne_bytes(header.len()))?;
     writer.write_all(&header)?;
+
+    writer.write_all(&usize::to_ne_bytes(source_map.len()))?;
+    writer.write_all(&source_map)?;
 
     writer.write_all(&usize::to_ne_bytes(hir.len()))?;
     writer.write_all(&hir)?;
@@ -209,9 +228,14 @@ fn deserialize_metadata<R: std::io::Read>(
     reader: &mut R,
 ) -> std::result::Result<PackageMetadata, Box<dyn std::error::Error>> {
     let header = deserialize_metadata_header(reader)?;
+    let source_map = deserialize_item::<R, SourceMap>(reader)?;
     let hir = deserialize_item::<R, Map>(reader)?;
 
-    Ok(PackageMetadata { header, hir })
+    Ok(PackageMetadata {
+        header,
+        source_map,
+        hir,
+    })
 }
 
 /// Deserialize a single "item" from the given reader.

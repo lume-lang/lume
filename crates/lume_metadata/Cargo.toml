@@ -12,6 +12,7 @@ lume_errors = { path = "../lume_errors" }
 lume_hir = { path = "../../compiler/lume_hir" }
 lume_infer = { path = "../../compiler/lume_infer" }
 lume_session = { path = "../../compiler/lume_session" }
+lume_span = { path = "../lume_span" }
 
 ciborium = { version = "=0.2.2" }
 serde = { workspace = true, features = ["derive"] }
