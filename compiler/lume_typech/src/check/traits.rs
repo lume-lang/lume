@@ -24,22 +24,18 @@ impl TyCheckCtx {
     }
 
     fn check_trait_impl(&self, trait_impl: &lume_hir::TraitImplementation) -> Result<()> {
-        let use_id = trait_impl.id;
-        let trait_type = self.trait_def_of(use_id)?;
-        let lume_hir::TypeDefinition::Trait(trait_def) = self.hir_expect_type(trait_type.id) else {
-            panic!("bug!: expected HIR ID to reference trait item");
-        };
+        let trait_definition = self.trait_definition_of_impl(trait_impl)?;
 
-        if trait_impl.type_args().len() != trait_def.type_parameters.len() {
+        if trait_impl.type_args().len() != trait_definition.type_parameters.len() {
             return Err(crate::check::errors::TraitImplTypeParameterCountMismatch {
                 source: trait_impl.location,
-                expected: trait_def.type_parameters.len(),
+                expected: trait_definition.type_parameters.len(),
                 found: trait_impl.type_args().len(),
             }
             .into());
         }
 
-        for method_def in &trait_def.methods {
+        for method_def in &trait_definition.methods {
             let Some(method_impl) = trait_impl
                 .methods
                 .iter()
@@ -59,11 +55,11 @@ impl TyCheckCtx {
                 .into());
             };
 
-            self.check_trait_method(trait_def, trait_impl, method_def, method_impl)?;
+            self.check_trait_method(trait_definition, trait_impl, method_def, method_impl)?;
         }
 
         for method_impl in &trait_impl.methods {
-            if !trait_def
+            if !trait_definition
                 .methods
                 .iter()
                 .any(|method_def| method_def.signature.name.name() == method_impl.signature.name.name())

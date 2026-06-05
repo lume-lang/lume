@@ -786,15 +786,11 @@ pub struct FnFlags {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
     pub id: NodeId,
-
-    #[serde(skip)]
     pub doc_comment: Option<String>,
 
     pub attrs: Vec<Attribute>,
     pub visibility: Visibility,
     pub signature: FnSignature,
-
-    #[serde(skip)]
     pub block: Option<Block>,
     pub location: Location,
 }
@@ -895,8 +891,6 @@ impl TypeDefinition {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
     pub id: NodeId,
-
-    #[serde(skip)]
     pub doc_comment: Option<String>,
 
     pub attrs: Vec<Attribute>,
@@ -916,8 +910,6 @@ impl EnumDefinition {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct EnumDefinitionCase {
     pub idx: usize,
-
-    #[serde(skip)]
     pub doc_comment: Option<String>,
 
     pub name: Path,
@@ -928,8 +920,6 @@ pub struct EnumDefinitionCase {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct StructDefinition {
     pub id: NodeId,
-
-    #[serde(skip)]
     pub doc_comment: Option<String>,
 
     pub attrs: Vec<Attribute>,
@@ -967,11 +957,7 @@ pub struct Implementation {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct Field {
     pub id: NodeId,
-
-    #[serde(skip)]
     pub index: usize,
-
-    #[serde(skip)]
     pub doc_comment: Option<String>,
 
     pub attrs: Vec<Attribute>,
@@ -985,15 +971,11 @@ pub struct Field {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
     pub id: NodeId,
-
-    #[serde(skip)]
     pub doc_comment: Option<String>,
 
     pub attrs: Vec<Attribute>,
     pub visibility: Visibility,
     pub signature: FnSignature,
-
-    #[serde(skip)]
     pub block: Option<Block>,
     pub location: Location,
 }
@@ -1001,8 +983,6 @@ pub struct MethodDefinition {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitDefinition {
     pub id: NodeId,
-
-    #[serde(skip)]
     pub doc_comment: Option<String>,
 
     pub attrs: Vec<Attribute>,
@@ -1022,14 +1002,10 @@ impl TraitDefinition {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
     pub id: NodeId,
-
-    #[serde(skip)]
     pub doc_comment: Option<String>,
 
     pub attrs: Vec<Attribute>,
     pub signature: FnSignature,
-
-    #[serde(skip)]
     pub block: Option<Block>,
     pub location: Location,
 }
@@ -1069,14 +1045,10 @@ impl TraitImplementation {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
     pub id: NodeId,
-
-    #[serde(skip)]
     pub doc_comment: Option<String>,
 
     pub attrs: Vec<Attribute>,
     pub signature: FnSignature,
-
-    #[serde(skip)]
     pub block: Option<Block>,
     pub location: Location,
 }

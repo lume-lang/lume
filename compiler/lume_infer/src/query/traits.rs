@@ -1,5 +1,4 @@
 use lume_errors::Result;
-use lume_hir::Node;
 use lume_span::NodeId;
 use lume_types::TypeRef;
 
@@ -27,19 +26,6 @@ impl TyInferCtx {
                     .unwrap_or(false)
                     .then_some(&implementation.implemented)
             })
-    }
-
-    /// Returns the [`lume_hir::TraitDefinition`] definition, which matches the
-    /// [`lume_hir::TraitImplementation`] with the given ID.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn trait_def_of(&self, id: NodeId) -> Result<&lume_hir::TraitDefinition> {
-        let Node::TraitImpl(trait_impl) = self.hir_expect_node(id) else {
-            return Err(crate::query::diagnostics::NodeNotFound { id }.into());
-        };
-
-        let trait_ty = self.mk_type_ref_from(&trait_impl.name, trait_impl.id)?;
-
-        Ok(self.hir_expect_trait(trait_ty.instance_of))
     }
 
     /// Determines whether the given [`TypeRef`], `ty`, implements the given
