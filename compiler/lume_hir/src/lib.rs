@@ -31,17 +31,9 @@ pub enum Node {
     Method(MethodDefinition),
     TraitMethodDef(TraitMethodDefinition),
     TraitMethodImpl(TraitMethodImplementation),
-
-    #[serde(skip)]
     Pattern(Pattern),
-
-    #[serde(skip)]
     Statement(Statement),
-
-    #[serde(skip)]
     Expression(Expression),
-
-    #[serde(skip)]
     TypeVariable(TypeVariable),
 }
 
@@ -1100,7 +1092,7 @@ impl TraitMethodImplementation {
     }
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Statement {
     pub id: NodeId,
     pub kind: StatementKind,
@@ -1147,7 +1139,7 @@ impl Statement {
     }
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq)]
 pub enum StatementKind {
     Variable(VariableDeclaration),
     Break(Break),
@@ -1158,7 +1150,7 @@ pub enum StatementKind {
     Expression(NodeId),
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct VariableDeclaration {
     pub id: NodeId,
     pub name: Identifier,
@@ -1167,40 +1159,40 @@ pub struct VariableDeclaration {
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Break {
     pub id: NodeId,
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Continue {
     pub id: NodeId,
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Final {
     pub id: NodeId,
     pub value: NodeId,
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Return {
     pub id: NodeId,
     pub value: Option<NodeId>,
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct InfiniteLoop {
     pub id: NodeId,
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Expression {
     pub id: NodeId,
     pub kind: ExpressionKind,
@@ -1342,7 +1334,7 @@ expr_lit_int!(lit_u8, U8, u8);
 expr_lit_int!(lit_u16, U16, u16);
 expr_lit_int!(lit_u32, U32, u32);
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
     Missing,
 
@@ -1475,7 +1467,7 @@ impl CallExpression<'_> {
     }
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Assignment {
     pub id: NodeId,
     pub target: NodeId,
@@ -1483,7 +1475,7 @@ pub struct Assignment {
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Cast {
     pub id: NodeId,
     pub source: NodeId,
@@ -1491,7 +1483,7 @@ pub struct Cast {
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Construct {
     pub id: NodeId,
     pub path: Path,
@@ -1499,7 +1491,7 @@ pub struct Construct {
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct ConstructorField {
     pub name: Identifier,
     pub value: NodeId,
@@ -1507,14 +1499,14 @@ pub struct ConstructorField {
     pub location: Location,
 }
 
-#[derive(Hash, Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Place {
     LValue,
     #[default]
     RValue,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct DerefExpr {
     pub id: NodeId,
     pub target: NodeId,
@@ -1522,14 +1514,14 @@ pub struct DerefExpr {
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct RefExpr {
     pub id: NodeId,
     pub target: NodeId,
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct StaticCall {
     pub id: NodeId,
     pub name: Path,
@@ -1555,7 +1547,7 @@ impl StaticCall {
     }
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct InstanceCall {
     pub id: NodeId,
     pub callee: NodeId,
@@ -1580,7 +1572,7 @@ impl InstanceCall {
     }
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct IntrinsicCall {
     pub id: NodeId,
     pub kind: IntrinsicKind,
@@ -1604,7 +1596,7 @@ impl IntrinsicCall {
     }
 }
 
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq, Eq)]
 pub enum IntrinsicKind {
     // Arithmetic intrinsics
     Add { lhs: NodeId, rhs: NodeId },
@@ -1696,21 +1688,21 @@ impl IntrinsicKind {
     }
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct If {
     pub id: NodeId,
     pub cases: Vec<Condition>,
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Condition {
     pub condition: Option<NodeId>,
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Is {
     pub id: NodeId,
     pub target: NodeId,
@@ -1809,7 +1801,7 @@ pub struct BooleanLiteral {
     pub value: bool,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Member {
     pub id: NodeId,
     pub callee: NodeId,
@@ -1817,7 +1809,7 @@ pub struct Member {
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct PatternField {
     pub id: NodeId,
     pub pattern: NodeId,
@@ -1825,7 +1817,7 @@ pub struct PatternField {
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Scope {
     pub id: NodeId,
     pub body: Vec<NodeId>,
@@ -1833,7 +1825,7 @@ pub struct Scope {
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Switch {
     pub id: NodeId,
     pub operand: NodeId,
@@ -1841,14 +1833,14 @@ pub struct Switch {
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct SwitchCase {
     pub pattern: NodeId,
     pub branch: NodeId,
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct Variable {
     pub id: NodeId,
     pub reference: VariableSource,
@@ -1856,14 +1848,14 @@ pub struct Variable {
     pub location: Location,
 }
 
-#[derive(Hash, Debug, Copy, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Copy, Clone, PartialEq)]
 pub enum VariableSource {
     Parameter(NodeId),
     Variable(NodeId),
     Pattern(NodeId),
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq)]
 pub struct Variant {
     pub id: NodeId,
     pub name: Path,
@@ -1871,7 +1863,7 @@ pub struct Variant {
     pub location: Location,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq)]
 pub struct Pattern {
     pub id: NodeId,
     pub kind: PatternKind,
@@ -1886,7 +1878,7 @@ impl Pattern {
     }
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq)]
 pub enum PatternKind {
     Missing,
     Literal(LiteralPattern),
@@ -1919,19 +1911,19 @@ impl WithLocation for PatternKind {
     }
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct LiteralPattern {
     pub literal: Literal,
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct IdentifierPattern {
     pub name: Identifier,
     pub location: Location,
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct VariantPattern {
     pub name: Path,
     pub fields: Vec<NodeId>,
@@ -1945,7 +1937,7 @@ impl VariantPattern {
     }
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct WildcardPattern {
     pub location: Location,
 }
@@ -2045,7 +2037,7 @@ impl std::hash::Hash for Type {
     }
 }
 
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
 pub struct TypeVariable {
     pub id: NodeId,
     pub location: Location,
