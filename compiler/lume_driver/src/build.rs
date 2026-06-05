@@ -50,6 +50,7 @@ where
             match stage_result {
                 StageResult::Value(object) => {
                     let GeneratedObject { name, object, metadata } = *object;
+                    tracing::debug!(name = &name, "using compiled object source");
 
                     linker_objects.push(lume_linker::ObjectSource::Compiled { name, data: object });
 
@@ -59,6 +60,7 @@ where
                 }
                 StageResult::Cached { bc_path } => {
                     let package_name = gcx.package_name(package_id).unwrap();
+                    tracing::debug!(name = package_name, "using cached object source");
 
                     linker_objects.push(lume_linker::ObjectSource::Cache {
                         name: package_name.into(),
