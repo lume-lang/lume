@@ -102,8 +102,11 @@ pub fn partition_public_nodes(tcx: &TyInferCtx) -> Map {
 ///
 /// If the metadata file does not exist, this function returns [`None`], wrapped
 /// in [`Ok`].
+#[tracing::instrument(level = "DEBUG", skip_all, err)]
 pub fn read_metadata_object<P: AsRef<Path>>(metadata_path: P) -> Result<Option<PackageMetadata>> {
     let metadata_path = metadata_path.as_ref();
+    tracing::debug!(path = %metadata_path.display());
+
     if !metadata_path.exists() {
         return Ok(None);
     }
@@ -131,8 +134,11 @@ pub fn read_metadata_object<P: AsRef<Path>>(metadata_path: P) -> Result<Option<P
 ///
 /// If the metadata file does not exist, this function returns [`None`], wrapped
 /// in [`Ok`].
+#[tracing::instrument(level = "DEBUG", skip_all, err)]
 pub fn read_metadata_header<P: AsRef<Path>>(metadata_path: P) -> Result<Option<PackageHeader>> {
     let metadata_path = metadata_path.as_ref();
+    tracing::debug!(path = %metadata_path.display());
+
     if !metadata_path.exists() {
         return Ok(None);
     }
@@ -181,6 +187,13 @@ pub fn write_metadata_object<P: AsRef<Path>>(metadata_directory: P, metadata: &P
         Box::new(diag) as lume_errors::Error
     })?;
 
+    tracing::debug!(
+        package = %metadata.header.name,
+        total_size = serialized.len(),
+        path = %metadata_path.display(),
+        "meta_serialized"
+    );
+
     std::fs::write(metadata_path, serialized).map_err(|err| {
         Box::new(SimpleDiagnostic::new("failed to write metadata").add_cause(err)) as lume_errors::Error
     })?;
@@ -207,6 +220,12 @@ impl<T: Serialize> LazyData<T> {
         let mut encoded = Vec::<u8>::new();
         ciborium::into_writer(&self.inner, &mut encoded)?;
 
+        tracing::debug!(
+            type = %std::any::type_name::<Self>(),
+            size = encoded.len(),
+            "meta_item_serialized"
+        );
+
         writer.write_all(&usize::to_ne_bytes(encoded.len()))?;
         writer.write_all(&encoded)?;
 
@@ -231,6 +250,12 @@ impl<T: serde::de::DeserializeOwned> LazyData<T> {
         let size = usize::from_ne_bytes(size_bytes);
         let mut buffer = vec![0x00; size];
         reader.read_exact(&mut buffer)?;
+
+        tracing::debug!(
+            type = %std::any::type_name::<Self>(),
+            size = buffer.len(),
+            "meta_item_deserialized"
+        );
 
         let section = ciborium::from_reader::<T, &[u8]>(buffer.as_ref())?;
 
@@ -264,6 +289,7 @@ impl<'de, T: Deserialize<'de>> Deserialize<'de> for LazyData<T> {
     }
 }
 
+#[tracing::instrument(level = "DEBUG", skip_all, fields(package = %metadata.header.name), err)]
 fn serialize_metadata<W: std::io::Write>(
     writer: &mut W,
     metadata: &PackageMetadata,

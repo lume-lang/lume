@@ -16,6 +16,7 @@ lume_span = { path = "../lume_span" }
 
 ciborium = { version = "=0.2.2" }
 serde = { workspace = true, features = ["derive"] }
+tracing = { workspace = true }
 
 [lints]
 workspace = true
