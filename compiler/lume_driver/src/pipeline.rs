@@ -136,15 +136,22 @@ impl Pipeline {
             );
 
             let has_hash_changed = needs_compilation(&gcx, &dependency);
-            let bc_path = gcx.obj_bc_path_of(&dependency.name);
+            let metadata_path = metadata_path_of(&gcx, &dependency);
 
             // We can skip recompilation of a package if *all* the following circumstances
             // are true:
             // - none of it's dependencies have been marked as "dirty",
             // - the package hash within the package's `.mlib` file is the same as now,
             // - and the target object file already exists
-            if !dirty_packages.contains(&dependency.id) && !has_hash_changed && bc_path.exists() {
+            if !dirty_packages.contains(&dependency.id)
+                && !has_hash_changed
+                && let Some(mut metadata) = lume_metadata::read_metadata_object(&metadata_path)?
+            {
+                let bc_path = gcx.obj_bc_path_of(&dependency.name);
                 maps.insert(dependency.id, StageResult::Cached { bc_path });
+
+                std::mem::take(&mut *metadata.hir).merge_into(&mut dependency_hir);
+
                 continue;
             }
 
@@ -324,6 +331,15 @@ impl LoweredToMir {
     }
 }
 
+/// Determines the absolute path of the metadata file for the given package.
+#[tracing::instrument(level = "TRACE", skip_all, fields(package = %package.name), ret)]
+pub(crate) fn metadata_path_of(gcx: &Arc<GlobalCtx>, package: &Package) -> PathBuf {
+    let metadata_directory = gcx.obj_metadata_path();
+    let metadata_filename = lume_metadata::metadata_filename_of(&package.name);
+
+    metadata_directory.join(metadata_filename)
+}
+
 /// Determines whether the given package needs to be compiled or re-compiled.
 ///
 /// This takes the state of the current package metadata into account, as well
@@ -336,9 +352,7 @@ pub(crate) fn needs_compilation(gcx: &Arc<GlobalCtx>, package: &Package) -> bool
         return true;
     }
 
-    let metadata_directory = gcx.obj_metadata_path();
-    let metadata_filename = lume_metadata::metadata_filename_of(&package.name);
-    let metadata_path = metadata_directory.join(metadata_filename);
+    let metadata_path = metadata_path_of(gcx, package);
 
     // If no metadata file could be found, the package has likely not been built
     // yet - in which case it obviously needs to be built.

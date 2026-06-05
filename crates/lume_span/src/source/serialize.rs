@@ -18,7 +18,7 @@ use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
 
 use crate::source::Location;
-use crate::{SourceFile, SourceFileId, SourceMap};
+use crate::{PackageId, SourceFile, SourceFileId, SourceMap};
 
 /// Global state for deserialized source maps. This value is populated when any
 /// [`SourceMap`] is deserialized, either by reading `.mlib` metadata files or
@@ -26,7 +26,15 @@ use crate::{SourceFile, SourceFileId, SourceMap};
 /// value will be expanded to contain the new source files.
 static DESERIALIZE_STATE: LazyLock<Mutex<SourceMap>> = LazyLock::new(|| Mutex::new(SourceMap::new()));
 
+/// Empty source file to be duplicated when trying to deserialize empty source
+/// file IDs (i.e. IDs created with [`SourceFileId::empty()`]).
+static EMPTY_SOURCE_FILE: LazyLock<Arc<SourceFile>> = LazyLock::new(|| Arc::new(SourceFile::empty()));
+
 fn source_from_state(id: SourceFileId) -> Arc<SourceFile> {
+    if id == SourceFileId(PackageId::empty(), 0) {
+        return (*EMPTY_SOURCE_FILE).clone();
+    }
+
     let state = (*DESERIALIZE_STATE)
         .try_lock()
         .expect("failed to lock deserialization state - is another thread trying to deserialize?");
