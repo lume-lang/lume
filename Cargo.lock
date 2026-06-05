@@ -2038,6 +2038,7 @@ dependencies = [
  "lume_session",
  "lume_span",
  "serde",
+ "tracing",
 ]
 
 [[package]]
