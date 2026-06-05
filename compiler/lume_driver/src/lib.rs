@@ -6,7 +6,7 @@ use arc::locate_package;
 use indexmap::IndexMap;
 use lume_errors::{DiagCtxHandle, Result};
 use lume_session::{DependencyMap, FileLoader, Options, Package, Session};
-use lume_span::{FileName, PackageId, SourceFile};
+use lume_span::{FileName, PackageId, SourceFile, SourceMap};
 use lume_typech::TyCheckCtx;
 
 #[cfg(feature = "codegen")]
@@ -62,6 +62,7 @@ pub struct Driver<IO> {
 
     config: Config<IO>,
     dependencies: DependencyMap,
+    source_map: SourceMap,
 
     /// Defines the diagnostics context for reporting errors during compilation.
     dcx: DiagCtxHandle,
@@ -87,6 +88,11 @@ where
         Ok(Driver {
             package: dependencies.root_package().clone(),
             config,
+            source_map: dependencies
+                .packages
+                .values()
+                .flat_map(|package| package.files.values().cloned())
+                .collect(),
             dependencies,
             dcx,
         })
