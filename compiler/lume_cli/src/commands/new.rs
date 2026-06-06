@@ -110,12 +110,26 @@ impl NewCommand {
             templater.render(".gitignore", GitignoreTemplate {})?;
         }
 
+        let relative_path = if let Ok(cwd) = std::env::current_dir() {
+            self.output.strip_prefix(cwd).unwrap_or(&self.output)
+        } else {
+            &self.output
+        };
+
         templater.progress.println(
             "",
             format!(
-                "\n{:>13} You can now run the program using {}.",
+                "\n{:>13} You can now run the program using {}",
                 "Success!".stylize("accent"),
-                format!("lume run {package_name}").stylize("secondary.bold"),
+                format!(
+                    "lume run {}",
+                    if relative_path.as_os_str() == "." {
+                        String::new()
+                    } else {
+                        relative_path.display().to_string()
+                    }
+                )
+                .stylize("secondary.bold"),
             ),
         );
 
