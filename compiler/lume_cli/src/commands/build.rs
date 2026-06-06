@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use lume_cli_tools::Stylable;
 use lume_driver::{Config, Driver};
 use lume_errors::DiagCtxHandle;
 use lume_session::FileSystemLoader;
@@ -24,12 +25,32 @@ impl BuildCommand {
             }
         };
 
+        let compile_progress = lume_cli_tools::progress_bar().hidden().with_prefix("Building");
+
         let config = Config::<FileSystemLoader> {
             options: self.build.options(),
             ..Default::default()
         };
 
-        let driver = match Driver::from_root(&PathBuf::from(project_path), config, dcx.clone()) {
+        let callbacks = lume_driver::Callbacks {
+            arc_event: &|event| {
+                if let lume_driver::ArcEvent::PackagesLoaded { graph } = event {
+                    compile_progress.set_length(graph.packages.len() as u64);
+                    compile_progress.show();
+                }
+            },
+            on_package_state_change: &|_, state| match state {
+                lume_driver::PackageState::CompilationCached { .. } => {
+                    compile_progress.inc(1);
+                }
+                lume_driver::PackageState::CompilationStarted { package } => {
+                    compile_progress.inc(1);
+                    compile_progress.println("Compiling", format!("{} v{}", package.name, package.version));
+                }
+            },
+        };
+
+        let driver = match Driver::from_root(&PathBuf::from(project_path), config, callbacks, dcx.clone()) {
             Ok(driver) => driver,
             Err(err) => {
                 dcx.emit_and_push(err);
@@ -40,5 +61,14 @@ impl BuildCommand {
         if let Err(err) = driver.build() {
             dcx.emit_and_push(err);
         }
+
+        compile_progress.println(
+            "",
+            format!(
+                "\n{:>13} You can now run the program using {}.",
+                "Success!".stylize("accent"),
+                "lume run".stylize("secondary.bold"),
+            ),
+        );
     }
 }

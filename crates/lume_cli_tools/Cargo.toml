@@ -6,6 +6,7 @@ rust-version.workspace = true
 
 [dependencies]
 console = { version = "0.16.3" }
+indicatif = { version = "0.18.4" }
 owo-colors = { workspace = true }
 
 [lints]

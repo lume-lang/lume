@@ -24,12 +24,32 @@ impl CheckCommand {
             }
         };
 
+        let progress_bar = lume_cli_tools::progress_bar().hidden().with_prefix("Building");
+
         let config = Config::<FileSystemLoader> {
             options: self.build.options(),
             ..Default::default()
         };
 
-        let driver = match Driver::from_root(&PathBuf::from(project_path), config, dcx.clone()) {
+        let callbacks = lume_driver::Callbacks {
+            arc_event: &|event| {
+                if let lume_driver::ArcEvent::PackagesLoaded { graph } = event {
+                    progress_bar.set_length(graph.packages.len() as u64);
+                    progress_bar.show();
+                }
+            },
+            on_package_state_change: &|_, state| match state {
+                lume_driver::PackageState::CompilationCached { .. } => {
+                    progress_bar.inc(1);
+                }
+                lume_driver::PackageState::CompilationStarted { package } => {
+                    progress_bar.inc(1);
+                    progress_bar.println("Checking", format!("{} v{}", package.name, package.version));
+                }
+            },
+        };
+
+        let driver = match Driver::from_root(&PathBuf::from(project_path), config, callbacks, dcx.clone()) {
             Ok(driver) => driver,
             Err(err) => {
                 dcx.emit_and_push(err);
