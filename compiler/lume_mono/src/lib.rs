@@ -4,7 +4,6 @@ use lume_span::NodeId;
 
 pub(crate) mod collector;
 pub use collector::collect;
-
 pub(crate) mod canonicalize;
 pub use canonicalize::canonicalize;
 use lume_types::TypeRef;

@@ -83,6 +83,7 @@ pub struct Generics {
     /// Type arguments for the matching type parameters.
     pub types: Vec<TypeRef>,
 }
+
 pub static EMPTY_GENERICS: Generics = Generics {
     ids: Vec::new(),
     types: Vec::new(),
@@ -102,5 +103,13 @@ impl Generics {
 
     pub fn iter(&self) -> impl Iterator<Item = (NodeId, &TypeRef)> {
         self.ids.iter().copied().zip(self.types.iter())
+    }
+}
+
+impl FromIterator<(NodeId, TypeRef)> for Generics {
+    fn from_iter<T: IntoIterator<Item = (NodeId, TypeRef)>>(iter: T) -> Self {
+        let (ids, types): (Vec<_>, Vec<_>) = iter.into_iter().collect();
+
+        Self { ids, types }
     }
 }

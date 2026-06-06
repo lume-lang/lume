@@ -42,8 +42,10 @@ impl<'tcx> ModuleTransformer<'tcx> {
                 let signature = self.signature_of(func);
 
                 let mangle_version = lume_mangle::Version::default();
-                let mangle_instance = lume_mangle::Instance::from(func.id);
+                let mangle_instance = lume_mir::Instance::from(func.id);
                 let mangled_name = lume_mangle::mangled(self.mcx.tcx(), &mangle_instance, mangle_version).unwrap();
+
+                tracing::trace!(%mangled_name);
 
                 let mut func = Function::new(func.id, func.name_as_str().intern(), mangled_name, func.location);
                 func.signature = signature;

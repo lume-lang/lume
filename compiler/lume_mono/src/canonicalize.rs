@@ -73,9 +73,9 @@ fn canonicalize_body(
     func.instance = instance.clone();
 
     let mangle_version = lume_mangle::Version::default();
-    let mangle_instance = lume_mangle::Instance {
+    let mangle_instance = lume_mir::Instance {
         id: func.id,
-        generics: generics.iter().map(|(id, arg)| (id, arg.clone())).collect(),
+        generics: Some(generics.iter().map(|(id, arg)| (id, arg.clone())).collect()),
     };
 
     func.name = instance.display(mcx.tcx()).to_string().intern();
