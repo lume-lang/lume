@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use lume_errors::{DiagCtxHandle, Result};
 use lume_session::{FileSystemLoader, Options, VirtualFileSystem};
 
-use crate::{Config, Driver, Pipeline};
+use crate::{Callbacks, Config, Driver, Pipeline};
 
 pub type IO = VirtualFileSystem<FileSystemLoader>;
 
@@ -131,10 +131,10 @@ impl WorkspaceBuilder {
     /// let root = std::path::PathBuf::new();
     /// let _ = dcx.with(|handle| workspace(root).driver(handle));
     /// ```
-    pub fn driver(self, dcx: DiagCtxHandle) -> Result<Driver<IO>> {
+    pub fn driver(self, dcx: DiagCtxHandle) -> Result<Driver<'static, IO>> {
         let root = self.config.io.root().to_path_buf();
 
-        Driver::from_root(&root, self.config, dcx)
+        Driver::from_root(&root, self.config, Callbacks::default(), dcx)
     }
 
     /// Creates a new pipeline instance from the workspace builder.
@@ -149,7 +149,7 @@ impl WorkspaceBuilder {
     /// let root = std::path::PathBuf::new();
     /// let _ = dcx.with(|handle| workspace(root).pipeline(handle));
     /// ```
-    pub fn pipeline(self, dcx: DiagCtxHandle) -> Result<Pipeline> {
+    pub fn pipeline(self, dcx: DiagCtxHandle) -> Result<Pipeline<'static>> {
         self.driver(dcx).map(|driver| driver.to_pipeline())
     }
 

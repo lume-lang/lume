@@ -9,6 +9,9 @@ use lume_session::{DependencyMap, FileLoader, Options, Package, Session};
 use lume_span::{FileName, PackageId, SourceFile, SourceMap};
 use lume_typech::TyCheckCtx;
 
+pub mod callbacks;
+pub use callbacks::*;
+
 #[cfg(feature = "codegen")]
 pub mod build;
 
@@ -56,7 +59,7 @@ impl<IO: Default> Default for Config<IO> {
     }
 }
 
-pub struct Driver<IO> {
+pub struct Driver<'io, IO> {
     /// Defines the structure of the Arcfile within the package.
     pub package: Package,
 
@@ -66,9 +69,11 @@ pub struct Driver<IO> {
 
     /// Defines the diagnostics context for reporting errors during compilation.
     dcx: DiagCtxHandle,
+
+    pub callbacks: Callbacks<'io>,
 }
 
-impl<IO> Driver<IO>
+impl<'io, IO> Driver<'io, IO>
 where
     IO: FileLoader,
 {
@@ -81,9 +86,13 @@ where
     /// # Errors
     ///
     /// Returns `Err` if the given path has no `Arcfile` within it.
-    pub fn from_root(root: &Path, config: Config<IO>, dcx: DiagCtxHandle) -> Result<Self> {
+    pub fn from_root(root: &Path, config: Config<IO>, callbacks: Callbacks<'io>, dcx: DiagCtxHandle) -> Result<Self> {
+        (callbacks.arc_event)(ArcEvent::FindingRootPackage { root });
+
         let mut dependencies = dcx.with(|handle| locate_package(root, &config.io, handle))?;
         dependencies.add_package_sources_recursive(&config.io)?;
+
+        (callbacks.arc_event)(ArcEvent::PackagesLoaded { graph: &dependencies });
 
         Ok(Driver {
             package: dependencies.root_package().clone(),
@@ -95,6 +104,7 @@ where
                 .collect(),
             dependencies,
             dcx,
+            callbacks,
         })
     }
 
