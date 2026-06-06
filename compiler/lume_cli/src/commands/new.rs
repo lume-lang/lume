@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use lume_cli_tools::Stylable;
 use lume_errors::{IntoDiagnostic, MapDiagnostic, Result, SimpleDiagnostic};
 
 use crate::error::*;
@@ -109,24 +110,38 @@ impl NewCommand {
             templater.render(".gitignore", GitignoreTemplate {})?;
         }
 
+        templater.progress.println(
+            "",
+            format!(
+                "\n{:>13} You can now run the program using {}.",
+                "Success!".stylize("accent"),
+                format!("lume run {package_name}").stylize("secondary.bold"),
+            ),
+        );
+
         Ok(())
     }
 }
 
 struct Templater<'a> {
     root: &'a Path,
+    progress: lume_cli_tools::progress::ProgressBar,
 }
 
 impl<'a> Templater<'a> {
     /// Creates a new template, rooted in the given directory.
     pub fn create(root: &'a Path) -> Result<Self> {
         std::fs::create_dir_all(root).map_cause("could not create package directory")?;
+        let progress = lume_cli_tools::progress_bar().with_gutter(8).with_prefix("Creating");
 
-        Ok(Self { root })
+        Ok(Self { root, progress })
     }
 
     /// Renders a template to the given path, relative to the root directory.
     pub fn render<P: AsRef<Path>, T: askama::Template>(&self, path: P, template: T) -> Result<()> {
+        self.progress.inc(1);
+        self.progress.println("Create", path.as_ref().display().to_string());
+
         let dest_path = self.root.join(path);
 
         if let Some(parent_dir) = dest_path.parent() {
@@ -141,5 +156,11 @@ impl<'a> Templater<'a> {
         }
 
         Ok(())
+    }
+}
+
+impl Drop for Templater<'_> {
+    fn drop(&mut self) {
+        self.progress.finish();
     }
 }

@@ -1,6 +1,6 @@
 use crate::*;
 
-impl<IO> Driver<IO>
+impl<IO> Driver<'_, IO>
 where
     IO: FileLoader,
 {
@@ -14,7 +14,7 @@ where
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[allow(clippy::needless_pass_by_value)]
     pub fn check_package(root: &Path, config: Config<IO>, dcx: DiagCtxHandle) -> Result<()> {
-        let driver = Self::from_root(root, config, dcx.clone())?;
+        let driver = Self::from_root(root, config, Callbacks::default(), dcx.clone())?;
 
         if let Err(err) = driver.check() {
             dcx.emit_and_push(err);

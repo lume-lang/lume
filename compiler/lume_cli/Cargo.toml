@@ -10,6 +10,7 @@ doctest = false
 
 [dependencies]
 arc = { path = "../arc" }
+lume_cli_tools = { path = "../../crates/lume_cli_tools" }
 lume_driver = { path = "../lume_driver" }
 lume_fmt = { path = "../../tools/fmt" }
 lume_errors = { path = "../../crates/lume_errors" }

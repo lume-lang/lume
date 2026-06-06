@@ -30,11 +30,20 @@ impl CleanCommand {
         };
 
         let config = Config::<FileSystemLoader>::default();
+        let progress = lume_cli_tools::progress_bar().with_prefix("Cleaning");
 
-        match Driver::from_root(&PathBuf::from(project_path), config, dcx.clone()) {
+        match Driver::from_root(
+            &PathBuf::from(project_path),
+            config,
+            lume_driver::Callbacks::default(),
+            dcx.clone(),
+        ) {
             Ok(driver) => {
-                let obj_path = (*driver.to_pipeline()).obj_path();
+                let pipeline = driver.to_pipeline();
+                let obj_path = pipeline.obj_path();
+
                 tracing::trace!("attempting to remove `{}`...", obj_path.display());
+                progress.println("Clean", &pipeline.session.dep_graph.root_package().name);
 
                 if self.dry_run || std::fs::exists(&obj_path).ok() == Some(false) {
                     return;
