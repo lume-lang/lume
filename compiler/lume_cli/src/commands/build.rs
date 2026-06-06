@@ -18,7 +18,7 @@ impl BuildCommand {
     #[allow(clippy::needless_pass_by_value)]
     pub(crate) fn run(&self, dcx: DiagCtxHandle) {
         let project_path = match project_or_cwd(self.build.path.as_ref()) {
-            Ok(path) => path,
+            Ok(path) => PathBuf::from(path),
             Err(err) => {
                 dcx.emit(err);
                 return;
@@ -50,7 +50,7 @@ impl BuildCommand {
             },
         };
 
-        let driver = match Driver::from_root(&PathBuf::from(project_path), config, callbacks, dcx.clone()) {
+        let driver = match Driver::from_root(&project_path, config, callbacks, dcx.clone()) {
             Ok(driver) => driver,
             Err(err) => {
                 dcx.emit_and_push(err);
@@ -60,14 +60,29 @@ impl BuildCommand {
 
         if let Err(err) = driver.build() {
             dcx.emit_and_push(err);
+            return;
         }
+
+        let relative_path = if let Ok(cwd) = std::env::current_dir() {
+            project_path.strip_prefix(cwd).unwrap_or(&project_path)
+        } else {
+            &project_path
+        };
 
         compile_progress.println(
             "",
             format!(
-                "\n{:>13} You can now run the program using {}.",
+                "\n{:>13} You can now run the program using {}",
                 "Success!".stylize("accent"),
-                "lume run".stylize("secondary.bold"),
+                format!(
+                    "lume run {}",
+                    if relative_path.as_os_str() == "." {
+                        String::new()
+                    } else {
+                        relative_path.display().to_string()
+                    }
+                )
+                .stylize("secondary.bold"),
             ),
         );
     }
