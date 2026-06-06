@@ -10,7 +10,7 @@
       "username": "dev"
     },
     "ghcr.io/devcontainers/features/rust:1": {
-      "version": "1.88",
+      "version": "1.92",
       "profile": "minimal"
     }
   },
