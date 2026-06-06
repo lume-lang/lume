@@ -9,8 +9,8 @@ pub use fmt::*;
 use indexmap::{IndexMap, IndexSet};
 pub use lume_infer::instance::*;
 use lume_session::{Options, Package};
-use lume_span::{Internable, Interned, Location, NodeId, SourceFile};
-use lume_type_metadata::{StaticMetadata, TypeMetadata, TypeMetadataId};
+use lume_span::{Interned, Location, NodeId, SourceFile};
+use lume_type_metadata::{StaticMetadata, TypeMetadata};
 use lume_types::TypeRef;
 use serde::{Deserialize, Serialize};
 

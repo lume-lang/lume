@@ -1,5 +1,4 @@
 use lume_errors::Result;
-use lume_span::NodeId;
 use lume_typech::TyCheckCtx;
 
 pub mod l1;
@@ -14,8 +13,8 @@ pub enum Version {
     L1,
 }
 
-pub fn mangled(tcx: &TyCheckCtx, id: NodeId, version: Version) -> Result<String> {
+pub fn mangled(tcx: &TyCheckCtx, instance: &lume_typech::Instance, version: Version) -> Result<String> {
     match version {
-        Version::L1 => l1::mangled_name_of(tcx, id),
+        Version::L1 => l1::mangled_name_of(tcx, instance.id),
     }
 }

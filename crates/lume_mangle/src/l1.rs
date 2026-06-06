@@ -219,7 +219,7 @@ fn mangled_name_segment(name: &str) -> String {
 }
 
 fn mangled_impl_segment(tcx: &TyCheckCtx, ty: &lume_hir::Type) -> String {
-    let type_name = if let Some(type_param) = tcx.as_type_param(ty.id.as_node_id()) {
+    let type_name = if let Some(type_param) = tcx.as_type_parameter(ty.id.as_node_id()) {
         mangled_type_parameter_segment(type_param)
     } else {
         mangled_path_name(&ty.name)

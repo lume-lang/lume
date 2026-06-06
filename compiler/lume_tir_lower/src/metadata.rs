@@ -156,7 +156,8 @@ impl lume_type_metadata::visitor::Visitor for MetadataBuilder<'_> {
         let full_name = self.tcx.hir_path_of_node(type_id).to_wide_string();
 
         let mangle_version = lume_mangle::Version::default();
-        let mangled_name = lume_mangle::mangled(self.tcx, type_id, mangle_version).unwrap();
+        let mangled_name =
+            lume_mangle::mangled(self.tcx, &lume_typech::Instance::from(type_id), mangle_version).unwrap();
 
         let kind = self.kind_of_type(type_ref);
         let size = self.size_of_type(type_ref)?;
