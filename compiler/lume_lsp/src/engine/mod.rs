@@ -71,7 +71,12 @@ impl Engine {
                 source_overrides: None,
             };
 
-            let driver = lume_driver::Driver::from_root(&engine.root, config, engine.diagnostics.dcx.handle())?;
+            let driver = lume_driver::Driver::from_root(
+                &engine.root,
+                config,
+                lume_driver::Callbacks::default(),
+                engine.diagnostics.dcx.handle(),
+            )?;
 
             driver.check()
         });

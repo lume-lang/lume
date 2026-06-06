@@ -16,9 +16,9 @@ use crate::*;
 /// with the compiler directly.
 ///
 /// See [`pipeline()`].
-pub struct Pipeline(Arc<GlobalCtx>);
+pub struct Pipeline<'io>(Arc<GlobalCtx>, Callbacks<'io>);
 
-impl Deref for Pipeline {
+impl Deref for Pipeline<'_> {
     type Target = GlobalCtx;
 
     fn deref(&self) -> &Self::Target {
@@ -43,13 +43,13 @@ impl Deref for Pipeline {
 /// let pipeline = pipeline(gcx);
 /// ```
 #[inline]
-pub fn pipeline(gcx: Arc<GlobalCtx>) -> Pipeline {
-    Pipeline(gcx)
+pub fn pipeline(gcx: Arc<GlobalCtx>) -> Pipeline<'static> {
+    Pipeline(gcx, Callbacks::default())
 }
 
-impl<IO> Driver<IO> {
+impl<'io, IO> Driver<'io, IO> {
     /// Creates a new pipeline from the current driver instance.
-    pub fn to_pipeline(self) -> Pipeline {
+    pub fn to_pipeline(self) -> Pipeline<'io> {
         let session = Session {
             dep_graph: self.dependencies,
             workspace_root: self.package.path,
@@ -59,7 +59,7 @@ impl<IO> Driver<IO> {
 
         let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
 
-        pipeline(gcx)
+        Pipeline(gcx, self.callbacks)
     }
 }
 
@@ -112,10 +112,10 @@ pub struct GeneratedObject {
     pub metadata: lume_metadata::PackageMetadata,
 }
 
-impl Pipeline {
+impl Pipeline<'_> {
     #[tracing::instrument(level = "INFO", skip_all)]
     pub fn lower_to_hir(self) -> Result<LoweredToHir> {
-        let Pipeline(gcx) = self;
+        let Pipeline(gcx, callbacks) = self;
 
         let mut maps = IndexMap::new();
         let mut dependencies = gcx.session.dep_graph.iter().cloned().collect::<Vec<_>>();
@@ -152,8 +152,12 @@ impl Pipeline {
 
                 std::mem::take(&mut *metadata.hir).merge_into(&mut dependency_hir);
 
+                (callbacks.on_package_state_change)(&gcx, PackageState::CompilationCached { package: &dependency });
+
                 continue;
             }
+
+            (callbacks.on_package_state_change)(&gcx, PackageState::CompilationStarted { package: &dependency });
 
             // If the package hash is different from the cached hash, mark all the depending
             // packages as dirty.
