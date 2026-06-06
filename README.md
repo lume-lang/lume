@@ -2,6 +2,8 @@
 
 Lume is a lightweight yet powerful programming language designed for simplicity and efficiency. It's syntax is intuitive, making it easy for developers to pick up and start building applications quickly. 
 
+![Lume CLI example](/docs/static/lume-new.gif)
+
 ## Examples
 
 Here's a quick glimpse of Lume's capabilities:
