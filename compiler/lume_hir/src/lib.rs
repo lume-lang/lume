@@ -15,7 +15,7 @@ pub mod macros;
 
 pub use lang::LangItem;
 pub use map::Map;
-pub use visitor::{Visitor, traverse};
+pub use visitor::{Visitor, traverse, traverse_node};
 
 pub const SELF_PARAM_NAME: &str = "self";
 pub const SELF_TYPE_NAME: &str = "Self";
@@ -1347,7 +1347,7 @@ pub enum ExpressionKind {
     Variant(Variant),
 }
 
-#[derive(Hash, Debug, Clone, Copy, PartialEq)]
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CallExpression<'a> {
     /// Defines a call which was invoked without any callee or receiver.
     ///
@@ -1486,14 +1486,14 @@ pub struct DerefExpr {
     pub location: Location,
 }
 
-#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq, Eq)]
 pub struct RefExpr {
     pub id: NodeId,
     pub target: NodeId,
     pub location: Location,
 }
 
-#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq, Eq)]
 pub struct StaticCall {
     pub id: NodeId,
     pub name: Path,
@@ -1519,7 +1519,7 @@ impl StaticCall {
     }
 }
 
-#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq, Eq)]
 pub struct InstanceCall {
     pub id: NodeId,
     pub callee: NodeId,
@@ -1544,7 +1544,7 @@ impl InstanceCall {
     }
 }
 
-#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq, Eq)]
 pub struct IntrinsicCall {
     pub id: NodeId,
     pub kind: IntrinsicKind,

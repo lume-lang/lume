@@ -284,7 +284,7 @@ fn bitcast(builder: &mut Builder<'_, '_>, expr: &lume_tir::Bitcast) -> lume_mir:
 fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
         let struct_name = builder.tcx().new_named_type(&expr.ty, true).unwrap();
-        let type_fields = builder.tcx().fields_on(expr.ty.instance_of).unwrap();
+        let type_fields = builder.tcx().hir_fields_on(expr.ty.instance_of).unwrap();
 
         // Sort all the constructor expressions so they have the same order as
         // the fields within the type. If this isn't done, the value of a field may be
@@ -344,8 +344,12 @@ fn construct(builder: &mut Builder<'_, '_>, expr: &lume_tir::Construct) -> lume_
 fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume_mir::Operand {
     builder.with_current_block(|builder, _| {
         let is_ffi_call = builder.tcx().hir_is_callable_external(expr.function);
+        let call_instance =
+            builder
+                .mcx
+                .instantiated_instance(&builder.func.instance, expr.function, expr.type_arguments.clone());
 
-        let mut signature = builder.signature_of(expr.function);
+        let mut signature = builder.signature_of(&call_instance);
         signature.return_type = builder.lower_type(&expr.return_type);
 
         let return_type = expr.uninst_return_type.as_ref().unwrap_or(&expr.return_type);
@@ -385,7 +389,13 @@ fn call_expression(builder: &mut Builder<'_, '_>, expr: &lume_tir::Call) -> lume
             call_arguments.push(arg_operand);
         }
 
-        let return_value = builder.call_with_signature(expr.function, &signature, call_arguments, expr.location);
+        let return_value = builder.call_with_signature(
+            call_instance,
+            &signature,
+            expr.type_arguments.clone(),
+            call_arguments,
+            expr.location,
+        );
 
         builder.use_register(return_value, expr.location)
     })

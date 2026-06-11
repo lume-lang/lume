@@ -12,6 +12,7 @@ lume_hir = { path = "../lume_hir" }
 lume_mangle = { path = "../../crates/lume_mangle" }
 lume_mir = { path = "../lume_mir" }
 lume_mir_queries = { path = "../lume_mir_queries" }
+lume_mono = { path = "../lume_mono" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 lume_tir = { path = "../lume_tir" }

@@ -59,7 +59,7 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_parameters_id = self.available_type_params_at(method.id);
+                let type_parameters_id = self.all_type_parameters_of(method.id);
                 let type_parameters = self.as_type_params(&type_parameters_id)?;
 
                 let return_type = self.mk_type_ref_generic(&method.signature.return_type, &type_parameters)?;
@@ -77,7 +77,7 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_parameters_id = self.available_type_params_at(method.id);
+                let type_parameters_id = self.all_type_parameters_of(method.id);
                 let type_parameters = self.as_type_params(&type_parameters_id)?;
 
                 let return_type = self.mk_type_ref_generic(&method.signature.return_type, &type_parameters)?;
@@ -95,7 +95,7 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_parameters_id = self.available_type_params_at(method.id);
+                let type_parameters_id = self.all_type_parameters_of(method.id);
                 let type_parameters = self.as_type_params(&type_parameters_id)?;
 
                 let return_type = self.mk_type_ref_generic(&method.signature.return_type, &type_parameters)?;
@@ -544,7 +544,7 @@ impl TyCheckCtx {
 
         let mut fields_left = expr.fields.iter().map(|field| &field.name).collect::<IndexSet<_>>();
 
-        for field in self.fields_on(constructed_type.instance_of)? {
+        for field in self.hir_fields_on(constructed_type.instance_of)? {
             let Some(constructor_field) = self.constructer_field_of(expr, field.name.as_str()) else {
                 self.dcx().emit(
                     MissingField {

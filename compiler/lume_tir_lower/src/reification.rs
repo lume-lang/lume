@@ -151,7 +151,7 @@ impl ReificationPass<'_> {
     }
 
     fn add_metadata_arguments_on_call(&self, call: &mut Call) {
-        let type_param_len = self.tcx.available_type_params_at(call.function).len();
+        let type_param_len = self.tcx.all_type_parameters_of(call.function).len();
         let type_arg_len = call.type_arguments.len();
         let remaining_type_args = type_param_len.saturating_sub(type_arg_len);
 

@@ -26,7 +26,7 @@ pub(crate) fn lower_type(mcx: &MirQueryCtx, type_ref: &TypeRef) -> lume_mir::Typ
             let struct_def = mcx.tcx().hir_expect_struct(type_ref.instance_of);
             let name = format!("{:+}", struct_def.name);
 
-            let ty_props = mcx.tcx().fields_on(type_ref.instance_of).unwrap();
+            let ty_props = mcx.tcx().hir_fields_on(type_ref.instance_of).unwrap();
             let props = ty_props
                 .iter()
                 .map(|prop| {

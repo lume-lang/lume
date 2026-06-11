@@ -17,8 +17,8 @@ impl LowerFunction<'_> {
                     self.fcast(*operand, *bits)
                 }
             }
-            lume_mir::DeclarationKind::Call { func_id, args, .. } => {
-                let ret = self.call(*func_id, args);
+            lume_mir::DeclarationKind::Call { instance, args, .. } => {
+                let ret = self.call(instance.id, args);
 
                 if ret.is_empty() {
                     self.builder.ins().iconst(self.backend.cl_ptr_type(), 0)

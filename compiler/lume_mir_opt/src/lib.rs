@@ -2,7 +2,6 @@ pub(crate) mod pass;
 
 use lume_mir::ModuleMap;
 use lume_mir_queries::MirQueryCtx;
-use lume_span::NodeId;
 use lume_typech::TyCheckCtx;
 
 pub struct Optimizer<'tcx> {
@@ -37,11 +36,17 @@ impl<'tcx> Optimizer<'tcx> {
         let functions = self.mcx.mir().functions.iter();
 
         let eligible_functions = functions
-            .filter_map(|(id, func)| if is_func_eligible(func) { Some(*id) } else { None })
-            .collect::<Vec<NodeId>>();
+            .filter_map(|(instance, func)| {
+                if is_func_eligible(func) {
+                    Some(instance.clone())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
 
-        for func_id in eligible_functions {
-            pass::run_all_passes(&mut self.mcx, func_id);
+        for instance in eligible_functions {
+            pass::run_all_passes(&mut self.mcx, &instance);
         }
     }
 }
