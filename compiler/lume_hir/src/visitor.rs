@@ -3,38 +3,38 @@ use lume_errors::Result;
 use crate::*;
 
 /// Visitor trait for traversing the HIR map.
-pub trait Visitor {
-    fn visit_node(&mut self, _node: &Node) -> Result<()> {
+pub trait Visitor<'hir> {
+    fn visit_node(&mut self, _node: &'hir Node) -> Result<()> {
         Ok(())
     }
 
-    fn visit_type(&mut self, _ty: &Type) -> Result<()> {
+    fn visit_type(&mut self, _ty: &'hir Type) -> Result<()> {
         Ok(())
     }
 
-    fn visit_stmt(&mut self, _stmt: &Statement) -> Result<()> {
+    fn visit_stmt(&mut self, _stmt: &'hir Statement) -> Result<()> {
         Ok(())
     }
 
-    fn visit_expr(&mut self, _expr: &Expression) -> Result<()> {
+    fn visit_expr(&mut self, _expr: &'hir Expression) -> Result<()> {
         Ok(())
     }
 
-    fn visit_pattern(&mut self, _pattern: &Pattern) -> Result<()> {
+    fn visit_pattern(&mut self, _pattern: &'hir Pattern) -> Result<()> {
         Ok(())
     }
 
-    fn visit_path(&mut self, _path: &Path) -> Result<()> {
+    fn visit_path(&mut self, _path: &'hir Path) -> Result<()> {
         Ok(())
     }
 
-    fn visit_identifier(&mut self, _ident: &Identifier) -> Result<()> {
+    fn visit_identifier(&mut self, _ident: &'hir Identifier) -> Result<()> {
         Ok(())
     }
 }
 
 /// Traverses the given HIR map using the provided visitor.
-pub fn traverse<V: Visitor>(hir: &Map, visitor: &mut V) -> Result<()> {
+pub fn traverse<'hir, V: Visitor<'hir>>(hir: &'hir Map, visitor: &mut V) -> Result<()> {
     for node in hir.nodes().values() {
         traverse_node(hir, visitor, node)?;
     }
@@ -42,7 +42,7 @@ pub fn traverse<V: Visitor>(hir: &Map, visitor: &mut V) -> Result<()> {
     Ok(())
 }
 
-fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<()> {
+pub fn traverse_node<'hir, V: Visitor<'hir>>(hir: &'hir Map, visitor: &mut V, node: &'hir Node) -> Result<()> {
     visitor.visit_node(node)?;
 
     match node {
@@ -182,7 +182,11 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
     Ok(())
 }
 
-fn traverse_type_params<V: Visitor, I: Iterator<Item = NodeId>>(hir: &Map, visitor: &mut V, iter: I) -> Result<()> {
+fn traverse_type_params<'hir, V: Visitor<'hir>, I: Iterator<Item = NodeId>>(
+    hir: &'hir Map,
+    visitor: &mut V,
+    iter: I,
+) -> Result<()> {
     for type_param_id in iter {
         let Node::Type(TypeDefinition::TypeParameter(type_param)) = hir.expect_node(type_param_id)? else {
             continue;
@@ -198,7 +202,7 @@ fn traverse_type_params<V: Visitor, I: Iterator<Item = NodeId>>(hir: &Map, visit
     Ok(())
 }
 
-fn traverse_stmt<V: Visitor>(hir: &Map, visitor: &mut V, stmt: &Statement) -> Result<()> {
+fn traverse_stmt<'hir, V: Visitor<'hir>>(hir: &'hir Map, visitor: &mut V, stmt: &'hir Statement) -> Result<()> {
     visitor.visit_stmt(stmt)?;
 
     match &stmt.kind {
@@ -233,7 +237,7 @@ fn traverse_stmt<V: Visitor>(hir: &Map, visitor: &mut V, stmt: &Statement) -> Re
     Ok(())
 }
 
-fn traverse_expr<V: Visitor>(hir: &Map, visitor: &mut V, expr: &Expression) -> Result<()> {
+fn traverse_expr<'hir, V: Visitor<'hir>>(hir: &'hir Map, visitor: &mut V, expr: &'hir Expression) -> Result<()> {
     visitor.visit_expr(expr)?;
 
     match &expr.kind {
@@ -322,7 +326,7 @@ fn traverse_expr<V: Visitor>(hir: &Map, visitor: &mut V, expr: &Expression) -> R
     Ok(())
 }
 
-fn traverse_pattern<V: Visitor>(hir: &Map, visitor: &mut V, pattern: &Pattern) -> Result<()> {
+fn traverse_pattern<'hir, V: Visitor<'hir>>(hir: &'hir Map, visitor: &mut V, pattern: &'hir Pattern) -> Result<()> {
     visitor.visit_pattern(pattern)?;
 
     match &pattern.kind {
@@ -345,13 +349,13 @@ fn traverse_pattern<V: Visitor>(hir: &Map, visitor: &mut V, pattern: &Pattern) -
     Ok(())
 }
 
-fn traverse_type<V: Visitor>(hir: &Map, visitor: &mut V, ty: &Type) -> Result<()> {
+fn traverse_type<'hir, V: Visitor<'hir>>(hir: &'hir Map, visitor: &mut V, ty: &'hir Type) -> Result<()> {
     visitor.visit_type(ty)?;
 
     traverse_path(hir, visitor, &ty.name)
 }
 
-fn traverse_path<V: Visitor>(hir: &Map, visitor: &mut V, path: &Path) -> Result<()> {
+fn traverse_path<'hir, V: Visitor<'hir>>(hir: &'hir Map, visitor: &mut V, path: &'hir Path) -> Result<()> {
     visitor.visit_path(path)?;
 
     for root in &path.root {
@@ -361,7 +365,11 @@ fn traverse_path<V: Visitor>(hir: &Map, visitor: &mut V, path: &Path) -> Result<
     traverse_path_segment(hir, visitor, &path.name)
 }
 
-fn traverse_path_segment<V: Visitor>(hir: &Map, visitor: &mut V, path: &PathSegment) -> Result<()> {
+fn traverse_path_segment<'hir, V: Visitor<'hir>>(
+    hir: &'hir Map,
+    visitor: &mut V,
+    path: &'hir PathSegment,
+) -> Result<()> {
     match path {
         PathSegment::Namespace { name } | PathSegment::Variant { name, .. } => {
             visitor.visit_identifier(name)?;

@@ -60,6 +60,8 @@ impl<'tcx> ModuleTransformer<'tcx> {
             self.mcx.mir_mut().functions.insert(func.id, defined_func);
         }
 
+        let _mono_items = lume_mono::collect(&self.mcx).unwrap();
+
         self.mcx.take_mir()
     }
 
