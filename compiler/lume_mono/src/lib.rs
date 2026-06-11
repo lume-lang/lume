@@ -1,52 +1,12 @@
 use indexmap::{IndexMap, IndexSet};
+use lume_mir::{Generics, Instance};
 use lume_span::NodeId;
-use lume_typech::TyCheckCtx;
-use lume_types::TypeRef;
 
 pub(crate) mod collector;
 pub use collector::collect;
 
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Instance {
-    /// ID of the method or function which this instance represents.
-    pub id: NodeId,
-
-    /// Generic arguments for the callable instance
-    pub generics: Vec<TypeRef>,
-}
-
-impl Instance {
-    pub fn display<'tcx>(&'tcx self, tcx: &'tcx TyCheckCtx) -> InstanceDisplay<'tcx> {
-        InstanceDisplay(self, tcx)
-    }
-}
-
-pub struct InstanceDisplay<'tcx>(&'tcx Instance, &'tcx TyCheckCtx);
-
-impl std::fmt::Display for InstanceDisplay<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let InstanceDisplay(instance, tcx) = self;
-
-        write!(f, "{:+}", tcx.hir_path_of_node(instance.id))?;
-
-        if !instance.generics.is_empty() {
-            write!(
-                f,
-                "<{}>",
-                instance
-                    .generics
-                    .iter()
-                    .filter_map(|generic| tcx.ty_stringifier(generic).stringify().ok())
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            )?;
-        }
-
-        write!(f, "()")?;
-
-        Ok(())
-    }
-}
+pub(crate) mod canonicalize;
+pub use canonicalize::canonicalize;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct MonoItems {
@@ -60,6 +20,10 @@ impl MonoItems {
 
     pub fn iter(&self) -> impl Iterator<Item = &Instance> {
         self.items.values().flatten()
+    }
+
+    pub fn any_of(&self, id: NodeId) -> bool {
+        self.items.get(&id).is_some_and(|set| !set.is_empty())
     }
 
     pub fn all_of(&self, id: NodeId) -> impl Iterator<Item = &Instance> {

@@ -3,7 +3,6 @@ mod heap_to_stack;
 use lume_mir::*;
 use lume_mir_queries::MirQueryCtx;
 use lume_session::OptimizationLevel;
-use lume_span::NodeId;
 
 /// Defines a MIR optimization pass which can be executed over a function or
 /// block.
@@ -15,31 +14,31 @@ pub(crate) trait OptimizerPass {
     fn enabled(level: OptimizationLevel) -> bool;
 
     /// Executes the pass on the given function.
-    fn execute(&mut self, mcx: &mut MirQueryCtx, func_id: NodeId);
+    fn execute(&mut self, mcx: &mut MirQueryCtx, instance: &Instance);
 }
 
 /// Executes the given optimizer pass on the given function, if the pass is
 /// enabled under the optimization level.
 #[inline]
-pub(crate) fn run_pass<P: OptimizerPass>(mcx: &mut MirQueryCtx, level: OptimizationLevel, func_id: NodeId) {
+pub(crate) fn run_pass<P: OptimizerPass>(mcx: &mut MirQueryCtx, level: OptimizationLevel, instance: &Instance) {
     if P::enabled(level) {
         let mut pass = P::new();
-        pass.execute(mcx, func_id);
+        pass.execute(mcx, instance);
     }
 }
 
 /// Attempts to run all optimization passes which have been enabled by `level`
 /// on the given function.
 #[inline]
-pub(crate) fn run_all_passes(mcx: &mut MirQueryCtx, func_id: NodeId) {
+pub(crate) fn run_all_passes(mcx: &mut MirQueryCtx, instance: &Instance) {
     let session = &mcx.gcx().session;
     let level = session.options.optimize;
 
-    run_pass::<heap_to_stack::HeapToStack>(mcx, level, func_id);
+    run_pass::<heap_to_stack::HeapToStack>(mcx, level, instance);
 
     // If the `dump_mir` property is defined but empty, we dump the function MIR
     // after all the passes have been executed.
-    let func = mcx.mir().function(func_id);
+    let func = mcx.mir().instance(instance);
 
     #[allow(clippy::disallowed_macros, reason = "only used in debugging")]
     if mcx.should_dump_func(func, None) {

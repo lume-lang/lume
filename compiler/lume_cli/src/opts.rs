@@ -9,6 +9,10 @@ pub struct BuildOptions {
     #[arg(value_name = "DIR", value_hint = ValueHint::DirPath)]
     pub path: Option<PathBuf>,
 
+    /// Whether to disable incremental compilation.
+    #[arg(long)]
+    pub incremental: bool,
+
     /// Generate source-level debug information
     #[arg(
         long,

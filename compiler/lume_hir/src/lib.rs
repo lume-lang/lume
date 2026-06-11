@@ -1486,7 +1486,7 @@ pub struct DerefExpr {
     pub location: Location,
 }
 
-#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Hash, Debug, Clone, PartialEq, Eq)]
 pub struct RefExpr {
     pub id: NodeId,
     pub target: NodeId,

@@ -5,7 +5,7 @@ use lume_mir_queries::MirQueryCtx;
 use lume_span::NodeId;
 use lume_typech::TyCheckCtx;
 
-use crate::{Instance, MonoItems};
+use crate::{Generics, Instance, MonoItems};
 
 pub fn collect(mcx: &MirQueryCtx<'_>) -> Result<MonoItems> {
     let mut items = MonoItems::default();
@@ -29,7 +29,7 @@ pub(crate) fn collect_roots(mcx: &MirQueryCtx<'_>) -> Result<IndexSet<Instance>>
     if let Some(main_fn) = tcx.entrypoint() {
         worklist.insert(Instance {
             id: main_fn.id,
-            generics: Vec::new(),
+            generics: Some(Generics::default()),
         });
     }
 
@@ -42,7 +42,7 @@ pub(crate) fn collect_roots(mcx: &MirQueryCtx<'_>) -> Result<IndexSet<Instance>>
     {
         worklist.insert(Instance {
             id: mir_func.id,
-            generics: Vec::new(),
+            generics: Some(Generics::default()),
         });
     }
 
@@ -55,22 +55,28 @@ pub(crate) fn collect_roots(mcx: &MirQueryCtx<'_>) -> Result<IndexSet<Instance>>
 
         tracing::debug!(item = workitem.display(tcx).to_string(), "collected");
 
+        let generics = workitem.generics.clone().unwrap_or_default();
         let type_parameters = tcx.type_params_of(workitem.id)?;
-        debug_assert_eq!(type_parameters.len(), workitem.generics.len());
+        debug_assert_eq!(type_parameters.len(), generics.len());
 
         for CallLocation { call_expr, callable_id } in visitor.calls_in(tcx.hir(), workitem.id)? {
+            let generic_params = tcx.type_params_of(callable_id)?;
+
             let generic_args = tcx
                 .mk_type_refs_from(call_expr.type_arguments(), call_expr.id())?
                 .into_iter()
                 .map(|type_arg| {
-                    tcx.instantiate_flat_type_from(&type_arg, type_parameters, &workitem.generics)
+                    tcx.instantiate_flat_type_from(&type_arg, type_parameters, &generics.types)
                         .to_owned()
                 })
                 .collect::<Vec<_>>();
 
             let call_instance = Instance {
                 id: callable_id,
-                generics: generic_args,
+                generics: Some(Generics {
+                    ids: generic_params.to_vec(),
+                    types: generic_args,
+                }),
             };
 
             tracing::trace!(
