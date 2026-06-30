@@ -1,6 +1,7 @@
 use crate::*;
 
 const TOKEN_NAMES: &[(&str, &str)] = &[
+    ("const", "const_kw"),
     ("import", "import_kw"),
     ("namespace", "namespace_kw"),
     ("fn", "fn_kw"),

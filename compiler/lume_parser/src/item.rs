@@ -1,6 +1,7 @@
 use crate::*;
 
 const ITEM_RECOVERY_SET: &[SyntaxKind] = &[
+    Token![const],
     Token![namespace],
     Token![import],
     Token![impl],
@@ -21,6 +22,7 @@ impl Parser {
         self.parse_attributes();
 
         self.parse_visibility();
+        self.parse_constnesss();
 
         match self.token() {
             Token![import] => self.parse_import(),
@@ -56,6 +58,14 @@ impl Parser {
                 self.finish_node();
             }
             _ => {}
+        }
+    }
+
+    fn parse_constnesss(&mut self) {
+        if self.peek(SyntaxKind::CONST_KW) {
+            self.start_node(SyntaxKind::CONSTNESS);
+            self.consume(Token![const]);
+            self.finish_node();
         }
     }
 

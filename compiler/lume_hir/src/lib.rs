@@ -749,6 +749,12 @@ pub struct Block {
 }
 
 #[derive(Serialize, Deserialize, Hash, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Constness {
+    Const,
+    NotConst,
+}
+
+#[derive(Serialize, Deserialize, Hash, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Visibility {
     // Order matters here, since `Ord` and `PartialOrd` determines
     // the order of enums by the order of their variants!
@@ -790,6 +796,7 @@ pub struct FunctionDefinition {
 
     pub attrs: Vec<Attribute>,
     pub visibility: Visibility,
+    pub constness: Constness,
     pub signature: FnSignature,
     pub block: Option<Block>,
     pub location: Location,

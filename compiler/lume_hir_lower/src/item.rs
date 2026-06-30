@@ -30,6 +30,14 @@ fn visibility(expr: Option<lume_ast::Visibility>) -> lume_hir::Visibility {
     }
 }
 
+fn constness(expr: Option<lume_ast::Constness>) -> lume_hir::Constness {
+    if expr.is_some() {
+        lume_hir::Constness::Const
+    } else {
+        lume_hir::Constness::NotConst
+    }
+}
+
 impl LoweringContext<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn item(&mut self, expr: lume_ast::Item) -> Result<()> {
@@ -142,6 +150,7 @@ impl LoweringContext<'_> {
 
         lume_hir::with_frame!(self.current_type_params, || {
             let visibility = visibility(expr.visibility());
+            let constness = constness(expr.constness());
             let signature = self.signature_opt(expr.sig(), false);
             let doc_comment = documentation(expr.doc_comments());
             let location = self.location(expr.location());
@@ -157,6 +166,7 @@ impl LoweringContext<'_> {
                 doc_comment,
                 attrs,
                 visibility,
+                constness,
                 signature,
                 block,
                 location,

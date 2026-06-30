@@ -458,6 +458,7 @@ impl<'cfg, 'src> Formatter<'cfg, 'src> {
         let signature = doc_comment
             .append(attributes)
             .append(visibility(func.visibility()))
+            .append(constness(func.constness()))
             .append(self.signature(signature));
 
         let body = match func.block() {
@@ -1500,6 +1501,13 @@ fn visibility<'a>(vis: Option<Visibility>) -> Document<'a> {
         Some(v) if v.priv_kw().is_some() => str("priv "),
         Some(v) => string(v.as_text()),
         None => empty(),
+    }
+}
+
+fn constness<'a>(c: Option<Constness>) -> Document<'a> {
+    match c {
+        Some(constness) if constness.const_kw().is_some() => str("const "),
+        Some(_) | None => empty(),
     }
 }
 

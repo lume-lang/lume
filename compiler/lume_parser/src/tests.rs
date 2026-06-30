@@ -96,6 +96,7 @@ fn test_function_definition_snapshots() {
     assert_snap_eq!("fn main() -> std::Int32 {}", "namespaced_type");
     assert_snap_eq!("fn empty?() {}", "boolean_function");
     assert_snap_eq!("fn foo(...args: Int32) {}", "varargs");
+    assert_snap_eq!("const fn foo() {}", "const_fn");
 }
 
 #[test]
