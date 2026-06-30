@@ -533,6 +533,7 @@ fn as_parser_token(token: Token<'_>) -> (SyntaxKind, TextSpan) {
         TokenKind::Colon => SyntaxKind::COLON,
         TokenKind::Comma => SyntaxKind::COMMA,
         TokenKind::Comment(_) => SyntaxKind::LINE_COMMENT,
+        TokenKind::Const => SyntaxKind::CONST_KW,
         TokenKind::Continue => SyntaxKind::CONTINUE_KW,
         TokenKind::Decrement => SyntaxKind::DECREMENT,
         TokenKind::Div => SyntaxKind::DIV,

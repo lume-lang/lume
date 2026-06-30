@@ -160,6 +160,9 @@ impl Fn {
     pub fn visibility(&self) -> Option<Visibility> {
         crate::support::child(self.syntax())
     }
+    pub fn constness(&self) -> Option<Constness> {
+        crate::support::child(self.syntax())
+    }
     pub fn sig(&self) -> Option<Sig> {
         crate::support::child(self.syntax())
     }
@@ -423,6 +426,26 @@ impl AstNode for Visibility {
     fn cast(syntax: SyntaxNode) -> Option<Self> {
         match syntax.kind() {
             SyntaxKind::VISIBILITY => Some(Visibility { syntax }),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode {
+        &self.syntax
+    }
+}
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct Constness {
+    syntax: SyntaxNode,
+}
+impl Constness {
+    pub fn const_kw(&self) -> Option<SyntaxToken> {
+        crate::support::token(self.syntax(), SyntaxKind::CONST_KW)
+    }
+}
+impl AstNode for Constness {
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        match syntax.kind() {
+            SyntaxKind::CONSTNESS => Some(Constness { syntax }),
             _ => None,
         }
     }

@@ -124,6 +124,9 @@ pub enum TokenKind<'source> {
     #[regex("//", lex_comment)]
     Comment(&'source str),
 
+    #[token("const")]
+    Const,
+
     #[token("continue")]
     Continue,
 
@@ -338,6 +341,7 @@ impl TokenKind<'_> {
             TokenKind::Colon => TokenType::Colon,
             TokenKind::Comma => TokenType::Comma,
             TokenKind::Comment(_) => TokenType::Comment,
+            TokenKind::Const => TokenType::Const,
             TokenKind::Continue => TokenType::Continue,
             TokenKind::Decrement => TokenType::Decrement,
             TokenKind::Div => TokenType::Div,
@@ -505,6 +509,7 @@ pub enum TokenType {
     Colon,
     Comma,
     Comment,
+    Const,
     Continue,
     Decrement,
     Div,
@@ -585,6 +590,7 @@ impl Display for TokenType {
             TokenType::Colon => f.write_str(":"),
             TokenType::Comma => f.write_str(","),
             TokenType::Comment => f.write_str("comment"),
+            TokenType::Const => f.write_str("const"),
             TokenType::Continue => f.write_str("continue"),
             TokenType::Decrement => f.write_str("--"),
             TokenType::Div => f.write_str("/"),
@@ -874,6 +880,7 @@ mod tests {
     fn test_keywords() {
         assert_lex("as", &[(Ok(TokenKind::As), "as", 0..2)]);
         assert_lex("break", &[(Ok(TokenKind::Break), "break", 0..5)]);
+        assert_lex("const", &[(Ok(TokenKind::Const), "const", 0..5)]);
         assert_lex("continue", &[(Ok(TokenKind::Continue), "continue", 0..8)]);
         assert_lex("external", &[(Ok(TokenKind::External), "external", 0..8)]);
         assert_lex("for", &[(Ok(TokenKind::For), "for", 0..3)]);

@@ -39,6 +39,9 @@ Item =
 Visibility =
   ('pub' 'internal'?) | 'priv'
 
+Constness =
+  'const'?
+
 Import =
   'import' ImportPath ImportList
 
@@ -53,7 +56,7 @@ Namespace =
 
 Fn =
   doc_comments:DocComment* Attr*
-  Visibility? Sig Block?
+  Visibility? Constness? Sig Block?
 
 Method =
   doc_comments:DocComment* Attr*

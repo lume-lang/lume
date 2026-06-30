@@ -38,6 +38,7 @@ macro_rules! Token {
     // Keywords
     [as] => { $crate::SyntaxKind::AS_KW };
     [break] => { $crate::SyntaxKind::BREAK_KW };
+    [const] => { $crate::SyntaxKind::CONST_KW };
     [continue] => { $crate::SyntaxKind::CONTINUE_KW };
     [else] => { $crate::SyntaxKind::ELSE_KW };
     [enum] => { $crate::SyntaxKind::ENUM_KW };
@@ -77,6 +78,7 @@ pub enum SyntaxKind {
 
     SOURCE_FILE,
     IDENT,
+    CONSTNESS,
     VISIBILITY,
     NAME,
     SIG,
@@ -232,6 +234,7 @@ pub enum SyntaxKind {
     // Keywords
     AS_KW,
     BREAK_KW,
+    CONST_KW,
     CONTINUE_KW,
     ELSE_KW,
     ENUM_KW,
