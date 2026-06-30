@@ -26,6 +26,7 @@ pub fn install_handlers() {
     }
 
     // Install all the signals which should be handled
+    #[allow(function_casts_as_integer)]
     unsafe {
         let mut sa: libc::sigaction = std::mem::zeroed();
         sa.sa_sigaction = signal_handler as libc::sighandler_t;

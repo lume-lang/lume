@@ -123,7 +123,7 @@ impl LanguageItems {
     /// language item already exists within the set.
     pub fn add_name(&mut self, name: &str, node: NodeId) -> Result<()> {
         let Some(lang_item) = LangItem::from_name(name) else {
-            return Err(SimpleDiagnostic::new(format!("no language item with name {name:?} found",)).into());
+            return Err(SimpleDiagnostic::new(format!("no language item with name {name:?} found")).into());
         };
 
         self.add(lang_item, node)

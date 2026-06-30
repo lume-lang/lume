@@ -76,7 +76,8 @@ impl NewCommand {
             && !self.force
         {
             return Err(SimpleDiagnostic::new("output directory is not empty")
-                .with_help("to create the template anyway, run the command with `--force`"))?;
+                .with_help("to create the template anyway, run the command with `--force`")
+                .into());
         }
 
         let templater = Templater::create(&output_directory)?;
@@ -165,8 +166,9 @@ impl<'a> Templater<'a> {
         if let Err(err) = std::fs::write(&dest_path, template.render().unwrap()) {
             return Err(
                 SimpleDiagnostic::new(format!("failed to write templated file: {}", dest_path.display()))
-                    .add_cause(err),
-            )?;
+                    .add_cause(err)
+                    .into(),
+            );
         }
 
         Ok(())

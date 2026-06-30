@@ -27,7 +27,7 @@ mod x86_64 {
     /// Gets the return address of the frame, pointed to by `fp`.
     #[inline]
     pub(crate) unsafe fn return_addr_of_frame(fp: usize) -> usize {
-        unsafe { *(fp as *mut usize).offset(1) }
+        unsafe { *(fp as *mut usize).add(1) }
     }
 }
 
@@ -62,7 +62,7 @@ mod aarch64 {
     /// Gets the return address of the frame, pointed to by `fp`.
     #[inline]
     pub(crate) unsafe fn return_addr_of_frame(fp: usize) -> usize {
-        unsafe { *(fp as *mut usize).offset(1) }
+        unsafe { *(fp as *mut usize).add(1) }
     }
 }
 

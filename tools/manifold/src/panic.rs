@@ -46,7 +46,7 @@ fn custom_panic_hook(default_hook: &PanicHook, info: &std::panic::PanicHookInfo<
 
     match backtrace.status() {
         BacktraceStatus::Captured => {
-            write!(out, "stack backtrace:\n{backtrace}",).unwrap();
+            write!(out, "stack backtrace:\n{backtrace}").unwrap();
         }
         BacktraceStatus::Disabled => {
             writeln!(

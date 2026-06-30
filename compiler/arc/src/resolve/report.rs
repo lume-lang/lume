@@ -58,7 +58,7 @@ impl pubgrub::ReportFormatter<PackageKey, VersionSet, DependencyError> for Repor
                     format!("could not fetch dependency {source}, required by {pkg} {set}")
                 }
                 DependencyError::VersionsFetchFailed { package_name } => {
-                    format!("could not retrieve versions for {package_name}, required by {pkg} {set}",)
+                    format!("could not retrieve versions for {package_name}, required by {pkg} {set}")
                 }
                 DependencyError::VersionNotFound => format!("could not find any matching version of {pkg}"),
             },

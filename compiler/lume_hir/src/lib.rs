@@ -346,7 +346,7 @@ impl std::fmt::Display for PathSegment {
         match self {
             Self::Namespace { name } => f.write_str(name.as_str()),
             Self::Type { name, bound_types, .. } | Self::Callable { name, bound_types, .. } => {
-                write!(f, "{name}",)?;
+                write!(f, "{name}")?;
 
                 if !bound_types.is_empty() {
                     write!(

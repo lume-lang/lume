@@ -588,7 +588,7 @@ fn import_function<TModule: Module>(
 
 pub(crate) fn address_for_func(func_id: FuncId) -> Address {
     let symbol = func_id.as_u32();
-    assert!(symbol & 1 << 31 == 0);
+    assert_eq!(symbol & 1 << 31, 0);
 
     Address::Symbol {
         symbol: symbol as usize,

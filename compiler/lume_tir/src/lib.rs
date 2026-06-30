@@ -109,7 +109,7 @@ impl std::fmt::Display for PathSegment {
             | Self::Callable {
                 name, type_arguments, ..
             } => {
-                write!(f, "{name}",)?;
+                write!(f, "{name}")?;
 
                 if !type_arguments.is_empty() {
                     write!(
