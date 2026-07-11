@@ -37,7 +37,7 @@ struct ConstNodeVisitor<'tcx> {
 
 impl ConstNodeVisitor<'_> {
     fn raise_incompatible_call(&mut self, expr_span: Location, callable: Callable<'_>) {
-        let callable_span = callable.name().location();
+        let callable_span = callable.name().name().location;
 
         self.errors.push(
             SimpleDiagnostic::new("cannot call non-const callable in const context")
