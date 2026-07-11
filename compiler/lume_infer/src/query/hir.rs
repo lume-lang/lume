@@ -38,6 +38,29 @@ impl Iterator for ParentHirIterator<'_> {
     }
 }
 
+/// An iterator over the elements of a linked [`NodeId`]s.
+///
+/// This `struct` is created by [`TyInferCtx::hir_parent_id_iter()`].
+pub struct ChildHirIterator<'a> {
+    tcx: &'a TyInferCtx,
+    current: Option<NodeId>,
+}
+
+impl Iterator for ChildHirIterator<'_> {
+    type Item = NodeId;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let item = self.current;
+
+        self.current = match self.current {
+            Some(c) => self.tcx.hir_parent_of(c),
+            None => None,
+        };
+
+        item
+    }
+}
+
 impl TyInferCtx {
     pub fn hir_nodes(&self) -> impl Iterator<Item = &Node> {
         self.hir.nodes.values()

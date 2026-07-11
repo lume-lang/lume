@@ -1,5 +1,6 @@
+use std::ops::ControlFlow;
+
 use indexmap::IndexSet;
-use lume_errors::Result;
 use lume_hir::{Visitor, WithLocation as _, traverse};
 use lume_infer::query::CallReference;
 use lume_span::{Location, NodeId};
@@ -85,7 +86,7 @@ pub(crate) struct SymbolLookup {
 impl SymbolLookup {
     pub fn from_hir(hir: &lume_hir::Map) -> Self {
         let mut visitor = LocationVisitor::default();
-        traverse(hir, &mut visitor).expect("HIR traversal");
+        let _ = traverse(hir, &mut visitor);
 
         Self {
             nodes: visitor.nodes,
@@ -134,16 +135,18 @@ struct LocationVisitor {
 }
 
 impl Visitor for LocationVisitor {
-    fn visit_type(&mut self, ty: &lume_hir::Type) -> Result<()> {
+    type Break = ();
+
+    fn visit_type(&mut self, ty: &lume_hir::Type) -> ControlFlow<Self::Break> {
         self.symbols.insert_sorted(SymbolEntry {
             kind: SymbolKind::Type { name: ty.name.clone() },
             location: ty.location,
         });
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 
-    fn visit_node(&mut self, node: &lume_hir::Node) -> Result<()> {
+    fn visit_node(&mut self, node: &lume_hir::Node) -> ControlFlow<Self::Break> {
         match node {
             lume_hir::Node::Function(func) => {
                 self.symbols.insert_sorted(SymbolEntry {
@@ -220,10 +223,10 @@ impl Visitor for LocationVisitor {
             _ => {}
         }
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 
-    fn visit_stmt(&mut self, stmt: &lume_hir::Statement) -> Result<()> {
+    fn visit_stmt(&mut self, stmt: &lume_hir::Statement) -> ControlFlow<Self::Break> {
         if let lume_hir::StatementKind::Variable(stmt) = &stmt.kind {
             self.symbols.insert(SymbolEntry {
                 kind: SymbolKind::VariableDeclaration { id: stmt.id },
@@ -231,10 +234,10 @@ impl Visitor for LocationVisitor {
             });
         }
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 
-    fn visit_expr(&mut self, expr: &lume_hir::Expression) -> Result<()> {
+    fn visit_expr(&mut self, expr: &lume_hir::Expression) -> ControlFlow<Self::Break> {
         self.nodes.insert_sorted(NodeEntry {
             id: expr.id,
             location: expr.location,
@@ -307,10 +310,10 @@ impl Visitor for LocationVisitor {
             | lume_hir::ExpressionKind::Missing => {}
         }
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 
-    fn visit_path(&mut self, path: &lume_hir::Path) -> Result<()> {
+    fn visit_path(&mut self, path: &lume_hir::Path) -> ControlFlow<Self::Break> {
         let mut current = Some(path.clone());
 
         while let Some(parent) = current {
@@ -324,10 +327,10 @@ impl Visitor for LocationVisitor {
             current = parent.parent();
         }
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 
-    fn visit_pattern(&mut self, pattern: &lume_hir::Pattern) -> Result<()> {
+    fn visit_pattern(&mut self, pattern: &lume_hir::Pattern) -> ControlFlow<Self::Break> {
         match &pattern.kind {
             lume_hir::PatternKind::Variant(expr) => {
                 self.symbols.insert(SymbolEntry {
@@ -348,6 +351,6 @@ impl Visitor for LocationVisitor {
             lume_hir::PatternKind::Missing => {}
         }
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 }

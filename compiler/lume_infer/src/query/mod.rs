@@ -8,6 +8,7 @@ use crate::{TyInferCtx, *};
 
 pub mod attr;
 pub mod callable;
+pub mod const_;
 mod diagnostics;
 pub mod hir;
 pub mod lookup;

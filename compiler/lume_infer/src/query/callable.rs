@@ -1160,6 +1160,65 @@ impl TyInferCtx {
             }
         }
     }
+
+    /// Determines whether the given call expression is a compiler-inserted
+    /// intrinsic, such as `Add<Int32> for Int32`, `Not<Boolean>`, etc.,
+    /// such that the actual implementation is a regular, non-branching CPU
+    /// instruction.
+    ///
+    /// This is different from regular intrinsics, which might be implemented
+    /// for any type and can contain any type of CPU instructions.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub fn is_compiler_intrinsic(&self, expr: &lume_hir::IntrinsicCall) -> Result<bool> {
+        let callee_type = self.type_of(expr.kind.callee())?;
+
+        if callee_type.is_integer() {
+            Ok(matches!(
+                &expr.kind,
+                lume_hir::IntrinsicKind::Equal { .. }
+                    | lume_hir::IntrinsicKind::NotEqual { .. }
+                    | lume_hir::IntrinsicKind::Greater { .. }
+                    | lume_hir::IntrinsicKind::GreaterEqual { .. }
+                    | lume_hir::IntrinsicKind::Less { .. }
+                    | lume_hir::IntrinsicKind::LessEqual { .. }
+                    | lume_hir::IntrinsicKind::BinaryAnd { .. }
+                    | lume_hir::IntrinsicKind::BinaryOr { .. }
+                    | lume_hir::IntrinsicKind::BinaryXor { .. }
+                    | lume_hir::IntrinsicKind::Add { .. }
+                    | lume_hir::IntrinsicKind::Sub { .. }
+                    | lume_hir::IntrinsicKind::Mul { .. }
+                    | lume_hir::IntrinsicKind::Div { .. }
+                    | lume_hir::IntrinsicKind::Negate { .. }
+            ))
+        } else if callee_type.is_float() {
+            Ok(matches!(
+                &expr.kind,
+                lume_hir::IntrinsicKind::Equal { .. }
+                    | lume_hir::IntrinsicKind::NotEqual { .. }
+                    | lume_hir::IntrinsicKind::Greater { .. }
+                    | lume_hir::IntrinsicKind::GreaterEqual { .. }
+                    | lume_hir::IntrinsicKind::Less { .. }
+                    | lume_hir::IntrinsicKind::LessEqual { .. }
+                    | lume_hir::IntrinsicKind::Add { .. }
+                    | lume_hir::IntrinsicKind::Sub { .. }
+                    | lume_hir::IntrinsicKind::Mul { .. }
+                    | lume_hir::IntrinsicKind::Div { .. }
+                    | lume_hir::IntrinsicKind::Negate { .. }
+            ))
+        } else if callee_type.is_bool() {
+            Ok(matches!(
+                &expr.kind,
+                lume_hir::IntrinsicKind::Equal { .. }
+                    | lume_hir::IntrinsicKind::NotEqual { .. }
+                    | lume_hir::IntrinsicKind::And { .. }
+                    | lume_hir::IntrinsicKind::Or { .. }
+                    | lume_hir::IntrinsicKind::Not { .. }
+            ))
+        } else {
+            Ok(false)
+        }
+    }
 }
 
 fn param_of(tcx: &TyInferCtx, parent: NodeId, param: &lume_hir::Parameter) -> Result<lume_types::Parameter> {

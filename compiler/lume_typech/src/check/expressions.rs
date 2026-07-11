@@ -113,8 +113,11 @@ impl TyCheckCtx {
             self.define_block_scope(block)?;
 
             let return_type = self.mk_type_ref_from(&func.signature.return_type, func.id)?;
-
             self.ensure_block_ty_match(block, &return_type)?;
+
+            if func.constness == lume_hir::Constness::Const {
+                self.ensure_const_compatible(func.id);
+            }
         }
 
         Ok(())

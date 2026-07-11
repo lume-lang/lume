@@ -1,48 +1,50 @@
-use lume_errors::Result;
+use std::ops::ControlFlow;
 
 use crate::*;
 
 /// Visitor trait for traversing the HIR map.
 pub trait Visitor {
-    fn visit_node(&mut self, _node: &Node) -> Result<()> {
-        Ok(())
+    type Break;
+
+    fn visit_node(&mut self, _node: &Node) -> ControlFlow<Self::Break> {
+        ControlFlow::Continue(())
     }
 
-    fn visit_type(&mut self, _ty: &Type) -> Result<()> {
-        Ok(())
+    fn visit_type(&mut self, _ty: &Type) -> ControlFlow<Self::Break> {
+        ControlFlow::Continue(())
     }
 
-    fn visit_stmt(&mut self, _stmt: &Statement) -> Result<()> {
-        Ok(())
+    fn visit_stmt(&mut self, _stmt: &Statement) -> ControlFlow<Self::Break> {
+        ControlFlow::Continue(())
     }
 
-    fn visit_expr(&mut self, _expr: &Expression) -> Result<()> {
-        Ok(())
+    fn visit_expr(&mut self, _expr: &Expression) -> ControlFlow<Self::Break> {
+        ControlFlow::Continue(())
     }
 
-    fn visit_pattern(&mut self, _pattern: &Pattern) -> Result<()> {
-        Ok(())
+    fn visit_pattern(&mut self, _pattern: &Pattern) -> ControlFlow<Self::Break> {
+        ControlFlow::Continue(())
     }
 
-    fn visit_path(&mut self, _path: &Path) -> Result<()> {
-        Ok(())
+    fn visit_path(&mut self, _path: &Path) -> ControlFlow<Self::Break> {
+        ControlFlow::Continue(())
     }
 
-    fn visit_identifier(&mut self, _ident: &Identifier) -> Result<()> {
-        Ok(())
+    fn visit_identifier(&mut self, _ident: &Identifier) -> ControlFlow<Self::Break> {
+        ControlFlow::Continue(())
     }
 }
 
 /// Traverses the given HIR map using the provided visitor.
-pub fn traverse<V: Visitor>(hir: &Map, visitor: &mut V) -> Result<()> {
+pub fn traverse<V: Visitor>(hir: &Map, visitor: &mut V) -> ControlFlow<V::Break> {
     for node in hir.nodes().values() {
         traverse_node(hir, visitor, node)?;
     }
 
-    Ok(())
+    ControlFlow::Continue(())
 }
 
-fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<()> {
+pub fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> ControlFlow<V::Break> {
     visitor.visit_node(node)?;
 
     match node {
@@ -58,7 +60,7 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
 
             if let Some(block) = &n.block {
                 for stmt in &block.statements {
-                    traverse_stmt(hir, visitor, hir.expect_statement(*stmt)?)?;
+                    traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
                 }
             }
 
@@ -74,7 +76,7 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
                     traverse_type(hir, visitor, &field.field_type)?;
 
                     if let Some(default_value) = &field.default_value {
-                        traverse_expr(hir, visitor, hir.expect_expression(*default_value)?)?;
+                        traverse_expr(hir, visitor, hir.expect_expression(*default_value).unwrap())?;
                     }
                 }
             }
@@ -94,7 +96,7 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
 
                     if let Some(block) = &method.block {
                         for stmt in &block.statements {
-                            traverse_stmt(hir, visitor, hir.expect_statement(*stmt)?)?;
+                            traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
                         }
                     }
 
@@ -138,7 +140,7 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
 
                 if let Some(block) = &method.block {
                     for stmt in &block.statements {
-                        traverse_stmt(hir, visitor, hir.expect_statement(*stmt)?)?;
+                        traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
                     }
                 }
 
@@ -161,7 +163,7 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
 
                 if let Some(block) = &method.block {
                     for stmt in &block.statements {
-                        traverse_stmt(hir, visitor, hir.expect_statement(*stmt)?)?;
+                        traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
                     }
                 }
 
@@ -179,12 +181,16 @@ fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Result<
         | Node::Expression(_) => {}
     }
 
-    Ok(())
+    ControlFlow::Continue(())
 }
 
-fn traverse_type_params<V: Visitor, I: Iterator<Item = NodeId>>(hir: &Map, visitor: &mut V, iter: I) -> Result<()> {
+pub fn traverse_type_params<V: Visitor, I: Iterator<Item = NodeId>>(
+    hir: &Map,
+    visitor: &mut V,
+    iter: I,
+) -> ControlFlow<V::Break> {
     for type_param_id in iter {
-        let Node::Type(TypeDefinition::TypeParameter(type_param)) = hir.expect_node(type_param_id)? else {
+        let Node::Type(TypeDefinition::TypeParameter(type_param)) = hir.expect_node(type_param_id).unwrap() else {
             continue;
         };
 
@@ -195,10 +201,10 @@ fn traverse_type_params<V: Visitor, I: Iterator<Item = NodeId>>(hir: &Map, visit
         }
     }
 
-    Ok(())
+    ControlFlow::Continue(())
 }
 
-fn traverse_stmt<V: Visitor>(hir: &Map, visitor: &mut V, stmt: &Statement) -> Result<()> {
+pub fn traverse_stmt<V: Visitor>(hir: &Map, visitor: &mut V, stmt: &Statement) -> ControlFlow<V::Break> {
     visitor.visit_stmt(stmt)?;
 
     match &stmt.kind {
@@ -209,120 +215,120 @@ fn traverse_stmt<V: Visitor>(hir: &Map, visitor: &mut V, stmt: &Statement) -> Re
                 traverse_type(hir, visitor, declared_type)?;
             }
 
-            traverse_expr(hir, visitor, hir.expect_expression(stmt.value)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(stmt.value).unwrap())?;
         }
         StatementKind::Break(_) | StatementKind::Continue(_) => {}
         StatementKind::Final(stmt) => {
-            traverse_expr(hir, visitor, hir.expect_expression(stmt.value)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(stmt.value).unwrap())?;
         }
         StatementKind::Return(stmt) => {
             if let Some(value) = stmt.value {
-                traverse_expr(hir, visitor, hir.expect_expression(value)?)?;
+                traverse_expr(hir, visitor, hir.expect_expression(value).unwrap())?;
             }
         }
         StatementKind::InfiniteLoop(stmt) => {
             for stmt in &stmt.block.statements {
-                traverse_stmt(hir, visitor, hir.expect_statement(*stmt)?)?;
+                traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
             }
         }
         StatementKind::Expression(expr) => {
-            traverse_expr(hir, visitor, hir.expect_expression(*expr)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(*expr).unwrap())?;
         }
     }
 
-    Ok(())
+    ControlFlow::Continue(())
 }
 
-fn traverse_expr<V: Visitor>(hir: &Map, visitor: &mut V, expr: &Expression) -> Result<()> {
+pub fn traverse_expr<V: Visitor>(hir: &Map, visitor: &mut V, expr: &Expression) -> ControlFlow<V::Break> {
     visitor.visit_expr(expr)?;
 
     match &expr.kind {
         ExpressionKind::Assignment(expr) => {
-            traverse_expr(hir, visitor, hir.expect_expression(expr.target)?)?;
-            traverse_expr(hir, visitor, hir.expect_expression(expr.value)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(expr.target).unwrap())?;
+            traverse_expr(hir, visitor, hir.expect_expression(expr.value).unwrap())?;
         }
         ExpressionKind::Cast(expr) => {
-            traverse_expr(hir, visitor, hir.expect_expression(expr.source)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(expr.source).unwrap())?;
             traverse_type(hir, visitor, &expr.target)?;
         }
         ExpressionKind::Construct(expr) => {
             traverse_path(hir, visitor, &expr.path)?;
 
             for field in &expr.fields {
-                traverse_expr(hir, visitor, hir.expect_expression(field.value)?)?;
+                traverse_expr(hir, visitor, hir.expect_expression(field.value).unwrap())?;
             }
         }
         ExpressionKind::Ref(expr) => {
-            traverse_expr(hir, visitor, hir.expect_expression(expr.target)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(expr.target).unwrap())?;
         }
         ExpressionKind::Deref(expr) => {
-            traverse_expr(hir, visitor, hir.expect_expression(expr.target)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(expr.target).unwrap())?;
         }
         ExpressionKind::StaticCall(expr) => {
             traverse_path(hir, visitor, &expr.name)?;
 
             for argument in &expr.arguments {
-                traverse_expr(hir, visitor, hir.expect_expression(*argument)?)?;
+                traverse_expr(hir, visitor, hir.expect_expression(*argument).unwrap())?;
             }
         }
         ExpressionKind::InstanceCall(expr) => {
             traverse_path_segment(hir, visitor, &expr.name)?;
-            traverse_expr(hir, visitor, hir.expect_expression(expr.callee)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(expr.callee).unwrap())?;
 
             for argument in &expr.arguments {
-                traverse_expr(hir, visitor, hir.expect_expression(*argument)?)?;
+                traverse_expr(hir, visitor, hir.expect_expression(*argument).unwrap())?;
             }
         }
         ExpressionKind::IntrinsicCall(expr) => {
             for argument in &expr.kind.arguments() {
-                traverse_expr(hir, visitor, hir.expect_expression(*argument)?)?;
+                traverse_expr(hir, visitor, hir.expect_expression(*argument).unwrap())?;
             }
         }
         ExpressionKind::If(expr) => {
             for case in &expr.cases {
                 if let Some(condition) = case.condition {
-                    traverse_expr(hir, visitor, hir.expect_expression(condition)?)?;
+                    traverse_expr(hir, visitor, hir.expect_expression(condition).unwrap())?;
                 }
 
                 for stmt in &case.block.statements {
-                    traverse_stmt(hir, visitor, hir.expect_statement(*stmt)?)?;
+                    traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
                 }
             }
         }
         ExpressionKind::Is(expr) => {
-            traverse_expr(hir, visitor, hir.expect_expression(expr.target)?)?;
-            traverse_pattern(hir, visitor, hir.expect_pattern(expr.pattern)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(expr.target).unwrap())?;
+            traverse_pattern(hir, visitor, hir.expect_pattern(expr.pattern).unwrap())?;
         }
         ExpressionKind::Member(expr) => {
-            traverse_expr(hir, visitor, hir.expect_expression(expr.callee)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(expr.callee).unwrap())?;
         }
         ExpressionKind::Scope(expr) => {
             for stmt in &expr.body {
-                traverse_stmt(hir, visitor, hir.expect_statement(*stmt)?)?;
+                traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
             }
         }
         ExpressionKind::Switch(expr) => {
-            traverse_expr(hir, visitor, hir.expect_expression(expr.operand)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(expr.operand).unwrap())?;
 
             for case in &expr.cases {
-                traverse_pattern(hir, visitor, hir.expect_pattern(case.pattern)?)?;
-                traverse_expr(hir, visitor, hir.expect_expression(case.branch)?)?;
+                traverse_pattern(hir, visitor, hir.expect_pattern(case.pattern).unwrap())?;
+                traverse_expr(hir, visitor, hir.expect_expression(case.branch).unwrap())?;
             }
         }
         ExpressionKind::Variant(expr) => {
             traverse_path(hir, visitor, &expr.name)?;
 
             for argument in &expr.arguments {
-                traverse_expr(hir, visitor, hir.expect_expression(*argument)?)?;
+                traverse_expr(hir, visitor, hir.expect_expression(*argument).unwrap())?;
             }
         }
         ExpressionKind::Literal(_) | ExpressionKind::Variable(_) | ExpressionKind::Missing => {}
     }
 
-    Ok(())
+    ControlFlow::Continue(())
 }
 
-fn traverse_pattern<V: Visitor>(hir: &Map, visitor: &mut V, pattern: &Pattern) -> Result<()> {
+pub fn traverse_pattern<V: Visitor>(hir: &Map, visitor: &mut V, pattern: &Pattern) -> ControlFlow<V::Break> {
     visitor.visit_pattern(pattern)?;
 
     match &pattern.kind {
@@ -330,28 +336,28 @@ fn traverse_pattern<V: Visitor>(hir: &Map, visitor: &mut V, pattern: &Pattern) -
             visitor.visit_identifier(&ident.name)?;
         }
         PatternKind::Literal(pat) => {
-            traverse_expr(hir, visitor, hir.expect_expression(pat.literal.id)?)?;
+            traverse_expr(hir, visitor, hir.expect_expression(pat.literal.id).unwrap())?;
         }
         PatternKind::Variant(pat) => {
             traverse_path(hir, visitor, &pat.name)?;
 
             for &field in &pat.fields {
-                traverse_pattern(hir, visitor, hir.expect_pattern(field)?)?;
+                traverse_pattern(hir, visitor, hir.expect_pattern(field).unwrap())?;
             }
         }
         PatternKind::Wildcard(_) | PatternKind::Missing => {}
     }
 
-    Ok(())
+    ControlFlow::Continue(())
 }
 
-fn traverse_type<V: Visitor>(hir: &Map, visitor: &mut V, ty: &Type) -> Result<()> {
+pub fn traverse_type<V: Visitor>(hir: &Map, visitor: &mut V, ty: &Type) -> ControlFlow<V::Break> {
     visitor.visit_type(ty)?;
 
     traverse_path(hir, visitor, &ty.name)
 }
 
-fn traverse_path<V: Visitor>(hir: &Map, visitor: &mut V, path: &Path) -> Result<()> {
+pub fn traverse_path<V: Visitor>(hir: &Map, visitor: &mut V, path: &Path) -> ControlFlow<V::Break> {
     visitor.visit_path(path)?;
 
     for root in &path.root {
@@ -361,7 +367,7 @@ fn traverse_path<V: Visitor>(hir: &Map, visitor: &mut V, path: &Path) -> Result<
     traverse_path_segment(hir, visitor, &path.name)
 }
 
-fn traverse_path_segment<V: Visitor>(hir: &Map, visitor: &mut V, path: &PathSegment) -> Result<()> {
+pub fn traverse_path_segment<V: Visitor>(hir: &Map, visitor: &mut V, path: &PathSegment) -> ControlFlow<V::Break> {
     match path {
         PathSegment::Namespace { name } | PathSegment::Variant { name, .. } => {
             visitor.visit_identifier(name)?;
@@ -376,5 +382,5 @@ fn traverse_path_segment<V: Visitor>(hir: &Map, visitor: &mut V, path: &PathSegm
         PathSegment::Missing => {}
     }
 
-    Ok(())
+    ControlFlow::Continue(())
 }
