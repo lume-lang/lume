@@ -1,0 +1,12 @@
+× error: cannot call non-const callable in const context
+    ╭─[const_fn_intrinsic_noncompiler.lm:15:13]
+ 14 │
+ 15 │     let c = a + b;
+    ∶             ^^^^^ cannot call non-const callable Foo::add in a const context
+ 16 │ }
+    ∶
+ 5  │ use Add: Foo {
+ 6  │     fn add(self, _: Foo) -> Foo {
+    ∶        ^^^ callable declared here
+ 7  │         self
+    ╰──

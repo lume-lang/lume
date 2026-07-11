@@ -1,0 +1,10 @@
+× error: cannot call non-const callable in const context
+   ╭─[const_fn_call_nonconst.lm:4:5]
+ 3 │ const fn bar() {
+ 4 │     foo();
+   ∶     ^^^^^ cannot call non-const callable foo in a const context
+ 5 │ }
+   ∶
+ 1 │ fn foo() {}
+   ∶    ^^^ callable declared here
+   ╰──

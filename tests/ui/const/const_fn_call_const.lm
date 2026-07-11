@@ -1,0 +1,7 @@
+//# test-outcome=success
+
+const fn foo() {}
+
+const fn bar() {
+    foo();
+}

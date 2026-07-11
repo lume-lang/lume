@@ -1,0 +1,16 @@
+import std::ops (Add)
+
+struct Foo {}
+
+use Add: Foo {
+    fn add(self, _: Foo) -> Foo {
+        self
+    }
+}
+
+const fn bar() {
+    let a = Foo {};
+    let b = Foo {};
+
+    let c = a + b;
+}

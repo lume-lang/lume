@@ -1,0 +1,5 @@
+//# test-outcome=success
+
+const fn bar() -> Int32 {
+    4 + 4
+}

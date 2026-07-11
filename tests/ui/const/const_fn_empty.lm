@@ -1,0 +1,3 @@
+//# test-outcome=success
+
+const fn foo() { }
