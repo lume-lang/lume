@@ -16,3 +16,40 @@ namespace std
 pub struct String {
     inner: *UInt8;
 }
+
+impl String {
+    /// Creates a new empty `String`.
+    ///
+    /// Since they `String` is empty, it has no backing allocation for it's buffer. This makes
+    /// the call to `new` very cheap, but can make subsequent allocations more expensive.
+    ///
+    /// If you have an idea of the amount of data the string will hold, consider using the
+    /// [`with_capacity`](`String::with_capacity`) method instead.
+    pub fn new() -> Self {
+        Self::with_capacity(0)
+    }
+
+    /// Creates a new `String` with a backing buffer capacity to hold, at least, `size` bytes.
+    ///
+    /// The size of the buffer is the capacity of the buffer, but the string itself might
+    /// still have a length lower than this buffer.
+    ///
+    /// If the string length exceeds the capacity, the buffer will be reallocated.
+    pub fn with_capacity(size: UInt64) -> Self {
+        unsafe {
+            let ptr = std::mem::alloc<UInt8>(size);
+
+            String::from_ptr(ptr)
+        }
+    }
+
+    /// Creates a new `String` from a pointer.
+    ///
+    /// # Safety
+    ///
+    /// This method is unsafe, since the pointer can be invalid, contain non-UTF-8 bytes
+    /// or not be null-terminated.
+    pub fn unsafe from_ptr(ptr: *UInt8) -> String {
+        String { inner: ptr }
+    }
+}
