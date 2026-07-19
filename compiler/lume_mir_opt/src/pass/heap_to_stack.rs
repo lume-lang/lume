@@ -187,7 +187,15 @@ fn replace_reg_in_op(operand: &mut Operand, register: RegisterId, slot: SlotId) 
         | OperandKind::Bitcast { .. }
         | OperandKind::LoadSlot { .. }
         | OperandKind::SlotAddress { .. } => {}
-        OperandKind::Load { .. } => unimplemented!(),
+        OperandKind::Load { id, loaded_type } => {
+            if *id == register {
+                operand.kind = OperandKind::LoadSlot {
+                    target: slot,
+                    offset: 0,
+                    loaded_type: loaded_type.clone(),
+                }
+            }
+        }
         OperandKind::LoadField {
             target,
             offset,
