@@ -264,23 +264,32 @@ fn mangled_path_name(name: &lume_hir::Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
+    use lume_driver::test_support::workspace;
     use lume_errors::{DiagCtx, Result};
     use lume_hir::{Path, PathSegment};
     use lume_typech::TyCheckCtx;
 
     fn mangle_fixture(package_name: &'static str, source: &'static str) -> Result<TyCheckCtx> {
-        let source_file = lume_span::SourceFile::new(lume_span::PackageId::empty(), "main.lm", source);
-        let stub_package = build_stage::stub_package_with(|pkg: &mut lume_session::Package| {
-            pkg.name = package_name.to_string();
-            pkg.add_source(Arc::new(source_file));
-        });
-
         let dcx = DiagCtx::new();
-        let manifold_driver = build_stage::ManifoldDriver::new(stub_package, dcx.clone());
 
-        manifold_driver.type_check()
+        let driver = workspace(std::env::current_dir().unwrap())
+            .with_config(|config| config.dry_run = true)
+            .with_option(|opts| opts.enable_incremental = false)
+            .with_file(
+                "Arcfile",
+                format!(
+                    r#"
+                    [package]
+                    name = "{package_name}"
+                    version = "1.0.0"
+                    lume_version = "^0"
+                "#
+                ),
+            )
+            .with_file("src/main.lm", source)
+            .driver(dcx.handle())?;
+
+        Ok(driver.check()?.into_root_package().tcx)
     }
 
     #[test]

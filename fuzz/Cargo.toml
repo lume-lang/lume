@@ -11,8 +11,7 @@ cargo-fuzz = true
 afl = "*"
 libfuzzer-sys = "0.4"
 
-build_stage = { path = "../tools/build_stage" }
-lume_data_structures = { path = "../crates/lume_data_structures" }
+lume_driver = { workspace = true, features = ["test-support"] }
 lume_errors = { path = "../crates/lume_errors" }
 lume_lexer = { path = "../compiler/lume_lexer" }
 lume_parser = { path = "../compiler/lume_parser" }

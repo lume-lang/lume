@@ -72,6 +72,10 @@ impl CheckedPackageGraph {
     pub fn root_package(&self) -> &CheckedPackage {
         self.packages.get(&self.root).unwrap()
     }
+
+    pub fn into_root_package(mut self) -> CheckedPackage {
+        self.packages.remove(&self.root).unwrap()
+    }
 }
 
 pub struct CheckedPackage {

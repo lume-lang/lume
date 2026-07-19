@@ -15,7 +15,7 @@ lume_span = { workspace = true }
 lume_typech = { workspace = true }
 
 [dev-dependencies]
-build_stage = { path = "../../tools/build_stage" }
+lume_driver = { workspace = true, features = ["test-support"] }
 
 [lints]
 workspace = true
