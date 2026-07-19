@@ -296,8 +296,13 @@ impl LoweringContext<'_> {
         let value = if let Some(value) = expr.value() {
             self.expression(value, Place::default())
         } else {
-            let ast_expr: lume_ast::Expr = crate::make::parse_from_text(name.as_str(), Target::Statement);
-            let expr_id = self.expression(ast_expr, Place::default());
+            let expr_id = if let Some(ast_expr) =
+                crate::make::parse_from_text::<lume_ast::Expr>(name.as_str(), Target::Statement)
+            {
+                self.expression(ast_expr, Place::default())
+            } else {
+                self.missing_expr(None)
+            };
 
             self.map.expression_mut(expr_id).unwrap().location = name.location;
 
