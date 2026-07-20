@@ -6,6 +6,7 @@ use crate::builder::decl::OperandRef;
 use crate::builder::pattern::pattern;
 use crate::dynamic::DynamicShimBuilder;
 
+#[tracing::instrument(level = "DEBUG", skip_all, fields(func = %func.name))]
 pub(crate) fn lower_function(mut builder: Builder<'_, '_>, func: &lume_tir::Function) -> lume_mir::Function {
     match func.kind {
         lume_tir::FunctionKind::Static | lume_tir::FunctionKind::Dropper => {

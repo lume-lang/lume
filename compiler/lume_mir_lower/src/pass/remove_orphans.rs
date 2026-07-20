@@ -34,11 +34,18 @@ impl Pass for RemoveOrphanBlocks {
         }
 
         while let Some(orphan_block) = orphan_blocks.pop() {
+            tracing::trace!(func = %func.name, block = %orphan_block, "remove_orphan");
+
             for block in func.blocks.values_mut() {
                 block.remove_predecessor(orphan_block);
             }
 
             func.blocks.shift_remove(&orphan_block);
+
+            // Remove all local registers which were defined in the block.
+            func.registers
+                .locals
+                .retain(|_id, register| register.block != Some(orphan_block));
         }
     }
 }

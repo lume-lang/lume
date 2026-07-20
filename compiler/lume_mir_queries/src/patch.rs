@@ -114,6 +114,7 @@ impl<'mcx, 'tcx> Patcher<'mcx, 'tcx> {
 mod rename {
     use super::*;
 
+    #[tracing::instrument(level = "TRACE", skip_all, fields(func = ?target.name))]
     pub fn apply(p: &mut Patcher<'_, '_>, target: &mut Function) {
         // Handle cases where a renamed register crosses a block-boundary, causing two
         // blocks to use the same register:
@@ -137,6 +138,8 @@ mod rename {
         let mut new_registers = IndexMap::new();
 
         for (&local_source, &dest_register) in &p.mapped_registers.mapping {
+            tracing::trace!(source = %local_source, dest = %dest_register, "rename_register");
+
             // If the function's register already exists in the correct block, skip over it.
             if let Some(register) = target.registers.locals.get(&local_source.register)
                 && register.block.is_some_and(|block| block == local_source.block)
