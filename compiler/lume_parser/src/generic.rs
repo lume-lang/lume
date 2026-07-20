@@ -47,7 +47,7 @@ impl Parser {
         }
 
         let mut idx = offset;
-        let mut angles_count = 0_usize;
+        let mut angles_count = 0_isize;
 
         for (tok, _span) in self.tokens.iter().rev().skip(offset + 1) {
             idx += 1;
