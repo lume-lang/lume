@@ -336,8 +336,8 @@ impl Statement {
     pub fn is_returning(&self) -> bool {
         match self {
             Statement::InfiniteLoop(stmt) => stmt.is_returning(),
-            Statement::Return(_) | Statement::Continue(_) => true,
-            Statement::Final(_) | Statement::Variable(_) | Statement::Break(_) => false,
+            Statement::Return(_) => true,
+            Statement::Final(_) | Statement::Variable(_) | Statement::Continue(_) | Statement::Break(_) => false,
             Statement::Expression(expr) => expr.is_returning(),
         }
     }
