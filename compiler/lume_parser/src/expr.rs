@@ -267,21 +267,22 @@ impl Parser {
 
             // If the identifier is following by a lesser sign, it might be referring to a generic call expression
             Token![<] => {
-                let (next_tok_offset, has_type_args) = self.is_type_arguments(1);
-                let next_token = self.token_at(next_tok_offset + 1);
+                let next_token = self
+                    .is_type_arguments(1)
+                    .map(|next_tok_offset| self.token_at(next_tok_offset + 1));
 
-                match (has_type_args, next_token) {
-                    (_, SyntaxKind::LEFT_PAREN) => {
+                match next_token {
+                    Some(SyntaxKind::LEFT_PAREN) => {
                         let cp_varref = self.checkpoint();
                         self.parse_variable_reference(cp_varref);
                         self.parse_instance_call(c)
                     }
-                    (_, SyntaxKind::LEFT_BRACE) => {
+                    Some(SyntaxKind::LEFT_BRACE) => {
                         self.parse_path();
                         self.parse_construction_expression(c)
                     }
-                    (true, _) => self.parse_path_expression(c),
-                    (false, _) => self.parse_variable_reference(c),
+                    Some(_) => self.parse_path_expression(c),
+                    None => self.parse_variable_reference(c),
                 }
             }
 

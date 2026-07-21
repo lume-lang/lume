@@ -41,9 +41,12 @@ impl Parser {
     }
 
     /// Attempts to determine whether the next token(s) are type arguments.
-    pub(super) fn is_type_arguments(&mut self, offset: usize) -> (usize, bool) {
+    ///
+    /// If the token stream is a type argument list, returns the offset to the
+    /// end of the list, right at the closing bracket (`>`).
+    pub(super) fn is_type_arguments(&mut self, offset: usize) -> Option<usize> {
         if !self.peek_at(offset, Token![<]) {
-            return (0, false);
+            return None;
         }
 
         let mut idx = offset;
@@ -64,7 +67,7 @@ impl Parser {
                 | SyntaxKind::WHITESPACE
                 | SyntaxKind::NEWLINE => {}
                 _ => {
-                    return (idx, false);
+                    return None;
                 }
             }
 
@@ -73,7 +76,7 @@ impl Parser {
             }
         }
 
-        (idx, true)
+        Some(idx)
     }
 
     /// Parses zero-or-more type arguments, boxed as [`Box<Type>`].
