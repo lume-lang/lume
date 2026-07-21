@@ -1,5 +1,7 @@
 namespace std
 
+import std::ops (Equal)
+
 /// Defines an immutable, UTF-8 encoded string.
 ///
 /// Strings are most often created implicitly using double-quotes around some text, which is the
@@ -49,7 +51,18 @@ impl String {
     ///
     /// This method is unsafe, since the pointer can be invalid, contain non-UTF-8 bytes
     /// or not be null-terminated.
+    ![lang_item(name = "string_from_ptr")]
     pub fn unsafe from_ptr(ptr: *UInt8) -> String {
         String { inner: ptr }
+    }
+}
+
+![external(name = "strcmp")]
+fn unsafe external strcmp(lhs: *UInt8, rhs: *UInt8) -> Int32
+
+use Equal: String {
+    ![lang_item(name = "string_eq")]
+    fn eq(self, other: String) -> Boolean {
+        unsafe { strcmp(self.inner, other.inner) == 0 }
     }
 }

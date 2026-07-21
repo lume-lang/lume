@@ -57,6 +57,10 @@ lang_items! {
     ArrayWithCapacity       "array_with_capacity"       "Array::with_capacity",
     ArrayPush               "array_push"                "Array::push",
 
+    // String operations
+    StringFromPtr           "string_from_ptr"           "String::from_ptr",
+    StringEq                "string_eq"                 "String::eq",
+
     // Iterators
     Iterator                "iterator"                  "Iterator",
     Next                    "next"                      "Iterator::next",

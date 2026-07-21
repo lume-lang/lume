@@ -77,7 +77,36 @@ fn literal_pattern(
                 location: literal.location,
             }],
         },
-        lume_tir::LiteralKind::String(_) => unimplemented!(),
+        lume_tir::LiteralKind::String(value) => {
+            let string_from_ptr_id = builder
+                .tcx()
+                .lang_item(lume_hir::LangItem::StringFromPtr)
+                .expect("expected String::from_ptr()");
+
+            let string_eq_id = builder
+                .tcx()
+                .lang_item(lume_hir::LangItem::StringEq)
+                .expect("expected String::eq()");
+
+            let lhs = builder.declare_operand(operand, OperandRef::Implicit);
+            let rhs = builder.call(
+                string_from_ptr_id,
+                vec![lume_mir::Operand {
+                    kind: lume_mir::OperandKind::String { value: *value },
+                    location: literal.location,
+                }],
+                literal.location,
+            );
+
+            let lhs_untagged = lume_mir::Operand::untagged_of(lhs);
+            let rhs_untagged = lume_mir::Operand::untagged_of(rhs);
+
+            let result = builder.call(string_eq_id, vec![lhs_untagged, rhs_untagged], literal.location);
+            return lume_mir::Operand {
+                kind: lume_mir::OperandKind::Reference { id: result },
+                location: literal.location,
+            };
+        }
     };
 
     let result = builder.declare(lume_mir::Declaration {
