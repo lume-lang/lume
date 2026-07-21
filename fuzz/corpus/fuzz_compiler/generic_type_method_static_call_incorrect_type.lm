@@ -1,9 +1,0 @@
-struct A<T> {}
-
-impl<T> A<T> {
-    pub fn bar(val:  T) { }
-}
-
-fn bar() {
-    A<Boolean>::bar(0);
-}

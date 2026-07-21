@@ -1,0 +1,18 @@
+impl Foo {
+    fn a(self) {
+
+    }
+
+    fn new() -> Foo {
+        Foo { }
+    }
+
+    pub fn public() {
+    }
+
+    pub(internal) fn internal() {
+    }
+
+    priv fn private() {
+    }
+}

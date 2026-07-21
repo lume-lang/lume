@@ -1,9 +1,0 @@
-trait Default { }
-
-trait Foo {
-    pub fn foo<T: Default>();
-}
-
-use Foo in Int32 {
-    pub fn foo<T>() { }
-}

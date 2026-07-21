@@ -1,8 +1,0 @@
-struct A {
-    foo: Boolean;
-    bar: Boolean;
-}
-
-fn foo() {
-    let a = A { foo: false, bar: true };
-}

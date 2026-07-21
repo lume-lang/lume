@@ -1,0 +1,9 @@
+fn main() {
+    if a {
+        foo
+    } else if b {
+        bar
+    } else {
+        baz
+    }
+}

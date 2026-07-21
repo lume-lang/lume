@@ -1,0 +1,6 @@
+fn main() {
+    Foo {
+        field: value,
+        field_name,
+    }
+}

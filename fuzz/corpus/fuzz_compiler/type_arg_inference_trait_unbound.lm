@@ -1,7 +1,0 @@
-trait Foo {}
-
-fn foo<T: Foo>(val: T) { }
-
-fn main() {
-    foo(6_i32);
-}

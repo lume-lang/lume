@@ -1,0 +1,8 @@
+impl<T> Foo<T> {
+}
+
+impl<T: Foo> Foo<T> {
+}
+
+impl<T: Foo + Bar> Foo<T> {
+}

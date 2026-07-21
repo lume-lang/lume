@@ -1,0 +1,7 @@
+trait Default {
+    fn default() -> Self;
+}
+
+fn foo<T: Default>() {
+    T::default();
+}

@@ -1,0 +1,26 @@
+import std::ops (Equal)
+
+fn assert(predicate: Boolean) {
+    if !predicate {
+        std::process::bail("assertion failed!");
+    }
+}
+
+struct Foo { }
+
+use Equal: Foo {
+    fn equal(self, other: Self) -> Boolean {
+        true
+    }
+}
+
+pub fn main() {
+    let a = Foo { };
+    let b = Foo { };
+
+    assert(a.equal(b));
+    assert(!a.not_equal(b));
+
+    assert(Equal::equal(a, b));
+    assert(!Equal::not_equal(a, b));
+}

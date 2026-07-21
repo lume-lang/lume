@@ -1,3 +1,0 @@
-fn foo() -> Int32 {
-    return true;
-}

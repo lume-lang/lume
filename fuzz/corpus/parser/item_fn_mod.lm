@@ -1,0 +1,9 @@
+fn foo() -> Int32 {
+    5_i32
+}
+
+fn external foo() -> Int32
+
+fn unsafe foo() -> Int32 {
+    5_i32
+}

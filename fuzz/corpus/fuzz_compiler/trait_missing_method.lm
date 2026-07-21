@@ -1,7 +1,0 @@
-struct A { }
-
-trait Foo {
-    fn foo();
-}
-
-use Foo in A { }

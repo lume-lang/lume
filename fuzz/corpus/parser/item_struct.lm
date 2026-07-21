@@ -1,0 +1,12 @@
+struct Foo {
+    field: Type;
+    field: Type = default_value;
+}
+
+struct Foo {
+    pub field: Type;
+
+    pub(internal) field: Type;
+
+    priv field: Type;
+}

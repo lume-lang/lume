@@ -1,7 +1,0 @@
-fn foo() {
-    let i = 0;
-
-    loop {
-        i = i + 1;
-    }
-}

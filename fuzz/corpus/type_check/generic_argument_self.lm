@@ -1,0 +1,13 @@
+fn generic<T>() { }
+
+struct A { }
+
+trait Foo {
+    fn foo();
+}
+
+use Foo: A {
+    fn foo() {
+        generic<Self>();
+    }
+}

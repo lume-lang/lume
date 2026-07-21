@@ -1,0 +1,7 @@
+struct Foo<T> {
+    field: T;
+}
+
+struct Foo<T: Foo> {
+    pub value: T;
+}

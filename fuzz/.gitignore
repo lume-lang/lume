@@ -1,7 +1,3 @@
 target
 artifacts
 coverage
-
-/corpus/**/*
-!corpus/fuzz_compiler/
-!corpus/fuzz_compiler/*.lm

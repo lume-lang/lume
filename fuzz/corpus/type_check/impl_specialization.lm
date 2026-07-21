@@ -1,0 +1,11 @@
+struct Foo<T> { }
+
+impl Foo<Int32> {
+    pub fn foo(self) { }
+}
+
+fn main() {
+    let root = Foo<Int32> { };
+
+    root.foo();
+}

@@ -1,5 +1,0 @@
-enum Foo { A, B(Int32) }
-
-fn foo() {
-    let a = Foo::B;
-}

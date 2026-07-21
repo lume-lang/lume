@@ -1,0 +1,13 @@
+//# test-outcome=success
+
+struct Foo { }
+
+impl Foo {
+    fn new() -> Self {
+        Foo { }
+    }
+
+    fn new_but_different() -> Self {
+        Self::new()
+    }
+}

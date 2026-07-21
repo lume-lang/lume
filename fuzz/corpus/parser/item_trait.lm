@@ -1,0 +1,9 @@
+trait Foo {
+    fn value(val: Int32);
+}
+
+trait Foo {
+    fn value(self) -> Int32 {
+        return 0;
+    }
+}

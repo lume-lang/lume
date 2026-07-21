@@ -1,7 +1,0 @@
-struct A {}
-
-impl A {
-    pub fn bar<T>(val:  T) -> T {
-        return val;
-    }
-}

@@ -1,0 +1,21 @@
+enum Foo {
+    A,
+    B,
+    C,
+}
+
+enum Bar {
+    A(Int32),
+    B(UInt64, UInt64),
+    C(Boolean),
+}
+
+enum Option<T> {
+    Some(T),
+    None,
+}
+
+enum Result<T, Err> {
+    Ok(T),
+    Err(Err),
+}

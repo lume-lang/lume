@@ -1,0 +1,7 @@
+trait Default<T> {
+    fn default() -> T;
+}
+
+trait Default<T: Foo> {
+    fn default() -> T;
+}

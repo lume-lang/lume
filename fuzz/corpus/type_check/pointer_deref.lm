@@ -1,0 +1,7 @@
+fn unsafe rvalue(ptr: *UInt64) {
+    let value = *ptr;
+}
+
+fn unsafe lvalue(ptr: *UInt64) -> UInt64 {
+    *ptr
+}

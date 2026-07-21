@@ -1,0 +1,7 @@
+trait Default {
+    fn default_of<T>() -> T;
+}
+
+fn foo<T: Default>() {
+    T::default_of<Int32>();
+}

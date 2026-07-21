@@ -1,3 +1,0 @@
-fn foo() {
-    let arr = std::Array::new();
-}

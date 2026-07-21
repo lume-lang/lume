@@ -1,0 +1,7 @@
+namespace foo::bar::baz
+
+fn main() {
+    foo::bar::Baz {  };
+    foo::Bar::baz();
+    foo::Bar<T>::baz();
+}

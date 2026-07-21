@@ -1,0 +1,11 @@
+fn main() {
+    loop { }
+
+    loop {
+        break;
+    }
+
+    loop {
+        continue;
+    }
+}

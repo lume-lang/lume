@@ -1,0 +1,5 @@
+fn foo<T>() { }
+
+fn foo<T: Foo>() { }
+
+fn foo<T: Foo + Bar>() { }

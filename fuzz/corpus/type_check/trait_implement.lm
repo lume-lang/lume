@@ -1,0 +1,9 @@
+trait IsTrue {
+    fn is_true(self) -> Boolean;
+}
+
+use IsTrue: Boolean {
+    fn is_true(self) -> Boolean {
+        self
+    }
+}

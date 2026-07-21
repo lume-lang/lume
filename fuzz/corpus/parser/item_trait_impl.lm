@@ -1,0 +1,11 @@
+use Foo: Baz {
+    fn value(self) -> Int32 {
+        return 0;
+    }
+}
+
+use<T> Foo<T>: Baz<T> {
+    fn value(self) -> Int32 {
+        return 0;
+    }
+}

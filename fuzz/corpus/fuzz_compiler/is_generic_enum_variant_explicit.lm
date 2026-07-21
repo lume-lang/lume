@@ -1,9 +1,0 @@
-import std (Optional)
-
-fn main() {
-    let a = Optional<Int32>::Some(5);
-
-    if a is Optional<Int32>::None {
-        // ...
-    }
-}

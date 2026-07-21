@@ -1,0 +1,7 @@
+fn identity<T>(value: T) -> T {
+    value
+}
+
+pub fn main() {
+    let value = identity(42_i32);
+}
