@@ -1,0 +1,25 @@
+[package]
+name = "lume_mono"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+lume_errors = { path = "../../crates/lume_errors" }
+lume_hir = { path = "../lume_hir" }
+lume_infer = { path = "../lume_infer" }
+lume_mir = { path = "../lume_mir" }
+lume_mir_queries = { path = "../lume_mir_queries" }
+lume_session = { path = "../lume_session" }
+lume_span = { path = "../../crates/lume_span" }
+lume_typech = { path = "../lume_typech" }
+lume_types = { path = "../lume_types" }
+
+indexmap = { workspace = true }
+tracing = { workspace = true }
+
+[lints]
+workspace = true

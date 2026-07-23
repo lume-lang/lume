@@ -7,6 +7,7 @@ use error_snippet::Result;
 use lume_architect::DatabaseContext;
 use lume_errors::{DiagCtx, Error};
 use lume_hir::{Path, TypeParameter};
+use lume_session::Package;
 use lume_span::*;
 use lume_types::{FunctionSig, TyCtx, TypeDatabaseContext, TypeRef};
 
@@ -93,6 +94,11 @@ impl TyInferCtx {
     /// Retrieves the diagnostics handler from the parent context.
     pub fn dcx(&self) -> DiagCtx {
         self.tcx.dcx()
+    }
+
+    /// Returns a reference to the current package.
+    pub fn current_package(&self) -> &Package {
+        self.package(self.hir().package).unwrap()
     }
 
     /// Defines all the different types, type parameters and type constraints
