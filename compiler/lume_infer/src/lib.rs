@@ -334,6 +334,18 @@ impl TyInferCtx {
         // If `to` refers to a trait where `from` implements `to`, they can
         // be downcast correctly.
         if self.is_trait(to)? {
+            tracing::warn!(
+                target = self.ty_stringifier(from)
+                    .include_namespace(true)
+                    .stringify()
+                    .unwrap(),
+                trait = self.ty_stringifier(to)
+                    .include_namespace(true)
+                    .stringify()
+                    .unwrap(),
+                "check_trait_impl"
+            );
+
             if self.trait_impl_by(to, from)? {
                 return Ok(());
             }

@@ -1,0 +1,21 @@
+struct Foo {
+    pub value: Int32 = 47_i32;
+}
+
+trait Default {
+    fn default(self) -> Self;
+}
+
+use Default: Foo {
+    fn default(self) -> Self {
+        self
+    }
+}
+
+fn main() {
+    let item = Foo { };
+    let default = Default::default(item);
+
+    let _ = default.value;
+    //      ^^^^^^^^^^^^^ could not find field value on type Default
+}

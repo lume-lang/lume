@@ -1,0 +1,11 @@
+//# test-outcome=success
+
+trait Display {
+    fn display(item: Self);
+}
+
+use Display: Int32 {
+    fn display(item: Self) {
+        let _: Int32 = item + item;
+    }
+}

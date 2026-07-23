@@ -189,6 +189,17 @@ impl TyInferCtx {
         Ok(self.is_self_type(ty))
     }
 
+    /// Replaces all `Self` types within `target` with the given `self_type`,
+    /// in-place.
+    #[tracing::instrument(level = "TRACE", skip_all, ret)]
+    pub fn replace_self_type(&self, target: &mut TypeRef, self_type: &TypeRef) {
+        for inner_type in target.walk_mut() {
+            if self.is_self_type(inner_type) {
+                *inner_type = self_type.clone();
+            }
+        }
+    }
+
     /// Gets the current `Never` type as a [`TypeRef`].
     #[cached_query]
     #[tracing::instrument(level = "Trace", skip_all)]

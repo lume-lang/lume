@@ -75,6 +75,12 @@ impl TyCheckCtx {
 
         let signature = self.instantiated_signature_of(callable, expr)?;
 
+        tracing::debug!(
+            sig = self.sig_to_string(signature.as_ref(), true).unwrap(),
+            span = %expr.location(),
+            "check_sig"
+        );
+
         self.check_params(expr, &signature.params, &arguments)
     }
 
@@ -236,6 +242,20 @@ impl TyCheckCtx {
             // passed to the method.
             for (param, arg) in parameters.iter().zip(arguments.iter()) {
                 let arg_type = self.type_of_expr(arg)?;
+
+                tracing::info!(
+                    lhs = self
+                        .ty_stringifier(&arg_type)
+                        .include_namespace(true)
+                        .stringify()
+                        .unwrap(),
+                    rhs = self
+                        .ty_stringifier(&param.ty)
+                        .include_namespace(true)
+                        .stringify()
+                        .unwrap(),
+                    "check_parameter"
+                );
 
                 if let Err(err) = self.ensure_type_compatibility(&arg_type, &param.ty) {
                     self.dcx().emit(err);

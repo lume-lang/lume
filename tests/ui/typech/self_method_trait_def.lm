@@ -1,0 +1,11 @@
+//# test-outcome=success
+
+trait Display {
+    fn display_array(array: [Self]) {
+        // ...
+    }
+}
+
+fn display<T: Display>(val: T) {
+    Display::display_array([val]);
+}

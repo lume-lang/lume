@@ -658,9 +658,10 @@ impl TyInferCtx {
         signature: lume_types::FunctionSig<'a>,
         expr: lume_hir::CallExpression<'a>,
     ) -> Result<lume_types::FunctionSigOwned> {
+        let self_type = self.impl_type_in_call(signature, expr);
         let type_arguments = self.type_args_in_call(expr)?;
 
-        Ok(self.instantiate_function(signature, &type_arguments))
+        Ok(self.instantiate_function(signature, &type_arguments, self_type.as_ref()))
     }
 
     /// Attempt to instantiate the given callable purely from the arguments
@@ -691,6 +692,7 @@ impl TyInferCtx {
             type_params: Vec::new(),
         };
 
+        let self_type = self.impl_type_in_call(signature, expr);
         let callable = self.probe_callable(expr)?;
         let params = &signature.params;
 
@@ -744,6 +746,10 @@ impl TyInferCtx {
         self.instantiate_type_from(signature.ret_ty, signature.type_params, &type_args)
             .clone_into(&mut inst.ret_ty);
 
+        if let Some(self_type) = &self_type {
+            self.replace_self_type(&mut inst.ret_ty, self_type);
+        }
+
         Ok(inst)
     }
 
@@ -754,8 +760,9 @@ impl TyInferCtx {
         &self,
         sig: lume_types::FunctionSig<'_>,
         type_args: &[TypeRef],
+        self_type: Option<&TypeRef>,
     ) -> lume_types::FunctionSigOwned {
-        self.instantiate_signature_isolate(sig, sig.type_params, type_args)
+        self.instantiate_signature_isolate(sig, sig.type_params, type_args, self_type)
     }
 
     /// Instantiates a function signature against the given type arguments,
@@ -766,6 +773,7 @@ impl TyInferCtx {
         sig: lume_types::FunctionSig<'_>,
         type_params: &[NodeId],
         type_args: &[TypeRef],
+        self_type: Option<&TypeRef>,
     ) -> lume_types::FunctionSigOwned {
         let mut inst = lume_types::FunctionSigOwned {
             id: sig.id,
@@ -788,6 +796,10 @@ impl TyInferCtx {
         }
 
         inst.ret_ty = self.instantiate_type_from(sig.ret_ty, type_params, type_args);
+
+        if let Some(self_type) = self_type {
+            self.replace_self_type(&mut inst.ret_ty, self_type);
+        }
 
         inst
     }
@@ -836,6 +848,37 @@ impl TyInferCtx {
         }
 
         ty
+    }
+
+    /// Gets the type of `Self` in the given call-expression, given the callable
+    /// signature.
+    ///
+    /// If the callable does not take a `self` parameter, returns [`None`].
+    #[tracing::instrument(level = "TRACE", skip_all, fields(call = %self.hir_path_of_node(sig.id).to_wide_string()))]
+    fn impl_type_in_call(&self, sig: lume_types::FunctionSig<'_>, expr: lume_hir::CallExpression) -> Option<TypeRef> {
+        if !sig.is_instanced() {
+            return None;
+        }
+
+        // If the signature references a method, return the implementing type from the
+        // `impl` block.
+        if let Ok(impl_type) = self.impl_type_of_method(sig.id) {
+            return Some(impl_type);
+        }
+
+        // If the signature is not an implementation method, it must be a trait method.
+        //
+        // In that case, return the type of the argument for `self`. This assumes that
+        // the argument actually implements the trait itself, which will be
+        // checked later.
+        let self_parameter_idx = sig.params.iter().position(|param| param.is_self())?;
+        let argument_node_id = match expr {
+            lume_hir::CallExpression::Instanced(call) => call.callee,
+            lume_hir::CallExpression::Static(call) => *call.arguments.get(self_parameter_idx)?,
+            lume_hir::CallExpression::Intrinsic(call) => *call.kind.arguments().get(self_parameter_idx)?,
+        };
+
+        self.type_of(argument_node_id).ok()
     }
 
     /// Gets all the type arguments defined within the given call expression.

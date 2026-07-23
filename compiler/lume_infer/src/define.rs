@@ -220,6 +220,8 @@ impl TyInferCtx {
 
             qualified_name.location = method_name.location;
 
+            tracing::trace!(name = %qualified_name.to_wide_string(), "define_method");
+
             self.tcx
                 .db_mut()
                 .method_alloc(method.id, type_ref.clone(), qualified_name, method_kind);
