@@ -476,13 +476,13 @@ impl CraneliftBackend {
 
         let mut stack_maps = WriterRelocate::new(endian);
 
-        for (def, func) in &self.declared_funcs {
-            let func_def = self.context.functions.get(def).unwrap();
+        for (&def, func) in &self.declared_funcs {
+            let func_def = self.context.function(def);
             if func_def.signature.external {
                 continue;
             }
 
-            let Some(metadata) = function_metadata.get(def) else {
+            let Some(metadata) = function_metadata.get(&def) else {
                 continue;
             };
 
