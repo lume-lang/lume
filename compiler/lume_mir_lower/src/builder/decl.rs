@@ -276,6 +276,8 @@ impl Builder<'_, '_> {
         let args = self.normalize_call_argumets(signature, args);
         let return_type = signature.return_type.clone();
 
+        tracing::debug!(%func_name, "call");
+
         self.declare_as(return_type, lume_mir::Declaration {
             kind: Box::new(lume_mir::DeclarationKind::Call {
                 instance,

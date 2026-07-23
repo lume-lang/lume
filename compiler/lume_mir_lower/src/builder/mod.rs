@@ -236,6 +236,8 @@ impl Builder<'_, '_> {
             self.add_edge_from_current(block);
         }
 
+        tracing::debug!(%block, "branch_to");
+
         self.func.current_block_mut().branch(block, location);
     }
 
