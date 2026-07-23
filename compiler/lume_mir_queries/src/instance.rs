@@ -1,4 +1,4 @@
-use lume_mir::Instance;
+use lume_mir::{Generics, Instance};
 use lume_span::NodeId;
 use lume_types::TypeRef;
 
@@ -6,17 +6,17 @@ use crate::MirQueryCtx;
 
 impl MirQueryCtx<'_> {
     #[inline]
-    pub fn instance_of(&self, id: NodeId, type_arguments: Vec<TypeRef>) -> lume_mir::Instance {
+    pub fn instance_of(&self, id: NodeId, type_arguments: Vec<TypeRef>) -> Instance {
         let type_parameter_ids = self.tcx().all_type_parameters_of(id);
         // debug_assert_eq!(type_parameter_ids.len(), type_arguments.len());
 
         if type_arguments.is_empty() {
-            return lume_mir::Instance { id, generics: None };
+            return Instance { id, generics: None };
         }
 
-        lume_mir::Instance {
+        Instance {
             id,
-            generics: Some(lume_mir::Generics {
+            generics: Some(Generics {
                 ids: type_parameter_ids,
                 types: type_arguments,
             }),
@@ -24,7 +24,7 @@ impl MirQueryCtx<'_> {
     }
 
     #[inline]
-    pub fn instance_of_type(&self, ty: TypeRef) -> lume_mir::Instance {
+    pub fn instance_of_type(&self, ty: TypeRef) -> Instance {
         self.instance_of(ty.instance_of, ty.bound_types)
     }
 
@@ -65,5 +65,75 @@ impl MirQueryCtx<'_> {
         }
 
         instance
+    }
+
+    /// Attempts to instantiate a new [`TypeRef`] from a set of generic
+    /// arguments.
+    ///
+    /// **Arguments**:
+    /// - `type_ref`: type reference to instantiate.
+    /// - `generics`: any type arguments supplied for the type. Could be the
+    ///   generics from a call site or supplied by the user.
+    ///
+    /// # Example
+    ///
+    /// Let's say we want to instantiat the type of `value`:
+    /// ```lm (ignore,illustration)
+    /// fn foo() {
+    ///   let value = bar<T, UInt32>();
+    /// }
+    /// ```
+    /// would result in the arguments of:
+    /// - `type_ref = type_of(value)`
+    /// - `generics = [T, UInt32])`
+    pub fn instantiated_type(&self, mut type_ref: TypeRef, generics: &Generics) -> TypeRef {
+        // Replace all contained type parameters with their respective canonical type
+        // parameter. This helps with mapping the correct type arguments into the
+        // type-ref, as they might not use the same type parameter IDs.
+        for bound_type in type_ref.walk_mut() {
+            if !bound_type.bound_types.is_empty() || !self.tcx().is_type_parameter(bound_type) {
+                continue;
+            }
+
+            let Some(owner) = self.tcx().hir_parent_node_of(bound_type.instance_of) else {
+                continue;
+            };
+
+            if let Ok(Some(canonical)) = self.tcx().hir_canonical_type_of(bound_type.instance_of, owner.id()) {
+                bound_type.instance_of = canonical.as_node_id();
+            }
+        }
+
+        for (type_parameter_id, replacement) in generics.iter() {
+            type_ref.replace_contained(type_parameter_id, replacement);
+        }
+
+        type_ref
+    }
+
+    /// Attempts to instantiate a new [`Instance`] from an existing
+    /// type-reference and a set of generic arguments. This is shorthand for:
+    /// ```ignore (illustrative)
+    /// mcx.instance_of_type(mcx.instantiated_type(type_ref, generics))
+    /// ```
+    ///
+    /// **Arguments**:
+    /// - `type_ref`: type reference to instantiate.
+    /// - `generics`: any type arguments supplied for the type. Could be the
+    ///   generics from a call site or supplied by the user.
+    ///
+    /// # Example
+    ///
+    /// Let's say we want to instantiat the type of `value`:
+    /// ```lm (ignore,illustration)
+    /// fn foo() {
+    ///   let value = bar<T, UInt32>();
+    /// }
+    /// ```
+    /// would result in the arguments of:
+    /// - `type_ref = type_of(value)`
+    /// - `generics = [T, UInt32])`
+    pub fn instantiated_type_instance(&self, type_ref: TypeRef, generics: &Generics) -> Instance {
+        self.instance_of_type(self.instantiated_type(type_ref, generics))
     }
 }

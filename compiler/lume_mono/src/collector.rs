@@ -174,7 +174,7 @@ fn collect_monotypes(mcx: &MirQueryCtx<'_>, items: &mut MonoItems) -> Result<()>
 
             for field in mcx.tcx().hir_fields_on(instance.id)? {
                 let field_type = mcx.tcx().mk_type_ref_from(&field.field_type, instance.id)?;
-                let field_instance = monotype_of(mcx, field_type, &instance_generics);
+                let field_instance = mcx.instantiated_type_instance(field_type, &instance_generics);
 
                 worklist.insert(field_instance);
             }
@@ -182,7 +182,7 @@ fn collect_monotypes(mcx: &MirQueryCtx<'_>, items: &mut MonoItems) -> Result<()>
             for method in mcx.tcx().methods_defined_on(&instance_type) {
                 for parameter in mcx.tcx().parameters_of(method.id) {
                     let parameter_type = mcx.tcx().mk_type_ref_from(&parameter.param_type, method.id)?;
-                    let parameter_instance = monotype_of(mcx, parameter_type, &instance_generics);
+                    let parameter_instance = mcx.instantiated_type_instance(parameter_type, &instance_generics);
 
                     worklist.insert(parameter_instance);
                 }
@@ -191,7 +191,7 @@ fn collect_monotypes(mcx: &MirQueryCtx<'_>, items: &mut MonoItems) -> Result<()>
                     .tcx()
                     .mk_type_ref_from(mcx.tcx().return_type_of(method.id).unwrap(), method.id)?;
 
-                let return_instance = monotype_of(mcx, return_type, &instance_generics);
+                let return_instance = mcx.instantiated_type_instance(return_type, &instance_generics);
                 worklist.insert(return_instance);
             }
 
@@ -217,34 +217,4 @@ fn collect_monotypes(mcx: &MirQueryCtx<'_>, items: &mut MonoItems) -> Result<()>
     }
 
     Ok(())
-}
-
-/// Create an instantiated [`Instance`] from the given [`TypeRef`], using the
-/// generics from the surrounding context.
-fn monotype_of(mcx: &MirQueryCtx, mut type_: TypeRef, generics: &Generics) -> Instance {
-    // Replace all contained type parameters with their respective canonical type
-    // parameter. This helps with mapping the correct type arguments into the
-    // type-ref, as they might not use the same type parameter IDs.
-    for bound_type in type_.walk_mut() {
-        if !bound_type.bound_types.is_empty() || !mcx.tcx().is_type_parameter(bound_type) {
-            continue;
-        }
-
-        let Some(owner) = mcx.tcx().hir_parent_node_of(bound_type.instance_of) else {
-            continue;
-        };
-
-        if let Ok(Some(canonical)) = mcx
-            .tcx()
-            .hir_canonical_type_of(lume_hir::TypeId::from(bound_type.instance_of), owner.id())
-        {
-            bound_type.instance_of = canonical.as_node_id();
-        }
-    }
-
-    for (type_parameter_id, replacement) in generics.iter() {
-        type_.replace_contained(type_parameter_id, replacement);
-    }
-
-    mcx.instance_of_type(type_)
 }

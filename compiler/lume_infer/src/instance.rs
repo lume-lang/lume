@@ -14,6 +14,16 @@ pub struct Instance {
 }
 
 impl Instance {
+    #[inline]
+    pub fn as_usize(&self) -> usize {
+        lume_hash::portable_hash(self)
+    }
+
+    #[inline]
+    pub fn generics_or_empty(&self) -> &Generics {
+        self.generics.as_ref().unwrap_or(&EMPTY_GENERICS)
+    }
+
     pub fn display<'tcx>(&'tcx self, tcx: &'tcx TyInferCtx) -> InstanceDisplay<'tcx> {
         InstanceDisplay(self, tcx)
     }
@@ -62,6 +72,10 @@ pub struct Generics {
     /// Type arguments for the matching type parameters.
     pub types: Vec<TypeRef>,
 }
+pub static EMPTY_GENERICS: Generics = Generics {
+    ids: Vec::new(),
+    types: Vec::new(),
+};
 
 impl Generics {
     #[inline]
