@@ -35,7 +35,7 @@ fn match_all_items_in_root() {
 }
 
 #[test]
-fn breaks_with_returned_flow() {
+fn match_breaks_with_returned_flow() {
     let hir = fixture_as_hir(
         "
         fn foo() {}
@@ -56,6 +56,30 @@ fn breaks_with_returned_flow() {
     });
 
     assert_eq!(called.load(std::sync::atomic::Ordering::SeqCst), 1);
+}
+
+#[test]
+fn match_with_outside_state() {
+    let hir = fixture_as_hir(
+        "
+        fn foo() {}
+        fn bar() {}
+    ",
+    );
+
+    let mut matches = Vec::new();
+
+    find_matches(&hir, &function([]).bind("func"), &mut |result| {
+        let lume_hir::Node::Function(func) = result.bound_node("func").unwrap() else {
+            unreachable!();
+        };
+
+        matches.push(func.path().to_string());
+
+        ControlFlow::Continue(())
+    });
+
+    assert_eq!(matches, vec!["foo", "bar"]);
 }
 
 #[test]
