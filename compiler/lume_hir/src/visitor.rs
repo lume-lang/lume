@@ -48,23 +48,14 @@ pub fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Con
     visitor.visit_node(node)?;
 
     match node {
-        Node::Function(n) => {
-            traverse_path(hir, visitor, &n.signature.name)?;
-            traverse_type_params(hir, visitor, n.signature.type_parameters.iter().copied())?;
+        Node::Function(func) => {
+            traverse_signature(hir, visitor, &func.signature)?;
 
-            for param in &n.signature.parameters {
-                visitor.visit_identifier(&param.name)?;
-
-                traverse_type(hir, visitor, &param.param_type)?;
-            }
-
-            if let Some(block) = &n.block {
+            if let Some(block) = &func.block {
                 for stmt in &block.statements {
                     traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
                 }
             }
-
-            traverse_type(hir, visitor, &n.signature.return_type)?;
         }
         Node::Type(ty) => match ty {
             TypeDefinition::Struct(struct_def) => {
@@ -72,12 +63,7 @@ pub fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Con
                 traverse_type_params(hir, visitor, struct_def.type_parameters.iter().copied())?;
 
                 for field in &struct_def.fields {
-                    visitor.visit_identifier(&field.name)?;
-                    traverse_type(hir, visitor, &field.field_type)?;
-
-                    if let Some(default_value) = &field.default_value {
-                        traverse_expr(hir, visitor, hir.expect_expression(*default_value).unwrap())?;
-                    }
+                    traverse_node(hir, visitor, hir.expect_node(field.id).unwrap())?;
                 }
             }
             TypeDefinition::Trait(trait_def) => {
@@ -85,22 +71,7 @@ pub fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Con
                 traverse_type_params(hir, visitor, trait_def.type_parameters.iter().copied())?;
 
                 for method in &trait_def.methods {
-                    traverse_path(hir, visitor, &method.signature.name)?;
-                    traverse_type_params(hir, visitor, method.signature.type_parameters.iter().copied())?;
-
-                    for param in &method.signature.parameters {
-                        visitor.visit_identifier(&param.name)?;
-
-                        traverse_type(hir, visitor, &param.param_type)?;
-                    }
-
-                    if let Some(block) = &method.block {
-                        for stmt in &block.statements {
-                            traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
-                        }
-                    }
-
-                    traverse_type(hir, visitor, &method.signature.return_type)?;
+                    traverse_node(hir, visitor, hir.expect_node(method.id).unwrap())?;
                 }
             }
             TypeDefinition::Enum(enum_def) => {
@@ -129,22 +100,7 @@ pub fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Con
             traverse_type_params(hir, visitor, trait_impl.type_parameters.iter().copied())?;
 
             for method in &trait_impl.methods {
-                traverse_path(hir, visitor, &method.signature.name)?;
-                traverse_type_params(hir, visitor, method.signature.type_parameters.iter().copied())?;
-
-                for param in &method.signature.parameters {
-                    visitor.visit_identifier(&param.name)?;
-
-                    traverse_type(hir, visitor, &param.param_type)?;
-                }
-
-                if let Some(block) = &method.block {
-                    for stmt in &block.statements {
-                        traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
-                    }
-                }
-
-                traverse_type(hir, visitor, &method.signature.return_type)?;
+                traverse_node(hir, visitor, hir.expect_node(method.id).unwrap())?;
             }
         }
         Node::Impl(type_impl) => {
@@ -152,34 +108,74 @@ pub fn traverse_node<V: Visitor>(hir: &Map, visitor: &mut V, node: &Node) -> Con
             traverse_type_params(hir, visitor, type_impl.type_parameters.iter().copied())?;
 
             for method in &type_impl.methods {
-                traverse_path(hir, visitor, &method.signature.name)?;
-                traverse_type_params(hir, visitor, method.signature.type_parameters.iter().copied())?;
-
-                for param in &method.signature.parameters {
-                    visitor.visit_identifier(&param.name)?;
-
-                    traverse_type(hir, visitor, &param.param_type)?;
-                }
-
-                if let Some(block) = &method.block {
-                    for stmt in &block.statements {
-                        traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
-                    }
-                }
-
-                traverse_type(hir, visitor, &method.signature.return_type)?;
+                traverse_node(hir, visitor, hir.expect_node(method.id).unwrap())?;
             }
         }
-        Node::Field(_)
-        | Node::Parameter(_)
-        | Node::Method(_)
-        | Node::TraitMethodDef(_)
-        | Node::TraitMethodImpl(_)
-        | Node::Pattern(_)
-        | Node::Statement(_)
-        | Node::TypeVariable(_)
-        | Node::Expression(_) => {}
+        Node::Method(method) => {
+            traverse_signature(hir, visitor, &method.signature)?;
+
+            if let Some(block) = &method.block {
+                for stmt in &block.statements {
+                    traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
+                }
+            }
+        }
+        Node::Field(field) => {
+            visitor.visit_identifier(&field.name)?;
+            traverse_type(hir, visitor, &field.field_type)?;
+
+            if let Some(default_value) = field.default_value {
+                traverse_expr(hir, visitor, hir.expect_expression(default_value).unwrap())?;
+            }
+        }
+        Node::Parameter(parameter) => {
+            visitor.visit_identifier(&parameter.name)?;
+            traverse_type(hir, visitor, &parameter.param_type)?;
+        }
+        Node::TraitMethodDef(method) => {
+            traverse_signature(hir, visitor, &method.signature)?;
+
+            if let Some(block) = &method.block {
+                for stmt in &block.statements {
+                    traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
+                }
+            }
+        }
+        Node::TraitMethodImpl(method) => {
+            traverse_signature(hir, visitor, &method.signature)?;
+
+            if let Some(block) = &method.block {
+                for stmt in &block.statements {
+                    traverse_stmt(hir, visitor, hir.expect_statement(*stmt).unwrap())?;
+                }
+            }
+        }
+        Node::Pattern(pat) => {
+            traverse_pattern(hir, visitor, pat)?;
+        }
+        Node::Statement(stmt) => {
+            traverse_stmt(hir, visitor, stmt)?;
+        }
+        Node::Expression(expr) => {
+            traverse_expr(hir, visitor, expr)?;
+        }
+        Node::TypeVariable(_) => {}
     }
+
+    ControlFlow::Continue(())
+}
+
+pub fn traverse_signature<V: Visitor>(hir: &Map, visitor: &mut V, signature: &FnSignature) -> ControlFlow<V::Break> {
+    traverse_path(hir, visitor, &signature.name)?;
+    traverse_type_params(hir, visitor, signature.type_parameters.iter().copied())?;
+
+    for param in &signature.parameters {
+        visitor.visit_identifier(&param.name)?;
+
+        traverse_type(hir, visitor, &param.param_type)?;
+    }
+
+    traverse_type(hir, visitor, &signature.return_type)?;
 
     ControlFlow::Continue(())
 }
@@ -335,9 +331,6 @@ pub fn traverse_pattern<V: Visitor>(hir: &Map, visitor: &mut V, pattern: &Patter
         PatternKind::Identifier(ident) => {
             visitor.visit_identifier(&ident.name)?;
         }
-        PatternKind::Literal(pat) => {
-            traverse_expr(hir, visitor, hir.expect_expression(pat.literal.id).unwrap())?;
-        }
         PatternKind::Variant(pat) => {
             traverse_path(hir, visitor, &pat.name)?;
 
@@ -345,7 +338,7 @@ pub fn traverse_pattern<V: Visitor>(hir: &Map, visitor: &mut V, pattern: &Patter
                 traverse_pattern(hir, visitor, hir.expect_pattern(field).unwrap())?;
             }
         }
-        PatternKind::Wildcard(_) | PatternKind::Missing => {}
+        PatternKind::Literal(_) | PatternKind::Wildcard(_) | PatternKind::Missing => {}
     }
 
     ControlFlow::Continue(())
@@ -383,4 +376,56 @@ pub fn traverse_path_segment<V: Visitor>(hir: &Map, visitor: &mut V, path: &Path
     }
 
     ControlFlow::Continue(())
+}
+
+pub trait Visit {
+    fn visit<V: Visitor>(&self, hir: &Map, visitor: &mut V) -> ControlFlow<V::Break>;
+}
+
+impl Visit for Node {
+    fn visit<V: Visitor>(&self, hir: &Map, visitor: &mut V) -> ControlFlow<V::Break> {
+        traverse_node(hir, visitor, self)
+    }
+}
+
+impl Visit for Statement {
+    fn visit<V: Visitor>(&self, hir: &Map, visitor: &mut V) -> ControlFlow<V::Break> {
+        traverse_stmt(hir, visitor, self)
+    }
+}
+
+impl Visit for Expression {
+    fn visit<V: Visitor>(&self, hir: &Map, visitor: &mut V) -> ControlFlow<V::Break> {
+        traverse_expr(hir, visitor, self)
+    }
+}
+
+impl Visit for Pattern {
+    fn visit<V: Visitor>(&self, hir: &Map, visitor: &mut V) -> ControlFlow<V::Break> {
+        traverse_pattern(hir, visitor, self)
+    }
+}
+
+impl Visit for Type {
+    fn visit<V: Visitor>(&self, hir: &Map, visitor: &mut V) -> ControlFlow<V::Break> {
+        traverse_type(hir, visitor, self)
+    }
+}
+
+impl Visit for Path {
+    fn visit<V: Visitor>(&self, hir: &Map, visitor: &mut V) -> ControlFlow<V::Break> {
+        traverse_path(hir, visitor, self)
+    }
+}
+
+impl Visit for PathSegment {
+    fn visit<V: Visitor>(&self, hir: &Map, visitor: &mut V) -> ControlFlow<V::Break> {
+        traverse_path_segment(hir, visitor, self)
+    }
+}
+
+impl Visit for Identifier {
+    fn visit<V: Visitor>(&self, _hir: &Map, visitor: &mut V) -> ControlFlow<V::Break> {
+        visitor.visit_identifier(self)
+    }
 }
