@@ -19,6 +19,35 @@ pub use stmt::*;
 pub mod string;
 pub use string::*;
 
+/// Performs a global match against all nodes in the given HIR map.
+///
+/// Searches the HIR map for nodes which satisfy `matcher` and calls `callback`
+/// for each match. After each match, the return value of `callback` defines
+/// whether the matcher will continue or stop.
+///
+/// # Examples
+///
+/// To match with all function definitions in the entire HIR map:
+/// ```
+/// use std::ops::ControlFlow;
+/// use lume_hir::matcher::*;
+///
+/// fn all_functions(hir: &lume_hir::Map) -> Vec<lume_span::NodeId> {
+///     let mut functions = Vec::new();
+///
+///     find_matches(
+///         hir,
+///         &function([]).bind("func"),
+///         &mut |result| {
+///             functions.push(result.bound_node("func").unwrap().id());
+///
+///             ControlFlow::Continue(())
+///         }
+///     );
+///
+///     functions
+/// }
+/// ```
 pub fn find_matches<'hir>(
     hir: &'hir Map,
     matcher: &dyn Predicate<Subject = Node>,
@@ -28,6 +57,38 @@ pub fn find_matches<'hir>(
     let _ = traverse(hir, &mut visitor);
 }
 
+/// Performs a narrowed match against all nodes in the given HIR map, which are
+/// descendants of the given entrypoint node.
+///
+/// Searches the HIR map for nodes which satisfy `matcher` and calls `callback`
+/// for each match. After each match, the return value of `callback` defines
+/// whether the matcher will continue or stop.
+///
+/// # Examples
+///
+/// To find all methods inside of the given [`Node`] (which we assume is
+/// actually a [`Node::Impl`]):
+/// ```
+/// use std::ops::ControlFlow;
+/// use lume_hir::matcher::*;
+///
+/// fn all_methods_in(hir: &lume_hir::Map, impl_node: &lume_hir::Node) -> Vec<lume_span::NodeId> {
+///     let mut methods = Vec::new();
+///
+///     find_matches_in(
+///         hir,
+///         &method([]).bind("func"),
+///         &mut |result| {
+///             methods.push(result.bound_node("func").unwrap().id());
+///
+///             ControlFlow::Continue(())
+///         },
+///         impl_node
+///     );
+///
+///     methods
+/// }
+/// ```
 pub fn find_matches_in<'hir>(
     hir: &'hir Map,
     matcher: &dyn Predicate<Subject = Node>,
@@ -38,6 +99,19 @@ pub fn find_matches_in<'hir>(
     let _ = traverse_node(hir, &mut visitor, entrypoint);
 }
 
+/// Performs a global match against all nodes in the given HIR map.
+///
+/// Searches the HIR map for nodes which satisfy `matcher` and calls `callback`
+/// if a match is found. After the first match is found, the matcher stops and
+/// returns.
+///
+/// This is equivalent to:
+/// ```ignore
+/// find_matches(hir, matcher, &mut |result| {
+///     (callback)(result);
+///     ControlFlow::Break(())
+/// });
+/// ```
 pub fn find_first_match<'hir>(
     hir: &'hir Map,
     matcher: &dyn Predicate<Subject = Node>,

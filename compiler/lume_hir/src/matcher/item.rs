@@ -9,13 +9,13 @@ use crate::*;
 /// predicate to the matcher.
 ///
 /// For example:
-/// ```lume
+/// ```lume,ignore
 /// switch foo {
 ///     .. => { },
 /// }
 /// ```
 /// with a matcher of:
-/// ```rust (ignore)
+/// ```ignore
 /// expression([
 ///     switch([
 ///         has_case([
@@ -48,11 +48,11 @@ pub fn any<P: 'static>() -> PredicateBox<P> {
 /// nodes when it does match.
 ///
 /// For example:
-/// ```lume
+/// ```lume,ignore
 /// let foo: T = bar;
 /// ```
 /// with a matcher of:
-/// ```rust (ignore)
+/// ```ignore
 /// statement([
 ///     var_decl([
 ///         optionally([has_type_decl([any().bind("var_type")])]),
