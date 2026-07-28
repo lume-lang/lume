@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 pub mod lang;
 pub mod map;
+pub mod matcher;
 pub mod pretty;
 pub mod symbols;
 pub mod visitor;
