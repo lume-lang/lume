@@ -1913,6 +1913,7 @@ dependencies = [
  "indexmap",
  "insta",
  "lume_ast",
+ "lume_driver",
  "lume_errors",
  "lume_macros",
  "lume_span",

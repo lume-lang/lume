@@ -18,6 +18,7 @@ indexmap = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
+lume_driver = { workspace = true, features = ["test-support"] }
 insta = { version = "1.42.2", features = ["yaml"] }
 
 [lints]

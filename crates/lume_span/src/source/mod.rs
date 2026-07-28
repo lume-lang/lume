@@ -246,6 +246,12 @@ impl Location {
 
         self_coords.0 == other_coords.0 && other_coords.1 < self_coords.1
     }
+
+    #[inline]
+    #[must_use]
+    pub fn content(&self) -> Option<&str> {
+        self.file.content.get(self.start()..self.end())
+    }
 }
 
 impl std::fmt::Debug for Location {
