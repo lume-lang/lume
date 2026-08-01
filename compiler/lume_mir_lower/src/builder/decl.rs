@@ -1,5 +1,5 @@
 use lume_mir::*;
-use lume_span::{Location, NodeId};
+use lume_span::Location;
 use lume_types::TypeRef;
 
 use crate::builder::Builder;
@@ -249,31 +249,41 @@ impl Builder<'_, '_> {
 
     /// Declares a new register with the returned value of calling the given
     /// function.
-    pub(crate) fn call(&mut self, func_id: NodeId, args: Vec<Operand>, location: Location) -> RegisterId {
-        let signature = &self.mcx.mir().function(func_id).signature;
+    pub(crate) fn call(
+        &mut self,
+        instance: Instance,
+        type_args: Vec<TypeRef>,
+        args: Vec<Operand>,
+        location: Location,
+    ) -> RegisterId {
+        let signature = &self.mcx.mir().instance(&instance).signature;
 
-        self.call_with_signature(func_id, signature, args, location)
+        self.call_with_signature(instance, signature, type_args, args, location)
     }
 
     /// Declares a new register with the returned value of calling the given
     /// function.
     pub(crate) fn call_with_signature(
         &mut self,
-        func_id: NodeId,
+        instance: Instance,
         signature: &Signature,
+        type_args: Vec<TypeRef>,
         args: Vec<Operand>,
         location: Location,
     ) -> RegisterId {
-        let func_name = self.mcx.mir().function(func_id).name;
+        let func_name = self.mcx.mir().instance(&instance).name;
 
         let args = self.normalize_call_argumets(signature, args);
         let return_type = signature.return_type.clone();
 
+        tracing::debug!(%func_name, "call");
+
         self.declare_as(return_type, lume_mir::Declaration {
             kind: Box::new(lume_mir::DeclarationKind::Call {
-                func_id,
+                instance,
                 name: func_name,
                 args,
+                type_args,
             }),
             location,
         })
@@ -324,19 +334,19 @@ impl Builder<'_, '_> {
 
         let array_alloc_func_id = self.tcx().lang_item(lume_hir::LangItem::ArrayWithCapacity).unwrap();
         let array_alloc_func = self.mcx.function(array_alloc_func_id).unwrap();
+        let array_alloc_instance = Instance::from(array_alloc_func_id);
 
         let array_push_func_id = self.tcx().lang_item(lume_hir::LangItem::ArrayPush).unwrap();
+        let array_push_instance = Instance::from(array_push_func_id);
 
         let vararg_arr_reg = self
             .func
             .declare(array_alloc_func.signature.return_type.clone(), lume_mir::Declaration {
                 kind: Box::new(lume_mir::DeclarationKind::Call {
-                    func_id: array_alloc_func.id,
+                    instance: array_alloc_instance.clone(),
                     name: array_alloc_func.name,
-                    args: vec![
-                        lume_mir::Operand::integer(64, false, args.len().cast_signed() as i128),
-                        lume_mir::Operand::reference_of(metadata_reg),
-                    ],
+                    args: vec![lume_mir::Operand::integer(64, false, args.len().cast_signed() as i128)],
+                    type_args: vec![vararg_type.clone()],
                 }),
                 location: vararg_loc,
             });
@@ -347,7 +357,12 @@ impl Builder<'_, '_> {
             let vararg_arg = vararg_arr_op.clone();
             let metadata_op = lume_mir::Operand::reference_of(metadata_reg);
 
-            self.call(array_push_func_id, vec![vararg_arg, arg, metadata_op], vararg_loc);
+            self.call(
+                array_push_instance.clone(),
+                vec![vararg_type.clone()],
+                vec![vararg_arg, arg, metadata_op],
+                vararg_loc,
+            );
         }
 
         new_args.push(vararg_arr_op);

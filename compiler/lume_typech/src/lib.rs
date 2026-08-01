@@ -3,6 +3,7 @@ use std::ops::Deref;
 use lume_architect::DatabaseContext;
 use lume_errors::DiagCtx;
 use lume_infer::TyInferCtx;
+pub use lume_infer::{Generics, Instance};
 use lume_types::TypeDatabaseContext;
 
 pub mod check;

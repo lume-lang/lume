@@ -9,6 +9,7 @@ test = false
 doctest = false
 
 [dependencies]
+lume_infer = { workspace = true }
 lume_session = { workspace = true }
 lume_span = { workspace = true }
 lume_type_metadata = { workspace = true }

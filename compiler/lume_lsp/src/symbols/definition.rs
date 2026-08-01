@@ -57,7 +57,7 @@ pub(crate) fn definition_of(engine: &Engine, location: Location) -> Option<Locat
         }
         SymbolKind::Member { callee, field } => {
             let callee_type = package.tcx.type_of(*callee).ok()?;
-            let field = package.tcx.field_on(callee_type.instance_of, &field.name).ok()??;
+            let field = package.tcx.hir_field_on(callee_type.instance_of, &field.name).ok()??;
 
             Some(field.name.location)
         }

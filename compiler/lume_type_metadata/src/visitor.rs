@@ -47,7 +47,7 @@ fn visit_type<V: Visitor>(state: &mut State<'_>, visitor: &mut V, ty: &lume_type
 
     visitor.visit_type(ty)?;
 
-    if let Some(type_param) = state.tcx.as_type_param(ty.instance_of) {
+    if let Some(type_param) = state.tcx.as_type_parameter(ty.instance_of) {
         visitor.visit_type_parameter(type_param)?;
     }
 
@@ -55,7 +55,7 @@ fn visit_type<V: Visitor>(state: &mut State<'_>, visitor: &mut V, ty: &lume_type
         visit_type(state, visitor, bound_type)?;
     }
 
-    for field in state.tcx.fields_on(ty.instance_of)? {
+    for field in state.tcx.hir_fields_on(ty.instance_of)? {
         visit_field(state, visitor, field)?;
     }
 
@@ -63,7 +63,7 @@ fn visit_type<V: Visitor>(state: &mut State<'_>, visitor: &mut V, ty: &lume_type
         visit_method(state, visitor, method)?;
     }
 
-    for type_param_id in state.tcx.available_type_params_at(ty.instance_of) {
+    for type_param_id in state.tcx.all_type_parameters_of(ty.instance_of) {
         let type_param = state.tcx.hir_expect_type_parameter(type_param_id);
 
         visit_type_parameter(state, visitor, type_param)?;
@@ -82,7 +82,7 @@ fn visit_field<V: Visitor>(state: &mut State<'_>, visitor: &mut V, field: &lume_
     let field_type = state.tcx.mk_type_ref_from(&field.field_type, field.id)?;
     visit_type(state, visitor, &field_type)?;
 
-    for type_param_id in state.tcx.available_type_params_at(field.id) {
+    for type_param_id in state.tcx.all_type_parameters_of(field.id) {
         let type_param = state.tcx.hir_expect_type_parameter(type_param_id);
 
         visit_type_parameter(state, visitor, type_param)?;
@@ -104,7 +104,7 @@ fn visit_method<V: Visitor>(state: &mut State<'_>, visitor: &mut V, method: &lum
         visit_parameter(state, visitor, parameter)?;
     }
 
-    for type_param_id in state.tcx.available_type_params_at(method.id) {
+    for type_param_id in state.tcx.all_type_parameters_of(method.id) {
         let type_param = state.tcx.hir_expect_type_parameter(type_param_id);
 
         visit_type_parameter(state, visitor, type_param)?;

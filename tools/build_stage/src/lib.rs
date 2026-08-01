@@ -56,8 +56,8 @@ impl ManifoldDriver {
         let session = Session {
             dep_graph: dependency_map,
             workspace_root: package.path.clone(),
+            source_map: package.iter_sources().cloned().collect(),
             options,
-            ..Default::default()
         };
 
         let gcx = Arc::new(GlobalCtx::new(session, dcx));
@@ -133,10 +133,13 @@ impl ManifoldDriver {
 
         let object_data = lume_codegen::generate(mir)?;
         let output_file_path = self.gcx.binary_output_path(&self.package.name);
-        let object_file = lume_linker::write_object_files(&self.gcx, vec![lume_linker::ObjectSource::Compiled {
-            name: self.package.name.clone(),
-            data: object_data,
-        }])?;
+        let object_file = lume_linker::write_object_files(
+            &self.gcx,
+            vec![lume_linker::ObjectSource::Compiled {
+                name: self.package.name.clone(),
+                data: object_data,
+            }],
+        )?;
 
         lume_linker::link_objects(object_file, &output_file_path, &self.gcx.session.options)?;
 

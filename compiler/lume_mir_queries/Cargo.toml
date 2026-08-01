@@ -12,6 +12,7 @@ lume_mir = { workspace = true }
 lume_session = { workspace = true }
 lume_span = { workspace = true }
 lume_typech = { workspace = true }
+lume_types = { workspace = true }
 
 indexmap = { workspace = true }
 lume_architect = { workspace = true }
