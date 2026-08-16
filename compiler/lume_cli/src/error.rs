@@ -7,7 +7,7 @@ use lume_errors_derive::Diagnostic;
     help = "is the build path correct?"
 )]
 pub struct CouldNotDetermineBuildPath {
-    #[cause]
+    #[related]
     pub inner: lume_errors::Error,
 }
 
@@ -18,6 +18,6 @@ pub struct CouldNotDetermineBuildPath {
     help = "is the current directory readable?"
 )]
 pub struct CouldNotDetermineCurrentDir {
-    #[cause]
+    #[related]
     pub inner: lume_errors::Error,
 }

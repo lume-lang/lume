@@ -36,7 +36,7 @@ pub fn binbuild_version_of(version: &TargetVersion) -> Result<Option<semver::Ver
         Ok(_) => Ok(Some(tag)),
         Err(ureq::Error::StatusCode(404)) => Ok(None),
         Err(err) => Err(SimpleDiagnostic::new("failed to fetch Lume release")
-            .add_cause(err.into_io())
+            .add_related(err.into_io())
             .into()),
     }
 }

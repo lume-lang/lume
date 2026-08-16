@@ -47,7 +47,7 @@ pub(crate) fn clone_repository(repository: &str, rev: &str, dir: Option<&str>) -
     {
         return Err(
             SimpleDiagnostic::new("failed to clone repository: could not create local directory for clone")
-                .add_cause(err.into_diagnostic())
+                .add_related(err.into_diagnostic())
                 .into(),
         );
     }
@@ -68,7 +68,7 @@ pub(crate) fn clone_repository(repository: &str, rev: &str, dir: Option<&str>) -
             return Err(SimpleDiagnostic::new(
                 "failed to clone repository: destination folder already exists and cannot be deleted",
             )
-            .add_cause(err.into_diagnostic())
+            .add_related(err.into_diagnostic())
             .into());
         }
     }

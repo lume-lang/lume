@@ -30,7 +30,7 @@ pub fn clone(version: &toolchain::TargetVersion) -> Result<PathBuf> {
             return Err(SimpleDiagnostic::new(
                 "failed to clone repository: destination folder already exists and cannot be deleted",
             )
-            .add_cause(err.into_diagnostic())
+            .add_related(err.into_diagnostic())
             .into());
         }
     }

@@ -35,26 +35,6 @@ impl DiagnosticArg {
                     ));
                 }
             },
-            "cause" => {
-                if let syn::Meta::Path(_) = &attr.meta {
-                    DiagnosticArg::Cause(field_ident.clone(), false)
-                } else {
-                    return Err(Error::new_spanned(
-                        attr_path,
-                        "expected no arguments; should be formatted `#[cause]`",
-                    ));
-                }
-            }
-            "causes" => {
-                if let syn::Meta::Path(_) = &attr.meta {
-                    DiagnosticArg::Cause(field_ident.clone(), true)
-                } else {
-                    return Err(Error::new_spanned(
-                        attr_path,
-                        "expected no arguments; should be formatted `#[causes]`",
-                    ));
-                }
-            }
             "label" => {
                 if let syn::Meta::List(meta) = &attr.meta {
                     Self::parse_label(field_ident, meta)?

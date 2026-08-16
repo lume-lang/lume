@@ -843,12 +843,6 @@ pub trait Diagnostic: std::fmt::Debug {
         None
     }
 
-    /// Any errors which were the underlying cause for the diagnostic to be
-    /// raised.
-    fn causes(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
-        Box::new(std::iter::empty())
-    }
-
     /// Any related errors, which can be used to provide additional information
     /// about the diagnostic.
     fn related(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
@@ -938,9 +932,6 @@ pub struct SimpleDiagnostic {
     /// Defines a list of labels which can provide additional context about the
     /// diagnostic.
     pub labels: Option<Vec<Label>>,
-
-    /// Defines the underlying cause for the diagnostic to be raised.
-    pub causes: Vec<Box<dyn Diagnostic + Send + Sync>>,
 
     /// Defines the diagnostics which are related to the current one, if any.
     pub related: Vec<Box<dyn Diagnostic + Send + Sync>>,
@@ -1162,61 +1153,6 @@ impl SimpleDiagnostic {
         self.related.extend(related);
         self
     }
-
-    /// Adds a causing error diagnostic to the current instance.
-    ///
-    /// # Examples
-    /// ```
-    /// use lume_errors::SimpleDiagnostic;
-    ///
-    /// let cause1 = std::io::Error::new(std::io::ErrorKind::Other, "failed to read file");
-    /// let cause2 = std::io::Error::new(std::io::ErrorKind::Other, "file is unaccessible");
-    ///
-    /// let diag = SimpleDiagnostic::new("failed to perform I/O operation")
-    ///     .add_cause(cause1)
-    ///     .add_cause(cause2);
-    ///
-    /// assert_eq!(diag.message, "failed to perform I/O operation");
-    /// assert_eq!(diag.causes.iter().map(|e| e.to_string()).collect::<Vec<_>>(), vec![
-    ///     "failed to read file".to_string(),
-    ///     "file is unaccessible".to_string()
-    /// ]);
-    /// ```
-    pub fn add_cause(mut self, cause: impl Into<Box<dyn Diagnostic + Send + Sync>>) -> Self {
-        self.causes.push(cause.into());
-        self
-    }
-
-    /// Adds multiple causing error diagnostics to the current instance.
-    ///
-    /// # Examples
-    /// ```
-    /// use lume_errors::SimpleDiagnostic;
-    ///
-    /// let cause1 = std::io::Error::new(std::io::ErrorKind::Other, "failed to read file");
-    /// let cause2 = std::io::Error::new(std::io::ErrorKind::Other, "file is unaccessible");
-    ///
-    /// let diag = SimpleDiagnostic::new("failed to perform I/O operation")
-    ///     .add_causes([cause1, cause2]);
-    ///
-    /// assert_eq!(diag.message, "failed to perform I/O operation");
-    /// assert_eq!(diag.causes.iter().map(|e| e.to_string()).collect::<Vec<_>>(), vec![
-    ///     "failed to read file".to_string(),
-    ///     "file is unaccessible".to_string()
-    /// ]);
-    /// ```
-    pub fn add_causes(
-        mut self,
-        causes: impl IntoIterator<Item = impl Into<Box<dyn Diagnostic + Send + Sync>>>,
-    ) -> Self {
-        let causes = causes
-            .into_iter()
-            .map(|r| Into::<Box<dyn Diagnostic + Send + Sync>>::into(r))
-            .collect::<Vec<Box<dyn Diagnostic + Send + Sync>>>();
-
-        self.causes.extend(causes);
-        self
-    }
 }
 
 impl Diagnostic for SimpleDiagnostic {
@@ -1246,10 +1182,6 @@ impl Diagnostic for SimpleDiagnostic {
 
     fn related(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
         Box::new(self.related.iter().map(|b| b.as_ref()))
-    }
-
-    fn causes(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
-        Box::new(self.causes.iter().map(|b| b.as_ref()))
     }
 }
 
@@ -1288,10 +1220,6 @@ impl Diagnostic for SourceWrapped {
 
     fn related(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
         self.diagnostic.related()
-    }
-
-    fn causes(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
-        self.diagnostic.causes()
     }
 
     fn source_code(&self) -> Option<Arc<dyn Source>> {

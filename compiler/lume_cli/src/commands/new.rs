@@ -166,7 +166,7 @@ impl<'a> Templater<'a> {
         if let Err(err) = std::fs::write(&dest_path, template.render().unwrap()) {
             return Err(
                 SimpleDiagnostic::new(format!("failed to write templated file: {}", dest_path.display()))
-                    .add_cause(err)
+                    .add_related(err)
                     .into(),
             );
         }

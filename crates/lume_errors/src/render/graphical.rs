@@ -342,15 +342,6 @@ impl GraphicalRenderer {
     ///       ╰──
     /// ```
     fn render_source(&mut self, f: &mut impl std::fmt::Write, diagnostic: &dyn Diagnostic) -> std::fmt::Result {
-        for cause in diagnostic.causes() {
-            self.current_indent += 1;
-
-            self.render_diagnostic(f, cause)?;
-            writeln!(f)?;
-
-            self.current_indent -= 1;
-        }
-
         if let Some(labels) = diagnostic.labels() {
             let mut label_groups: IndexMap<Option<String>, LabelGroup> = IndexMap::new();
 

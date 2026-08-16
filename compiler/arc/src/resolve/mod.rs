@@ -98,7 +98,7 @@ pub(crate) fn package_key_of<P: AsRef<Path>>(root: P, source: &ManifestDependenc
                 Ok(path) => Ok(PackageKey::Local(path)),
                 Err(err) => Err(
                     SimpleDiagnostic::new(format!("could not canonicalize path: {}", source.path))
-                        .add_cause(err)
+                        .add_related(err)
                         .into(),
                 ),
             }

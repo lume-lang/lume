@@ -33,7 +33,7 @@ impl FormatCommand {
             if let Err(err) = self.format_path(PathBuf::from(path), &config, dcx.clone()) {
                 dcx.emit_and_push(
                     SimpleDiagnostic::new(format!("error while formatting given path: {path}"))
-                        .add_cause(err)
+                        .add_related(err)
                         .into(),
                 );
             }
@@ -87,7 +87,7 @@ fn read_config_file(config_path: Option<PathBuf>) -> Result<Config> {
         Ok(config) => config,
         Err(err) => {
             return Err(SimpleDiagnostic::new("could not read config file")
-                .add_cause(err.into_diagnostic())
+                .add_related(err.into_diagnostic())
                 .into());
         }
     };

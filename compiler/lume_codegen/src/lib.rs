@@ -296,7 +296,7 @@ impl CraneliftBackend {
                 };
 
                 let diagnostic =
-                    SimpleDiagnostic::new(format!("function verification failed ({})", func.name)).add_cause(cause);
+                    SimpleDiagnostic::new(format!("function verification failed ({})", func.name)).add_related(cause);
 
                 return Err(diagnostic.into());
             }
@@ -309,7 +309,7 @@ impl CraneliftBackend {
             // actually know the issue, we're using the debug output of the error in the
             // error.
             let diagnostic = SimpleDiagnostic::new(format!("function verification failed ({})", func.name))
-                .add_cause(SimpleDiagnostic::new(format!("{err:#?}")));
+                .add_related(SimpleDiagnostic::new(format!("{err:#?}")));
 
             return Err(diagnostic.into());
         }

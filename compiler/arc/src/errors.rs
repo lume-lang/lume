@@ -15,7 +15,7 @@ pub struct ArcfileMissing {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "failed to read Arcfile", code = "ARC0102")]
 pub struct ArcfileIoError {
-    #[cause]
+    #[related]
     pub inner: Error,
 }
 

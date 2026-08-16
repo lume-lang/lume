@@ -23,7 +23,6 @@ impl AttrDiagnostic {
         let help_block = self.help_block();
         let labels_block = self.labels_block();
         let related_block = self.related_block();
-        let cause_block = self.cause_block();
         let source_block = self.source_block();
         let severity_block = self.severity_block();
 
@@ -34,7 +33,6 @@ impl AttrDiagnostic {
                 #help_block
                 #labels_block
                 #related_block
-                #cause_block
                 #source_block
                 #severity_block
             }
@@ -275,40 +273,6 @@ impl AttrDiagnostic {
                         (&self.#related as &lume_errors::Error).as_ref();
 
                     let iter = std::iter::once(related)
-                        as std::iter::Once<&(dyn ::lume_errors::Diagnostic + Send + Sync)>;
-
-                    Box::new(iter)
-                }
-            }
-        }
-    }
-
-    /// Creates the implementation block for the `cause` trait function.
-    fn cause_block(&self) -> TokenStream {
-        let arg = self.args.iter().find(|arg| matches!(arg, DiagnosticArg::Cause(_, _)));
-
-        let (cause, collection) = match arg {
-            Some(DiagnosticArg::Cause(cause, collection)) => (cause.clone(), *collection),
-            _ => return TokenStream::new(),
-        };
-
-        if collection {
-            quote! {
-                fn causes(&self) -> Box<dyn Iterator<Item = &(dyn ::lume_errors::Diagnostic + Send + Sync)> + '_> {
-                    Box::new(
-                        self.#cause
-                            .iter()
-                            .map(|e| e.as_ref() as &(dyn ::lume_errors::Diagnostic + Send + Sync)),
-                    )
-                }
-            }
-        } else {
-            quote! {
-                fn causes(&self) -> Box<dyn Iterator<Item = &(dyn ::lume_errors::Diagnostic + Send + Sync)> + '_> {
-                    let causes: &(dyn lume_errors::Diagnostic + Send + Sync) =
-                        (&self.#cause as &lume_errors::Error).as_ref();
-
-                    let iter = std::iter::once(causes)
                         as std::iter::Once<&(dyn ::lume_errors::Diagnostic + Send + Sync)>;
 
                     Box::new(iter)

@@ -459,7 +459,7 @@ impl<T, E: std::error::Error + Send + Sync> MapDiagnostic<T> for std::result::Re
 
     fn map_cause(self, message: impl Into<String>) -> Result<T> {
         self.map_err(|err| {
-            let diag = SimpleDiagnostic::new(message).add_cause(err.into_diagnostic());
+            let diag = SimpleDiagnostic::new(message).add_related(err.into_diagnostic());
 
             Box::new(diag) as Error
         })

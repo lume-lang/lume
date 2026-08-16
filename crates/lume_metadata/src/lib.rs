@@ -96,7 +96,7 @@ pub fn read_metadata_object<P: AsRef<Path>>(metadata_path: P) -> Result<Option<P
 
     let metadata = deserialize_metadata(&mut reader).map_err(|err| {
         let diag = SimpleDiagnostic::new(format!("failed to deserialize metadata ({})", metadata_path.display()))
-            .add_cause(SimpleDiagnostic::new(err.to_string()));
+            .add_related(SimpleDiagnostic::new(err.to_string()));
 
         Box::new(diag) as lume_errors::Error
     })?;
@@ -126,7 +126,7 @@ pub fn read_metadata_header<P: AsRef<Path>>(metadata_path: P) -> Result<Option<P
 
     let header = deserialize_metadata_header(&mut metadata_file).map_err(|err| {
         let diag = SimpleDiagnostic::new(format!("failed to deserialize metadata ({})", metadata_path.display()))
-            .add_cause(SimpleDiagnostic::new(err.to_string()));
+            .add_related(SimpleDiagnostic::new(err.to_string()));
 
         Box::new(diag) as lume_errors::Error
     })?;
@@ -147,7 +147,7 @@ pub fn write_metadata_object<P: AsRef<Path>>(metadata_directory: P, metadata: &P
                 "failed to create metadata directory ({})",
                 metadata_directory.display()
             ))
-            .add_cause(err),
+            .add_related(err),
         ) as lume_errors::Error
     })?;
 
@@ -158,7 +158,7 @@ pub fn write_metadata_object<P: AsRef<Path>>(metadata_directory: P, metadata: &P
 
     serialize_metadata(&mut serialized, metadata).map_err(|err| {
         let diag = SimpleDiagnostic::new(format!("failed to serialize metadata ({})", metadata.header.name))
-            .add_cause(SimpleDiagnostic::new(err.to_string()));
+            .add_related(SimpleDiagnostic::new(err.to_string()));
 
         Box::new(diag) as lume_errors::Error
     })?;
@@ -177,7 +177,7 @@ pub fn write_metadata_object<P: AsRef<Path>>(metadata_directory: P, metadata: &P
     );
 
     std::fs::write(metadata_path, serialized).map_err(|err| {
-        Box::new(SimpleDiagnostic::new("failed to write metadata").add_cause(err)) as lume_errors::Error
+        Box::new(SimpleDiagnostic::new("failed to write metadata").add_related(err)) as lume_errors::Error
     })?;
 
     Ok(())

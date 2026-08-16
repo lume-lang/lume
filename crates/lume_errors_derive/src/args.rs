@@ -9,7 +9,6 @@ pub enum DiagnosticArg {
     Help(String),
     Severity(Severity),
     Related(Ident, bool),
-    Cause(Ident, bool),
     Span(Ident),
     Label {
         severity: Option<Severity>,
