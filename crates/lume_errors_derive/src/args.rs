@@ -63,10 +63,10 @@ impl DiagnosticArg {
     }
 
     fn parse_diagnostic_argument(name_value: &MetaNameValue) -> Result<Self> {
-        let ident = match name_value.path.get_ident() {
-            Some(ident) => ident,
-            None => return Err(Error::new_spanned(&name_value.path, "Expected identifier")),
-        };
+        let ident = name_value
+            .path
+            .get_ident()
+            .ok_or(Error::new_spanned(&name_value.path, "Expected identifier"))?;
 
         match ident.to_string().as_str() {
             "code" => Self::parse_code(name_value),
@@ -115,10 +115,9 @@ impl DiagnosticArg {
 
     fn parse_severity(meta: &MetaNameValue) -> Result<Self> {
         if let syn::Expr::Path(syn::ExprPath { path, .. }) = meta.value.clone() {
-            let ident = match path.get_ident() {
-                Some(ident) => ident,
-                None => return Err(Error::new_spanned(path, "Expected ident for path")),
-            };
+            let ident = path
+                .get_ident()
+                .ok_or(Error::new_spanned(&path, "Expected identifier"))?;
 
             Ok(DiagnosticArg::Severity(Severity(ident.clone())))
         } else {

@@ -5,9 +5,8 @@ use crate::diagnostic::Severity;
 
 impl DiagnosticArg {
     pub fn parse_field(field: &Field) -> Result<Option<Self>> {
-        let attr = match field.attrs.first() {
-            Some(attr) => attr,
-            None => return Ok(None),
+        let Some(attr) = field.attrs.first() else {
+            return Ok(None);
         };
 
         let attr_path = attr.path();
@@ -29,7 +28,7 @@ impl DiagnosticArg {
             "related" => match &attr.meta {
                 syn::Meta::Path(_) => DiagnosticArg::Related(field_ident.clone(), false),
                 syn::Meta::List(meta) => Self::parse_related(field_ident, meta)?,
-                _ => {
+                syn::Meta::NameValue(_) => {
                     return Err(Error::new_spanned(
                         attr_path,
                         "expected zero-or-one arguments; should be formatted `#[related]` or `#[related(collection)]`",

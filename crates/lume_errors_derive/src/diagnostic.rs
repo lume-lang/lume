@@ -25,9 +25,8 @@ impl AttrDiagnostic {
             };
 
             for field in &diagnostic.fields {
-                let field_attr_arg = match DiagnosticArg::parse_field(field)? {
-                    Some(attr) => attr,
-                    None => continue,
+                let Some(field_attr_arg) = DiagnosticArg::parse_field(field)? else {
+                    continue;
                 };
 
                 diagnostic.args.push(field_attr_arg);

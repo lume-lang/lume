@@ -25,10 +25,7 @@ impl FormattedMessage {
         while let Some(brace) = read.find('{') {
             read = &read[brace + 1..];
 
-            let next = match read.chars().next() {
-                Some(c) => c,
-                None => break,
-            };
+            let Some(next) = read.chars().next() else { break };
 
             let ident = match next {
                 'a'..='z' | 'A'..='Z' | '_' => {
