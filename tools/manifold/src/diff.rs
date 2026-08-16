@@ -2,8 +2,7 @@ use std::fmt;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use error_snippet::IntoDiagnostic;
-use lume_errors::{DiagCtx, Result};
+use lume_errors::{DiagCtx, IntoDiagnostic, Result};
 use owo_colors::{OwoColorize, Style};
 use similar::{ChangeTag, TextDiff};
 
@@ -52,7 +51,7 @@ pub(crate) fn diff_output_of(output: String, path: PathBuf, output_path: PathBuf
 }
 
 pub(crate) fn render_dcx_output(dcx: &DiagCtx) -> String {
-    let mut renderer = error_snippet::GraphicalRenderer::new();
+    let mut renderer = lume_errors::GraphicalRenderer::new();
     renderer.use_colors = false;
     renderer.highlight_source = false;
 

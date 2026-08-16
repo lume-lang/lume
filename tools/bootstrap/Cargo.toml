@@ -13,7 +13,6 @@ lume_cli_tools = { workspace = true }
 lume_errors = { workspace = true }
 
 clap = { workspace = true }
-error_snippet = { workspace = true }
 owo-colors = { workspace = true }
 regex = { workspace = true }
 ureq = { version = "3.2.0", features = ["json"] }

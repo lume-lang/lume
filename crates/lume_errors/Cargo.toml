@@ -4,13 +4,10 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
-[lib]
-test = false
-doctest = false
-
 [dependencies]
-error_snippet = { workspace = true }
-error_snippet_derive = { workspace = true }
+indexmap = { workspace = true }
+owo-colors = { workspace = true, features = ["supports-colors"] }
+terminal_size = { version = "^0.4", optional = true }
 
 [lints]
 workspace = true

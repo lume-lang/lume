@@ -11,6 +11,7 @@ doctest = false
 arc = { workspace = true }
 lume_ast = { workspace = true }
 lume_errors = { workspace = true }
+lume_errors_derive = { workspace = true }
 lume_hir = { workspace = true }
 lume_lexer = { workspace = true }
 lume_parser = { workspace = true }
@@ -18,8 +19,6 @@ lume_session = { workspace = true }
 lume_syntax = { workspace = true }
 lume_span = { workspace = true }
 
-error_snippet = { workspace = true }
-error_snippet_derive = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]

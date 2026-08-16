@@ -1,8 +1,7 @@
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
-use error_snippet::{Result, SimpleDiagnostic};
-use lume_errors::MapDiagnostic;
+use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 
 use crate::{cmd, fs};
 

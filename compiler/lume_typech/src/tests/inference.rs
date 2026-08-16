@@ -18,7 +18,7 @@ fn infer_expr_lit_match() -> Result<()> {
         (lume_hir::Expression::lit_u8(id, 16), Path::u8()),
         (lume_hir::Expression::lit_u16(id, 16), Path::u16()),
         (lume_hir::Expression::lit_u32(id, 16), Path::u32()),
-        (lume_hir::Expression::lit_u64(id, 16).unwrap(), Path::u64()),
+        (lume_hir::Expression::lit_u64(id, 16), Path::u64()),
     ];
 
     for (expr, expected_name) in matches {

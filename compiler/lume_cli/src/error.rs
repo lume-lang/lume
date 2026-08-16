@@ -1,4 +1,4 @@
-use error_snippet_derive::Diagnostic;
+use lume_errors_derive::Diagnostic;
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
@@ -8,7 +8,7 @@ use error_snippet_derive::Diagnostic;
 )]
 pub struct CouldNotDetermineBuildPath {
     #[cause]
-    pub inner: error_snippet::Error,
+    pub inner: lume_errors::Error,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -19,5 +19,5 @@ pub struct CouldNotDetermineBuildPath {
 )]
 pub struct CouldNotDetermineCurrentDir {
     #[cause]
-    pub inner: error_snippet::Error,
+    pub inner: lume_errors::Error,
 }

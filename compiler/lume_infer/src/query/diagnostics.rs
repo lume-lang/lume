@@ -1,7 +1,7 @@
 use std::ops::Range;
 use std::sync::Arc;
 
-use error_snippet_derive::Diagnostic;
+use lume_errors_derive::Diagnostic;
 use lume_hir::{Identifier, Path, PathSegment};
 use lume_span::{Location, NodeId, SourceFile};
 use lume_types::TypeKind;
@@ -16,7 +16,7 @@ pub(crate) struct MissingMethod {
     pub method_name: Identifier,
 
     #[related(collection)]
-    pub suggestions: Vec<error_snippet::Error>,
+    pub suggestions: Vec<lume_errors::Error>,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -37,7 +37,7 @@ pub struct MissingFunction {
     pub function_name: Identifier,
 
     #[related(collection)]
-    pub suggestions: Vec<error_snippet::Error>,
+    pub suggestions: Vec<lume_errors::Error>,
 }
 
 #[derive(Diagnostic, Debug)]

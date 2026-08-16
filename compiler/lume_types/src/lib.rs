@@ -1,9 +1,8 @@
 use std::ops::Deref;
 use std::sync::Arc;
 
-use error_snippet::Result;
 use indexmap::IndexMap;
-use lume_errors::DiagCtx;
+use lume_errors::{DiagCtx, Result};
 use lume_hir::{Path, TypeId};
 use lume_session::GlobalCtx;
 use lume_span::*;

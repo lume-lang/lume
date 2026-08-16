@@ -1,8 +1,7 @@
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
-use error_snippet::{IntoDiagnostic, Result, SimpleDiagnostic};
-use lume_errors::MapDiagnostic;
+use lume_errors::{IntoDiagnostic, MapDiagnostic, Result, SimpleDiagnostic};
 use url::Url;
 
 use crate::local_cache_dir;
@@ -89,12 +88,12 @@ pub(crate) fn clone_repository(repository: &str, rev: &str, dir: Option<&str>) -
     tracing::trace!("{cmd:?}");
 
     let process = cmd.spawn().map_err(|err| {
-        Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("failed to clone repository: {err}")))
+        Into::<lume_errors::Error>::into(SimpleDiagnostic::new(format!("failed to clone repository: {err}")))
     })?;
 
     let output = process
         .wait_with_output()
-        .map_err(|err| Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("git time-out: {err}"))))?;
+        .map_err(|err| Into::<lume_errors::Error>::into(SimpleDiagnostic::new(format!("git time-out: {err}"))))?;
 
     if !output.status.success() {
         return Err(SimpleDiagnostic::new(format!(
@@ -155,12 +154,12 @@ pub(crate) fn revision_of(source: &GitDependency) -> Result<String> {
     tracing::trace!("{cmd:?}");
 
     let process = cmd.spawn().map_err(|err| {
-        Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("failed to list repository: {err}")))
+        Into::<lume_errors::Error>::into(SimpleDiagnostic::new(format!("failed to list repository: {err}")))
     })?;
 
     let output = process
         .wait_with_output()
-        .map_err(|err| Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("git time-out: {err}"))))?;
+        .map_err(|err| Into::<lume_errors::Error>::into(SimpleDiagnostic::new(format!("git time-out: {err}"))))?;
 
     if !output.status.success() {
         return Err(SimpleDiagnostic::new(format!(

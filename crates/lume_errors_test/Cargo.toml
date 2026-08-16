@@ -9,7 +9,7 @@ test = false
 doctest = false
 
 [dependencies]
-error_snippet = { workspace = true }
+lume_errors = { workspace = true }
 insta = { version = "=1.43.1", features = ["yaml", "filters"] }
 owo-colors = { workspace = true }
 

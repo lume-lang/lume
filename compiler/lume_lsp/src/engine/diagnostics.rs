@@ -63,12 +63,12 @@ impl Diagnostics {
         }
     }
 
-    /// Publishes the given [`error_snippet::Diagnostic`] to the language
+    /// Publishes the given [`lume_errors::Diagnostic`] to the language
     /// client.
     fn publish_diagnostic<L>(
         &self,
         sender: &Sender<lsp_server::Message>,
-        diagnostic: &dyn error_snippet::Diagnostic,
+        diagnostic: &dyn lume_errors::Diagnostic,
         labels: L,
     ) where
         L: Iterator<Item = lume_errors::Label>,
@@ -95,10 +95,10 @@ impl Diagnostics {
             .collect();
 
         let severity = match diagnostic.severity() {
-            error_snippet::Severity::Note | error_snippet::Severity::Info => DiagnosticSeverity::INFORMATION,
-            error_snippet::Severity::Help => DiagnosticSeverity::HINT,
-            error_snippet::Severity::Warning => DiagnosticSeverity::WARNING,
-            error_snippet::Severity::Error => DiagnosticSeverity::ERROR,
+            lume_errors::Severity::Note | lume_errors::Severity::Info => DiagnosticSeverity::INFORMATION,
+            lume_errors::Severity::Help => DiagnosticSeverity::HINT,
+            lume_errors::Severity::Warning => DiagnosticSeverity::WARNING,
+            lume_errors::Severity::Error => DiagnosticSeverity::ERROR,
         };
 
         let code = diagnostic.code().map(|code| NumberOrString::String(code.to_string()));
@@ -125,14 +125,14 @@ impl Diagnostics {
         publish_diagnostics_to_file(sender, &[diag], primary_label.location.uri.clone());
     }
 
-    /// Lower the given [`error_snippet::Label`] into a [`DiagnosticLabel`].
+    /// Lower the given [`lume_errors::Label`] into a [`DiagnosticLabel`].
     ///
     /// If the label doesn't have any source content attached,
     /// returns [`None`].
     fn lower_diagnostic_label(
         &self,
-        diagnostic: &dyn error_snippet::Diagnostic,
-        label: &error_snippet::Label,
+        diagnostic: &dyn lume_errors::Diagnostic,
+        label: &lume_errors::Label,
     ) -> Option<DiagnosticLabel> {
         let source = label.source().or_else(|| diagnostic.source_code())?;
 
@@ -169,13 +169,13 @@ fn publish_diagnostics_to_file(sender: &Sender<lsp_server::Message>, diag: &[lsp
         .unwrap();
 }
 
-/// Publishes the given [`error_snippet::Diagnostic`] message to the
+/// Publishes the given [`lume_errors::Diagnostic`] message to the
 /// language client.
-fn publish_message(sender: &Sender<lsp_server::Message>, diagnostic: &dyn error_snippet::Diagnostic) {
+fn publish_message(sender: &Sender<lsp_server::Message>, diagnostic: &dyn lume_errors::Diagnostic) {
     let severity = match diagnostic.severity() {
-        error_snippet::Severity::Note | error_snippet::Severity::Help | error_snippet::Severity::Info => return,
-        error_snippet::Severity::Warning => lsp_types::MessageType::WARNING,
-        error_snippet::Severity::Error => lsp_types::MessageType::ERROR,
+        lume_errors::Severity::Note | lume_errors::Severity::Help | lume_errors::Severity::Info => return,
+        lume_errors::Severity::Warning => lsp_types::MessageType::WARNING,
+        lume_errors::Severity::Error => lsp_types::MessageType::ERROR,
     };
 
     let params = ShowMessageParams {

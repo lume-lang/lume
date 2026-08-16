@@ -22,7 +22,7 @@ impl UninstallCommand {
         if !toolchain_directory.exists() {
             return Err(
                 SimpleDiagnostic::new("toolchain is not installed; nothing to uninstall")
-                    .with_severity(error_snippet::Severity::Warning)
+                    .with_severity(lume_errors::Severity::Warning)
                     .into(),
             );
         }

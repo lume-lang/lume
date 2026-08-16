@@ -8,11 +8,10 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub use deps::*;
-use error_snippet::{IntoDiagnostic, Result};
 use indexmap::IndexMap;
 pub use io::*;
 use lume_architect::{Database, DatabaseContext};
-use lume_errors::DiagCtx;
+use lume_errors::{DiagCtx, IntoDiagnostic, Result};
 use lume_span::{FileName, PackageId, SourceFile, SourceMap};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};

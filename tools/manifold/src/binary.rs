@@ -62,12 +62,12 @@ pub(crate) fn run_test(path: TestPath, dcx: DiagCtx) -> Result<TestResult> {
     cmd.stderr(Stdio::piped());
 
     let process = cmd.spawn().map_err(|err| {
-        Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("could not invoke test binary: {err}")))
+        Into::<lume_errors::Error>::into(SimpleDiagnostic::new(format!("could not invoke test binary: {err}")))
     })?;
 
     let output = process
         .wait_with_output()
-        .map_err(|err| Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("binary time-out: {err}"))))?;
+        .map_err(|err| Into::<lume_errors::Error>::into(SimpleDiagnostic::new(format!("binary time-out: {err}"))))?;
 
     let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
 

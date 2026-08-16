@@ -15,7 +15,6 @@ lume_gc = { workspace = true, features = ["paranoid"] }
 lume_span = { workspace = true }
 
 clap = { workspace = true }
-error_snippet = { workspace = true }
 glob = "^0"
 owo-colors = { workspace = true }
 rayon = "=1.11.0"

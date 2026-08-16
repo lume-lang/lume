@@ -5,8 +5,8 @@ use std::marker::PhantomData;
 use std::ops::{Deref, Range};
 use std::sync::Arc;
 
-use error_snippet::Result;
 use logos::Logos;
+use lume_errors::Result;
 use lume_span::SourceFile;
 
 use crate::errors::*;

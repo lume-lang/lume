@@ -3,9 +3,8 @@ use std::fmt::Debug;
 use std::ops::Deref;
 use std::sync::RwLock;
 
-use error_snippet::Result;
 use lume_architect::DatabaseContext;
-use lume_errors::{DiagCtx, Error};
+use lume_errors::{DiagCtx, Error, Result};
 use lume_hir::{Path, TypeParameter};
 use lume_span::*;
 use lume_types::{FunctionSig, TyCtx, TypeDatabaseContext, TypeRef};
@@ -438,7 +437,7 @@ impl TyInferCtx {
     }
 
     /// Returns an error indicating that the given type was not found.
-    fn missing_type_err(&self, name: &lume_hir::Path, location: Location) -> error_snippet::Error {
+    fn missing_type_err(&self, name: &lume_hir::Path, location: Location) -> lume_errors::Error {
         for (newcomer_name, lume_name) in NEWCOMER_TYPE_NAMES {
             if newcomer_name == &name.name().as_str() {
                 return errors::UnavailableScalarType {

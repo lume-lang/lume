@@ -1,5 +1,5 @@
-use error_snippet::Result;
 use indexmap::IndexSet;
+use lume_errors::Result;
 use lume_span::NodeId;
 use lume_types::TypeRef;
 

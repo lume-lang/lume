@@ -1,5 +1,5 @@
-use error_snippet::Result;
 use lume_architect::cached_query;
+use lume_errors::Result;
 use lume_hir::{CallExpression, Node, Path, Visibility};
 use lume_span::NodeId;
 use lume_types::{Function, Method, TypeRef};

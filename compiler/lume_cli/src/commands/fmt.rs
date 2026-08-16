@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use error_snippet::{Label, WithSource};
 use lume_errors::*;
 use lume_fmt::Config;
 use lume_span::{PackageId, SourceFile};

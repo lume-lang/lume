@@ -6,8 +6,7 @@ pub(crate) mod resolve;
 
 use std::path::Path;
 
-use error_snippet::Result;
-use lume_errors::DiagCtxHandle;
+use lume_errors::{DiagCtxHandle, Result};
 use lume_session::{DependencyMap, FileLoader};
 
 pub use crate::cache::{clean_local_cache_dir, local_cache_dir};

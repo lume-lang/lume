@@ -3,8 +3,7 @@ mod query;
 
 use std::sync::Arc;
 
-use error_snippet::Result;
-use lume_errors::DiagCtx;
+use lume_errors::{DiagCtx, Result};
 use lume_errors_test::assert_dcx_snapshot;
 use lume_hir::map::Map;
 use lume_infer::TyInferCtx;

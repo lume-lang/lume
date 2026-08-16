@@ -28,15 +28,15 @@ impl Location {
     }
 }
 
-impl From<Location> for Arc<dyn error_snippet::Source> {
+impl From<Location> for Arc<dyn lume_errors::Source> {
     fn from(value: Location) -> Self {
         value.file.clone()
     }
 }
 
-impl From<Location> for error_snippet::SpanRange {
+impl From<Location> for lume_errors::SpanRange {
     fn from(value: Location) -> Self {
-        error_snippet::SpanRange(value.index.start..value.index.end)
+        lume_errors::SpanRange(value.index.start..value.index.end)
     }
 }
 

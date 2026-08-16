@@ -42,9 +42,9 @@
 //!   The returned signature will have it's first parameter, `val`, and return
 //!   value of type `Boolean` instead of the type parameter.
 
-use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
 use lume_architect::cached_query;
+use lume_errors::{IntoDiagnostic, Result};
 use lume_hir::{Identifier, Node, Path, WithLocation};
 use lume_span::{Location, NodeId};
 use lume_types::{Function, FunctionSigOwned, Method, MethodKind, TypeRef};
@@ -348,7 +348,7 @@ impl TyInferCtx {
     /// expression into a single, emittable error message.
     #[tracing::instrument(level = "Trace", skip_all)]
     fn fold_function_suggestions(&self, expr: &lume_hir::StaticCall) -> Result<super::diagnostics::MissingFunction> {
-        let suggestion: Option<Result<error_snippet::Error>> =
+        let suggestion: Option<Result<lume_errors::Error>> =
             self.lookup_function_suggestions(&expr.name).first().map(|suggestion| {
                 let function_name = suggestion.name.clone();
 
@@ -404,7 +404,7 @@ impl TyInferCtx {
             lume_hir::CallExpression::Intrinsic(_) => unreachable!(),
         };
 
-        let suggestion: Option<Result<error_snippet::Error>> = self
+        let suggestion: Option<Result<lume_errors::Error>> = self
             .lookup_method_suggestions(&callee_type, name.name())
             .first()
             .map(|suggestion| {

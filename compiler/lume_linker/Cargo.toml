@@ -13,7 +13,6 @@ lume_assets = { workspace = true }
 lume_errors = { workspace = true }
 lume_session = { workspace = true }
 
-error_snippet = { workspace = true }
 tracing = { workspace = true }
 
 [lints]

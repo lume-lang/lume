@@ -1,8 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use error_snippet::{Label, WithSource};
-use lume_errors::{Result, SimpleDiagnostic};
+use lume_errors::{Label, Result, SimpleDiagnostic, WithSource};
 use lume_session::FileLoader;
 use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
@@ -77,7 +76,7 @@ impl PackageParser {
         let url = normalize_path_url(root)?;
 
         if url.scheme() != "file" {
-            return Err(error_snippet::SimpleDiagnostic::new(format!(
+            return Err(lume_errors::SimpleDiagnostic::new(format!(
                 "only file:// URIs are supported, found {}",
                 url.scheme()
             ))

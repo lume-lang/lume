@@ -136,7 +136,7 @@ pub fn lbs_cli_entry() {
 
     let tainted = dcx.is_tainted();
 
-    let mut renderer = error_snippet::GraphicalRenderer::new();
+    let mut renderer = lume_errors::GraphicalRenderer::new();
     renderer.use_colors = true;
     renderer.highlight_source = true;
 

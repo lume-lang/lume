@@ -12,9 +12,9 @@ use std::ops::Range;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use error_snippet::Result;
-use error_snippet_derive::Diagnostic;
 use indexmap::IndexMap;
+use lume_errors::Result;
+use lume_errors_derive::Diagnostic;
 use serde::{Deserialize, Serialize};
 
 use crate::PackageId;
@@ -146,7 +146,7 @@ impl SourceFile {
     }
 }
 
-impl error_snippet::Source for SourceFile {
+impl lume_errors::Source for SourceFile {
     fn name(&self) -> Option<&str> {
         match &self.name {
             FileName::Internal => None,
@@ -266,13 +266,13 @@ impl std::fmt::Display for Location {
     }
 }
 
-impl From<Location> for Arc<dyn error_snippet::Source> {
+impl From<Location> for Arc<dyn lume_errors::Source> {
     fn from(value: Location) -> Self {
         value.file
     }
 }
 
-impl From<Location> for error_snippet::SpanRange {
+impl From<Location> for lume_errors::SpanRange {
     fn from(value: Location) -> Self {
         value.index.into()
     }

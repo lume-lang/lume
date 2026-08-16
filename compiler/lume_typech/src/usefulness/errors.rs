@@ -1,4 +1,4 @@
-use error_snippet_derive::Diagnostic;
+use lume_errors_derive::Diagnostic;
 use lume_span::Location;
 
 #[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]

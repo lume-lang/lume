@@ -1,8 +1,7 @@
 use std::fmt::Debug;
 
-use error_snippet::SimpleDiagnostic;
 use indexmap::{IndexMap, IndexSet};
-use lume_errors::Result;
+use lume_errors::{Result, SimpleDiagnostic};
 use serde::{Deserialize, Serialize};
 
 use crate::*;

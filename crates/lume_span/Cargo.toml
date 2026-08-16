@@ -8,10 +8,10 @@ rust-version.workspace = true
 doctest = false
 
 [dependencies]
+lume_errors = { workspace = true }
+lume_errors_derive = { workspace = true }
 lume_hash = { workspace = true }
 
-error_snippet = { workspace = true }
-error_snippet_derive = { workspace = true }
 indexmap = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive", "rc"] }
 

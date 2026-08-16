@@ -12,9 +12,8 @@ use std::ops::Deref;
 use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
 use std::sync::Arc;
 
-use error_snippet::{Result, SimpleDiagnostic};
 use glob::glob;
-use lume_errors::{DiagCtx, MapDiagnostic};
+use lume_errors::{DiagCtx, MapDiagnostic, Result, SimpleDiagnostic};
 use owo_colors::OwoColorize;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 

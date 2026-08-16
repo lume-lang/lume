@@ -10,13 +10,12 @@ doctest = false
 [dependencies]
 lume_assets = { workspace = true }
 lume_errors = { workspace = true }
+lume_errors_derive = { workspace = true }
 lume_hash = { workspace = true }
 lume_options = { workspace = true }
 lume_session = { workspace = true }
 lume_span = { workspace = true }
 
-error_snippet = { workspace = true }
-error_snippet_derive = { workspace = true }
 indexmap = { workspace = true }
 pubgrub = { version = "0.4" }
 semver = { version = "^1", features = ["serde"] }

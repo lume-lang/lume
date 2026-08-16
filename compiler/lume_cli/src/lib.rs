@@ -108,7 +108,7 @@ pub fn lume_cli_entry() {
         LumeSubcommands::Lsp(mut cmd) => cmd.run(dcx),
     });
 
-    let mut renderer = error_snippet::GraphicalRenderer::new();
+    let mut renderer = lume_errors::GraphicalRenderer::new();
     renderer.use_colors = true;
     renderer.highlight_source = true;
 

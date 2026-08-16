@@ -2,8 +2,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 
-use error_snippet::SimpleDiagnostic;
-use lume_errors::{MapDiagnostic, Result};
+use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
 use lume_session::{GlobalCtx, LinkerPreference, Options};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -166,12 +165,12 @@ pub fn link_objects(objects: Vec<ObjectLocation>, output: &PathBuf, opts: &Optio
     tracing::info!("linker command: {cmd:?}");
 
     let process = cmd.spawn().map_err(|err| {
-        Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("could not invoke linker: {err}")))
+        Into::<lume_errors::Error>::into(SimpleDiagnostic::new(format!("could not invoke linker: {err}")))
     })?;
 
     let output = process
         .wait_with_output()
-        .map_err(|err| Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("linker time-out: {err}"))))?;
+        .map_err(|err| Into::<lume_errors::Error>::into(SimpleDiagnostic::new(format!("linker time-out: {err}"))))?;
 
     if !output.status.success() {
         return Err(SimpleDiagnostic::new(format!(

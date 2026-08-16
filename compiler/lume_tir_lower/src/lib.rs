@@ -7,8 +7,8 @@ pub(crate) mod pattern;
 pub(crate) mod reification;
 pub(crate) mod stmt;
 
-use error_snippet::Result;
 use indexmap::IndexMap;
+use lume_errors::Result;
 use lume_span::{Internable, Location, NodeId};
 use lume_tir::{TypedIR, VariableId, VariableSource};
 pub use lume_type_metadata::StaticMetadata;

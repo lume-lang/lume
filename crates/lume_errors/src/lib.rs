@@ -1,473 +1,1325 @@
-#![allow(clippy::arc_with_non_send_sync)]
+use std::fmt::Display;
+use std::ops::Range;
+use std::sync::Arc;
 
-pub const ERROR_GUARANTEED_CODE: &str = "FINAL_ERROR";
+pub mod context;
+pub mod handler;
+pub mod render;
+pub mod source;
 
-pub extern crate error_snippet_derive;
+pub use crate::context::*;
+pub use crate::handler::*;
+pub use crate::render::*;
+pub use crate::source::*;
 
-use std::sync::{Arc, Mutex, MutexGuard};
+pub type Error = Box<dyn Diagnostic + Send + Sync>;
 
-pub use error_snippet::{
-    Diagnostic, Error, GraphicalRenderer, IntoDiagnostic, Label, Result, SimpleDiagnostic, SpanRange,
-};
-use error_snippet::{Renderer, Severity};
-pub use error_snippet_derive::Diagnostic;
+pub type Result<T> = std::result::Result<T, Error>;
 
-/// A context to deal with diagnostics, which is meant to
-/// be used throughout the entire lifespan of the compiler / driver
-/// process.
+/// Diagnostic severity level.
 ///
-/// Certain diagnostics may cause a single stage within the compiler
-/// to halt or exit early, where-as others might be more benign.
-#[derive(Default)]
-pub struct DiagCtxInner {
-    /// Holding block for all the reported diagnostics.
-    emitted: Vec<Error>,
+/// Intended to be used by the reporter to change how the diagnostic is
+/// displayed. Diagnostics of [`Error`] or higher also cause the reporter to
+/// halt upon draining.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Severity {
+    /// Failure. Program cannot continue.
+    #[default]
+    Error,
 
-    /// Tracks the location of where diagnostics are pushed from.
-    track_diagnostics: bool,
+    /// Warning. Program can continue but may be affected.
+    Warning,
 
-    /// Treat all errors as bugs, causing a `panic!`.
-    panic_on_error: bool,
+    /// Information. Program can continue and may be unaffected.
+    Info,
+
+    /// Note. Has no effect on the program, but may provide additional context.
+    Note,
+
+    /// Help. Has no effect on the program, but may provide extra help and tips.
+    Help,
 }
 
-impl DiagCtxInner {
-    /// Renders all the stored diagnostics to the standard error output
-    /// (`stderr`).
-    fn render_stderr(&self, renderer: &mut impl Renderer) {
-        if let Some(buffer) = self.render_buffer(renderer) {
-            eprint!("{buffer}");
+impl std::fmt::Display for Severity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Severity::Error => f.write_str("error"),
+            Severity::Warning => f.write_str("warning"),
+            Severity::Info => f.write_str("info"),
+            Severity::Note => f.write_str("note"),
+            Severity::Help => f.write_str("help"),
         }
-    }
-
-    /// Renders all the stored diagnostics into a [`String`]
-    fn render_buffer(&self, renderer: &mut impl Renderer) -> Option<String> {
-        if self.emitted.is_empty() {
-            return None;
-        }
-
-        let buffer = self
-            .iter()
-            .map(|diagnostic| renderer.render(diagnostic.as_ref()).unwrap())
-            .collect::<String>();
-
-        Some(buffer)
-    }
-
-    /// Clears all the diagnostics from the context.
-    fn clear(&mut self) {
-        self.emitted.clear();
-    }
-
-    /// Pushes the given diagnostic to the context.
-    #[track_caller]
-    fn push(&mut self, diag: Error) {
-        if diag.message().as_str() == ERROR_GUARANTEED_CODE {
-            return;
-        }
-
-        #[allow(clippy::disallowed_macros, reason = "used for debugging")]
-        if self.track_diagnostics {
-            eprintln!("[track_diagnostics] pushed from {}", std::panic::Location::caller());
-        }
-
-        assert!(
-            !self.panic_on_error,
-            "error emitted with `panic_on_error` enabled: {}",
-            diag.message()
-        );
-
-        self.emitted.push(diag);
-    }
-
-    /// Iterates over all the diagnostics within the context.
-    fn iter(&self) -> impl Iterator<Item = &Error> {
-        self.emitted.iter()
-    }
-
-    /// Invokes the given closure with an iterator over all reported
-    /// diagnostics.
-    fn with_iter<F, R>(&self, f: F) -> R
-    where
-        F: for<'a> FnOnce(std::slice::Iter<'a, Error>) -> R,
-    {
-        f(self.emitted.iter())
-    }
-
-    /// Determines whether the diagnostic context has been tainted with
-    /// one-or-more errors.
-    fn is_tainted(&self) -> bool {
-        self.emitted.iter().any(|diag| diag.severity() == Severity::Error)
     }
 }
 
-/// A context to deal with diagnostics, which is meant to
-/// be used throughout the entire lifespan of the compiler / driver
-/// process.
+/// Defines some span within a [`Source`] instance.
 ///
-/// Certain diagnostics may cause a single stage within the compiler
-/// to halt or exit early, where-as others might be more benign.
-#[derive(Clone, Default)]
-pub struct DiagCtx {
-    /// The inner handler for diagnostics, which holds all the
-    /// reporting diagnostics.
-    inner: Arc<Mutex<DiagCtxInner>>,
+/// The range within the span is an absolute zero-indexed range of characters
+/// within the source file. It is not a line-column representation and does not
+/// provide information about the line and column numbers.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SpanRange(pub Range<usize>);
+
+impl From<Range<usize>> for SpanRange {
+    fn from(range: Range<usize>) -> SpanRange {
+        SpanRange(Range {
+            start: range.start,
+            end: range.end,
+        })
+    }
 }
 
-impl DiagCtx {
-    /// Creates a new [`DiagCtx`] instance using the given output format.
-    pub fn new() -> Self {
-        DiagCtx::default()
+impl From<SpanRange> for Range<usize> {
+    fn from(span: SpanRange) -> Range<usize> {
+        span.0
     }
+}
 
-    /// Retrives the instance of the parent [`DiagCtxInner`], which
-    /// is contained within the context.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the inner diagnostics context has been locked by another
-    /// thread.
-    fn inner(&self) -> MutexGuard<'_, DiagCtxInner> {
-        self.inner.lock().unwrap()
+impl std::fmt::Display for SpanRange {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.0)
     }
+}
 
-    /// Prints the location of where diagnostics are pushed to the context - the
-    /// error does not have to be emitted.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the handle has already been locked by another thread.
-    pub fn track_diagnostics(&self) {
-        self.inner().track_diagnostics = true;
+/// Defines some location with a [`Source`] instance.
+///
+/// The location within the structure is an absolute zero-indexed position of
+/// characters within the source file. It is not a line-column representation
+/// and does not provide information about the line and column numbers.
+#[derive(Debug, Clone)]
+pub struct SourceLocation {
+    /// Defines the source which the range is referring to.
+    source: Arc<dyn Source>,
+
+    /// Defines the character offset into the file.
+    offset: usize,
+}
+
+impl SourceLocation {
+    /// Creates a new [`SourceLocation`] with the given source and offset.
+    pub fn new(source: Arc<dyn Source>, offset: usize) -> Self {
+        Self { source, offset }
     }
+}
 
-    /// Enables panicking whenever an error is pushed to the context - the error
-    /// does not have to be emitted.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the handle has already been locked by another thread.
-    pub fn panic_on_error(&self) {
-        self.inner().panic_on_error = true;
+impl PartialEq for SourceLocation {
+    fn eq(&self, other: &Self) -> bool {
+        self.source.name() == other.source.name()
+            && self.source.content() == other.source.content()
+            && self.offset == other.offset
     }
+}
 
-    /// Emits the given diagnostic to the context directly, without
-    /// passing any handles or instances around.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the handle has already been locked by another thread.
-    #[track_caller]
-    pub fn emit(&self, diag: Error) {
-        self.inner().push(diag);
+impl std::cmp::Eq for SourceLocation {}
+
+impl PartialOrd for SourceLocation {
+    fn partial_cmp(&self, other: &SourceLocation) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
+}
 
-    /// Create a handle for the diagnostic context, which can be
-    /// used to emit diagnositcs to the inner context.
-    pub fn handle(&self) -> DiagCtxHandle {
-        DiagCtxHandle {
-            inner: Arc::clone(&self.inner),
-            emitted: Arc::new(Mutex::new(Vec::new())),
+impl std::cmp::Ord for SourceLocation {
+    fn cmp(&self, other: &SourceLocation) -> std::cmp::Ordering {
+        let other_offset = other.offset;
+
+        match self.offset {
+            v if v < other_offset => std::cmp::Ordering::Less,
+            v if v > other_offset => std::cmp::Ordering::Greater,
+            _ => std::cmp::Ordering::Equal,
+        }
+    }
+}
+
+/// Defines some span with a [`Source`] instance.
+///
+/// The range within the span is an absolute zero-indexed range of characters
+/// within the source file. It is not a line-column representation and does not
+/// provide information about the line and column numbers.
+#[derive(Debug, Clone)]
+pub struct SourceRange {
+    /// Defines the source which the range is referring to.
+    source: Arc<dyn Source>,
+
+    /// Defines the underlying span.
+    span: SpanRange,
+}
+
+impl SourceRange {
+    /// Creates a new [`SourceRange`] with the given source and span.
+    pub fn new(source: Arc<dyn Source>, span: impl Into<SpanRange>) -> Self {
+        Self {
+            source,
+            span: span.into(),
+        }
+    }
+}
+
+impl PartialEq for SourceRange {
+    fn eq(&self, other: &Self) -> bool {
+        self.source.name() == other.source.name()
+            && self.source.content() == other.source.content()
+            && self.span == other.span
+    }
+}
+
+impl std::cmp::Eq for SourceRange {}
+
+impl PartialOrd for SourceRange {
+    fn partial_cmp(&self, other: &SourceRange) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl std::cmp::Ord for SourceRange {
+    fn cmp(&self, other: &SourceRange) -> std::cmp::Ordering {
+        let other_start = other.span.0.start;
+
+        match self.span.0.start {
+            v if v < other_start => std::cmp::Ordering::Less,
+            v if v > other_start => std::cmp::Ordering::Greater,
+            _ => std::cmp::Ordering::Equal,
+        }
+    }
+}
+
+/// Represents a labelled span of some source code.
+///
+/// Each label is meant to be used as a snippet within a larger source code. It
+/// provides a way to highlight a specific portion of the source code, and uses
+/// labels to provide additional information about the span.
+#[derive(Debug, Clone)]
+pub struct Label {
+    /// Defines the actual label to print on the snippet.
+    message: String,
+
+    /// Defines the source span where the label should be placed.
+    ///
+    /// If this method returns `None`, the parent diagnostic is expected to have
+    /// a source attached via the [`Diagnostic::source_code()`] method.
+    source: Option<Arc<dyn Source>>,
+
+    /// Defines the index range where the label should be placed.
+    range: SpanRange,
+
+    /// Defines the severity of the label, which can be independant from the
+    /// parent diagnostic.
+    severity: Option<Severity>,
+}
+
+impl PartialEq for Label {
+    fn eq(&self, other: &Label) -> bool {
+        self.message == other.message && self.range == other.range
+    }
+}
+
+impl Eq for Label {}
+
+impl Label {
+    /// Creates a new [`Label`] from the given source, range, and label.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity};
+    ///
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return 0;
+    /// }"#);
+    ///
+    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
+    ///
+    /// assert_eq!(label.message(), "could not find method 'invok'");
+    /// assert_eq!(label.severity(), None);
+    /// ```
+    pub fn new(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, message: impl Into<String>) -> Self {
+        Self {
+            source,
+            range: range.into(),
+            message: message.into(),
+            severity: None,
         }
     }
 
-    /// Invokes the given closure with an iterator over all reported
-    /// diagnostics.
+    /// Creates a new [`Label`] from the given source, range, and label, with a
+    /// severity of [`Severity::Error`].
     ///
-    /// # Panics
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity};
     ///
-    /// Panics if the inner diagnostics context has been locked by another
-    /// thread.
-    pub fn with_iter<F, R>(&self, f: F) -> R
-    where
-        F: for<'a> FnOnce(std::slice::Iter<'a, Error>) -> R,
-    {
-        let guard = self.inner.lock().unwrap();
-
-        guard.with_iter(f)
-    }
-
-    /// Determines whether the diagnostic context has been tainted with
-    /// one-or-more errors.
-    pub fn is_tainted(&self) -> bool {
-        self.inner().is_tainted()
-    }
-
-    /// Ensure that the context is untainted.
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
     ///
-    /// # Errors
+    ///     return 0;
+    /// }"#);
     ///
-    /// Returns `Err` if the context is tainted with one-or-more errors.
-    pub fn ensure_untainted(&self) -> Result<()> {
-        if self.is_tainted() {
-            Err(TaintedError(()).into())
-        } else {
-            Ok(())
+    /// let label = Label::error(Some(source.clone()), 60..65, "could not find method 'invok'");
+    ///
+    /// assert_eq!(label.message(), "could not find method 'invok'");
+    /// assert_eq!(label.severity(), Some(Severity::Error));
+    /// ```
+    pub fn error(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
+        Self {
+            source,
+            range: range.into(),
+            message: label.into(),
+            severity: Some(Severity::Error),
         }
     }
 
-    /// Renders all the stored diagnostics to the standard error output
-    /// (`stderr`).
-    pub fn render_stderr(&self, renderer: &mut impl Renderer) {
-        self.inner().render_stderr(renderer);
-    }
-
-    /// Renders all the stored diagnostics into a [`String`]
-    pub fn render_buffer(&self, renderer: &mut impl Renderer) -> Option<String> {
-        self.inner().render_buffer(renderer)
-    }
-
-    /// Clears all the diagnostics from the context.
-    pub fn clear(&self) {
-        self.inner().clear();
-    }
-
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
-    pub fn with_none(&self, f: impl FnOnce(DiagCtxHandle)) {
-        let handle = self.handle();
-        f(handle.clone());
-
-        handle.push();
-    }
-
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
+    /// Creates a new [`Label`] from the given source, range, and label, with a
+    /// severity of [`Severity::Warning`].
     ///
-    /// # Errors
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity};
     ///
-    /// Returns `Err` if an error occured while executing the closure or if the
-    /// closure itself returned `Err`.
-    pub fn with_res<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> Result<TReturn> {
-        let handle = self.handle();
-        let res = f(handle.clone());
-
-        handle.push();
-
-        self.ensure_untainted()?;
-
-        Ok(res)
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return 0;
+    /// }"#);
+    ///
+    /// let label = Label::warning(Some(source.clone()), 60..65, "could not find method 'invok'");
+    ///
+    /// assert_eq!(label.message(), "could not find method 'invok'");
+    /// assert_eq!(label.severity(), Some(Severity::Warning));
+    /// ```
+    pub fn warning(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
+        Self {
+            source,
+            range: range.into(),
+            message: label.into(),
+            severity: Some(Severity::Warning),
+        }
     }
 
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
+    /// Creates a new [`Label`] from the given source, range, and label, with a
+    /// severity of [`Severity::Info`].
     ///
-    /// # Errors
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity};
     ///
-    /// Returns `Err` if an error occured while executing the closure or if the
-    /// closure itself returned `Err`.
-    pub fn with<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> Result<TReturn>) -> Result<TReturn> {
-        let handle = self.handle();
-        let res = f(handle.clone());
-
-        handle.push();
-
-        self.ensure_untainted()?;
-
-        res
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return 0;
+    /// }"#);
+    ///
+    /// let label = Label::info(Some(source.clone()), 60..65, "could not find method 'invok'");
+    ///
+    /// assert_eq!(label.message(), "could not find method 'invok'");
+    /// assert_eq!(label.severity(), Some(Severity::Info));
+    /// ```
+    pub fn info(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
+        Self {
+            source,
+            range: range.into(),
+            message: label.into(),
+            severity: Some(Severity::Info),
+        }
     }
 
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
-    pub fn with_opt<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> Result<TReturn>) -> Option<TReturn> {
-        let handle = self.handle();
+    /// Creates a new [`Label`] from the given source, range, and label, with a
+    /// severity of [`Severity::Note`].
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity};
+    ///
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return 0;
+    /// }"#);
+    ///
+    /// let label = Label::note(Some(source.clone()), 60..65, "could not find method 'invok'");
+    ///
+    /// assert_eq!(label.message(), "could not find method 'invok'");
+    /// assert_eq!(label.severity(), Some(Severity::Note));
+    /// ```
+    pub fn note(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
+        Self {
+            source,
+            range: range.into(),
+            message: label.into(),
+            severity: Some(Severity::Note),
+        }
+    }
 
-        match f(handle.clone()) {
-            Ok(value) => Some(value),
-            Err(err) => {
-                handle.emit_and_push(err);
-                None
+    /// Creates a new [`Label`] from the given source, range, and label, with a
+    /// severity of [`Severity::Help`].
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity};
+    ///
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return 0;
+    /// }"#);
+    ///
+    /// let label = Label::help(Some(source.clone()), 60..65, "could not find method 'invok'");
+    ///
+    /// assert_eq!(label.message(), "could not find method 'invok'");
+    /// assert_eq!(label.severity(), Some(Severity::Help));
+    /// ```
+    pub fn help(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
+        Self {
+            source,
+            range: range.into(),
+            message: label.into(),
+            severity: Some(Severity::Help),
+        }
+    }
+
+    /// Gets the message of the current label instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity};
+    ///
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return 0;
+    /// }"#);
+    ///
+    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
+    ///
+    /// assert_eq!(label.message(), "could not find method 'invok'");
+    /// ```
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+
+    /// Gets the integer span of the current label instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity, SpanRange};
+    ///
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return 0;
+    /// }"#);
+    ///
+    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
+    ///
+    /// assert_eq!(label.range(), &SpanRange(60..65));
+    /// ```
+    pub fn range(&self) -> &SpanRange {
+        &self.range
+    }
+
+    /// Gets the source code of the current label instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity, Source, SpanRange};
+    ///
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return 0;
+    /// }"#);
+    ///
+    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
+    ///
+    /// assert_eq!(label.source().unwrap().name(), source.name());
+    /// assert_eq!(label.source().unwrap().content(), source.content());
+    /// ```
+    pub fn source(&self) -> Option<Arc<dyn Source>> {
+        self.source.clone()
+    }
+
+    /// Gets the severity of the current label instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity};
+    ///
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return 0;
+    /// }"#);
+    ///
+    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'")
+    ///     .with_severity(Severity::Warning);
+    ///
+    /// assert_eq!(label.severity(), Some(Severity::Warning));
+    /// ```
+    pub fn severity(&self) -> Option<Severity> {
+        self.severity
+    }
+
+    /// Sets the severity for the current label instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity};
+    ///
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return 0;
+    /// }"#);
+    ///
+    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'")
+    ///     .with_severity(Severity::Warning);
+    ///
+    /// assert_eq!(label.message(), "could not find method 'invok'");
+    /// assert_eq!(label.severity(), Some(Severity::Warning));
+    /// ```
+    pub fn with_severity(mut self, severity: Severity) -> Self {
+        self.severity = Some(severity);
+        self
+    }
+
+    /// Reads a span of the source using the range within the
+    /// label itself, including a dynamic amount of context lines.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Label, Severity};
+    ///
+    /// let source = Arc::new(r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return 0;
+    /// }"#);
+    ///
+    /// let label = Label::new(Some(source.clone()), 58..67, String::new());
+    /// let span = label.read_span(None, 0).unwrap();
+    ///
+    /// assert_eq!(span.data, "    let b = a.invok();");
+    /// assert_eq!(span.start_line, 2);
+    /// assert_eq!(span.line, 2);
+    /// ```
+    pub fn read_span(&self, diagnostic: Option<&dyn Diagnostic>, context_lines: usize) -> Option<LabelSpan> {
+        let diag_source = diagnostic.and_then(|d| d.source_code());
+        let source = self.source.clone().or(diag_source)?;
+
+        let content = source.content();
+        let range = self.range().0.clone();
+
+        let mut line_start = 0;
+        let mut line_spans = Vec::new();
+
+        for line in content.lines() {
+            let line_len = line.len();
+            let span = line_start..(line_start + line_len);
+
+            line_spans.push(span);
+
+            // +1 for '\n' (assuming UNIX-style newlines)
+            line_start += line_len + 1;
+        }
+
+        // Determine the lines that intersect with the byte range
+        let mut matching_lines = Vec::new();
+        for (i, span) in line_spans.iter().enumerate() {
+            if span.end > range.start && span.start < range.end {
+                matching_lines.push(i);
             }
         }
-    }
-}
 
-unsafe impl Send for DiagCtx {}
-unsafe impl Sync for DiagCtx {}
+        // If the range is outside the span of the input string,
+        // we return the first context window of the string as a fallback.
+        if matching_lines.is_empty() {
+            // Get the end of the context window, if possible.
+            // Otherwise, just return the entire string.
+            let last_line_span = line_spans.get(context_lines * 2 + 1).or_else(|| line_spans.last());
 
-/// A handle to a parent [`DiagCtx`], which can be used in
-/// distinct sequential "stages", where each stage can only progress
-/// forward if no halting diagnostics were reporting in any of the previous
-/// stages.
-///
-/// The handle acts as a mutable reference to it's parent [`DiagCtx`] instance,
-/// but will drain all errors to the output, once it's been dropped or manually
-/// drained.
-#[derive(Clone)]
-pub struct DiagCtxHandle {
-    /// Contains the parent [`DiagCtxInner`] handler.
-    inner: Arc<Mutex<DiagCtxInner>>,
+            let last_line_idx = last_line_span.map(|s| s.end).unwrap_or_default();
 
-    /// Holding block for all the reported diagnostics.
-    emitted: Arc<Mutex<Vec<Error>>>,
-}
-
-impl DiagCtxHandle {
-    /// Creates a new [`DiagCtxHandle`], functioning  similar to a shim. Mostly
-    /// used for testing.
-    pub fn shim() -> Self {
-        DiagCtx::new().handle()
-    }
-
-    /// Creates a [`DiagCtx`] from the given handle, which serves the same
-    /// output as the handle itself.
-    pub fn to_context(self) -> DiagCtx {
-        DiagCtx {
-            inner: self.inner.clone(),
-        }
-    }
-
-    /// Retrives the instance of the parent [`DiagCtxInner`], which
-    /// is contained within the handle.
-    fn inner(&self) -> MutexGuard<'_, DiagCtxInner> {
-        self.inner.lock().unwrap()
-    }
-
-    /// Emits the given diagnostic to the context directly, without
-    /// passing any handles or instances around.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the handle has already been locked by another thread.
-    #[track_caller]
-    pub fn emit(&self, diag: Error) {
-        if diag.message().as_str() == ERROR_GUARANTEED_CODE {
-            return;
+            return Some(LabelSpan {
+                data: content[0..last_line_idx].to_string(),
+                start_line: context_lines,
+                line: 0,
+            });
         }
 
-        self.emitted.lock().unwrap().push(diag);
-    }
+        let first_matching_line = *matching_lines.first().unwrap();
 
-    /// Emits the given diagnostic to the context directly and pushes
-    /// it directly to the parent context.
-    #[track_caller]
-    pub fn emit_and_push(&self, diag: Error) {
-        self.emit(diag);
-        self.push();
-    }
+        let first_match = first_matching_line.saturating_sub(context_lines);
+        let last_match = (matching_lines.last().unwrap() + context_lines).min(line_spans.len() - 1);
 
-    /// Drains the currently reported errors in the context to the output
-    /// buffer.
-    ///
-    /// # Errors
-    ///
-    /// If any reported diagnostics have a severity at or above
-    /// [`error_snippet::Severity::Error`], they will be counted towards a
-    /// [`error_snippet::DrainError::CompoundError`], which will be
-    /// raised when draining has finished.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the handle has already been locked by another thread.
-    pub fn push(&self) {
-        let mut emitted = self.emitted.lock().unwrap();
+        let start_byte = line_spans[first_match].start;
+        let end_byte = line_spans[last_match].end;
 
-        self.inner().emitted.append(&mut emitted);
-    }
-
-    /// Create a handle for the diagnostic context, which can be
-    /// used to emit diagnositcs to the inner context.
-    #[must_use]
-    pub fn handle(&self) -> DiagCtxHandle {
-        DiagCtxHandle {
-            inner: Arc::clone(&self.inner),
-            emitted: Arc::new(Mutex::new(Vec::new())),
-        }
-    }
-
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if an error occured while executing the closure or if the
-    /// closure itself returned `Err`.
-    pub fn with_res<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> Result<TReturn> {
-        let res = f(self.clone());
-        self.push();
-
-        Ok(res)
-    }
-
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if an error occured while executing the closure or if the
-    /// closure itself returned `Err`.
-    pub fn with<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> Result<TReturn>) -> Result<TReturn> {
-        let res = f(self.clone());
-        self.push();
-
-        res
-    }
-
-    /// Ensure that the context is untainted.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if the context is tainted with one-or-more errors.
-    pub fn ensure_untainted(&self) -> Result<()> {
-        if self.inner().is_tainted() {
-            Err(TaintedError(()).into())
-        } else {
-            Ok(())
-        }
-    }
-}
-
-unsafe impl Send for DiagCtxHandle {}
-unsafe impl Sync for DiagCtxHandle {}
-
-#[derive(Debug, Clone)]
-struct TaintedError(());
-
-impl error_snippet::Diagnostic for TaintedError {
-    fn message(&self) -> String {
-        String::from(ERROR_GUARANTEED_CODE)
-    }
-}
-
-pub trait MapDiagnostic<T> {
-    /// If the instance is a [`std::result::Result::Err`], maps it into
-    /// an instance of [`Diagnostic`] (via
-    /// [`IntoDiagnostic::into_diagnostic`]).
-    fn map_diagnostic(self) -> Result<T>;
-
-    /// If the instance is a [`std::result::Result::Err`], declares it as a
-    /// cause of a new [`Diagnostic`] with the given message.
-    ///
-    /// This method is effectively an alias of:
-    /// ```rs
-    /// self.map_err(|err| SimpleDiagnostic::new(message)
-    ///     .add_cause(err.into_diagnostic())
-    /// )
-    /// ```
-    fn map_cause(self, message: impl Into<String>) -> Result<T>;
-}
-
-impl<T, E: std::error::Error + Send + Sync> MapDiagnostic<T> for std::result::Result<T, E> {
-    fn map_diagnostic(self) -> Result<T> {
-        self.map_err(IntoDiagnostic::into_diagnostic)
-    }
-
-    fn map_cause(self, message: impl Into<String>) -> Result<T> {
-        self.map_err(|err| {
-            let diag = SimpleDiagnostic::new(message).add_cause(err.into_diagnostic());
-
-            Box::new(diag) as Error
+        Some(LabelSpan {
+            data: content[start_byte..end_byte].to_string(),
+            start_line: first_matching_line,
+            line: first_match,
         })
+    }
+}
+
+/// Represents a span within a label.
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub struct LabelSpan {
+    /// Defines the string inside the associated span.
+    pub data: String,
+
+    /// Defines the zero-indexed line in the associated source, where the span
+    /// starts (including context lines).
+    pub line: usize,
+
+    /// Defines the zero-indexed line in the associated source, where the span
+    /// starts (excluding context lines).
+    pub start_line: usize,
+}
+
+impl LabelSpan {
+    /// Gets the line count in the span.
+    pub fn line_count(&self) -> usize {
+        self.data.lines().count()
+    }
+}
+
+/// Represents a suggested fix with a source file attached.
+///
+/// Suggestions can guide the user to change some part of the source code,
+/// in order to fix diagnostics.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Suggestion {
+    /// Defines some span within a file should be deleted.
+    Deletion { range: SourceRange },
+
+    /// Defines some string should be inserted at some position within a file.
+    Insertion { location: SourceLocation, value: String },
+
+    /// Defines some span within a file should be replaced.
+    Replacement { range: SourceRange, replacement: String },
+}
+
+impl Suggestion {
+    /// Creates a new [`Suggestion`] where a certain span within
+    /// a file should be deleted.
+    pub fn delete(range: SourceRange) -> Self {
+        Self::Deletion { range }
+    }
+
+    /// Creates a new [`Suggestion`] where a certain location
+    /// should have a string value inserted.
+    pub fn insert(location: SourceLocation, value: impl Into<String>) -> Self {
+        Self::Insertion {
+            location,
+            value: value.into(),
+        }
+    }
+
+    /// Creates a new [`Suggestion`] where a certain span should
+    /// be replaced with a string value.
+    pub fn replace(range: SourceRange, replacement: impl Into<String>) -> Self {
+        Self::Replacement {
+            range,
+            replacement: replacement.into(),
+        }
+    }
+
+    /// Gets the source file of the suggestion.
+    pub fn source(&self) -> Arc<dyn Source> {
+        match self {
+            Suggestion::Insertion { location, .. } => location.source.clone(),
+            Suggestion::Deletion { range, .. } | Suggestion::Replacement { range, .. } => range.source.clone(),
+        }
+    }
+
+    /// Gets the span which the suggestion refers to.
+    ///
+    /// All suggestion types, except insertions, returns the inner span
+    /// directly, where-as insertions will create a new span with a distance
+    /// of 1.
+    pub fn span(&self) -> Range<usize> {
+        match self {
+            Suggestion::Replacement { range, .. } | Suggestion::Deletion { range, .. } => range.span.0.clone(),
+            Suggestion::Insertion { location, .. } => location.offset..location.offset + 1,
+        }
+    }
+}
+
+/// Represents a help message, which can be attached to diagnostics to aid
+/// users.
+///
+/// Each help message is accompanied by zero-or-more suggestions, which can
+/// guide the user to change some part of the source code, in order to fix the
+/// diagnostic.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Help {
+    /// Defines the actual message to print in the footer.
+    pub message: String,
+
+    /// A list of zero-or-more suggestions to apply to the original source code.
+    pub suggestions: Vec<Suggestion>,
+}
+
+impl Help {
+    /// Creates a new [`Help`] with the given message.
+    ///
+    /// # Examples
+    /// ```
+    /// use lume_errors::Help;
+    ///
+    /// let help = Help::new("have you checked your syntax?");
+    ///
+    /// assert_eq!(help.message, "have you checked your syntax?");
+    /// assert_eq!(help.suggestions, vec![]);
+    /// ```
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+            suggestions: Vec::new(),
+        }
+    }
+
+    /// Adds the given suggestion to the help message.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Help, NamedSource, SourceRange, Suggestion};
+    ///
+    /// let source = Arc::new(NamedSource::new(
+    ///     "src/lib.rs",
+    ///     r#"fn main() -> int {
+    ///     /// doc comment
+    ///     let a = Testing::new();
+    ///     let b = a.invoke();
+    ///
+    ///     return 0;
+    /// }"#,
+    /// ));
+    ///
+    /// let source_range = SourceRange::new(source.clone(), 23..38);
+    /// let suggestion = Suggestion::delete(source_range);
+    ///
+    /// let help = Help::new("remove this doc comment")
+    ///     .with_suggestion(suggestion.clone());
+    ///
+    /// assert_eq!(help.suggestions, vec![suggestion]);
+    /// ```
+    pub fn with_suggestion(mut self, suggestion: impl Into<Suggestion>) -> Self {
+        self.suggestions.push(suggestion.into());
+        self
+    }
+
+    /// Adds the given suggestions to the help message.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Help, NamedSource, SourceRange, Suggestion};
+    ///
+    /// let source = Arc::new(NamedSource::new(
+    ///     "src/lib.rs",
+    ///     r#"fn main() -> int {
+    ///     let a = Testing::new();
+    ///     let b = a.invoke();
+    ///
+    ///     return (0);
+    /// }"#,
+    /// ));
+    ///
+    /// let suggestion1 = Suggestion::delete(SourceRange::new(source.clone(), 83..84));
+    /// let suggestion2 = Suggestion::delete(SourceRange::new(source.clone(), 85..86));
+    ///
+    /// let help = Help::new("remove this doc comment")
+    ///     .with_suggestions([suggestion1.clone(), suggestion2.clone()]);
+    ///
+    /// assert_eq!(help.suggestions, vec![suggestion1, suggestion2]);
+    /// ```
+    pub fn with_suggestions(mut self, suggestions: impl IntoIterator<Item = Suggestion>) -> Self {
+        self.suggestions.extend(suggestions);
+        self
+    }
+}
+
+impl From<&str> for Help {
+    fn from(value: &str) -> Self {
+        Help::new(value)
+    }
+}
+
+impl From<String> for Help {
+    fn from(value: String) -> Self {
+        Help::new(value)
+    }
+}
+
+impl From<&String> for Help {
+    fn from(value: &String) -> Self {
+        Help::new(value)
+    }
+}
+
+/// Represents a single diagnostic message, which can be
+/// pretty-printed into an intuitive and fancy error message.
+pub trait Diagnostic: std::fmt::Debug {
+    /// Defines which message to be raised to the user, when reported.
+    fn message(&self) -> String;
+
+    /// Diagnostic severity level.
+    ///
+    /// This may be used by the renderer to determine how to display the
+    /// diagnostic or even halt the program, depending on the severity
+    /// level.
+    fn severity(&self) -> Severity {
+        Severity::default()
+    }
+
+    /// Unique diagnostic code, which can be used to look up more information
+    /// about the error.
+    fn code<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        None
+    }
+
+    /// Gets the source code which the diagnostic refers to.
+    ///
+    /// This isn't used if only defined by itself. It will only be used if one
+    /// or more labels are defined without any source directly attached.
+    fn source_code(&self) -> Option<Arc<dyn Source>> {
+        None
+    }
+
+    /// Labels to attach to snippets of the source code.
+    fn labels(&self) -> Option<Box<dyn Iterator<Item = Label> + '_>> {
+        None
+    }
+
+    /// Any errors which were the underlying cause for the diagnostic to be
+    /// raised.
+    fn causes(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
+        Box::new(std::iter::empty())
+    }
+
+    /// Any related errors, which can be used to provide additional information
+    /// about the diagnostic.
+    fn related(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
+        Box::new(std::iter::empty())
+    }
+
+    /// Help messages, which can be used to provide additional information about
+    /// the diagnostic.
+    fn help(&self) -> Option<Box<dyn Iterator<Item = Help> + '_>> {
+        None
+    }
+}
+
+impl std::fmt::Display for Box<dyn Diagnostic + Send + Sync + 'static> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.message())
+    }
+}
+
+impl<T: Diagnostic + Send + Sync + 'static> From<T> for Box<dyn Diagnostic + Send + Sync + 'static> {
+    fn from(value: T) -> Self {
+        Box::new(value)
+    }
+}
+
+impl<T: Diagnostic + Send + Sync + 'static> From<T> for Box<dyn Diagnostic + Send + 'static> {
+    fn from(value: T) -> Self {
+        Box::<dyn Diagnostic + Send + Sync>::from(value)
+    }
+}
+
+impl<T: Diagnostic + Send + Sync + 'static> From<T> for Box<dyn Diagnostic + 'static> {
+    fn from(value: T) -> Self {
+        Box::<dyn Diagnostic + Send + Sync>::from(value)
+    }
+}
+
+impl From<Box<dyn std::error::Error + Send + Sync>> for Box<dyn Diagnostic + Send + Sync> {
+    fn from(err: Box<dyn std::error::Error + Send + Sync>) -> Self {
+        err.into_diagnostic()
+    }
+}
+
+impl From<std::io::Error> for Box<dyn Diagnostic + Send + Sync> {
+    fn from(s: std::io::Error) -> Self {
+        From::<Box<dyn std::error::Error + Send + Sync>>::from(Box::new(s))
+    }
+}
+
+impl std::cmp::PartialEq for Box<dyn Diagnostic + Send + Sync> {
+    fn eq(&self, other: &Self) -> bool {
+        self.message() == other.message()
+    }
+}
+
+impl std::cmp::Eq for Box<dyn Diagnostic + Send + Sync> {}
+
+/// Trait for converting implementations into implementations of [`Diagnostic`].
+pub trait IntoDiagnostic {
+    /// Converts the instance into an implementation of [`Diagnostic`].
+    fn into_diagnostic(self) -> Box<dyn Diagnostic + Send + Sync>;
+}
+
+impl<T: std::error::Error + Send + Sync> IntoDiagnostic for T {
+    fn into_diagnostic(self) -> Box<dyn Diagnostic + Send + Sync> {
+        Box::new(SimpleDiagnostic::new(self.to_string()))
+    }
+}
+
+/// Diagnostic which can be created at runtime.
+#[derive(Default, Debug)]
+pub struct SimpleDiagnostic {
+    /// Defines the message being displayed along with the diagnostic.
+    pub message: String,
+
+    /// Unique code for the diagnostic, which can be used to look up
+    /// more information about the diagnostic.
+    pub code: Option<String>,
+
+    /// Defines the severity of the diagnostic. Defaults to `Severity::Error`.
+    pub severity: Severity,
+
+    /// Defines a list of help messages which can help or guide the user about
+    /// the diagnostic.
+    pub help: Vec<Help>,
+
+    /// Defines a list of labels which can provide additional context about the
+    /// diagnostic.
+    pub labels: Option<Vec<Label>>,
+
+    /// Defines the underlying cause for the diagnostic to be raised.
+    pub causes: Vec<Box<dyn Diagnostic + Send + Sync>>,
+
+    /// Defines the diagnostics which are related to the current one, if any.
+    pub related: Vec<Box<dyn Diagnostic + Send + Sync>>,
+}
+
+impl SimpleDiagnostic {
+    /// Creates a new [`SimpleDiagnostic`] with the given message content.
+    ///
+    /// # Examples
+    /// ```
+    /// use lume_errors::SimpleDiagnostic;
+    ///
+    /// let diag = SimpleDiagnostic::new("Whoops, that wasn't supposed to happen!");
+    /// assert_eq!(diag.to_string(), "Whoops, that wasn't supposed to happen!");
+    /// assert_eq!(diag.message, "Whoops, that wasn't supposed to happen!");
+    /// ```
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+            ..Self::default()
+        }
+    }
+
+    /// Sets the severity for the current diagnostic instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use lume_errors::{Severity, SimpleDiagnostic};
+    ///
+    /// let diag = SimpleDiagnostic::new("Hmm, this could certainly be done better.")
+    ///     .with_severity(Severity::Warning);
+    ///
+    /// assert_eq!(diag.message, "Hmm, this could certainly be done better.");
+    /// assert_eq!(diag.severity, Severity::Warning);
+    /// ```
+    pub fn with_severity(mut self, severity: impl Into<Severity>) -> Self {
+        self.severity = severity.into();
+        self
+    }
+
+    /// Sets the diagnostic code for the current instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use lume_errors::SimpleDiagnostic;
+    ///
+    /// let diag = SimpleDiagnostic::new("Whoops, that wasn't supposed to happen!")
+    ///     .with_code("E1010");
+    ///
+    /// assert_eq!(diag.message, "Whoops, that wasn't supposed to happen!");
+    /// assert_eq!(diag.code, Some(String::from("E1010")));
+    /// ```
+    pub fn with_code(mut self, code: impl Into<String>) -> Self {
+        self.code = Some(code.into());
+        self
+    }
+
+    /// Adds a new help message to the current instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use lume_errors::{Help, SimpleDiagnostic};
+    ///
+    /// let diag = SimpleDiagnostic::new("Whoops, that wasn't supposed to happen!")
+    ///     .with_help("have you tried restarting?");
+    ///
+    /// assert_eq!(diag.message, "Whoops, that wasn't supposed to happen!");
+    /// assert_eq!(diag.help, vec![Help::new("have you tried restarting?")]);
+    /// ```
+    pub fn with_help(mut self, help: impl Into<Help>) -> Self {
+        self.help.push(help.into());
+        self
+    }
+
+    /// Sets the help message of the current instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use lume_errors::{Help, SimpleDiagnostic};
+    ///
+    /// let diag = SimpleDiagnostic::new("Whoops, that wasn't supposed to happen!")
+    ///     .set_help("have you tried restarting?");
+    ///
+    /// assert_eq!(diag.message, "Whoops, that wasn't supposed to happen!");
+    /// assert_eq!(diag.help, vec![Help::new("have you tried restarting?")]);
+    /// ```
+    pub fn set_help(mut self, help: impl Into<Help>) -> Self {
+        self.help = vec![help.into()];
+        self
+    }
+
+    /// Adds a new label to the current instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{SimpleDiagnostic, Label, NamedSource};
+    ///
+    /// let source = Arc::new(NamedSource::new(
+    ///     "src/lib.rs",
+    ///     r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return false;
+    /// }"#,
+    /// ));
+    ///
+    /// let label1 = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
+    /// let label2 = Label::new(Some(source.clone()), 81..86, "expected 'int', found 'boolean'");
+    ///
+    /// let diag = SimpleDiagnostic::new("Whoops, that wasn't supposed to happen!")
+    ///     .with_label(label1.clone())
+    ///     .with_label(label2.clone());
+    ///
+    /// assert_eq!(diag.message, "Whoops, that wasn't supposed to happen!");
+    /// assert_eq!(diag.labels, Some(vec![label1, label2]));
+    /// ```
+    pub fn with_label(mut self, label: impl Into<Label>) -> Self {
+        let mut labels = self.labels.unwrap_or_default();
+        labels.push(label.into());
+
+        self.labels = Some(labels);
+        self
+    }
+
+    /// Adds a list of labels to the current instance. The given
+    /// labels are appended onto the existing label array in the
+    /// diagnostic, so nothing is overwritten.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{SimpleDiagnostic, Label, NamedSource};
+    ///
+    /// let source = Arc::new(NamedSource::new(
+    ///     "src/lib.rs",
+    ///     r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return false;
+    /// }"#,
+    /// ));
+    ///
+    /// let label1 = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
+    /// let label2 = Label::new(Some(source.clone()), 81..86, "expected 'int', found 'boolean'");
+    ///
+    /// let diag = SimpleDiagnostic::new("Whoops, that wasn't supposed to happen!")
+    ///     .with_labels([label1.clone(), label2.clone()]);
+    ///
+    /// assert_eq!(diag.message, "Whoops, that wasn't supposed to happen!");
+    /// assert_eq!(diag.labels, Some(vec![label1, label2]));
+    /// ```
+    pub fn with_labels(mut self, labels: impl IntoIterator<Item = impl Into<Label>>) -> Self {
+        let labels = labels
+            .into_iter()
+            .map(|r| Into::<Label>::into(r))
+            .collect::<Vec<Label>>();
+
+        let mut all_labels = self.labels.unwrap_or_default();
+        all_labels.extend(labels);
+
+        self.labels = Some(all_labels);
+        self
+    }
+
+    /// Adds a related diagnostic to the current instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use lume_errors::SimpleDiagnostic;
+    ///
+    /// let related1 = std::io::Error::new(std::io::ErrorKind::Other, "failed to read file");
+    /// let related2 = std::io::Error::new(std::io::ErrorKind::Other, "file is unaccessible");
+    ///
+    /// let diag = SimpleDiagnostic::new("failed to perform I/O operation")
+    ///     .add_related(related1)
+    ///     .add_related(related2);
+    ///
+    /// assert_eq!(diag.message, "failed to perform I/O operation");
+    /// assert_eq!(diag.related.iter().map(|e| e.to_string()).collect::<Vec<_>>(), vec![
+    ///     "failed to read file".to_string(),
+    ///     "file is unaccessible".to_string()
+    /// ]);
+    /// ```
+    pub fn add_related(mut self, related: impl Into<Box<dyn Diagnostic + Send + Sync>>) -> Self {
+        self.related.push(related.into());
+        self
+    }
+
+    /// Adds multiple related diagnostics to the current instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use lume_errors::SimpleDiagnostic;
+    ///
+    /// let related1 = std::io::Error::new(std::io::ErrorKind::Other, "failed to read file");
+    /// let related2 = std::io::Error::new(std::io::ErrorKind::Other, "file is unaccessible");
+    ///
+    /// let diag = SimpleDiagnostic::new("failed to perform I/O operation")
+    ///     .append_related([related1, related2]);
+    ///
+    /// assert_eq!(diag.message, "failed to perform I/O operation");
+    /// assert_eq!(diag.related.iter().map(|e| e.to_string()).collect::<Vec<_>>(), vec![
+    ///     "failed to read file".to_string(),
+    ///     "file is unaccessible".to_string()
+    /// ]);
+    /// ```
+    pub fn append_related(
+        mut self,
+        related: impl IntoIterator<Item = impl Into<Box<dyn Diagnostic + Send + Sync>>>,
+    ) -> Self {
+        let related = related
+            .into_iter()
+            .map(|r| Into::<Box<dyn Diagnostic + Send + Sync>>::into(r))
+            .collect::<Vec<Box<dyn Diagnostic + Send + Sync>>>();
+
+        self.related.extend(related);
+        self
+    }
+
+    /// Adds a causing error diagnostic to the current instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use lume_errors::SimpleDiagnostic;
+    ///
+    /// let cause1 = std::io::Error::new(std::io::ErrorKind::Other, "failed to read file");
+    /// let cause2 = std::io::Error::new(std::io::ErrorKind::Other, "file is unaccessible");
+    ///
+    /// let diag = SimpleDiagnostic::new("failed to perform I/O operation")
+    ///     .add_cause(cause1)
+    ///     .add_cause(cause2);
+    ///
+    /// assert_eq!(diag.message, "failed to perform I/O operation");
+    /// assert_eq!(diag.causes.iter().map(|e| e.to_string()).collect::<Vec<_>>(), vec![
+    ///     "failed to read file".to_string(),
+    ///     "file is unaccessible".to_string()
+    /// ]);
+    /// ```
+    pub fn add_cause(mut self, cause: impl Into<Box<dyn Diagnostic + Send + Sync>>) -> Self {
+        self.causes.push(cause.into());
+        self
+    }
+
+    /// Adds multiple causing error diagnostics to the current instance.
+    ///
+    /// # Examples
+    /// ```
+    /// use lume_errors::SimpleDiagnostic;
+    ///
+    /// let cause1 = std::io::Error::new(std::io::ErrorKind::Other, "failed to read file");
+    /// let cause2 = std::io::Error::new(std::io::ErrorKind::Other, "file is unaccessible");
+    ///
+    /// let diag = SimpleDiagnostic::new("failed to perform I/O operation")
+    ///     .add_causes([cause1, cause2]);
+    ///
+    /// assert_eq!(diag.message, "failed to perform I/O operation");
+    /// assert_eq!(diag.causes.iter().map(|e| e.to_string()).collect::<Vec<_>>(), vec![
+    ///     "failed to read file".to_string(),
+    ///     "file is unaccessible".to_string()
+    /// ]);
+    /// ```
+    pub fn add_causes(
+        mut self,
+        causes: impl IntoIterator<Item = impl Into<Box<dyn Diagnostic + Send + Sync>>>,
+    ) -> Self {
+        let causes = causes
+            .into_iter()
+            .map(|r| Into::<Box<dyn Diagnostic + Send + Sync>>::into(r))
+            .collect::<Vec<Box<dyn Diagnostic + Send + Sync>>>();
+
+        self.causes.extend(causes);
+        self
+    }
+}
+
+impl Diagnostic for SimpleDiagnostic {
+    fn message(&self) -> String {
+        self.message.clone()
+    }
+
+    fn severity(&self) -> Severity {
+        self.severity
+    }
+
+    fn code(&self) -> Option<Box<dyn Display + '_>> {
+        self.code.as_ref().map(|c| Box::new(c) as Box<dyn Display>)
+    }
+
+    fn help(&self) -> Option<Box<dyn Iterator<Item = Help> + '_>> {
+        Some(Box::new(self.help.clone().into_iter()))
+    }
+
+    fn labels(&self) -> Option<Box<dyn Iterator<Item = Label> + '_>> {
+        self.labels
+            .as_ref()
+            .map(|ls| ls.iter().cloned())
+            .map(Box::new)
+            .map(|b| b as Box<dyn Iterator<Item = Label>>)
+    }
+
+    fn related(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
+        Box::new(self.related.iter().map(|b| b.as_ref()))
+    }
+
+    fn causes(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
+        Box::new(self.causes.iter().map(|b| b.as_ref()))
+    }
+}
+
+impl std::fmt::Display for SimpleDiagnostic {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+#[derive(Debug)]
+pub struct SourceWrapped {
+    pub(crate) diagnostic: Box<dyn Diagnostic + Send + Sync>,
+    pub(crate) source: Arc<dyn Source + Send + Sync>,
+}
+
+impl Diagnostic for SourceWrapped {
+    fn message(&self) -> String {
+        self.diagnostic.message()
+    }
+
+    fn severity(&self) -> Severity {
+        self.diagnostic.severity()
+    }
+
+    fn code(&self) -> Option<Box<dyn Display + '_>> {
+        self.diagnostic.code()
+    }
+
+    fn help(&self) -> Option<Box<dyn Iterator<Item = Help> + '_>> {
+        self.diagnostic.help()
+    }
+
+    fn labels(&self) -> Option<Box<dyn Iterator<Item = Label> + '_>> {
+        self.diagnostic.labels()
+    }
+
+    fn related(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
+        self.diagnostic.related()
+    }
+
+    fn causes(&self) -> Box<dyn Iterator<Item = &(dyn Diagnostic + Send + Sync)> + '_> {
+        self.diagnostic.causes()
+    }
+
+    fn source_code(&self) -> Option<Arc<dyn Source>> {
+        self.diagnostic.source_code().or_else(|| Some(self.source.clone()))
+    }
+}
+
+impl std::fmt::Display for SourceWrapped {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.message())
+    }
+}
+
+pub trait WithSource {
+    /// Provides the current diagnostic with source code, so it
+    /// can still be reported, even though no source is available at
+    /// the time of diagnostic creation.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::sync::Arc;
+    /// use lume_errors::{Diagnostic, SimpleDiagnostic, Label, NamedSource, Source, WithSource};
+    ///
+    /// // no source attached
+    /// let label = Label::new(None, 60..65, "could not find method 'invok'");
+    ///
+    /// let diag = SimpleDiagnostic::new("Whoops, that wasn't supposed to happen!")
+    ///     .with_label(label.clone());
+    ///
+    /// let source = Arc::new(NamedSource::new(
+    ///     "src/lib.rs",
+    ///     r#"fn main() -> int {
+    ///     let a = new Testing();
+    ///     let b = a.invok();
+    ///
+    ///     return false;
+    /// }"#,
+    /// ));
+    ///
+    /// // attach the source code to the diagnostic
+    /// let diag = diag.with_source(source.clone());
+    ///
+    /// assert_eq!(diag.message(), "Whoops, that wasn't supposed to happen!");
+    /// assert_eq!(diag.source_code().unwrap().name(), source.name());
+    /// assert_eq!(diag.source_code().unwrap().content(), source.content());
+    /// ```
+    fn with_source(self, source: Arc<dyn Source>) -> impl Diagnostic;
+}
+
+impl<T: Diagnostic + Send + Sync + 'static> WithSource for T {
+    fn with_source(self, source: Arc<dyn Source>) -> impl Diagnostic {
+        SourceWrapped {
+            diagnostic: Box::new(self),
+            source,
+        }
     }
 }

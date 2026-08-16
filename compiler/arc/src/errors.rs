@@ -2,8 +2,8 @@ use std::fmt::Debug;
 use std::ops::Range;
 use std::sync::Arc;
 
-use error_snippet::Error;
-use error_snippet_derive::Diagnostic;
+use lume_errors::Error;
+use lume_errors_derive::Diagnostic;
 use lume_span::SourceFile;
 
 #[derive(Diagnostic, Debug)]

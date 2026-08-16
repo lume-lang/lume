@@ -1,4 +1,6 @@
-pub use {error_snippet, insta, owo_colors};
+pub use insta;
+pub use lume_errors;
+pub use owo_colors;
 
 /// Asserts that the given [`lume_errors::DiagCtx`] renders the same output as
 /// has been saved and snapshot in a previous iteration.
@@ -9,7 +11,7 @@ pub use {error_snippet, insta, owo_colors};
 #[macro_export]
 macro_rules! assert_dcx_snapshot {
     ($dcx:expr) => {
-        let mut renderer = $crate::error_snippet::GraphicalRenderer::new();
+        let mut renderer = $crate::lume_errors::GraphicalRenderer::new();
         renderer.use_colors = false;
 
         $crate::owo_colors::set_override(false);
@@ -20,7 +22,7 @@ macro_rules! assert_dcx_snapshot {
         });
     };
     ($input:expr, $dcx:expr) => {
-        let mut renderer = $crate::error_snippet::GraphicalRenderer::new();
+        let mut renderer = $crate::lume_errors::GraphicalRenderer::new();
         renderer.use_colors = false;
 
         $crate::owo_colors::set_override(false);

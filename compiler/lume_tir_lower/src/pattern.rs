@@ -1,4 +1,4 @@
-use error_snippet::Result;
+use lume_errors::Result;
 use lume_span::NodeId;
 
 use crate::LowerFunction;

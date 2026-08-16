@@ -11,7 +11,7 @@ fn main() {
         Err(err) => {
             dcx.emit(err);
 
-            let mut renderer = error_snippet::GraphicalRenderer::new();
+            let mut renderer = lume_errors::GraphicalRenderer::new();
             renderer.use_colors = true;
             renderer.highlight_source = true;
 

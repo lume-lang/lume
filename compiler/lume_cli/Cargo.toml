@@ -14,6 +14,7 @@ lume_cli_tools = { workspace = true }
 lume_driver = { workspace = true, features = ["codegen"] }
 lume_fmt = { workspace = true }
 lume_errors = { workspace = true }
+lume_errors_derive = { workspace = true }
 lume_lsp = { workspace = true, optional = true }
 lume_session = { workspace = true }
 lume_span = { workspace = true }
@@ -21,8 +22,6 @@ lume_tracing = { workspace = true }
 
 askama = { version = "0.15.6" }
 clap = { workspace = true }
-error_snippet = { workspace = true }
-error_snippet_derive = { workspace = true }
 glob = { version = "^0" }
 toml = { version = "0.9.6" }
 tracing = { workspace = true }

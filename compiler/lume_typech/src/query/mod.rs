@@ -1,7 +1,7 @@
 pub(crate) mod diagnostics;
 
-use error_snippet::Result;
 use lume_architect::cached_query;
+use lume_errors::Result;
 use lume_hir::{Node, Visibility};
 pub use lume_infer::query::Callable;
 use lume_span::NodeId;

@@ -10,7 +10,6 @@ lume_errors = { workspace = true }
 lume_macros = { workspace = true }
 lume_span = { workspace = true }
 
-error_snippet = { workspace = true }
 indexmap = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 

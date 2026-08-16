@@ -37,6 +37,7 @@ lume_codegen = { path = "compiler/lume_codegen" }
 lume_demangle = { path = "crates/lume_demangle" }
 lume_driver = { path = "compiler/lume_driver", default-features = false }
 lume_errors = { path = "crates/lume_errors" }
+lume_errors_derive = { path = "crates/lume_errors_derive" }
 lume_errors_test = { path = "crates/lume_errors_test" }
 lume_hash = { path = "crates/lume_hash" }
 lume_hir = { path = "compiler/lume_hir" }
@@ -85,8 +86,6 @@ lume_tagged = { path = "rt/lume_tagged" }
 
 # 3rd-party packages
 clap = { version = "=4.5.39", features = ["derive"] }
-error_snippet = { version = "=0.2.0" }
-error_snippet_derive = { version = "=0.1.10" }
 indexmap = { version = "=2.11.3" }
 lume_architect = { git = "https://github.com/lume-lang/architect" }
 owo-colors = { version = "=4.2.2" }

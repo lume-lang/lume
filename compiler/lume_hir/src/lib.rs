@@ -1224,19 +1224,15 @@ impl Expression {
     }
 
     /// Creates a new [`Expression`] with a [`IntKind::U64`] value.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if `value` is too large to fit in a signed [`i64`] value.
-    pub fn lit_u64(id: NodeId, value: u64) -> error_snippet::Result<Self> {
-        Ok(Self::lit(
+    pub fn lit_u64(id: NodeId, value: u64) -> Self {
+        Self::lit(
             id,
             LiteralKind::Int(IntLiteral {
                 id,
                 value: i128::from(value),
                 kind: Some(IntKind::U64),
             }),
-        ))
+        )
     }
 
     /// Creates a new [`Expression`] with a [`InstanceCall`] value.

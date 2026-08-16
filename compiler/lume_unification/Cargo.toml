@@ -9,6 +9,7 @@ doctest = false
 
 [dependencies]
 lume_errors = { workspace = true }
+lume_errors_derive = { workspace = true }
 lume_hash = { workspace = true }
 lume_hir = { workspace = true }
 lume_infer = { workspace = true }
@@ -17,8 +18,6 @@ lume_session = { workspace = true }
 lume_span = { workspace = true }
 
 derive_more = { version = "*", features = ["debug", "eq"] }
-error_snippet = { workspace = true }
-error_snippet_derive = { workspace = true }
 indexmap = { workspace = true }
 lume_architect = { workspace = true }
 smallvec = { version = "^1.15" }
