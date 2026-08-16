@@ -422,10 +422,10 @@ impl GraphicalRenderer {
         severity: Severity,
     ) -> std::fmt::Result {
         let source_content = context.source.content();
-        let gutter_size = self.gutter_size_of(&source_content);
+        let gutter_size = self.gutter_size_of(source_content);
 
         let joined_span = context.max_span();
-        let span = coords_of_span(&source_content, joined_span.clone());
+        let span = coords_of_span(source_content, joined_span.clone());
 
         let style = self.severity_style(severity);
         let arrows = &self.theme.arrows;
@@ -440,7 +440,7 @@ impl GraphicalRenderer {
         //  34 │
         //  35 │        return true;
         //     │        ^^^^^^^^^^^^ expected `Array<T>`, found `Boolean`
-        let content = extract_with_context(&source_content, joined_span.0, self.context_lines);
+        let content = extract_with_context(source_content, joined_span.0, self.context_lines);
 
         let lines = content.lines().collect::<Vec<_>>();
         let line_count = lines.len();
@@ -450,7 +450,7 @@ impl GraphicalRenderer {
         let labels = context
             .children
             .iter()
-            .map(|(_, l)| (l, coords_of_span(&source_content, l.range.0.clone())))
+            .map(|(_, l)| (l, coords_of_span(source_content, l.range.0.clone())))
             .collect::<Vec<_>>();
 
         for (idx, line) in lines.into_iter().enumerate() {
@@ -689,13 +689,13 @@ impl GraphicalRenderer {
         let source = group.source;
         let source_name = source.name();
         let source_content = source.content();
-        let gutter_size = self.gutter_size_of(&source_content);
+        let gutter_size = self.gutter_size_of(source_content);
 
         // Render header for the label group.
         //
         //    ╭─[std/array.lm:35:8]
         //
-        let Span { start, .. } = coords_of_span(&source_content, first_label.range().clone());
+        let Span { start, .. } = coords_of_span(source_content, first_label.range().clone());
         self.render_snippet_header(f, source_name, gutter_size, start.line, start.column)?;
 
         // Render all the labels in in the group, along with joiners in the vertical
@@ -957,7 +957,7 @@ impl GraphicalRenderer {
             let source_name = source.name().map(|n| n.to_string());
             let source_content = source.content();
 
-            padding = padding.max(self.gutter_size_of(&source_content));
+            padding = padding.max(self.gutter_size_of(source_content));
 
             if let Some(group) = suggestion_groups.get_mut(&source_name) {
                 group.push(suggestion.clone());
@@ -1008,7 +1008,7 @@ impl GraphicalRenderer {
                 Suggestion::Deletion { range } | Suggestion::Replacement { range, .. } => range.span.0.start,
             };
 
-            let Coord { line, .. } = coords_of_idx(&source_content, start_idx);
+            let Coord { line, .. } = coords_of_idx(source_content, start_idx);
 
             if let Some(group) = suggested_lines.get_mut(&line) {
                 group.push(suggestion.clone());
@@ -1061,8 +1061,8 @@ impl GraphicalRenderer {
 
         let source = first_suggestion.source();
         let source_content = source.content();
-        let source_line = extract_with_context(&source_content, first_suggestion.span(), 0);
-        let padding = self.gutter_size_of(&source_content);
+        let source_line = extract_with_context(source_content, first_suggestion.span(), 0);
+        let padding = self.gutter_size_of(source_content);
 
         // Render the suggestion itself.
         //
@@ -1072,7 +1072,7 @@ impl GraphicalRenderer {
         let mut styled_line = Box::new(source_line) as Box<dyn std::fmt::Display>;
 
         for suggestion in &suggestions {
-            let span = coords_of_span(&source_content, suggestion.span());
+            let span = coords_of_span(source_content, suggestion.span());
 
             styled_line = self.style_suggestion_line(suggestion, styled_line, span);
         }
@@ -1093,7 +1093,7 @@ impl GraphicalRenderer {
         let mut offset = 0;
         for suggestion in &suggestions {
             let span = suggestion.span();
-            let Span { start, end } = coords_of_span(&source_content, span);
+            let Span { start, end } = coords_of_span(source_content, span);
 
             // Write the padding between the arrows.
             let spacing = start.column.saturating_sub(offset);
@@ -1209,7 +1209,7 @@ fn group_overlapping_labels(
         };
 
         // If the parent label only spans a single line, it cannot contain any children.
-        if !coords_of_span(parent_source.content().as_ref(), parent_span.clone()).is_multiline() {
+        if !coords_of_span(parent_source.content(), parent_span.clone()).is_multiline() {
             contexts.push(context);
 
             continue;

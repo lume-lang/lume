@@ -66,11 +66,10 @@ pub fn lower_to_hir(package: &Package, dcx: DiagCtxHandle) -> Result<Map> {
         for error in syntax_tree.errors() {
             ctx.dcx.emit_and_push(
                 lume_errors::SimpleDiagnostic::new(error.message())
-                    .with_label(lume_errors::Label::error(
-                        Some(source_file.clone()),
-                        error.span().0..error.span().1,
-                        "error occurred here",
-                    ))
+                    .with_label(
+                        lume_errors::Label::error(error.span().0..error.span().1, "error occurred here")
+                            .with_source(Some(source_file.clone())),
+                    )
                     .into(),
             );
         }

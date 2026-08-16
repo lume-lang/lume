@@ -93,7 +93,7 @@ fn read_config_file(config_path: Option<PathBuf>) -> Result<Config> {
     };
 
     toml::from_str::<Config>(&content).map_err(|err| {
-        let source_label = Label::error(None, err.span().unwrap_or_default(), err.message());
+        let source_label = Label::error(err.span().unwrap_or_default(), err.message());
 
         SimpleDiagnostic::new("failed to parse config")
             .with_label(source_label)

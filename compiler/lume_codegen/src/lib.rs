@@ -286,11 +286,9 @@ impl CraneliftBackend {
                     let disassembly = ctx.func.display().to_string();
                     let disassembly_len = disassembly.len();
 
-                    let disassembly_label = lume_errors::Label::note(
-                        Some(Arc::new(disassembly)),
-                        0..disassembly_len,
-                        "disassembly of Cranelift function",
-                    );
+                    let disassembly_label =
+                        lume_errors::Label::note(0..disassembly_len, "disassembly of Cranelift function")
+                            .with_source(Some(Arc::new(disassembly)));
 
                     SimpleDiagnostic::new(err.to_string()).with_label(disassembly_label)
                 } else {

@@ -4,8 +4,8 @@ use crate::Result;
 
 /// Defines a source file, which can be used to provide context for diagnostics.
 ///
-/// This trait represents some sort of source code, which will be reported to the user as
-/// part of the reporting process.
+/// This trait represents some sort of source code, which will be reported to
+/// the user as part of the reporting process.
 pub trait Source: Send + Sync + std::fmt::Debug {
     /// Defines the name of the source file.
     fn name(&self) -> Option<&str> {
@@ -13,47 +13,47 @@ pub trait Source: Send + Sync + std::fmt::Debug {
     }
 
     /// Gets the full content of the source file.
-    fn content(&self) -> Box<&str>;
+    fn content(&self) -> &str;
 }
 
 impl Source for [u8] {
-    fn content(&self) -> Box<&str> {
-        Box::new(std::str::from_utf8(self).unwrap())
+    fn content(&self) -> &str {
+        std::str::from_utf8(self).unwrap()
     }
 }
 
 impl Source for &[u8] {
-    fn content(&self) -> Box<&str> {
+    fn content(&self) -> &str {
         <[u8] as Source>::content(self)
     }
 }
 
 impl Source for Vec<u8> {
-    fn content(&self) -> Box<&str> {
+    fn content(&self) -> &str {
         <[u8] as Source>::content(self)
     }
 }
 
 impl Source for str {
-    fn content(&self) -> Box<&str> {
+    fn content(&self) -> &str {
         <[u8] as Source>::content(self.as_bytes())
     }
 }
 
 impl Source for &str {
-    fn content(&self) -> Box<&str> {
+    fn content(&self) -> &str {
         <str as Source>::content(self)
     }
 }
 
 impl Source for String {
-    fn content(&self) -> Box<&str> {
+    fn content(&self) -> &str {
         <str as Source>::content(self)
     }
 }
 
 impl Source for &String {
-    fn content(&self) -> Box<&str> {
+    fn content(&self) -> &str {
         <String as Source>::content(self)
     }
 }
@@ -77,8 +77,8 @@ impl Source for StringSource {
         None
     }
 
-    fn content(&self) -> Box<&str> {
-        Box::new(self.content.as_str())
+    fn content(&self) -> &str {
+        self.content.as_str()
     }
 }
 
@@ -118,7 +118,7 @@ impl Source for NamedSource {
         Some(self.name.as_str())
     }
 
-    fn content(&self) -> Box<&str> {
-        Box::new(self.content.as_str())
+    fn content(&self) -> &str {
+        self.content.as_str()
     }
 }

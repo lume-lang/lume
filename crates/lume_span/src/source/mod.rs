@@ -154,8 +154,8 @@ impl lume_errors::Source for SourceFile {
         }
     }
 
-    fn content(&self) -> Box<&str> {
-        Box::new(&self.content)
+    fn content(&self) -> &str {
+        &self.content
     }
 }
 

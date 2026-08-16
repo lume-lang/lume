@@ -16,6 +16,13 @@ pub type Error = Box<dyn Diagnostic + Send + Sync>;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[macro_export]
+macro_rules! diagnostic {
+    ($($arg:tt)*) => {
+        $crate::SimpleDiagnostic::new(format!($($arg)*))
+    };
+}
+
 /// Diagnostic severity level.
 ///
 /// Intended to be used by the reporter to change how the diagnostic is
@@ -229,14 +236,15 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
+    /// let label = Label::new(60..65, "could not find method 'invok'")
+    ///     .with_source(Some(source.clone()));
     ///
     /// assert_eq!(label.message(), "could not find method 'invok'");
     /// assert_eq!(label.severity(), None);
     /// ```
-    pub fn new(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, message: impl Into<String>) -> Self {
+    pub fn new(range: impl Into<SpanRange>, message: impl Into<String>) -> Self {
         Self {
-            source,
+            source: None,
             range: range.into(),
             message: message.into(),
             severity: None,
@@ -258,14 +266,15 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::error(Some(source.clone()), 60..65, "could not find method 'invok'");
+    /// let label = Label::error(60..65, "could not find method 'invok'")
+    ///     .with_source(Some(source.clone()));
     ///
     /// assert_eq!(label.message(), "could not find method 'invok'");
     /// assert_eq!(label.severity(), Some(Severity::Error));
     /// ```
-    pub fn error(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
+    pub fn error(range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
         Self {
-            source,
+            source: None,
             range: range.into(),
             message: label.into(),
             severity: Some(Severity::Error),
@@ -287,14 +296,15 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::warning(Some(source.clone()), 60..65, "could not find method 'invok'");
+    /// let label = Label::warning(60..65, "could not find method 'invok'")
+    ///     .with_source(Some(source.clone()));
     ///
     /// assert_eq!(label.message(), "could not find method 'invok'");
     /// assert_eq!(label.severity(), Some(Severity::Warning));
     /// ```
-    pub fn warning(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
+    pub fn warning(range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
         Self {
-            source,
+            source: None,
             range: range.into(),
             message: label.into(),
             severity: Some(Severity::Warning),
@@ -316,14 +326,15 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::info(Some(source.clone()), 60..65, "could not find method 'invok'");
+    /// let label = Label::info(60..65, "could not find method 'invok'")
+    ///     .with_source(Some(source.clone()));
     ///
     /// assert_eq!(label.message(), "could not find method 'invok'");
     /// assert_eq!(label.severity(), Some(Severity::Info));
     /// ```
-    pub fn info(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
+    pub fn info(range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
         Self {
-            source,
+            source: None,
             range: range.into(),
             message: label.into(),
             severity: Some(Severity::Info),
@@ -345,14 +356,15 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::note(Some(source.clone()), 60..65, "could not find method 'invok'");
+    /// let label = Label::note(60..65, "could not find method 'invok'")
+    ///     .with_source(Some(source.clone()));
     ///
     /// assert_eq!(label.message(), "could not find method 'invok'");
     /// assert_eq!(label.severity(), Some(Severity::Note));
     /// ```
-    pub fn note(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
+    pub fn note(range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
         Self {
-            source,
+            source: None,
             range: range.into(),
             message: label.into(),
             severity: Some(Severity::Note),
@@ -374,18 +386,26 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::help(Some(source.clone()), 60..65, "could not find method 'invok'");
+    /// let label = Label::help(60..65, "could not find method 'invok'")
+    ///     .with_source(Some(source.clone()));
     ///
     /// assert_eq!(label.message(), "could not find method 'invok'");
     /// assert_eq!(label.severity(), Some(Severity::Help));
     /// ```
-    pub fn help(source: Option<Arc<dyn Source>>, range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
+    pub fn help(range: impl Into<SpanRange>, label: impl Into<String>) -> Self {
         Self {
-            source,
+            source: None,
             range: range.into(),
             message: label.into(),
             severity: Some(Severity::Help),
         }
+    }
+
+    /// Sets the source file on an existing label instance, `self`, and returns
+    /// it.
+    pub fn with_source(mut self, source: Option<Arc<dyn Source>>) -> Self {
+        self.source = source;
+        self
     }
 
     /// Gets the message of the current label instance.
@@ -402,7 +422,8 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
+    /// let label = Label::new(60..65, "could not find method 'invok'")
+    ///     .with_source(Some(source.clone()));
     ///
     /// assert_eq!(label.message(), "could not find method 'invok'");
     /// ```
@@ -424,7 +445,8 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
+    /// let label = Label::new(60..65, "could not find method 'invok'")
+    ///     .with_source(Some(source.clone()));
     ///
     /// assert_eq!(label.range(), &SpanRange(60..65));
     /// ```
@@ -446,7 +468,8 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
+    /// let label = Label::new(60..65, "could not find method 'invok'")
+    ///     .with_source(Some(source.clone()));
     ///
     /// assert_eq!(label.source().unwrap().name(), source.name());
     /// assert_eq!(label.source().unwrap().content(), source.content());
@@ -469,7 +492,8 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'")
+    /// let label = Label::new(60..65, "could not find method 'invok'")
+    ///     .with_source(Some(source.clone()))
     ///     .with_severity(Severity::Warning);
     ///
     /// assert_eq!(label.severity(), Some(Severity::Warning));
@@ -492,7 +516,8 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'")
+    /// let label = Label::new(60..65, "could not find method 'invok'")
+    ///     .with_source(Some(source.clone()))
     ///     .with_severity(Severity::Warning);
     ///
     /// assert_eq!(label.message(), "could not find method 'invok'");
@@ -518,7 +543,8 @@ impl Label {
     ///     return 0;
     /// }"#);
     ///
-    /// let label = Label::new(Some(source.clone()), 58..67, String::new());
+    /// let label = Label::new(58..67, String::new())
+    ///     .with_source(Some(source.clone()));
     /// let span = label.read_span(None, 0).unwrap();
     ///
     /// assert_eq!(span.data, "    let b = a.invok();");
@@ -1023,8 +1049,8 @@ impl SimpleDiagnostic {
     /// }"#,
     /// ));
     ///
-    /// let label1 = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
-    /// let label2 = Label::new(Some(source.clone()), 81..86, "expected 'int', found 'boolean'");
+    /// let label1 = Label::new(60..65, "could not find method 'invok'").with_source(Some(source.clone()));
+    /// let label2 = Label::new(81..86, "expected 'int', found 'boolean'").with_source(Some(source.clone()));
     ///
     /// let diag = SimpleDiagnostic::new("Whoops, that wasn't supposed to happen!")
     ///     .with_label(label1.clone())
@@ -1060,8 +1086,8 @@ impl SimpleDiagnostic {
     /// }"#,
     /// ));
     ///
-    /// let label1 = Label::new(Some(source.clone()), 60..65, "could not find method 'invok'");
-    /// let label2 = Label::new(Some(source.clone()), 81..86, "expected 'int', found 'boolean'");
+    /// let label1 = Label::new(60..65, "could not find method 'invok'").with_source(Some(source.clone()));
+    /// let label2 = Label::new(81..86, "expected 'int', found 'boolean'").with_source(Some(source.clone()));
     ///
     /// let diag = SimpleDiagnostic::new("Whoops, that wasn't supposed to happen!")
     ///     .with_labels([label1.clone(), label2.clone()]);
@@ -1290,7 +1316,7 @@ pub trait WithSource {
     /// use lume_errors::{Diagnostic, SimpleDiagnostic, Label, NamedSource, Source, WithSource};
     ///
     /// // no source attached
-    /// let label = Label::new(None, 60..65, "could not find method 'invok'");
+    /// let label = Label::new(60..65, "could not find method 'invok'");
     ///
     /// let diag = SimpleDiagnostic::new("Whoops, that wasn't supposed to happen!")
     ///     .with_label(label.clone());

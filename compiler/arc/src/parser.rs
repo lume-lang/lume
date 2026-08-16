@@ -107,7 +107,6 @@ impl PackageParser {
                 return Err(SimpleDiagnostic::new("could not locate standard library for package")
                     .with_help("are there an active Lume toolchain?")
                     .with_label(Label::note(
-                        None,
                         manifest.package.name.span(),
                         format!("error occured in `{}`", manifest.package.name),
                     ))
@@ -134,7 +133,7 @@ impl PackageParser {
                 manifest
             }
             Err(err) => {
-                let source_label = Label::error(None, err.span().unwrap_or_default(), err.message());
+                let source_label = Label::error(err.span().unwrap_or_default(), err.message());
 
                 return Err(SimpleDiagnostic::new("failed to parse Arcfile")
                     .with_label(source_label)

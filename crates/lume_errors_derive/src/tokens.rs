@@ -217,24 +217,20 @@ impl AttrDiagnostic {
                         if has_source {
                             quote! {
                                 ::lume_errors::Label::#method_name(
-                                    Some(
-                                        Into::<std::sync::Arc<dyn ::lume_errors::Source>>::into(
-                                            self.#ident.clone()
-                                        )
-                                    ),
                                     Into::<::lume_errors::SpanRange>::into(
                                         self.#ident.clone()
                                     ),
                                     #formatted_str
-                                )
+                                ).with_source(Some(
+                                    Into::<std::sync::Arc<dyn ::lume_errors::Source>>::into(
+                                        self.#ident.clone()
+                                    )
+                                ))
                             }
                         } else {
                             quote! {
-                                ::lume_errors::Label::#method_name(
-                                    ::lume_errors::Diagnostic::source_code(self),
-                                    self.#ident.clone(),
-                                    #formatted_str
-                                )
+                                ::lume_errors::Label::#method_name(self.#ident.clone(), #formatted_str)
+                                    .with_source(::lume_errors::Diagnostic::source_code(self))
                             }
                         }
                     },

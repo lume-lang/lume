@@ -41,19 +41,20 @@ impl ConstNodeVisitor<'_> {
 
         self.errors.push(
             SimpleDiagnostic::new("cannot call non-const callable in const context")
-                .with_label(lume_errors::Label::error(
-                    Some(expr_span.file.clone()),
-                    expr_span.index.clone(),
-                    format!(
-                        "cannot call non-const callable {:+} in a const context",
-                        callable.name()
-                    ),
-                ))
-                .with_label(lume_errors::Label::note(
-                    Some(callable_span.file.clone()),
-                    callable_span.index.clone(),
-                    "callable declared here",
-                ))
+                .with_label(
+                    lume_errors::Label::error(
+                        expr_span.index.clone(),
+                        format!(
+                            "cannot call non-const callable {:+} in a const context",
+                            callable.name()
+                        ),
+                    )
+                    .with_source(Some(expr_span.file.clone())),
+                )
+                .with_label(
+                    lume_errors::Label::note(callable_span.index.clone(), "callable declared here")
+                        .with_source(Some(callable_span.file.clone())),
+                )
                 .into(),
         );
     }
