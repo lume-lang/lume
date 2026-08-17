@@ -26,7 +26,7 @@ pub struct ArcfileIoError {
     help = "consider updating your Lume compiler to the newest version"
 )]
 pub struct ArcfileIncompatibleLumeVersion {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("Current Lume version {current} is lower than minimum required version {required}.")]

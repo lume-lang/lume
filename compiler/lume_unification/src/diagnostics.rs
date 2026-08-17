@@ -20,7 +20,7 @@ pub struct BoundUnsatisfied {
     #[label(source, "type {type_name} does not implement {constraint_name}...")]
     pub source: Location,
 
-    #[label(source, help, "...which is required by the type parameter {param_name}")]
+    #[label(source, "...which is required by the type parameter {param_name}", severity = Help)]
     pub constraint_loc: Location,
 
     pub param_name: String,
@@ -34,7 +34,7 @@ pub struct InfiniteType {
     #[label(source, "could not resolve type argument for {type_parameter_name}")]
     pub location: Location,
 
-    #[label(source, note, "type parameter defined here")]
+    #[label(source, "type parameter defined here", severity = Note)]
     pub type_parameter_span: Location,
 
     pub type_parameter_name: String,

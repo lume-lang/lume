@@ -15,7 +15,7 @@ pub struct MismatchedTypes {
     #[label(source, "expected type {expected}, but found type {found}...")]
     pub found_loc: Location,
 
-    #[label(source, note, "...because of type defined here")]
+    #[label(source, "...because of type defined here", severity = Note)]
     pub reason_loc: Location,
 
     pub expected: String,
@@ -48,7 +48,7 @@ pub struct MissingType {
     help = "you can use the {suggestion} type, which likely is what you meant."
 )]
 pub struct UnavailableScalarType {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("the type {found} does not exist in Lume.")]
@@ -90,7 +90,7 @@ pub struct InvalidTypeInNamespace {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "no such field was found", code = "LM4115")]
 pub struct MissingField {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("could not find field {field_name} on type {type_name}")]
@@ -115,7 +115,7 @@ pub(crate) struct TypeParameterConstraintUnsatisfied {
     #[label(source, "type {type_name} does not implement {constraint_name}...")]
     pub source: Location,
 
-    #[label(source, help, "...which is required by the type parameter {param_name}")]
+    #[label(source, "...which is required by the type parameter {param_name}", severity = Help)]
     pub constraint_loc: Location,
 
     pub param_name: String,

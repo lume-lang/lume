@@ -140,7 +140,7 @@ pub fn find_test_root() -> Result<PathBuf> {
 
     if !test_root.is_dir() {
         return Err(SimpleDiagnostic::new("could not find test root")
-            .add_cause(SimpleDiagnostic::new(format!(
+            .add_related(SimpleDiagnostic::new(format!(
                 "could not find directory {}",
                 test_root.display()
             )))

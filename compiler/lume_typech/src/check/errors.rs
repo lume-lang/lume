@@ -12,7 +12,7 @@ pub struct MismatchedTypes {
     #[label(source, "expected type {expected}, but found type {found}...")]
     pub found_loc: Location,
 
-    #[label(source, note, "...because of type defined here")]
+    #[label(source, "...because of type defined here", severity = Note)]
     pub reason_loc: Location,
 
     pub expected: String,
@@ -94,10 +94,10 @@ pub(crate) struct NonMatchingAssignment {
     #[label(source, "cannot assign value of type {value_ty} to {target_ty}")]
     pub source: lume_span::Location,
 
-    #[label(source, note, "found type {target_ty} on right-hand side...")]
+    #[label(source, "found type {target_ty} on right-hand side...", severity = Note)]
     pub target_loc: lume_span::Location,
 
-    #[label(source, note, "...and found type {value_ty} on left-hand side")]
+    #[label(source, "...and found type {value_ty} on left-hand side", severity = Note)]
     pub value_loc: lume_span::Location,
 
     pub target_ty: String,
@@ -126,7 +126,7 @@ pub struct MismatchedTypesBranches {
     #[label(source, "expected type {expected}, but found type {found}...")]
     pub found_loc: Location,
 
-    #[label(source, note, "...because of type defined here")]
+    #[label(source, "...because of type defined here", severity = Note)]
     pub reason_loc: Location,
 
     pub expected: String,
@@ -186,7 +186,7 @@ pub struct InaccessibleType {
     #[label(source, "type {type_name:+} is inaccessible, because of it's visibility")]
     pub source: Location,
 
-    #[label(source, help, "type defined here")]
+    #[label(source, "type defined here", severity = Help)]
     pub type_def: Location,
 
     pub type_name: Path,
@@ -198,7 +198,7 @@ pub struct InaccessibleMethod {
     #[label(source, "method {method_name:+} is inaccessible, because of it's visibility")]
     pub source: Location,
 
-    #[label(source, help, "method defined here")]
+    #[label(source, "method defined here", severity = Help)]
     pub method_def: Location,
 
     pub method_name: Path,
@@ -210,7 +210,7 @@ pub struct InaccessibleFunction {
     #[label(source, "function {func_name:+} is inaccessible, because of it's visibility")]
     pub source: Location,
 
-    #[label(source, help, "function defined here")]
+    #[label(source, "function defined here", severity = Help)]
     pub func_def: Location,
 
     pub func_name: Path,
@@ -222,7 +222,7 @@ pub struct InaccessibleField {
     #[label(source, "field {field_name:+} is inaccessible, because of it's visibility")]
     pub source: Location,
 
-    #[label(source, help, "field defined here")]
+    #[label(source, "field defined here", severity = Help)]
     pub field_def: Location,
 
     pub field_name: String,
@@ -259,7 +259,7 @@ pub struct UnsafeFunctionCallOutsideUnsafe {
     #[label(source, "call to unsafe function {function_name} requires `unsafe` block")]
     pub source: Location,
 
-    #[label(source, help, "function defined here")]
+    #[label(source, "function defined here", severity = Help)]
     pub function_location: Location,
 
     pub function_name: String,
@@ -271,7 +271,7 @@ pub struct UnsafeMethodCallOutsideUnsafe {
     #[label(source, "call to unsafe method {method_name} requires `unsafe` block")]
     pub source: Location,
 
-    #[label(source, help, "method defined here")]
+    #[label(source, "method defined here", severity = Help)]
     pub method_location: Location,
 
     pub method_name: String,

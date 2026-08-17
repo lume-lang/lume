@@ -136,7 +136,7 @@ impl Diagnostics {
     ) -> Option<DiagnosticLabel> {
         let source = label.source().or_else(|| diagnostic.source_code())?;
 
-        let position = crate::position_from_range(source.content().as_ref(), &label.range().0);
+        let position = crate::position_from_range(source.content(), &label.range().0);
         let file_path = PathBuf::from(source.name()?);
 
         // Canonicalize the path to an absolute path, if not already.

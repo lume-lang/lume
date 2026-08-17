@@ -7,7 +7,7 @@ use lume_span::SourceFile;
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "unexpected character", code = "LM1020", help = "check your syntax")]
 pub struct UnexpectedCharacter {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("unexpected character {char}")]
@@ -23,7 +23,7 @@ pub struct UnexpectedCharacter {
     help = "did you forget to end your string?"
 )]
 pub struct MissingEndingQuote {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("string literal was started, but has no matching end-quote")]

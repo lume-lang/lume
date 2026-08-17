@@ -43,7 +43,7 @@ pub struct MissingFunction {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "did you mean to call {function_name}?", severity = Help)]
 pub struct SuggestedFunction {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("found function with similar name")]

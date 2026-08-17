@@ -69,7 +69,7 @@ pub fn run(binary_path: &Path) -> Result<i32> {
         Ok(process) => process,
         Err(err) => {
             return Err(SimpleDiagnostic::new("could not invoke benchmark binary")
-                .add_cause(err)
+                .add_related(err)
                 .into());
         }
     };
@@ -77,7 +77,9 @@ pub fn run(binary_path: &Path) -> Result<i32> {
     let output = match process.wait_with_output() {
         Ok(output) => output,
         Err(err) => {
-            return Err(SimpleDiagnostic::new("benchmark binary time-out").add_cause(err).into());
+            return Err(SimpleDiagnostic::new("benchmark binary time-out")
+                .add_related(err)
+                .into());
         }
     };
 

@@ -7,7 +7,7 @@ use lume_span::{Location, SourceFile};
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "invalid literal value", code = "LM1078")]
 pub struct InvalidLiteral {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("failed to parse literal value {value} as literal")]
@@ -19,7 +19,7 @@ pub struct InvalidLiteral {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "invalid namespace path", code = "LM3005")]
 pub struct InvalidNamespacePath {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("namespace path is not valid: {path:?}")]
@@ -35,7 +35,7 @@ pub struct InvalidNamespacePath {
     help = "since functions have no instance, remove the `{ty}` parameter"
 )]
 pub struct InvalidSelfParameter {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("`{ty}` is only available inside traits and implementations")]
@@ -51,7 +51,7 @@ pub struct InvalidSelfParameter {
     help = "consider moving the `{ty}` parameter to the beginning"
 )]
 pub struct SelfNotFirstParameter {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("instance methods must have `{ty}` as the first parameter")]
@@ -67,7 +67,7 @@ pub struct SelfNotFirstParameter {
     help = "consider moving the vararg parameter to the end"
 )]
 pub struct VarargNotLastParameter {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("vararg parameter must be the last parameter")]
@@ -81,7 +81,7 @@ pub struct VarargNotLastParameter {
     help = "remove the type in the parameter"
 )]
 pub struct SelfWithExplicitType {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("{ty} parameters cannot have a explicit type declared")]
@@ -93,7 +93,7 @@ pub struct SelfWithExplicitType {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "undeclared variable", code = "LM3024")]
 pub struct UndeclaredVariable {
-    #[span]
+    #[primary_span]
     pub source: Arc<SourceFile>,
 
     #[label("could not find a variable named {name} in the current scope")]
@@ -108,7 +108,7 @@ pub struct DuplicateDefinition {
     #[label(source, "item {name} is already defined within this file")]
     pub duplicate_range: Location,
 
-    #[label(source, note, "original definition found here")]
+    #[label(source, "original definition found here", severity = Note)]
     pub original_range: Location,
 
     pub name: String,
@@ -120,7 +120,7 @@ pub struct DuplicateTypeParameter {
     #[label(source, "type parameter {name} is already defined")]
     pub duplicate_range: Location,
 
-    #[label(source, note, "original type parameter found here")]
+    #[label(source, "original type parameter found here", severity = Note)]
     pub original_range: Location,
 
     pub name: String,
@@ -132,7 +132,7 @@ pub struct DuplicateParameter {
     #[label(source, "parameter {name} is already defined")]
     pub duplicate_range: Location,
 
-    #[label(source, note, "original parameter found here")]
+    #[label(source, "original parameter found here", severity = Note)]
     pub original_range: Location,
 
     pub name: String,
@@ -144,7 +144,7 @@ pub struct DuplicateMethod {
     #[label(source, "method {name} is already defined")]
     pub duplicate_range: Location,
 
-    #[label(source, note, "original method found here")]
+    #[label(source, "original method found here", severity = Note)]
     pub original_range: Location,
 
     pub name: String,
@@ -156,7 +156,7 @@ pub struct DuplicateField {
     #[label(source, "field {name} is already defined within this struct")]
     pub duplicate_range: Location,
 
-    #[label(source, note, "original field found here")]
+    #[label(source, "original field found here", severity = Note)]
     pub original_range: Location,
 
     pub name: String,
@@ -168,7 +168,7 @@ pub struct DuplicateVariant {
     #[label(source, "variant {name} is already defined in this enum")]
     pub duplicate_range: Location,
 
-    #[label(source, note, "original variant found here")]
+    #[label(source, "original variant found here", severity = Note)]
     pub original_range: Location,
 
     pub name: String,
