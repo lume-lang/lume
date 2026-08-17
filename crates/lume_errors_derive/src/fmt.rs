@@ -29,7 +29,7 @@ impl FormattedMessage {
 
             let ident = match next {
                 'a'..='z' | 'A'..='Z' | '_' => {
-                    let mut ident = Self::read_ident(&mut read);
+                    let mut ident = read_ident(&mut read);
                     ident.set_span(span);
                     ident
                 }
@@ -47,20 +47,20 @@ impl FormattedMessage {
             format!( #fmt_lit, #(#args),* )
         }
     }
+}
 
-    fn read_ident(read: &mut &str) -> Ident {
-        let mut ident = String::new();
+fn read_ident(read: &mut &str) -> Ident {
+    let mut ident = String::new();
 
-        for (i, ch) in read.char_indices() {
-            match ch {
-                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => ident.push(ch),
-                _ => {
-                    *read = &read[i..];
-                    break;
-                }
+    for (i, ch) in read.char_indices() {
+        match ch {
+            'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => ident.push(ch),
+            _ => {
+                *read = &read[i..];
+                break;
             }
         }
-
-        Ident::parse_any.parse_str(&ident).unwrap()
     }
+
+    Ident::parse_any.parse_str(&ident).unwrap()
 }

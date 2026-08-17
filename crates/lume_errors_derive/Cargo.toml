@@ -8,11 +8,13 @@ rust-version.workspace = true
 proc-macro = true
 
 [dependencies]
+darling = { version = "0.21.3" }
 proc-macro2 = "1.0.83"
 quote = "1.0.35"
 syn = "2.0.87"
 
 [dev-dependencies]
+lume_errors = { workspace = true }
 insta = { version = "1.42.2" }
 
 [lints]
