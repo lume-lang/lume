@@ -6,9 +6,9 @@ pub struct LanguageServerCommand {}
 
 impl LanguageServerCommand {
     #[expect(clippy::unused_self)]
-    pub(crate) fn run(&mut self, dcx: DiagCtxHandle) {
+    pub(crate) fn run(&mut self, dcx: DiagCtx) {
         if let Err(err) = lume_lsp::start_server() {
-            dcx.emit_and_push(err.into_diagnostic());
+            dcx.emit(err.into_diagnostic());
         }
     }
 }

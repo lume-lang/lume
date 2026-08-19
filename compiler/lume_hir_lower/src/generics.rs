@@ -43,7 +43,7 @@ impl LoweringContext<'_> {
             .filter_map(|&id| match self.map.expect_type_parameter(id) {
                 Ok(id) => Some(id),
                 Err(err) => {
-                    self.dcx.emit_and_push(err);
+                    self.dcx.emit(err);
                     None
                 }
             })

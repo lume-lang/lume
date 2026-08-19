@@ -13,11 +13,11 @@ where
     /// - an error occured while compiling the package,
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn check_package(root: &Path, config: Config<IO>, dcx: DiagCtxHandle) -> Result<()> {
+    pub fn check_package(root: &Path, config: Config<IO>, dcx: DiagCtx) -> Result<()> {
         let driver = Self::from_root(root, config, Callbacks::default(), dcx.clone())?;
 
         if let Err(err) = driver.check() {
-            dcx.emit_and_push(err);
+            dcx.emit(err);
         }
 
         Ok(())

@@ -56,13 +56,10 @@ impl TyCheckCtx {
             (lume_hir::CallExpression::Intrinsic(call), true) => call.kind.arguments(),
             (lume_hir::CallExpression::Static(call), _) => call.arguments.clone(),
             (lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_), false) => {
-                self.dcx().emit(
-                    diagnostics::InstanceCallOnStaticMethod {
-                        source: expr.location(),
-                        method_name: callable.name().clone(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(diagnostics::InstanceCallOnStaticMethod {
+                    source: expr.location(),
+                    method_name: callable.name().clone(),
+                });
 
                 return Ok(false);
             }
@@ -96,14 +93,11 @@ impl TyCheckCtx {
         // Verify that the amount of type arguments match the
         // expected number of type parameters.
         if type_params.len() != type_args.len() {
-            self.dcx().emit(
-                diagnostics::TypeArgumentCountMismatch {
-                    source: expr.location(),
-                    expected: type_params.len(),
-                    actual: type_args.len(),
-                }
-                .into(),
-            );
+            self.dcx().emit(diagnostics::TypeArgumentCountMismatch {
+                source: expr.location(),
+                expected: type_params.len(),
+                actual: type_args.len(),
+            });
 
             return Ok(false);
         }
@@ -120,16 +114,13 @@ impl TyCheckCtx {
                 if !self.check_type_compatibility(&arg, &constraint_type)? {
                     success = false;
 
-                    self.dcx().emit(
-                        diagnostics::TypeParameterConstraintUnsatisfied {
-                            source: arg.location,
-                            constraint_loc: constraint.location,
-                            param_name: param.name.to_string(),
-                            type_name: self.ty_stringifier(&arg).stringify()?,
-                            constraint_name: self.ty_stringifier(&constraint_type).stringify()?,
-                        }
-                        .into(),
-                    );
+                    self.dcx().emit(diagnostics::TypeParameterConstraintUnsatisfied {
+                        source: arg.location,
+                        constraint_loc: constraint.location,
+                        param_name: param.name.to_string(),
+                        type_name: self.ty_stringifier(&arg).stringify()?,
+                        constraint_name: self.ty_stringifier(&constraint_type).stringify()?,
+                    });
                 }
             }
         }
@@ -153,23 +144,17 @@ impl TyCheckCtx {
         if (is_vararg && parameters.len() - 1 > arguments.len()) || (!is_vararg && parameters.len() != arguments.len())
         {
             if is_vararg {
-                self.dcx().emit(
-                    diagnostics::VariableArgumentCountMismatch {
-                        source: expr.location(),
-                        expected: parameters.len(),
-                        actual: arguments.len(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(diagnostics::VariableArgumentCountMismatch {
+                    source: expr.location(),
+                    expected: parameters.len(),
+                    actual: arguments.len(),
+                });
             } else {
-                self.dcx().emit(
-                    diagnostics::ArgumentCountMismatch {
-                        source: expr.location(),
-                        expected: parameters.len(),
-                        actual: arguments.len(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(diagnostics::ArgumentCountMismatch {
+                    source: expr.location(),
+                    expected: parameters.len(),
+                    actual: arguments.len(),
+                });
             }
 
             return Ok(false);
@@ -184,14 +169,11 @@ impl TyCheckCtx {
             // If a function/method takes N parameters + 1 vararg parameter,
             // we expect at least N arguments.
             if parameters.len() - 1 > arguments.len() {
-                self.dcx().emit(
-                    diagnostics::VariableArgumentCountMismatch {
-                        source: expr.location(),
-                        expected: parameters.len(),
-                        actual: arguments.len(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(diagnostics::VariableArgumentCountMismatch {
+                    source: expr.location(),
+                    expected: parameters.len(),
+                    actual: arguments.len(),
+                });
 
                 return Ok(false);
             }
@@ -226,14 +208,11 @@ impl TyCheckCtx {
             // If the parameter count is fixed, we need exactly
             // that amount of arguments.
             if parameters.len() != arguments.len() {
-                self.dcx().emit(
-                    diagnostics::ArgumentCountMismatch {
-                        source: expr.location(),
-                        expected: parameters.len(),
-                        actual: arguments.len(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(diagnostics::ArgumentCountMismatch {
+                    source: expr.location(),
+                    expected: parameters.len(),
+                    actual: arguments.len(),
+                });
 
                 return Ok(false);
             }

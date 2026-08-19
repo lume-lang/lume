@@ -21,7 +21,7 @@ pub fn fixture_as_hir(source: &str) -> Map {
             "#,
         )
         .with_file("src/main.lm", source)
-        .pipeline(dcx.handle())
+        .pipeline(dcx)
         .unwrap();
 
     let LoweredToHir { gcx, mut maps } = pipeline.lower_to_hir().unwrap();

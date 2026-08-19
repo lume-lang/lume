@@ -35,23 +35,19 @@ impl Diagnostics {
         std::mem::take(&mut self.previous);
         std::mem::swap(&mut self.previous, &mut self.current);
 
-        self.dcx.with_iter(|diagnostics| {
-            for diagnostic in diagnostics {
-                tracing::info!("publishing diagnostic: {}", diagnostic.message());
-
-                let labels = diagnostic.labels().map_or_else(Vec::new, |iter| iter.collect());
-
-                if labels.is_empty() {
-                    publish_message(sender, diagnostic.as_ref());
-                } else {
-                    self.publish_diagnostic(sender, diagnostic.as_ref(), labels.into_iter());
-                }
-            }
-        });
-
-        // Clear all the diagnostics from the context, so they won't
+        // Take all the diagnostics from the context, so they won't
         // be reported on the next drain either.
-        self.dcx.clear();
+        for diagnostic in self.dcx.take() {
+            tracing::info!("publishing diagnostic: {}", diagnostic.message());
+
+            let labels = diagnostic.labels().map_or_else(Vec::new, |iter| iter.collect());
+
+            if labels.is_empty() {
+                publish_message(sender, diagnostic.as_ref());
+            } else {
+                self.publish_diagnostic(sender, diagnostic.as_ref(), labels.into_iter());
+            }
+        }
 
         // Take all the files which had one-or-more diagnostics, but no longer do and
         // push an empty list of diagnostics to the client.

@@ -75,7 +75,7 @@ impl Engine {
                 &engine.root,
                 config,
                 lume_driver::Callbacks::default(),
-                engine.diagnostics.dcx.handle(),
+                engine.diagnostics.dcx.clone(),
             )?;
 
             driver.check()

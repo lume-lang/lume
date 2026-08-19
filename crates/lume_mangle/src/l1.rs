@@ -287,7 +287,7 @@ mod tests {
                 ),
             )
             .with_file("src/main.lm", source)
-            .driver(dcx.handle())?;
+            .driver(dcx)?;
 
         Ok(driver.check()?.into_root_package().tcx)
     }

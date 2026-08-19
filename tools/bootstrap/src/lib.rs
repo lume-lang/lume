@@ -124,7 +124,7 @@ pub fn lbs_cli_entry() {
     set_verbose(matches.verbose);
     set_quiet(matches.quiet);
 
-    let _ = dcx.with_opt(|_handle| match matches.subcommand {
+    if let Err(err) = match matches.subcommand {
         Subcommands::Build(cmd) => cmd.run(),
         Subcommands::Install(cmd) => cmd.run(),
         Subcommands::Uninstall(cmd) => cmd.run(),
@@ -132,7 +132,9 @@ pub fn lbs_cli_entry() {
         Subcommands::List(cmd) => cmd.run(),
         Subcommands::Link(cmd) => cmd.run(),
         Subcommands::Clean(cmd) => cmd.run(),
-    });
+    } {
+        dcx.emit(err);
+    }
 
     let tainted = dcx.is_tainted();
 
@@ -141,7 +143,6 @@ pub fn lbs_cli_entry() {
     renderer.highlight_source = true;
 
     dcx.render_stderr(&mut renderer);
-    dcx.clear();
 
     if tainted {
         std::process::exit(133);

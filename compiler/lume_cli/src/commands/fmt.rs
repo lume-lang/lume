@@ -20,52 +20,48 @@ pub struct FormatCommand {
 
 impl FormatCommand {
     #[allow(clippy::needless_pass_by_value)]
-    pub(crate) fn run(&self, dcx: DiagCtxHandle) {
+    pub(crate) fn run(&self, dcx: DiagCtx) {
         let config = match read_config_file(self.config.clone()) {
             Ok(config) => config,
             Err(err) => {
-                dcx.emit_and_push(err);
+                dcx.emit(err);
                 return;
             }
         };
 
         for path in &self.paths {
-            if let Err(err) = self.format_path(PathBuf::from(path), &config, dcx.clone()) {
-                dcx.emit_and_push(
-                    SimpleDiagnostic::new(format!("error while formatting given path: {path}"))
-                        .add_related(err)
-                        .into(),
-                );
+            if let Err(err) = self.format_path(PathBuf::from(path), &config) {
+                dcx.emit(diagnostic!("error while formatting given path: {path}").add_related(err));
             }
         }
     }
 
-    fn format_path(&self, path: PathBuf, config: &Config, dcx: DiagCtxHandle) -> Result<()> {
+    fn format_path(&self, path: PathBuf, config: &Config) -> Result<()> {
         if path.try_exists().is_ok_and(|x| x) {
             if path.is_dir() {
-                self.format_directory(path, config, dcx)?;
+                self.format_directory(path, config)?;
             } else {
-                self.format_file(path, config, dcx)?;
+                self.format_file(path, config)?;
             }
         }
 
         Ok(())
     }
 
-    fn format_directory(&self, input_path: PathBuf, config: &Config, dcx: DiagCtxHandle) -> Result<()> {
+    fn format_directory(&self, input_path: PathBuf, config: &Config) -> Result<()> {
         let glob_pattern = format!("{}/**/*.lm", input_path.display());
         let paths = glob::glob(&glob_pattern).map_diagnostic()?;
 
         for matched_path in paths.filter_map(std::result::Result::ok) {
-            self.format_file(matched_path, config, dcx.clone())?;
+            self.format_file(matched_path, config)?;
         }
 
         Ok(())
     }
 
-    fn format_file(&self, input_path: PathBuf, config: &Config, dcx: DiagCtxHandle) -> Result<()> {
+    fn format_file(&self, input_path: PathBuf, config: &Config) -> Result<()> {
         let content = std::fs::read_to_string(&input_path).map_diagnostic()?;
-        let formatted = lume_fmt::format_src(&content, config, dcx)?;
+        let formatted = lume_fmt::format_src(&content, config)?;
 
         #[allow(clippy::disallowed_macros)]
         if self.write {

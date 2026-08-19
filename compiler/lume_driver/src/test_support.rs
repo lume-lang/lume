@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
-use lume_errors::{DiagCtxHandle, Result};
+use lume_errors::{DiagCtx, Result};
 use lume_session::{FileSystemLoader, Options, VirtualFileSystem};
 
-use crate::{Callbacks, Config, Driver, Pipeline};
+use crate::{Callbacks, CheckedPackageGraph, Config, Driver, Pipeline};
 
 pub type IO = VirtualFileSystem<FileSystemLoader>;
 
@@ -19,10 +19,10 @@ pub type IO = VirtualFileSystem<FileSystemLoader>;
 /// use std::path::PathBuf;
 ///
 /// use lume_driver::test_support::workspace;
-/// use lume_errors::DiagCtxHandle;
+/// use lume_errors::DiagCtx;
 ///
 /// let _ = workspace(PathBuf::new())
-///     .build(DiagCtxHandle::shim());
+///     .build(DiagCtx::new());
 /// ```
 #[inline]
 pub fn workspace<P: AsRef<Path>>(root: P) -> WorkspaceBuilder {
@@ -46,10 +46,10 @@ impl WorkspaceBuilder {
     /// use std::path::PathBuf;
     ///
     /// use lume_driver::test_support::WorkspaceBuilder;
-    /// use lume_errors::DiagCtxHandle;
+    /// use lume_errors::DiagCtx;
     ///
     /// let _ = WorkspaceBuilder::new(PathBuf::new())
-    ///     .build(DiagCtxHandle::shim());
+    ///     .build(DiagCtx::new());
     /// ```
     pub fn new<P: AsRef<Path>>(root: P) -> Self {
         Self {
@@ -125,13 +125,13 @@ impl WorkspaceBuilder {
     ///
     /// ```
     /// use lume_driver::test_support::workspace;
-    /// use lume_errors::{DiagCtx, DiagCtxHandle};
+    /// use lume_errors::DiagCtx;
     ///
     /// let dcx = DiagCtx::new();
     /// let root = std::path::PathBuf::new();
-    /// let _ = dcx.with(|handle| workspace(root).driver(handle));
+    /// let _ = workspace(root).driver(dcx);
     /// ```
-    pub fn driver(self, dcx: DiagCtxHandle) -> Result<Driver<'static, IO>> {
+    pub fn driver(self, dcx: DiagCtx) -> Result<Driver<'static, IO>> {
         let root = self.config.io.root().to_path_buf();
 
         Driver::from_root(&root, self.config, Callbacks::default(), dcx)
@@ -143,13 +143,13 @@ impl WorkspaceBuilder {
     ///
     /// ```
     /// use lume_driver::test_support::workspace;
-    /// use lume_errors::{DiagCtx, DiagCtxHandle};
+    /// use lume_errors::DiagCtx;
     ///
     /// let dcx = DiagCtx::new();
     /// let root = std::path::PathBuf::new();
-    /// let _ = dcx.with(|handle| workspace(root).pipeline(handle));
+    /// let _ = workspace(root).pipeline(dcx);
     /// ```
-    pub fn pipeline(self, dcx: DiagCtxHandle) -> Result<Pipeline<'static>> {
+    pub fn pipeline(self, dcx: DiagCtx) -> Result<Pipeline<'static>> {
         self.driver(dcx).map(|driver| driver.to_pipeline())
     }
 
@@ -161,20 +161,14 @@ impl WorkspaceBuilder {
     ///
     /// ```
     /// use lume_driver::test_support::workspace;
-    /// use lume_errors::{DiagCtx, DiagCtxHandle};
+    /// use lume_errors::DiagCtx;
     ///
     /// let dcx = DiagCtx::new();
     /// let root = std::path::PathBuf::new();
-    /// let _ = dcx.with(|handle| workspace(root).check(handle));
+    /// let _ = workspace(root).check(dcx);
     /// ```
-    pub fn check(self, dcx: DiagCtxHandle) -> Result<()> {
-        let driver = self.driver(dcx.clone())?;
-
-        if let Err(err) = driver.check() {
-            dcx.emit_and_push(err);
-        }
-
-        Ok(())
+    pub fn check(self, dcx: DiagCtx) -> Result<CheckedPackageGraph> {
+        self.driver(dcx)?.check()
     }
 
     /// Builds the workspace for errors without compiling anything.
@@ -185,24 +179,16 @@ impl WorkspaceBuilder {
     ///
     /// ```
     /// use lume_driver::test_support::workspace;
-    /// use lume_errors::{DiagCtx, DiagCtxHandle};
+    /// use lume_errors::DiagCtx;
     ///
     /// let dcx = DiagCtx::new();
     /// let root = std::path::PathBuf::new();
-    /// let _ = dcx.with(|handle| workspace(root).check(handle));
+    /// let _ = workspace(root).check(dcx);
     /// ```
-    pub fn build(self, dcx: DiagCtxHandle) -> Result<PathBuf> {
-        let driver = self.driver(dcx.clone())?;
+    pub fn build(self, dcx: DiagCtx) -> Result<PathBuf> {
+        let driver = self.driver(dcx)?;
 
-        match driver.build() {
-            Ok(executable) => Ok(executable.binary),
-            Err(err) => {
-                dcx.emit_and_push(err);
-                dcx.ensure_untainted()?;
-
-                unreachable!()
-            }
-        }
+        driver.build().map(|exec| exec.binary)
     }
 }
 
@@ -217,7 +203,7 @@ mod tests {
         let workspace = workspace(PathBuf::from("/lume-test-support/"));
 
         let dcx = DiagCtx::new();
-        if let Err(err) = dcx.with(|handle| workspace.check(handle)) {
+        if let Err(err) = workspace.check(dcx.clone()) {
             dcx.emit(err);
         }
 
@@ -240,7 +226,7 @@ mod tests {
             .with_file("src/main.lm", "fn main() {}");
 
         let dcx = DiagCtx::new();
-        if let Err(err) = dcx.with(|handle| workspace.build(handle)) {
+        if let Err(err) = workspace.build(dcx.clone()) {
             dcx.emit(err);
         }
 

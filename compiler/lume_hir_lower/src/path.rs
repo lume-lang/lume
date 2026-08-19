@@ -11,14 +11,11 @@ impl LoweringContext<'_> {
         let location = self.location(path.location());
 
         let Some((name, root)) = names.split_last() else {
-            self.dcx.emit_and_push(
-                crate::errors::InvalidNamespacePath {
-                    source: self.current_file().clone(),
-                    range: location.index.clone(),
-                    path: path.syntax().to_string(),
-                }
-                .into(),
-            );
+            self.dcx.emit(crate::errors::InvalidNamespacePath {
+                source: self.current_file().clone(),
+                range: location.index.clone(),
+                path: path.syntax().to_string(),
+            });
 
             return lume_hir::Path::missing();
         };
@@ -148,14 +145,11 @@ impl LoweringContext<'_> {
             return Path::join(self_path, selfless_path);
         }
 
-        self.dcx.emit_and_push(
-            errors::InvalidSelfParameter {
-                source: self.current_file().clone(),
-                range: self_segment.location().index.clone(),
-                ty: String::from("Self"),
-            }
-            .into(),
-        );
+        self.dcx.emit(errors::InvalidSelfParameter {
+            source: self.current_file().clone(),
+            range: self_segment.location().index.clone(),
+            ty: String::from("Self"),
+        });
 
         Path::missing()
     }

@@ -76,14 +76,11 @@ impl LoweringContext<'_> {
         let name = if let Some(ty) = &self.self_type {
             ty.clone()
         } else {
-            self.dcx.emit_and_push(
-                crate::errors::InvalidSelfParameter {
-                    source: self.current_file().clone(),
-                    range: location.index.clone(),
-                    ty: String::from(SELF_TYPE_NAME),
-                }
-                .into(),
-            );
+            self.dcx.emit(crate::errors::InvalidSelfParameter {
+                source: self.current_file().clone(),
+                range: location.index.clone(),
+                ty: String::from(SELF_TYPE_NAME),
+            });
 
             lume_hir::Path::missing()
         };

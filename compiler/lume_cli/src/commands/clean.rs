@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::ValueHint;
 use lume_driver::{Config, Driver};
-use lume_errors::{DiagCtxHandle, IntoDiagnostic};
+use lume_errors::{DiagCtx, IntoDiagnostic};
 use lume_session::FileSystemLoader;
 
 use crate::commands::project_or_cwd;
@@ -20,7 +20,7 @@ pub struct CleanCommand {
 
 impl CleanCommand {
     #[allow(clippy::needless_pass_by_value)]
-    pub(crate) fn run(&self, dcx: DiagCtxHandle) {
+    pub(crate) fn run(&self, dcx: DiagCtx) {
         let project_path = match project_or_cwd(self.path.as_ref()) {
             Ok(path) => path,
             Err(err) => {
@@ -50,11 +50,11 @@ impl CleanCommand {
                 }
 
                 if let Err(err) = std::fs::remove_dir_all(obj_path) {
-                    dcx.emit_and_push(err.into_diagnostic());
+                    dcx.emit(err.into_diagnostic());
                 }
             }
             Err(err) => {
-                dcx.emit_and_push(err);
+                dcx.emit(err);
             }
         }
     }

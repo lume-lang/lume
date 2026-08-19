@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use lume_driver::{Config, Driver};
-use lume_errors::DiagCtxHandle;
+use lume_errors::DiagCtx;
 use lume_session::FileSystemLoader;
 
 use crate::commands::project_or_cwd;
@@ -15,7 +15,7 @@ pub struct CheckCommand {
 
 impl CheckCommand {
     #[allow(clippy::needless_pass_by_value)]
-    pub(crate) fn run(&self, dcx: DiagCtxHandle) {
+    pub(crate) fn run(&self, dcx: DiagCtx) {
         let project_path = match project_or_cwd(self.build.path.as_ref()) {
             Ok(path) => path,
             Err(err) => {
@@ -52,13 +52,13 @@ impl CheckCommand {
         let driver = match Driver::from_root(&PathBuf::from(project_path), config, callbacks, dcx.clone()) {
             Ok(driver) => driver,
             Err(err) => {
-                dcx.emit_and_push(err);
+                dcx.emit(err);
                 return;
             }
         };
 
         if let Err(err) = driver.check() {
-            dcx.emit_and_push(err);
+            dcx.emit(err);
         }
     }
 }

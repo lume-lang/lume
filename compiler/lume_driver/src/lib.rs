@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use arc::locate_package;
 use indexmap::IndexMap;
-use lume_errors::{DiagCtxHandle, Result};
+use lume_errors::{DiagCtx, Result};
 use lume_session::{DependencyMap, FileLoader, Options, Package, Session};
 use lume_span::{FileName, PackageId, SourceFile, SourceMap};
 use lume_typech::TyCheckCtx;
@@ -68,7 +68,7 @@ pub struct Driver<'io, IO> {
     source_map: SourceMap,
 
     /// Defines the diagnostics context for reporting errors during compilation.
-    dcx: DiagCtxHandle,
+    dcx: DiagCtx,
 
     pub callbacks: Callbacks<'io>,
 }
@@ -86,10 +86,10 @@ where
     /// # Errors
     ///
     /// Returns `Err` if the given path has no `Arcfile` within it.
-    pub fn from_root(root: &Path, config: Config<IO>, callbacks: Callbacks<'io>, dcx: DiagCtxHandle) -> Result<Self> {
+    pub fn from_root(root: &Path, config: Config<IO>, callbacks: Callbacks<'io>, dcx: DiagCtx) -> Result<Self> {
         (callbacks.arc_event)(ArcEvent::FindingRootPackage { root });
 
-        let mut dependencies = dcx.with(|handle| locate_package(root, &config.io, handle))?;
+        let mut dependencies = dcx.in_transaction(|transaction| locate_package(root, &config.io, transaction))?;
         dependencies.add_package_sources_recursive(&config.io)?;
 
         (callbacks.arc_event)(ArcEvent::PackagesLoaded { graph: &dependencies });

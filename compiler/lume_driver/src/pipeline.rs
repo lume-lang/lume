@@ -57,7 +57,7 @@ impl<'io, IO> Driver<'io, IO> {
             options: self.config.options,
         };
 
-        let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
+        let gcx = Arc::new(GlobalCtx::new(session, self.dcx));
 
         Pipeline(gcx, self.callbacks)
     }
@@ -169,8 +169,10 @@ impl Pipeline<'_> {
                 dirty_packages.extend(gcx.session.dep_graph.dependents_of(dependency.id));
             }
 
-            let mut hir = tracing::info_span!("hir_lower")
-                .in_scope(|| gcx.dcx.with(|dcx| lume_hir_lower::lower_to_hir(&dependency, dcx)))?;
+            let mut hir = tracing::info_span!("hir_lower").in_scope(|| {
+                gcx.dcx
+                    .in_transaction(|transaction| lume_hir_lower::lower_to_hir(&dependency, transaction))
+            })?;
 
             #[allow(clippy::disallowed_macros, reason = "only used in debugging")]
             if gcx.session.options.dump_hir {

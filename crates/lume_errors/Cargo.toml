@@ -5,7 +5,6 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-dashmap = { version = "6.2.1" }
 indexmap = { workspace = true }
 owo-colors = { workspace = true, features = ["supports-colors"] }
 terminal_size = { version = "^0.4", optional = true }

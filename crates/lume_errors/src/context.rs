@@ -2,15 +2,12 @@
 
 pub const ERROR_GUARANTEED_CODE: &str = "FINAL_ERROR";
 
+use std::cell::RefCell;
+use std::panic::RefUnwindSafe;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-
-use dashmap::DashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::{Error, IntoDiagnostic, Renderer, Result, Severity, SimpleDiagnostic};
-
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-struct ErrorKey(usize);
 
 /// A context to deal with diagnostics, which is meant to
 /// be used throughout the entire lifespan of the compiler / driver
@@ -23,8 +20,7 @@ struct DiagCtxInner {
     panic_on_error: AtomicBool,
     track_diagnostics: AtomicBool,
 
-    counter: AtomicUsize,
-    emitted: DashMap<ErrorKey, Error>,
+    emitted: RefCell<Vec<Error>>,
 }
 
 impl DiagCtxInner {
@@ -32,14 +28,14 @@ impl DiagCtxInner {
     /// one-or-more errors.
     #[inline]
     pub fn is_tainted(&self) -> bool {
-        self.emitted.iter().any(|diag| diag.severity() >= Severity::Error)
-    }
-
-    /// Increments the error counter and returns the current value.
-    pub(crate) fn increment(&self) -> ErrorKey {
-        ErrorKey(self.counter.fetch_add(1, Ordering::Relaxed))
+        self.emitted
+            .borrow()
+            .iter()
+            .any(|diag| diag.severity() >= Severity::Error)
     }
 }
+
+impl RefUnwindSafe for DiagCtxInner {}
 
 /// A context to deal with diagnostics, which is meant to
 /// be used throughout the entire lifespan of the compiler / driver
@@ -84,7 +80,7 @@ impl DiagCtx {
     /// Note: this also includes non-errors!
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.inner.emitted.is_empty()
+        self.inner.emitted.borrow().is_empty()
     }
 
     /// Returns the amount of *diagnostics* which can been emitted to the
@@ -93,7 +89,7 @@ impl DiagCtx {
     /// Note: this also includes non-errors!
     #[inline]
     pub fn len(&self) -> usize {
-        self.inner.emitted.len()
+        self.inner.emitted.borrow().len()
     }
 
     /// Determines whether the diagnostic context has been tainted with
@@ -113,6 +109,22 @@ impl DiagCtx {
         } else {
             Ok(())
         }
+    }
+
+    /// Iterates all the diagnostics which have been emitted to the diagnostics
+    /// context.
+    ///
+    /// Note: this also includes non-errors!
+    #[inline]
+    pub fn take(&self) -> Vec<Error> {
+        std::mem::take(&mut *self.inner.emitted.borrow_mut())
+    }
+
+    /// Clears all the diagnostics which have been emitted to the diagnostics
+    /// context.
+    #[inline]
+    pub fn clear(&self) {
+        self.inner.emitted.borrow_mut().clear();
     }
 
     /// Starts a new diagnostic transaction.
@@ -153,7 +165,7 @@ impl DiagCtx {
         Transaction {
             dcx: Arc::clone(&self.inner),
             parent: TransactionParent::Context,
-            emitted: DashMap::new(),
+            emitted: RefCell::new(Vec::new()),
             on_success,
             on_failure,
         }
@@ -236,8 +248,7 @@ impl DiagCtx {
             diagnostic.message()
         );
 
-        let key = self.inner.increment();
-        self.inner.emitted.insert(key, diagnostic);
+        self.inner.emitted.borrow_mut().push(diagnostic);
     }
 }
 
@@ -252,13 +263,14 @@ impl DiagCtx {
 
     /// Renders all the stored diagnostics into a [`String`]
     pub fn render_buffer(&self, renderer: &mut impl Renderer) -> Option<String> {
-        if self.inner.emitted.is_empty() {
+        if self.inner.emitted.borrow().is_empty() {
             return None;
         }
 
         let buffer = self
             .inner
             .emitted
+            .borrow()
             .iter()
             .map(|diagnostic| renderer.render(diagnostic.as_ref()).unwrap())
             .collect::<String>();
@@ -320,36 +332,32 @@ enum TransactionParent<'dcx> {
 pub struct Transaction<'dcx> {
     dcx: Arc<DiagCtxInner>,
     parent: TransactionParent<'dcx>,
-    emitted: DashMap<ErrorKey, Error>,
+    emitted: RefCell<Vec<Error>>,
     on_success: Commit,
     on_failure: Rollback,
 }
 
 impl Transaction<'_> {
-    fn map_ref(&self) -> &DashMap<ErrorKey, Error> {
+    fn map_ref(&self) -> std::cell::RefMut<'_, Vec<Error>> {
         match self.parent {
-            TransactionParent::Context => &self.dcx.emitted,
-            TransactionParent::Transaction(inner) => &inner.emitted,
+            TransactionParent::Context => self.dcx.emitted.borrow_mut(),
+            TransactionParent::Transaction(inner) => inner.emitted.borrow_mut(),
         }
     }
 
     /// Commits the transaction to the owning diagnostic context.
     pub fn commit(&mut self) {
-        let emitted = std::mem::take(&mut self.emitted);
+        let emitted = std::mem::take(&mut *self.emitted.borrow_mut());
 
-        for (key, error) in emitted {
-            self.map_ref().insert(key, error);
+        for error in emitted {
+            self.map_ref().push(error);
         }
     }
 
     /// Rolls back the transaction, discarding all the events which ocurred
     /// inside the transaction.
     pub fn rollback(&mut self) {
-        let emitted = std::mem::take(&mut self.emitted);
-
-        for (key, _error) in emitted {
-            self.map_ref().remove(&key);
-        }
+        self.emitted.borrow_mut().clear();
     }
 
     /// If the transaction is untainted with errors, commits the transaction.
@@ -409,7 +417,7 @@ impl Transaction<'_> {
         Transaction {
             dcx: Arc::clone(&self.dcx),
             parent: TransactionParent::Transaction(self),
-            emitted: DashMap::new(),
+            emitted: RefCell::new(Vec::new()),
             on_success,
             on_failure,
         }
@@ -467,7 +475,7 @@ impl Transaction<'_> {
     /// Note: this also includes non-errors!
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.dcx.emitted.is_empty()
+        self.dcx.emitted.borrow().is_empty()
     }
 
     /// Returns the amount of *diagnostics* which can been emitted to the
@@ -476,14 +484,17 @@ impl Transaction<'_> {
     /// Note: this also includes non-errors!
     #[inline]
     pub fn len(&self) -> usize {
-        self.dcx.emitted.len()
+        self.dcx.emitted.borrow().len()
     }
 
     /// Determines whether the transaction has been tainted with
     /// one-or-more errors.
     #[inline]
     pub fn is_tainted(&self) -> bool {
-        self.emitted.iter().any(|diag| diag.severity() >= Severity::Error)
+        self.emitted
+            .borrow()
+            .iter()
+            .any(|diag| diag.severity() >= Severity::Error)
     }
 
     /// Ensure that the transaction is untainted.
@@ -518,8 +529,7 @@ impl Transaction<'_> {
             return;
         }
 
-        let key = self.dcx.increment();
-        self.emitted.insert(key, diagnostic);
+        self.emitted.borrow_mut().push(diagnostic);
     }
 }
 

@@ -178,14 +178,11 @@ impl TyCheckCtx {
             let type_def = self.tdb().expect_type(explicit_type.instance_of)?;
 
             if !self.is_type_visible_to(&explicit_type, stmt.id)? {
-                self.dcx().emit(
-                    InaccessibleType {
-                        source: explicit_type.location,
-                        type_def: type_def.name.location,
-                        type_name: type_def.name.clone(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(InaccessibleType {
+                    source: explicit_type.location,
+                    type_def: type_def.name.location,
+                    type_name: type_def.name.clone(),
+                });
             }
         }
 
@@ -340,8 +337,7 @@ impl TyCheckCtx {
             }
             lume_hir::ExpressionKind::Scope(expr) => {
                 if expr.unsafe_ && !self.is_unsafe_allowed(expr.id.package) {
-                    self.dcx()
-                        .emit(UnsafeCodeInSafePackage { source: expr.location }.into());
+                    self.dcx().emit(UnsafeCodeInSafePackage { source: expr.location });
                 }
 
                 for stmt in &expr.body {
@@ -419,14 +415,11 @@ impl TyCheckCtx {
         if !self.is_type_visible_to(&dest_type, expr.id)? {
             let type_def = self.tdb().expect_type(dest_type.instance_of)?;
 
-            self.dcx().emit(
-                InaccessibleType {
-                    source: expr.target.location,
-                    type_def: type_def.name.location,
-                    type_name: type_def.name.clone(),
-                }
-                .into(),
-            );
+            self.dcx().emit(InaccessibleType {
+                source: expr.target.location,
+                type_def: type_def.name.location,
+                type_name: type_def.name.clone(),
+            });
         }
 
         if self.cast_impl_of(&source_type, &dest_type).is_none() {
@@ -435,14 +428,11 @@ impl TyCheckCtx {
 
             let expr_location = self.hir_expect_expr(expr.id).location;
 
-            self.dcx().emit(
-                UnavailableCast {
-                    source: expr_location,
-                    from: source_named,
-                    to: dest_named,
-                }
-                .into(),
-            );
+            self.dcx().emit(UnavailableCast {
+                source: expr_location,
+                from: source_named,
+                to: dest_named,
+            });
         }
 
         Ok(())
@@ -457,55 +447,40 @@ impl TyCheckCtx {
         let signature = self.signature_of(callable)?;
 
         if self.is_dynamic_dispatch(expr)? && !signature.is_instanced() {
-            self.dcx().emit(
-                DispatchCannotBeInferred {
-                    source: expr.name().location,
-                }
-                .into(),
-            );
+            self.dcx().emit(DispatchCannotBeInferred {
+                source: expr.name().location,
+            });
         }
 
         if !self.is_visible_to(expr.id(), callable.id())? {
             if let lume_infer::query::Callable::Function(_) = callable {
-                self.dcx().emit(
-                    InaccessibleFunction {
-                        source: expr.location(),
-                        func_def: callable.name().location,
-                        func_name: callable.name().clone(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(InaccessibleFunction {
+                    source: expr.location(),
+                    func_def: callable.name().location,
+                    func_name: callable.name().clone(),
+                });
             } else {
-                self.dcx().emit(
-                    InaccessibleMethod {
-                        source: expr.location(),
-                        method_def: callable.name().location,
-                        method_name: callable.name().clone(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(InaccessibleMethod {
+                    source: expr.location(),
+                    method_def: callable.name().location,
+                    method_name: callable.name().clone(),
+                });
             }
         }
 
         if !self.hir_in_unsafe_block(expr.id()) && self.is_callable_unsafe(callable)? {
             if let lume_infer::query::Callable::Function(_) = callable {
-                self.dcx().emit(
-                    UnsafeFunctionCallOutsideUnsafe {
-                        source: expr.location(),
-                        function_location: callable.name().location,
-                        function_name: callable.name().to_wide_string(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(UnsafeFunctionCallOutsideUnsafe {
+                    source: expr.location(),
+                    function_location: callable.name().location,
+                    function_name: callable.name().to_wide_string(),
+                });
             } else {
-                self.dcx().emit(
-                    UnsafeMethodCallOutsideUnsafe {
-                        source: expr.location(),
-                        method_location: callable.name().location,
-                        method_name: callable.name().to_wide_string(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(UnsafeMethodCallOutsideUnsafe {
+                    source: expr.location(),
+                    method_location: callable.name().location,
+                    method_name: callable.name().to_wide_string(),
+                });
             }
         }
 
@@ -535,27 +510,21 @@ impl TyCheckCtx {
         if !self.is_type_visible_to(&constructed_type, expr.id)? {
             let type_def = self.hir_expect_struct(constructed_type.instance_of);
 
-            self.dcx().emit(
-                InaccessibleType {
-                    source: expr.location,
-                    type_def: type_def.name.location,
-                    type_name: expr.path.clone(),
-                }
-                .into(),
-            );
+            self.dcx().emit(InaccessibleType {
+                source: expr.location,
+                type_def: type_def.name.location,
+                type_name: expr.path.clone(),
+            });
         }
 
         let mut fields_left = expr.fields.iter().map(|field| &field.name).collect::<IndexSet<_>>();
 
         for field in self.fields_on(constructed_type.instance_of)? {
             let Some(constructor_field) = self.constructer_field_of(expr, field.name.as_str()) else {
-                self.dcx().emit(
-                    MissingField {
-                        source: expr.location,
-                        field: field.name.to_string(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(MissingField {
+                    source: expr.location,
+                    field: field.name.to_string(),
+                });
 
                 continue;
             };
@@ -563,14 +532,11 @@ impl TyCheckCtx {
             if !constructor_field.is_default && !self.is_visible_to(expr.id, field.id)? {
                 let hir_field = self.hir_field(field.id).expect("expected HIR field with same ID");
 
-                self.dcx().emit(
-                    InaccessibleField {
-                        source: constructor_field.location,
-                        field_def: hir_field.name.location,
-                        field_name: field.name.to_string(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(InaccessibleField {
+                    source: constructor_field.location,
+                    field_def: hir_field.name.location,
+                    field_name: field.name.to_string(),
+                });
             }
 
             let field_ty = self.type_of(constructor_field.value)?;
@@ -584,14 +550,11 @@ impl TyCheckCtx {
         }
 
         for field_left in fields_left {
-            self.dcx().emit(
-                UnknownField {
-                    source: field_left.location,
-                    ty: self.ty_stringifier(&constructed_type).stringify()?,
-                    field: field_left.to_string(),
-                }
-                .into(),
-            );
+            self.dcx().emit(UnknownField {
+                source: field_left.location,
+                ty: self.ty_stringifier(&constructed_type).stringify()?,
+                field: field_left.to_string(),
+            });
         }
 
         Ok(())
@@ -602,8 +565,7 @@ impl TyCheckCtx {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn ref_expression(&self, expr: &lume_hir::RefExpr) -> Result<()> {
         if !self.hir_in_unsafe_block(expr.id) {
-            self.dcx()
-                .emit(PointerRefOutsideUnsafe { source: expr.location }.into());
+            self.dcx().emit(PointerRefOutsideUnsafe { source: expr.location });
         }
 
         Ok(())
@@ -613,8 +575,7 @@ impl TyCheckCtx {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn deref_expression(&self, expr: &lume_hir::DerefExpr) -> Result<()> {
         if !self.hir_in_unsafe_block(expr.id) {
-            self.dcx()
-                .emit(PointerDerefOutsideUnsafe { source: expr.location }.into());
+            self.dcx().emit(PointerDerefOutsideUnsafe { source: expr.location });
         }
 
         Ok(())
@@ -664,41 +625,32 @@ impl TyCheckCtx {
         let callee_def = self.hir_expect_struct(callee_ty.instance_of);
 
         if !self.is_visible_to(expr.id, callee_def.id)? {
-            self.dcx().emit(
-                InaccessibleType {
-                    source: expr.location,
-                    type_def: callee_def.name.location,
-                    type_name: callee_def.name().clone(),
-                }
-                .into(),
-            );
+            self.dcx().emit(InaccessibleType {
+                source: expr.location,
+                type_def: callee_def.name.location,
+                type_name: callee_def.name().clone(),
+            });
         }
 
         let Some(field) = callee_def
             .fields()
             .find(|field| field.name.as_str() == expr.name.as_str())
         else {
-            self.dcx().emit(
-                UnknownField {
-                    source: expr.location,
-                    ty: self.ty_stringifier(&callee_ty).include_namespace(true).stringify()?,
-                    field: expr.name.name.clone(),
-                }
-                .into(),
-            );
+            self.dcx().emit(UnknownField {
+                source: expr.location,
+                ty: self.ty_stringifier(&callee_ty).include_namespace(true).stringify()?,
+                field: expr.name.name.clone(),
+            });
 
             return Ok(());
         };
 
         if !self.is_visible_to(expr.id, field.id)? {
-            self.dcx().emit(
-                InaccessibleField {
-                    source: expr.location,
-                    field_def: field.name.location,
-                    field_name: field.name.to_string(),
-                }
-                .into(),
-            );
+            self.dcx().emit(InaccessibleField {
+                source: expr.location,
+                field_def: field.name.location,
+                field_name: field.name.to_string(),
+            });
         }
 
         Ok(())
@@ -729,14 +681,11 @@ impl TyCheckCtx {
             {
                 let type_def = self.tdb().expect_type(case_pattern_ty.instance_of)?;
 
-                self.dcx().emit(
-                    InaccessibleType {
-                        source: case_pattern.location,
-                        type_def: type_def.name.location,
-                        type_name: type_def.name.clone(),
-                    }
-                    .into(),
-                );
+                self.dcx().emit(InaccessibleType {
+                    source: case_pattern.location,
+                    type_def: type_def.name.location,
+                    type_name: type_def.name.clone(),
+                });
             }
 
             if let Err(err) = self.ensure_type_compatibility(&case_branch_ty, &branch_ty) {
@@ -761,14 +710,11 @@ impl TyCheckCtx {
         let enum_case_def = self.enum_case_with_name(&expr.name)?;
 
         if !self.is_visible_to(expr.id, enum_def.id)? {
-            self.dcx().emit(
-                InaccessibleType {
-                    source: expr.location,
-                    type_def: enum_def.name.location,
-                    type_name: enum_def.name.clone(),
-                }
-                .into(),
-            );
+            self.dcx().emit(InaccessibleType {
+                source: expr.location,
+                type_def: enum_def.name.location,
+                type_name: enum_def.name.clone(),
+            });
         }
 
         if expr.arguments.len() != enum_case_def.parameters.len() {

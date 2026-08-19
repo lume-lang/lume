@@ -69,7 +69,7 @@ impl ManifoldDriver {
     pub fn build_hir(&self) -> Result<Map> {
         self.gcx
             .dcx
-            .with(|dcx| lume_hir_lower::lower_to_hir(&self.package, dcx))
+            .in_transaction(|dcx| lume_hir_lower::lower_to_hir(&self.package, dcx))
     }
 
     /// Infers the types of all expressions and statements within the source

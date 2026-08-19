@@ -126,14 +126,11 @@ pub(crate) fn verify_type_name(tcx: &TyInferCtx, path: &lume_hir::Path, location
     let declared_arg_count = type_path.bound_types().len();
 
     if expected_arg_count != declared_arg_count {
-        tcx.dcx().emit(
-            TypeArgumentCountMismatch {
-                location,
-                type_name: path.clone(),
-                expected: expected_arg_count,
-                actual: declared_arg_count,
-            }
-            .into(),
-        );
+        tcx.dcx().emit(TypeArgumentCountMismatch {
+            location,
+            type_name: path.clone(),
+            expected: expected_arg_count,
+            actual: declared_arg_count,
+        });
     }
 }

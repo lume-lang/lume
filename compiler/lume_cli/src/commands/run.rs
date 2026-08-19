@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use lume_driver::{Config, Driver};
-use lume_errors::DiagCtxHandle;
+use lume_errors::DiagCtx;
 use lume_session::FileSystemLoader;
 
 use crate::commands::project_or_cwd;
@@ -20,7 +20,7 @@ pub struct RunCommand {
 
 impl RunCommand {
     #[allow(clippy::needless_pass_by_value)]
-    pub(crate) fn run(&self, dcx: DiagCtxHandle) {
+    pub(crate) fn run(&self, dcx: DiagCtx) {
         let project_path = match project_or_cwd(self.build.path.as_ref()) {
             Ok(path) => PathBuf::from(path),
             Err(err) => {
@@ -83,7 +83,7 @@ impl RunCommand {
 
                 std::process::exit(exit_code)
             }
-            Err(err) => dcx.emit_and_push(err),
+            Err(err) => dcx.emit(err),
         }
     }
 }

@@ -21,17 +21,17 @@ fn main() {
                     "#,
                 )
                 .with_file("src/main.lm", content)
-                .pipeline(dcx.handle())
+                .pipeline(dcx.clone())
                 .unwrap();
 
-            let _ = dcx.with(|_handle| {
+            let _ = (|| {
                 pipeline
                     .lower_to_hir()?
                     .type_check()?
                     .lower_to_tir()?
                     .lower_to_mir()?
                     .codegen()
-            });
+            })();
         }
     });
 }

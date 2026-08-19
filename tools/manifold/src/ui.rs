@@ -129,7 +129,7 @@ fn build_test_file(test_case: &TestCase) -> String {
     }
 
     if let Err(err) =
-        || -> Result<lume_driver::TypeChecked> { builder.pipeline(dcx.handle())?.lower_to_hir()?.type_check() }()
+        || -> Result<lume_driver::TypeChecked> { builder.pipeline(dcx.clone())?.lower_to_hir()?.type_check() }()
     {
         dcx.emit(err);
     }

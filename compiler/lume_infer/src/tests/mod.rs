@@ -27,10 +27,10 @@ fn package_with_src(input: &str) -> Package {
 
 #[track_caller]
 fn lower_into_hir(input: &str) -> Result<Map> {
-    let dcx = DiagCtx::new().handle();
+    let dcx = DiagCtx::new();
     let package = package_with_src(input);
 
-    dcx.with(|handle| lume_hir_lower::lower_to_hir(&package, handle))
+    dcx.in_transaction(|handle| lume_hir_lower::lower_to_hir(&package, handle))
 }
 
 #[track_caller]

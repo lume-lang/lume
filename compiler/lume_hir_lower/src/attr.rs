@@ -42,29 +42,23 @@ impl LoweringContext<'_> {
             match attr.name.as_str() {
                 "lang_item" => {
                     let Some(name_arg) = attr.arguments.iter().find(|arg| arg.name.as_str() == "name") else {
-                        self.dcx.emit_and_push(
-                            errors::LangItemMissingName {
-                                location: attr.location,
-                            }
-                            .into(),
-                        );
+                        self.dcx.emit(errors::LangItemMissingName {
+                            location: attr.location,
+                        });
 
                         continue;
                     };
 
                     let lume_hir::LiteralKind::String(lit_value) = &name_arg.value.kind else {
-                        self.dcx.emit_and_push(
-                            errors::LangItemInvalidNameType {
-                                location: name_arg.value.location,
-                            }
-                            .into(),
-                        );
+                        self.dcx.emit(errors::LangItemInvalidNameType {
+                            location: name_arg.value.location,
+                        });
 
                         continue;
                     };
 
                     if let Err(err) = self.map.lang_items.add_name(&lit_value.value, current_node) {
-                        self.dcx.emit_and_push(err);
+                        self.dcx.emit(err);
                     }
                 }
 
@@ -73,12 +67,9 @@ impl LoweringContext<'_> {
                 }
 
                 _ => {
-                    self.dcx.emit_and_push(
-                        errors::UnknownAttribute {
-                            location: attr.location,
-                        }
-                        .into(),
-                    );
+                    self.dcx.emit(errors::UnknownAttribute {
+                        location: attr.location,
+                    });
                 }
             }
         }

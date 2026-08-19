@@ -32,7 +32,7 @@ fn build_mir(path: &TestPath, content: String) -> Result<String> {
             "#,
         )
         .with_file(PathBuf::from("src").join(file_name), &content)
-        .pipeline(dcx.handle())?;
+        .pipeline(dcx.clone())?;
 
     let mir_result = || -> Result<lume_driver::LoweredToMir> {
         pipeline.lower_to_hir()?.type_check()?.lower_to_tir()?.lower_to_mir()

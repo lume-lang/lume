@@ -1,6 +1,6 @@
 pub(crate) mod clean;
 
-use lume_errors::DiagCtxHandle;
+use lume_errors::DiagCtx;
 
 #[derive(Debug, clap::Parser)]
 #[command(name = "arc", about = "Commands for the Arc package manager", long_about = None)]
@@ -20,7 +20,7 @@ pub enum ArcSubcommands {
 }
 
 impl ArcCommand {
-    pub(crate) fn run(&self, dcx: DiagCtxHandle) {
+    pub(crate) fn run(&self, dcx: DiagCtx) {
         match &self.subcommand {
             ArcSubcommands::Clean(cmd) => cmd.run(dcx),
         }

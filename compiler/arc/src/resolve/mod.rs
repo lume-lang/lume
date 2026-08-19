@@ -6,7 +6,7 @@ use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
 use indexmap::IndexMap;
-use lume_errors::{DiagCtxHandle, Result, SimpleDiagnostic};
+use lume_errors::{Result, SimpleDiagnostic, Transaction};
 use lume_session::FileLoader;
 pub(crate) use provider::resolve;
 use semver::Version;
@@ -16,16 +16,14 @@ use crate::parser::PackageParser;
 
 pub struct Resolver<'io, IO> {
     io: &'io IO,
-    dcx: DiagCtxHandle,
     local_paths: IndexMap<PackageKey, PathBuf>,
     local_packages: IndexMap<PackageKey, Manifest>,
 }
 
 impl<'io, IO> Resolver<'io, IO> {
-    pub fn new(io: &'io IO, dcx: DiagCtxHandle) -> Self {
+    pub fn new(io: &'io IO) -> Self {
         Self {
             io,
-            dcx,
             local_paths: IndexMap::default(),
             local_packages: IndexMap::default(),
         }

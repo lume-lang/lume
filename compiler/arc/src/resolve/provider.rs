@@ -12,16 +12,20 @@ use semver::Version;
 use crate::resolve::report::report;
 use crate::resolve::*;
 
-pub(crate) fn resolve<R: AsRef<Path>, IO: FileLoader>(root: R, resolver: Resolver<'_, IO>) -> Result<DependencyMap> {
+pub(crate) fn resolve<R: AsRef<Path>, IO: FileLoader>(
+    root: R,
+    resolver: Resolver<'_, IO>,
+    transaction: Transaction<'_>,
+) -> Result<DependencyMap> {
     let root_path = PathBuf::from(root.as_ref());
     let root_manifest = PackageParser::locate(&root_path, resolver.io)?;
     let root_package_id = root_manifest.package_id();
     let root_version = root_manifest.package.version.into_inner();
 
-    let resolver = RwLockResolver(resolver.dcx.clone(), RwLock::new(resolver));
+    let resolver = RwLockResolver(transaction, RwLock::new(resolver));
     let root_package_key = PackageKey::Local(root_path);
 
-    resolver.0.clone().with(|dcx| {
+    resolver.0.in_transaction(|mut transaction| {
         let solution = match pubgrub::resolve(&resolver, root_package_key, root_version) {
             Ok(solution) => solution,
             Err(pubgrub::PubGrubError::NoSolution(mut derivation_tree)) => {
@@ -31,18 +35,21 @@ pub(crate) fn resolve<R: AsRef<Path>, IO: FileLoader>(root: R, resolver: Resolve
                 let packages = std::mem::take(&mut resolver.local_packages);
 
                 let report = report(packages, &derivation_tree);
-                dcx.emit_and_push(SimpleDiagnostic::new(report).into());
+                transaction.emit(SimpleDiagnostic::new(report));
+                transaction.commit();
 
-                return Err(dcx.ensure_untainted().unwrap_err());
+                return Err(transaction.ensure_untainted().unwrap_err());
             }
             Err(
                 pubgrub::PubGrubError::ErrorRetrievingDependencies { .. }
                 | pubgrub::PubGrubError::ErrorChoosingVersion { .. }
                 | pubgrub::PubGrubError::ErrorInShouldCancel(_),
             ) => {
+                transaction.commit();
+
                 // These error types will always have some error raised to the
                 // diagnostics context, so just return the tainted-error here.
-                return Err(dcx.ensure_untainted().unwrap_err());
+                return Err(transaction.ensure_untainted().unwrap_err());
             }
         };
 
@@ -85,11 +92,13 @@ pub(crate) fn resolve<R: AsRef<Path>, IO: FileLoader>(root: R, resolver: Resolve
             }
         }
 
+        transaction.commit();
+
         Ok(map)
     })
 }
 
-struct RwLockResolver<'io, IO>(DiagCtxHandle, RwLock<Resolver<'io, IO>>);
+struct RwLockResolver<'io, IO>(Transaction<'io>, RwLock<Resolver<'io, IO>>);
 
 impl<IO: FileLoader> RwLockResolver<'_, IO> {
     pub fn versions_of(&self, key: &PackageKey) -> Result<Vec<Version>> {
@@ -114,7 +123,7 @@ impl<IO: FileLoader> pubgrub::DependencyProvider for RwLockResolver<'_, IO> {
         let package_versions = match self.versions_of(package) {
             Ok(versions) => versions,
             Err(err) => {
-                self.0.emit_and_push(err);
+                self.0.emit(err);
 
                 return (u32::MAX, std::cmp::Reverse(Version::new(0, 0, 0)));
             }
@@ -133,7 +142,7 @@ impl<IO: FileLoader> pubgrub::DependencyProvider for RwLockResolver<'_, IO> {
         match self.versions_of(package) {
             Ok(versions) => Ok(versions.into_iter().filter(|v| range.contains(v)).max()),
             Err(err) => {
-                self.0.emit_and_push(err);
+                self.0.emit(err);
 
                 Err(DependencyError::PackageFetchFailed {
                     source: package.clone(),
@@ -156,7 +165,7 @@ impl<IO: FileLoader> pubgrub::DependencyProvider for RwLockResolver<'_, IO> {
                 (manifest.path.clone(), manifest.dependencies.clone())
             }
             Err(err) => {
-                self.0.emit_and_push(err);
+                self.0.emit(err);
 
                 return Ok(Dependencies::Unavailable(DependencyError::PackageFetchFailed {
                     source: package.clone(),
@@ -170,7 +179,7 @@ impl<IO: FileLoader> pubgrub::DependencyProvider for RwLockResolver<'_, IO> {
             let dependency = match package_key_of(&manifest_root, &manifest_dependency.source) {
                 Ok(key) => key,
                 Err(err) => {
-                    self.0.emit_and_push(err);
+                    self.0.emit(err);
 
                     return Ok(Dependencies::Unavailable(DependencyError::VersionsFetchFailed {
                         package_name: dependency_name.clone(),
@@ -183,7 +192,7 @@ impl<IO: FileLoader> pubgrub::DependencyProvider for RwLockResolver<'_, IO> {
                     .into_iter()
                     .filter(|v| manifest_dependency.required_version.matches(v)),
                 Err(err) => {
-                    self.0.emit_and_push(err);
+                    self.0.emit(err);
 
                     return Ok(Dependencies::Unavailable(DependencyError::VersionsFetchFailed {
                         package_name: dependency_name.clone(),

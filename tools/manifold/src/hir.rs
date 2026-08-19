@@ -29,7 +29,7 @@ fn build_hir(path: &TestPath, content: String) -> Result<String> {
             "#,
         )
         .with_file(source_file_name, content)
-        .pipeline(dcx.handle())?;
+        .pipeline(dcx.clone())?;
 
     let map = match pipeline.lower_to_hir() {
         Ok(lume_driver::LoweredToHir { gcx, mut maps }) => {

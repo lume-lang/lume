@@ -48,7 +48,7 @@ pub(crate) fn run_test(path: TestPath, dcx: DiagCtx) -> Result<TestResult> {
             ),
         )
         .with_file(PathBuf::from("src").join(file_name), &file_content)
-        .build(dcx.handle())?;
+        .build(dcx.clone())?;
 
     let test_case = TestCase {
         source_path: path.relative.0.clone(),

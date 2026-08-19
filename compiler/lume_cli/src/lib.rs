@@ -91,22 +91,22 @@ pub fn lume_cli_entry() {
         dcx.track_diagnostics();
     }
 
-    dcx.with_none(|dcx| match matches.subcommand {
-        LumeSubcommands::Arc(cmd) => cmd.run(dcx),
-        LumeSubcommands::Check(cmd) => cmd.run(dcx),
-        LumeSubcommands::Build(cmd) => cmd.run(dcx),
-        LumeSubcommands::Clean(cmd) => cmd.run(dcx),
-        LumeSubcommands::Format(cmd) => cmd.run(dcx),
+    match matches.subcommand {
+        LumeSubcommands::Arc(cmd) => cmd.run(dcx.clone()),
+        LumeSubcommands::Check(cmd) => cmd.run(dcx.clone()),
+        LumeSubcommands::Build(cmd) => cmd.run(dcx.clone()),
+        LumeSubcommands::Clean(cmd) => cmd.run(dcx.clone()),
+        LumeSubcommands::Format(cmd) => cmd.run(dcx.clone()),
         LumeSubcommands::New(cmd) => {
             if let Err(err) = cmd.run() {
-                dcx.emit_and_push(err);
+                dcx.emit(err);
             }
         }
-        LumeSubcommands::Run(cmd) => cmd.run(dcx),
+        LumeSubcommands::Run(cmd) => cmd.run(dcx.clone()),
 
         #[cfg(feature = "lsp")]
-        LumeSubcommands::Lsp(mut cmd) => cmd.run(dcx),
-    });
+        LumeSubcommands::Lsp(mut cmd) => cmd.run(dcx.clone()),
+    }
 
     let mut renderer = lume_errors::GraphicalRenderer::new();
     renderer.use_colors = true;

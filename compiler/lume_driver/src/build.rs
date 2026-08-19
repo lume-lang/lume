@@ -15,8 +15,8 @@ where
     /// - an error occured while writing the output executable
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn build_package(root: &Path, config: Config<IO>, dcx: DiagCtxHandle) -> Result<CompiledExecutable> {
-        let driver = Self::from_root(root, config, Callbacks::default(), dcx.clone())?;
+    pub fn build_package(root: &Path, config: Config<IO>, dcx: DiagCtx) -> Result<CompiledExecutable> {
+        let driver = Self::from_root(root, config, Callbacks::default(), dcx)?;
 
         driver.build()
     }

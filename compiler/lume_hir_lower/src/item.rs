@@ -196,26 +196,20 @@ impl LoweringContext<'_> {
             // so much easier to see whether a method is an instance method or a static
             // method.
             if index > 0 && param.is_self() {
-                self.dcx.emit_and_push(
-                    crate::errors::SelfNotFirstParameter {
-                        source: self.current_file().clone(),
-                        range: param.location().0.clone(),
-                        ty: String::from(SELF_PARAM_NAME),
-                    }
-                    .into(),
-                );
+                self.dcx.emit(crate::errors::SelfNotFirstParameter {
+                    source: self.current_file().clone(),
+                    range: param.location().0.clone(),
+                    ty: String::from(SELF_PARAM_NAME),
+                });
             }
 
             // Using `self` outside of an object context is not allowed, such as functions.
             if !allow_self && param.ty().is_some_and(|ty| ty.is_self()) {
-                self.dcx.emit_and_push(
-                    crate::errors::InvalidSelfParameter {
-                        source: self.current_file().clone(),
-                        range: param.location().0.clone(),
-                        ty: String::from(SELF_TYPE_NAME),
-                    }
-                    .into(),
-                );
+                self.dcx.emit(crate::errors::InvalidSelfParameter {
+                    source: self.current_file().clone(),
+                    range: param.location().0.clone(),
+                    ty: String::from(SELF_TYPE_NAME),
+                });
             }
 
             let is_vararg = param.vararg().is_some();
@@ -225,25 +219,19 @@ impl LoweringContext<'_> {
                 && !param.is_self_type()
                 && param.name().is_some_and(|name| name.syntax().text() == SELF_PARAM_NAME)
             {
-                self.dcx.emit_and_push(
-                    crate::errors::SelfWithExplicitType {
-                        source: self.current_file().clone(),
-                        range: param.location().0.clone(),
-                        ty: String::from(SELF_PARAM_NAME),
-                    }
-                    .into(),
-                );
+                self.dcx.emit(crate::errors::SelfWithExplicitType {
+                    source: self.current_file().clone(),
+                    range: param.location().0.clone(),
+                    ty: String::from(SELF_PARAM_NAME),
+                });
             }
 
             // Make sure that any vararg parameters exist only on the last position.
             if is_vararg && index + 1 < param_len {
-                self.dcx.emit_and_push(
-                    crate::errors::VarargNotLastParameter {
-                        source: self.current_file().clone(),
-                        range: param.location().0.clone(),
-                    }
-                    .into(),
-                );
+                self.dcx.emit(crate::errors::VarargNotLastParameter {
+                    source: self.current_file().clone(),
+                    range: param.location().0.clone(),
+                });
             }
 
             let id = self.next_node_id();

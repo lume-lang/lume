@@ -6,7 +6,7 @@ pub(crate) mod resolve;
 
 use std::path::Path;
 
-use lume_errors::{DiagCtxHandle, Result};
+use lume_errors::{Result, Transaction};
 use lume_session::{DependencyMap, FileLoader};
 
 pub use crate::cache::{clean_local_cache_dir, local_cache_dir};
@@ -20,7 +20,7 @@ pub const DEFAULT_ARCFILE: &str = "Arcfile";
 /// This method may fail if:
 /// - the given path has no `Arcfile` stored within it
 /// - or the located `Arcfile` doesn't refer to a file.
-pub fn locate_package<L: FileLoader>(root: &Path, loader: &L, dcx: DiagCtxHandle) -> Result<DependencyMap> {
-    let resolver = resolve::Resolver::new(loader, dcx);
-    resolve::resolve(root, resolver)
+pub fn locate_package<L: FileLoader>(root: &Path, loader: &L, transaction: Transaction<'_>) -> Result<DependencyMap> {
+    let resolver = resolve::Resolver::new(loader);
+    resolve::resolve(root, resolver, transaction)
 }

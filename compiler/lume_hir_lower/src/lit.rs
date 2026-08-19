@@ -25,14 +25,11 @@ impl LoweringContext<'_> {
         value_str = value_str.replace('_', "");
 
         let Ok(value) = i128::from_str_radix(&value_str, radix as u32) else {
-            self.dcx.emit_and_push(
-                crate::errors::InvalidLiteral {
-                    source: self.current_file().clone(),
-                    range: expr.range(),
-                    value: value_str,
-                }
-                .into(),
-            );
+            self.dcx.emit(crate::errors::InvalidLiteral {
+                source: self.current_file().clone(),
+                range: expr.range(),
+                value: value_str,
+            });
 
             return lume_hir::Literal::missing();
         };
@@ -54,14 +51,11 @@ impl LoweringContext<'_> {
         value_str = value_str.replace('_', "");
 
         let Ok(value) = value_str.parse::<f64>() else {
-            self.dcx.emit_and_push(
-                crate::errors::InvalidLiteral {
-                    source: self.current_file().clone(),
-                    range: expr.range(),
-                    value: value_str,
-                }
-                .into(),
-            );
+            self.dcx.emit(crate::errors::InvalidLiteral {
+                source: self.current_file().clone(),
+                range: expr.range(),
+                value: value_str,
+            });
 
             return lume_hir::Literal::missing();
         };

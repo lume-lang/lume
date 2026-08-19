@@ -17,7 +17,7 @@ use std::sync::{Arc, LazyLock};
 
 pub use lume_ast;
 use lume_ast::AstNode;
-use lume_errors::{DiagCtxHandle, Result};
+use lume_errors::{Result, Transaction};
 pub use lume_hir::WithLocation as _;
 use lume_hir::symbols::SymbolTable;
 use lume_hir::{Map, Path, PathSegment, Place};
@@ -47,7 +47,7 @@ static DEFAULT_STD_IMPORTS: LazyLock<Vec<(&str, Path)>> = LazyLock::new(|| {
     ]
 });
 
-pub fn lower_to_hir(package: &Package, dcx: DiagCtxHandle) -> Result<Map> {
+pub fn lower_to_hir(package: &Package, dcx: Transaction<'_>) -> Result<Map> {
     let mut ctx = LoweringContext::new(package, dcx);
 
     for (_file_name, source_file) in ctx.package.files.clone() {
@@ -55,7 +55,7 @@ pub fn lower_to_hir(package: &Package, dcx: DiagCtxHandle) -> Result<Map> {
         let tokens = match lexer.lex() {
             Ok(tokens) => tokens,
             Err(err) => {
-                ctx.dcx.emit_and_push(err);
+                ctx.dcx.emit(err);
                 continue;
             }
         };
@@ -64,20 +64,18 @@ pub fn lower_to_hir(package: &Package, dcx: DiagCtxHandle) -> Result<Map> {
         let syntax_tree = parser.parse(lume_parser::Target::Item);
 
         for error in syntax_tree.errors() {
-            ctx.dcx.emit_and_push(
-                lume_errors::SimpleDiagnostic::new(error.message())
-                    .with_label(
-                        lume_errors::Label::error(error.span().0..error.span().1, "error occurred here")
-                            .with_source(Some(source_file.clone())),
-                    )
-                    .into(),
+            ctx.dcx.emit(
+                lume_errors::SimpleDiagnostic::new(error.message()).with_label(
+                    lume_errors::Label::error(error.span().0..error.span().1, "error occurred here")
+                        .with_source(Some(source_file.clone())),
+                ),
             );
         }
 
         let source_node = lume_ast::SourceFile::cast(syntax_tree.syntax()).unwrap();
 
         if let Err(err) = ctx.lower_items(source_file.id, source_node.item()) {
-            ctx.dcx.emit_and_push(err);
+            ctx.dcx.emit(err);
         }
     }
 
@@ -105,7 +103,7 @@ impl DefinedItem {
 
 pub struct LoweringContext<'pkg> {
     package: &'pkg Package,
-    dcx: DiagCtxHandle,
+    dcx: Transaction<'pkg>,
     map: Map,
 
     current_node: NodeId,
@@ -122,7 +120,7 @@ pub struct LoweringContext<'pkg> {
 
 impl<'pkg> LoweringContext<'pkg> {
     /// Creates a new lowering context for creating HIR maps from AST.
-    pub fn new(package: &'pkg Package, dcx: DiagCtxHandle) -> Self {
+    pub fn new(package: &'pkg Package, dcx: Transaction<'pkg>) -> Self {
         let map = Map::empty(package.id);
 
         // TODO:
@@ -216,18 +214,15 @@ impl LoweringContext<'_> {
     #[tracing::instrument(level = "TRACE", skip_all)]
     fn ensure_item_undefined(&mut self, id: NodeId, item: DefinedItem) {
         if let Some((existing, _)) = self.defined.get_key_value(&item) {
-            self.dcx.emit_and_push(
-                crate::errors::DuplicateDefinition {
-                    duplicate_range: lume_span::source::Location {
-                        file: self.current_file().clone(),
-                        index: item.location().index.clone(),
-                    }
-                    .intern(),
-                    original_range: existing.location(),
-                    name: item.path().to_string(),
+            self.dcx.emit(crate::errors::DuplicateDefinition {
+                duplicate_range: lume_span::source::Location {
+                    file: self.current_file().clone(),
+                    index: item.location().index.clone(),
                 }
-                .into(),
-            );
+                .intern(),
+                original_range: existing.location(),
+                name: item.path().to_string(),
+            });
 
             return;
         }
@@ -433,7 +428,7 @@ impl LoweringContext<'_> {
             let item_name = Unique::name(item);
 
             if let Some(existing) = seen.get(&item_name) {
-                self.dcx.emit_and_push(on_duplicate(item, existing));
+                self.dcx.emit(on_duplicate(item, existing));
             }
 
             seen.insert(item_name, item);

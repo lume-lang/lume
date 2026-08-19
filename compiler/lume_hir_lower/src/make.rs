@@ -125,14 +125,11 @@ impl LoweringContext<'_> {
         let name = name.into();
 
         let Some(reference) = self.current_locals.retrieve(&name.name).copied() else {
-            self.dcx.emit_and_push(
-                crate::errors::UndeclaredVariable {
-                    source: self.current_file().clone(),
-                    range: location.index.clone(),
-                    name: name.to_string(),
-                }
-                .into(),
-            );
+            self.dcx.emit(crate::errors::UndeclaredVariable {
+                source: self.current_file().clone(),
+                range: location.index.clone(),
+                name: name.to_string(),
+            });
 
             return self.missing_expr(Some(id));
         };

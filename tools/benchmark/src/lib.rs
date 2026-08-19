@@ -44,7 +44,7 @@ pub fn compile(path: &Path) -> Result<PathBuf> {
             ),
         )
         .with_file(PathBuf::from("src").join(file_name), &file_content)
-        .build(dcx.handle());
+        .build(dcx.clone());
 
     if let Ok(path) = binary_path {
         Ok(path)
