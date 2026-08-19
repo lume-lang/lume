@@ -160,7 +160,7 @@ impl Handler for DiagnosticHandler {
             self.renderer.render_stderr(diagnostic.as_ref())?;
 
             // If the diagnostic is an error, mark it down.
-            if diagnostic.severity() == Severity::Error {
+            if diagnostic.severity() >= Severity::Error {
                 encountered_errors += 1;
             }
         }

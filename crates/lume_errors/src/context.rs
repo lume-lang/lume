@@ -2,9 +2,15 @@
 
 pub const ERROR_GUARANTEED_CODE: &str = "FINAL_ERROR";
 
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+use dashmap::DashMap;
 
 use crate::{Error, IntoDiagnostic, Renderer, Result, Severity, SimpleDiagnostic};
+
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct ErrorKey(usize);
 
 /// A context to deal with diagnostics, which is meant to
 /// be used throughout the entire lifespan of the compiler / driver
@@ -13,84 +19,25 @@ use crate::{Error, IntoDiagnostic, Renderer, Result, Severity, SimpleDiagnostic}
 /// Certain diagnostics may cause a single stage within the compiler
 /// to halt or exit early, where-as others might be more benign.
 #[derive(Default)]
-pub struct DiagCtxInner {
-    /// Holding block for all the reported diagnostics.
-    emitted: Vec<Error>,
+struct DiagCtxInner {
+    panic_on_error: AtomicBool,
+    track_diagnostics: AtomicBool,
 
-    /// Tracks the location of where diagnostics are pushed from.
-    track_diagnostics: bool,
-
-    /// Treat all errors as bugs, causing a `panic!`.
-    panic_on_error: bool,
+    counter: AtomicUsize,
+    emitted: DashMap<ErrorKey, Error>,
 }
 
 impl DiagCtxInner {
-    /// Renders all the stored diagnostics to the standard error output
-    /// (`stderr`).
-    fn render_stderr(&self, renderer: &mut impl Renderer) {
-        if let Some(buffer) = self.render_buffer(renderer) {
-            eprint!("{buffer}");
-        }
-    }
-
-    /// Renders all the stored diagnostics into a [`String`]
-    fn render_buffer(&self, renderer: &mut impl Renderer) -> Option<String> {
-        if self.emitted.is_empty() {
-            return None;
-        }
-
-        let buffer = self
-            .iter()
-            .map(|diagnostic| renderer.render(diagnostic.as_ref()).unwrap())
-            .collect::<String>();
-
-        Some(buffer)
-    }
-
-    /// Clears all the diagnostics from the context.
-    fn clear(&mut self) {
-        self.emitted.clear();
-    }
-
-    /// Pushes the given diagnostic to the context.
-    #[track_caller]
-    fn push(&mut self, diag: Error) {
-        if diag.message().as_str() == ERROR_GUARANTEED_CODE {
-            return;
-        }
-
-        #[allow(clippy::disallowed_macros, reason = "used for debugging")]
-        if self.track_diagnostics {
-            eprintln!("[track_diagnostics] pushed from {}", std::panic::Location::caller());
-        }
-
-        assert!(
-            !self.panic_on_error,
-            "error emitted with `panic_on_error` enabled: {}",
-            diag.message()
-        );
-
-        self.emitted.push(diag);
-    }
-
-    /// Iterates over all the diagnostics within the context.
-    fn iter(&self) -> impl Iterator<Item = &Error> {
-        self.emitted.iter()
-    }
-
-    /// Invokes the given closure with an iterator over all reported
-    /// diagnostics.
-    fn with_iter<F, R>(&self, f: F) -> R
-    where
-        F: for<'a> FnOnce(std::slice::Iter<'a, Error>) -> R,
-    {
-        f(self.emitted.iter())
-    }
-
     /// Determines whether the diagnostic context has been tainted with
     /// one-or-more errors.
-    fn is_tainted(&self) -> bool {
-        self.emitted.iter().any(|diag| diag.severity() == Severity::Error)
+    #[inline]
+    pub fn is_tainted(&self) -> bool {
+        self.emitted.iter().any(|diag| diag.severity() >= Severity::Error)
+    }
+
+    /// Increments the error counter and returns the current value.
+    pub(crate) fn increment(&self) -> ErrorKey {
+        ErrorKey(self.counter.fetch_add(1, Ordering::Relaxed))
     }
 }
 
@@ -100,28 +47,15 @@ impl DiagCtxInner {
 ///
 /// Certain diagnostics may cause a single stage within the compiler
 /// to halt or exit early, where-as others might be more benign.
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct DiagCtx {
-    /// The inner handler for diagnostics, which holds all the
-    /// reporting diagnostics.
-    inner: Arc<Mutex<DiagCtxInner>>,
+    inner: Arc<DiagCtxInner>,
 }
 
 impl DiagCtx {
-    /// Creates a new [`DiagCtx`] instance using the given output format.
+    /// Creates a new [`DiagCtx`] instance.
     pub fn new() -> Self {
-        DiagCtx::default()
-    }
-
-    /// Retrives the instance of the parent [`DiagCtxInner`], which
-    /// is contained within the context.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the inner diagnostics context has been locked by another
-    /// thread.
-    fn inner(&self) -> MutexGuard<'_, DiagCtxInner> {
-        self.inner.lock().unwrap()
+        Self::default()
     }
 
     /// Prints the location of where diagnostics are pushed to the context - the
@@ -131,7 +65,7 @@ impl DiagCtx {
     ///
     /// Panics if the handle has already been locked by another thread.
     pub fn track_diagnostics(&self) {
-        self.inner().track_diagnostics = true;
+        self.inner.track_diagnostics.store(true, Ordering::Relaxed);
     }
 
     /// Enables panicking whenever an error is pushed to the context - the error
@@ -141,49 +75,31 @@ impl DiagCtx {
     ///
     /// Panics if the handle has already been locked by another thread.
     pub fn panic_on_error(&self) {
-        self.inner().panic_on_error = true;
+        self.inner.panic_on_error.store(true, Ordering::Relaxed);
     }
 
-    /// Emits the given diagnostic to the context directly, without
-    /// passing any handles or instances around.
+    /// Returns whether the context is empty, i.e. no diagnostics have been
+    /// emitted.
     ///
-    /// # Panics
-    ///
-    /// Panics if the handle has already been locked by another thread.
-    #[track_caller]
-    pub fn emit(&self, diag: Error) {
-        self.inner().push(diag);
+    /// Note: this also includes non-errors!
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.inner.emitted.is_empty()
     }
 
-    /// Create a handle for the diagnostic context, which can be
-    /// used to emit diagnositcs to the inner context.
-    pub fn handle(&self) -> DiagCtxHandle {
-        DiagCtxHandle {
-            inner: Arc::clone(&self.inner),
-            emitted: Arc::new(Mutex::new(Vec::new())),
-        }
-    }
-
-    /// Invokes the given closure with an iterator over all reported
-    /// diagnostics.
+    /// Returns the amount of *diagnostics* which can been emitted to the
+    /// context.
     ///
-    /// # Panics
-    ///
-    /// Panics if the inner diagnostics context has been locked by another
-    /// thread.
-    pub fn with_iter<F, R>(&self, f: F) -> R
-    where
-        F: for<'a> FnOnce(std::slice::Iter<'a, Error>) -> R,
-    {
-        let guard = self.inner.lock().unwrap();
-
-        guard.with_iter(f)
+    /// Note: this also includes non-errors!
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.inner.emitted.len()
     }
 
     /// Determines whether the diagnostic context has been tainted with
     /// one-or-more errors.
     pub fn is_tainted(&self) -> bool {
-        self.inner().is_tainted()
+        self.inner.is_tainted()
     }
 
     /// Ensure that the context is untainted.
@@ -199,231 +115,361 @@ impl DiagCtx {
         }
     }
 
+    /// Starts a new diagnostic transaction.
+    ///
+    /// When the transaction is dropped, the default behaviour is to ignore it,
+    /// regardless of whether or not any errors were raised in the transaction.
+    /// To change this behaviour, use [`Self::begin_transaction_with()`].
+    pub fn begin_transaction(&self) -> Transaction<'_> {
+        self.begin_transaction_with(OnSuccess::default(), OnFailure::default())
+    }
+
+    /// Starts a new diagnostic transaction, with the given operations for
+    /// success and failure.
+    ///
+    /// When the transaction is dropped, the state of `on_success` and
+    /// `on_failure` determines what happens to the transaction:
+    ///
+    /// **If no errors are raised in the `Transaction`**:
+    /// - `OnSuccess::Ignore`: the transaction is ignored **(default)**,
+    /// - `OnSuccess::Commit`: the transaction is committed,
+    ///
+    /// **If an error is raised in the `Transaction`**:
+    /// - `OnFailure::Ignore`: the transaction is ignored **(default)**,
+    /// - `OnFailure::Rollback`: the transaction is rolled back,
+    #[inline]
+    pub fn begin_transaction_with(&self, on_success: OnSuccess, on_failure: OnFailure) -> Transaction<'_> {
+        Transaction {
+            dcx: Arc::clone(&self.inner),
+            parent: TransactionParent::Context,
+            emitted: DashMap::new(),
+            on_success,
+            on_failure,
+        }
+    }
+
+    /// Runs the given closure inside of a transaction and returns the result of
+    /// the closure.
+    ///
+    /// The transaction is passed to the closure, so it is the callers
+    /// responsibility to commit or rollback the transaction. See
+    /// [`Self::in_transaction_with()`] for more information.
+    pub fn in_transaction<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(Transaction<'_>) -> R,
+    {
+        self.in_transaction_with(OnSuccess::default(), OnFailure::default(), f)
+    }
+
+    /// Runs the given closure inside of a transaction and returns the result of
+    /// the closure.
+    ///
+    /// When the transaction is dropped, the state of `on_success` and
+    /// `on_failure` determines what happens to the transaction:
+    ///
+    /// **If no errors are raised in the `Transaction`**:
+    /// - `OnSuccess::Ignore`: the transaction is ignored **(default)**,
+    /// - `OnSuccess::Commit`: the transaction is committed,
+    ///
+    /// **If an error is raised in the `Transaction`**:
+    /// - `OnFailure::Ignore`: the transaction is ignored **(default)**,
+    /// - `OnFailure::Rollback`: the transaction is rolled back,
+    #[inline]
+    pub fn in_transaction_with<F, R>(&self, on_success: OnSuccess, on_failure: OnFailure, f: F) -> R
+    where
+        F: FnOnce(Transaction<'_>) -> R,
+    {
+        let transaction = self.begin_transaction_with(on_success, on_failure);
+        f(transaction)
+    }
+
+    /// Emits the given diagnostic to the current transaction.
+    ///
+    /// # Note
+    ///
+    /// Since the diagnostic is emitted to the current transaction, it will only
+    /// be pushed once the transaction is commited (via
+    /// [`commit()`])
+    ///
+    /// [`commit()`]: Transaction::commit()
+    #[track_caller]
+    pub fn emit<E>(&self, diagnostic: E)
+    where
+        E: Into<Error>,
+    {
+        let diagnostic = diagnostic.into();
+
+        if diagnostic.message().as_str() == ERROR_GUARANTEED_CODE {
+            return;
+        }
+
+        #[allow(clippy::disallowed_macros, reason = "used for debugging")]
+        if self.inner.track_diagnostics.load(Ordering::Relaxed) {
+            eprintln!("[track_diagnostics] pushed from {}", std::panic::Location::caller());
+        }
+
+        assert!(
+            !(diagnostic.severity() >= Severity::Error && self.inner.panic_on_error.load(Ordering::Relaxed)),
+            "error emitted with `panic_on_error` enabled: {}",
+            diagnostic.message()
+        );
+
+        let key = self.inner.increment();
+        self.inner.emitted.insert(key, diagnostic);
+    }
+}
+
+impl DiagCtx {
     /// Renders all the stored diagnostics to the standard error output
     /// (`stderr`).
     pub fn render_stderr(&self, renderer: &mut impl Renderer) {
-        self.inner().render_stderr(renderer);
+        if let Some(buffer) = self.render_buffer(renderer) {
+            eprint!("{buffer}");
+        }
     }
 
     /// Renders all the stored diagnostics into a [`String`]
     pub fn render_buffer(&self, renderer: &mut impl Renderer) -> Option<String> {
-        self.inner().render_buffer(renderer)
-    }
-
-    /// Clears all the diagnostics from the context.
-    pub fn clear(&self) {
-        self.inner().clear();
-    }
-
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
-    pub fn with_none(&self, f: impl FnOnce(DiagCtxHandle)) {
-        let handle = self.handle();
-        f(handle.clone());
-
-        handle.push();
-    }
-
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if an error occured while executing the closure or if the
-    /// closure itself returned `Err`.
-    pub fn with_res<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> Result<TReturn> {
-        let handle = self.handle();
-        let res = f(handle.clone());
-
-        handle.push();
-
-        self.ensure_untainted()?;
-
-        Ok(res)
-    }
-
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if an error occured while executing the closure or if the
-    /// closure itself returned `Err`.
-    pub fn with<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> Result<TReturn>) -> Result<TReturn> {
-        let handle = self.handle();
-        let res = f(handle.clone());
-
-        handle.push();
-
-        self.ensure_untainted()?;
-
-        res
-    }
-
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
-    pub fn with_opt<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> Result<TReturn>) -> Option<TReturn> {
-        let handle = self.handle();
-
-        match f(handle.clone()) {
-            Ok(value) => Some(value),
-            Err(err) => {
-                handle.emit_and_push(err);
-                None
-            }
+        if self.inner.emitted.is_empty() {
+            return None;
         }
+
+        let buffer = self
+            .inner
+            .emitted
+            .iter()
+            .map(|diagnostic| renderer.render(diagnostic.as_ref()).unwrap())
+            .collect::<String>();
+
+        Some(buffer)
     }
 }
 
 unsafe impl Send for DiagCtx {}
 unsafe impl Sync for DiagCtx {}
 
-/// A handle to a parent [`DiagCtx`], which can be used in
-/// distinct sequential "stages", where each stage can only progress
-/// forward if no halting diagnostics were reporting in any of the previous
-/// stages.
-///
-/// The handle acts as a mutable reference to it's parent [`DiagCtx`] instance,
-/// but will drain all errors to the output, once it's been dropped or manually
-/// drained.
-#[derive(Clone)]
-pub struct DiagCtxHandle {
-    /// Contains the parent [`DiagCtxInner`] handler.
-    inner: Arc<Mutex<DiagCtxInner>>,
+/// Defines the operation when a transaction is executed without raising any
+/// errors.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OnSuccess {
+    /// Nothing is done.
+    #[default]
+    Ignore,
 
-    /// Holding block for all the reported diagnostics.
-    emitted: Arc<Mutex<Vec<Error>>>,
+    /// The transaction is automatically committed.
+    Commit,
 }
 
-impl DiagCtxHandle {
-    /// Creates a new [`DiagCtxHandle`], functioning  similar to a shim. Mostly
-    /// used for testing.
-    pub fn shim() -> Self {
-        DiagCtx::new().handle()
-    }
+/// Defines the operation when a transaction is executed and one-or-more errors
+/// are raised.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OnFailure {
+    /// Nothing is done.
+    #[default]
+    Ignore,
 
-    /// Creates a [`DiagCtx`] from the given handle, which serves the same
-    /// output as the handle itself.
-    pub fn to_context(self) -> DiagCtx {
-        DiagCtx {
-            inner: self.inner.clone(),
+    /// The transaction is automatically rolled back.
+    Rollback,
+}
+
+/// Denotes where a [`Transaction`] should commit it's events to.
+enum TransactionParent<'dcx> {
+    /// When commited, events are applied to the parent [`DiagCtx`], defined in
+    /// [`Transaction::dcx`].
+    Context,
+
+    /// When commited, events are applied to a parent [`Transaction`] instance.
+    Transaction(&'dcx Transaction<'dcx>),
+}
+
+/// Represents a transaction.
+///
+/// Transactions allow for scoped operations, where all errors raised within the
+/// scope can be atomically commited or rolled back. Until the transaction is
+/// commited, no errors are applied to the parent diagnostics context.
+///
+/// Multiple transactions can exist at the same time and transactions can even
+/// be created from other transactions.
+pub struct Transaction<'dcx> {
+    dcx: Arc<DiagCtxInner>,
+    parent: TransactionParent<'dcx>,
+    emitted: DashMap<ErrorKey, Error>,
+    on_success: OnSuccess,
+    on_failure: OnFailure,
+}
+
+impl Transaction<'_> {
+    fn map_ref(&self) -> &DashMap<ErrorKey, Error> {
+        match self.parent {
+            TransactionParent::Context => &self.dcx.emitted,
+            TransactionParent::Transaction(inner) => &inner.emitted,
         }
     }
 
-    /// Retrives the instance of the parent [`DiagCtxInner`], which
-    /// is contained within the handle.
-    fn inner(&self) -> MutexGuard<'_, DiagCtxInner> {
-        self.inner.lock().unwrap()
+    /// Commits the transaction to the owning diagnostic context.
+    pub fn commit(&mut self) {
+        let emitted = std::mem::take(&mut self.emitted);
+
+        for (key, error) in emitted {
+            self.map_ref().insert(key, error);
+        }
     }
 
-    /// Emits the given diagnostic to the context directly, without
-    /// passing any handles or instances around.
+    /// Rolls back the transaction, discarding all the events which ocurred
+    /// inside the transaction.
+    pub fn rollback(&mut self) {
+        let emitted = std::mem::take(&mut self.emitted);
+
+        for (key, _error) in emitted {
+            self.map_ref().remove(&key);
+        }
+    }
+
+    /// If the transaction is untainted with errors, commits the transaction.
     ///
-    /// # Panics
+    /// If the transaction is tainted, do nothing.
+    pub fn commit_if_untainted(&mut self) {
+        if !self.is_tainted() {
+            self.commit();
+        }
+    }
+
+    /// If the transaction is tainted with errors, roll back the transaction.
     ///
-    /// Panics if the handle has already been locked by another thread.
+    /// If the transaction is not tainted, do nothing.
+    pub fn rollback_if_tainted(&mut self) {
+        if self.is_tainted() {
+            self.rollback();
+        }
+    }
+
+    /// Starts a new diagnostic sub-transaction, based on the current
+    /// transaction.
+    ///
+    /// When the transaction is dropped, the default behaviour is to ignore it,
+    /// regardless of whether or not any errors were raised in the transaction.
+    /// To change this behaviour, use [`Self::begin_transaction_with()`].
+    pub fn begin_transaction(&self) -> Transaction<'_> {
+        self.begin_transaction_with(OnSuccess::default(), OnFailure::default())
+    }
+
+    /// Starts a new diagnostic transaction, with the given operations for
+    /// success and failure.
+    ///
+    /// When the transaction is dropped, the state of `on_success` and
+    /// `on_failure` determines what happens to the transaction:
+    ///
+    /// **If no errors are raised in the `Transaction`**:
+    /// - `OnSuccess::Ignore`: the transaction is ignored **(default)**,
+    /// - `OnSuccess::Commit`: the transaction is committed,
+    ///
+    /// **If an error is raised in the `Transaction`**:
+    /// - `OnFailure::Ignore`: the transaction is ignored **(default)**,
+    /// - `OnFailure::Rollback`: the transaction is rolled back,
+    #[inline]
+    pub fn begin_transaction_with(&self, on_success: OnSuccess, on_failure: OnFailure) -> Transaction<'_> {
+        Transaction {
+            dcx: Arc::clone(&self.dcx),
+            parent: TransactionParent::Transaction(self),
+            emitted: DashMap::new(),
+            on_success,
+            on_failure,
+        }
+    }
+
+    /// Runs the given closure inside of a transaction and returns the result of
+    /// the closure.
+    ///
+    /// The transaction is passed to the closure, so it is the callers
+    /// responsibility to commit or rollback the transaction. See
+    /// [`Self::in_transaction_with()`] for more information.
+    pub fn in_transaction<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(Transaction<'_>) -> R,
+    {
+        self.in_transaction_with(OnSuccess::default(), OnFailure::default(), f)
+    }
+
+    /// Runs the given closure inside of a transaction and returns the result of
+    /// the closure.
+    ///
+    /// When the transaction is dropped, the state of `on_success` and
+    /// `on_failure` determines what happens to the transaction:
+    ///
+    /// **If no errors are raised in the `Transaction`**:
+    /// - `OnSuccess::Ignore`: the transaction is ignored **(default)**,
+    /// - `OnSuccess::Commit`: the transaction is committed,
+    ///
+    /// **If an error is raised in the `Transaction`**:
+    /// - `OnFailure::Ignore`: the transaction is ignored **(default)**,
+    /// - `OnFailure::Rollback`: the transaction is rolled back,
+    #[inline]
+    pub fn in_transaction_with<F, R>(&self, on_success: OnSuccess, on_failure: OnFailure, f: F) -> R
+    where
+        F: FnOnce(Transaction<'_>) -> R,
+    {
+        let transaction = self.begin_transaction_with(on_success, on_failure);
+        f(transaction)
+    }
+
+    /// Returns whether the transaction is empty, i.e. no diagnostics have been
+    /// emitted.
+    ///
+    /// Note: this also includes non-errors!
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.dcx.emitted.is_empty()
+    }
+
+    /// Returns the amount of *diagnostics* which can been emitted to the
+    /// transaction.
+    ///
+    /// Note: this also includes non-errors!
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.dcx.emitted.len()
+    }
+
+    /// Determines whether the transaction has been tainted with
+    /// one-or-more errors.
+    #[inline]
+    pub fn is_tainted(&self) -> bool {
+        self.emitted.iter().any(|diag| diag.severity() >= Severity::Error)
+    }
+
+    /// Emits the given diagnostic to the current transaction.
+    ///
+    /// # Note
+    ///
+    /// Since the diagnostic is emitted to the current transaction, it will only
+    /// be pushed once the transaction is commited (via
+    /// [`commit()`])
+    ///
+    /// [`commit()`]: Transaction::commit()
     #[track_caller]
-    pub fn emit(&self, diag: Error) {
-        if diag.message().as_str() == ERROR_GUARANTEED_CODE {
+    pub fn emit<E>(&self, diagnostic: E)
+    where
+        E: Into<Error>,
+    {
+        let diagnostic = diagnostic.into();
+        if diagnostic.message().as_str() == ERROR_GUARANTEED_CODE {
             return;
         }
 
-        self.emitted.lock().unwrap().push(diag);
-    }
-
-    /// Emits the given diagnostic to the context directly and pushes
-    /// it directly to the parent context.
-    #[track_caller]
-    pub fn emit_and_push(&self, diag: Error) {
-        self.emit(diag);
-        self.push();
-    }
-
-    /// Drains the currently reported errors in the context to the output
-    /// buffer.
-    ///
-    /// # Errors
-    ///
-    /// If any reported diagnostics have a severity at or above
-    /// [`lume_errors::Severity::Error`], they will be counted towards a
-    /// [`lume_errors::DrainError::CompoundError`], which will be
-    /// raised when draining has finished.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the handle has already been locked by another thread.
-    pub fn push(&self) {
-        let mut emitted = self.emitted.lock().unwrap();
-
-        self.inner().emitted.append(&mut emitted);
-    }
-
-    /// Create a handle for the diagnostic context, which can be
-    /// used to emit diagnositcs to the inner context.
-    #[must_use]
-    pub fn handle(&self) -> DiagCtxHandle {
-        DiagCtxHandle {
-            inner: Arc::clone(&self.inner),
-            emitted: Arc::new(Mutex::new(Vec::new())),
-        }
-    }
-
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if an error occured while executing the closure or if the
-    /// closure itself returned `Err`.
-    pub fn with_res<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> Result<TReturn> {
-        let res = f(self.clone());
-        self.push();
-
-        Ok(res)
-    }
-
-    /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is
-    /// dropped and all diagnostics reporting within it are immediately
-    /// pushed to the inner handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if an error occured while executing the closure or if the
-    /// closure itself returned `Err`.
-    pub fn with<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> Result<TReturn>) -> Result<TReturn> {
-        let res = f(self.clone());
-        self.push();
-
-        res
-    }
-
-    /// Ensure that the context is untainted.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if the context is tainted with one-or-more errors.
-    pub fn ensure_untainted(&self) -> Result<()> {
-        if self.inner().is_tainted() {
-            Err(TaintedError(()).into())
-        } else {
-            Ok(())
-        }
+        let key = self.dcx.increment();
+        self.emitted.insert(key, diagnostic);
     }
 }
 
-unsafe impl Send for DiagCtxHandle {}
-unsafe impl Sync for DiagCtxHandle {}
+impl Drop for Transaction<'_> {
+    fn drop(&mut self) {
+        if self.on_failure == OnFailure::Rollback && self.is_tainted() {
+            self.rollback();
+        } else if self.on_success == OnSuccess::Commit && !self.is_tainted() {
+            self.commit();
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 struct TaintedError(());

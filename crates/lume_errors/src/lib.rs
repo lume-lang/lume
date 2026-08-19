@@ -16,8 +16,30 @@ pub type Error = Box<dyn Diagnostic + Send + Sync>;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// Constructs a [`SimpleDiagnostic`] using a formatted string (via [`format!`])
+/// for the message.
+///
+/// The returned value is a [`SimpleDiagnostic`].
+///
+/// # Examples
+///
+/// ```
+/// use lume_errors::{diagnostic, Severity};
+///
+/// let diagnostic = diagnostic!("oops! an error occured!")
+///     .with_code("LM4010")
+///     .with_severity(Severity::Error);
+///
+/// let property = "handle";
+/// let diagnostic = diagnostic!("unknown property: {property:?}")
+///     .with_code("LM0001")
+///     .with_severity(Severity::Warning);
+/// ```
 #[macro_export]
 macro_rules! diagnostic {
+    ($msg:literal) => {
+        $crate::SimpleDiagnostic::new(String::from($msg))
+    };
     ($($arg:tt)*) => {
         $crate::SimpleDiagnostic::new(format!($($arg)*))
     };
@@ -26,25 +48,25 @@ macro_rules! diagnostic {
 /// Diagnostic severity level.
 ///
 /// Intended to be used by the reporter to change how the diagnostic is
-/// displayed. Diagnostics of [`Error`] or higher also cause the reporter to
-/// halt upon draining.
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+/// displayed. Diagnostics of [`Severity::Error`] or higher also cause the
+/// reporter to halt upon draining.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Severity {
-    /// Failure. Program cannot continue.
-    #[default]
-    Error,
-
-    /// Warning. Program can continue but may be affected.
-    Warning,
-
-    /// Information. Program can continue and may be unaffected.
-    Info,
+    /// Help. Has no effect on the program, but may provide extra help and tips.
+    Help,
 
     /// Note. Has no effect on the program, but may provide additional context.
     Note,
 
-    /// Help. Has no effect on the program, but may provide extra help and tips.
-    Help,
+    /// Information. Program can continue and may be unaffected.
+    Info,
+
+    /// Warning. Program can continue but may be affected.
+    Warning,
+
+    /// Failure. Program cannot continue.
+    #[default]
+    Error,
 }
 
 impl std::fmt::Display for Severity {
