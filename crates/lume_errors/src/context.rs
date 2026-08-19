@@ -47,7 +47,7 @@ impl DiagCtxInner {
 ///
 /// Certain diagnostics may cause a single stage within the compiler
 /// to halt or exit early, where-as others might be more benign.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct DiagCtx {
     inner: Arc<DiagCtxInner>,
 }
@@ -121,7 +121,7 @@ impl DiagCtx {
     /// regardless of whether or not any errors were raised in the transaction.
     /// To change this behaviour, use [`Self::begin_transaction_with()`].
     pub fn begin_transaction(&self) -> Transaction<'_> {
-        self.begin_transaction_with(OnSuccess::default(), OnFailure::default())
+        self.begin_transaction_with(Commit::default(), Rollback::default())
     }
 
     /// Starts a new diagnostic transaction, with the given operations for
@@ -130,15 +130,26 @@ impl DiagCtx {
     /// When the transaction is dropped, the state of `on_success` and
     /// `on_failure` determines what happens to the transaction:
     ///
-    /// **If no errors are raised in the `Transaction`**:
-    /// - `OnSuccess::Ignore`: the transaction is ignored **(default)**,
-    /// - `OnSuccess::Commit`: the transaction is committed,
+    /// **Commit:**
+    /// - `Commit::Never`: the transaction is never automatically committed,
+    /// - `Commit::OnSuccess`: the transaction is automatically committed if no
+    ///   errors are raised in the `Transaction`,
+    /// - `Commit::Always`: the transaction is committed when dropped
+    ///   **(default)**
     ///
-    /// **If an error is raised in the `Transaction`**:
-    /// - `OnFailure::Ignore`: the transaction is ignored **(default)**,
-    /// - `OnFailure::Rollback`: the transaction is rolled back,
+    /// **Rollback:**
+    /// - `Rollback::Never`: the transaction is never automatically rolled back
+    ///   **(default)**,
+    /// - `Rollback::OnFailure`: the transaction is automatically rolled back if
+    ///   one-or-more errors are raised in the `Transaction`,
+    /// - `Rollback::Always`: the transaction is rolled back when the
+    ///   transaction is dropped
+    ///
+    /// If either a call to [`Transaction::commit()`] or
+    /// [`Transaction::rollback()`] occurs before the transaction is dropped,
+    /// that call takes precedence.
     #[inline]
-    pub fn begin_transaction_with(&self, on_success: OnSuccess, on_failure: OnFailure) -> Transaction<'_> {
+    pub fn begin_transaction_with(&self, on_success: Commit, on_failure: Rollback) -> Transaction<'_> {
         Transaction {
             dcx: Arc::clone(&self.inner),
             parent: TransactionParent::Context,
@@ -158,7 +169,7 @@ impl DiagCtx {
     where
         F: FnOnce(Transaction<'_>) -> R,
     {
-        self.in_transaction_with(OnSuccess::default(), OnFailure::default(), f)
+        self.in_transaction_with(Commit::default(), Rollback::default(), f)
     }
 
     /// Runs the given closure inside of a transaction and returns the result of
@@ -167,15 +178,26 @@ impl DiagCtx {
     /// When the transaction is dropped, the state of `on_success` and
     /// `on_failure` determines what happens to the transaction:
     ///
-    /// **If no errors are raised in the `Transaction`**:
-    /// - `OnSuccess::Ignore`: the transaction is ignored **(default)**,
-    /// - `OnSuccess::Commit`: the transaction is committed,
+    /// **Commit:**
+    /// - `Commit::Never`: the transaction is never automatically committed,
+    /// - `Commit::OnSuccess`: the transaction is automatically committed if no
+    ///   errors are raised in the `Transaction`,
+    /// - `Commit::Always`: the transaction is committed when dropped
+    ///   **(default)**
     ///
-    /// **If an error is raised in the `Transaction`**:
-    /// - `OnFailure::Ignore`: the transaction is ignored **(default)**,
-    /// - `OnFailure::Rollback`: the transaction is rolled back,
+    /// **Rollback:**
+    /// - `Rollback::Never`: the transaction is never automatically rolled back
+    ///   **(default)**,
+    /// - `Rollback::OnFailure`: the transaction is automatically rolled back if
+    ///   one-or-more errors are raised in the `Transaction`,
+    /// - `Rollback::Always`: the transaction is rolled back when the
+    ///   transaction is dropped
+    ///
+    /// If either a call to [`Transaction::commit()`] or
+    /// [`Transaction::rollback()`] occurs before the transaction is dropped,
+    /// that call takes precedence.
     #[inline]
-    pub fn in_transaction_with<F, R>(&self, on_success: OnSuccess, on_failure: OnFailure, f: F) -> R
+    pub fn in_transaction_with<F, R>(&self, on_success: Commit, on_failure: Rollback, f: F) -> R
     where
         F: FnOnce(Transaction<'_>) -> R,
     {
@@ -248,28 +270,33 @@ impl DiagCtx {
 unsafe impl Send for DiagCtx {}
 unsafe impl Sync for DiagCtx {}
 
-/// Defines the operation when a transaction is executed without raising any
-/// errors.
+/// Defines when the transaction should commit.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum OnSuccess {
-    /// Nothing is done.
-    #[default]
-    Ignore,
+pub enum Commit {
+    /// Never automatically commit the transaction.
+    Never,
 
-    /// The transaction is automatically committed.
-    Commit,
+    /// The transaction is automatically committed when no errors are raised.
+    OnSuccess,
+
+    /// Always commit the transaction.
+    #[default]
+    Always,
 }
 
-/// Defines the operation when a transaction is executed and one-or-more errors
-/// are raised.
+/// Defines when the transaction should roll back.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum OnFailure {
-    /// Nothing is done.
+pub enum Rollback {
+    /// Never automatically rollback the transaction.
     #[default]
-    Ignore,
+    Never,
 
-    /// The transaction is automatically rolled back.
-    Rollback,
+    /// The transaction is automatically rolled back if one-or-more errors are
+    /// raised.
+    OnFailure,
+
+    /// Always rollback the transaction.
+    Always,
 }
 
 /// Denotes where a [`Transaction`] should commit it's events to.
@@ -294,8 +321,8 @@ pub struct Transaction<'dcx> {
     dcx: Arc<DiagCtxInner>,
     parent: TransactionParent<'dcx>,
     emitted: DashMap<ErrorKey, Error>,
-    on_success: OnSuccess,
-    on_failure: OnFailure,
+    on_success: Commit,
+    on_failure: Rollback,
 }
 
 impl Transaction<'_> {
@@ -350,7 +377,7 @@ impl Transaction<'_> {
     /// regardless of whether or not any errors were raised in the transaction.
     /// To change this behaviour, use [`Self::begin_transaction_with()`].
     pub fn begin_transaction(&self) -> Transaction<'_> {
-        self.begin_transaction_with(OnSuccess::default(), OnFailure::default())
+        self.begin_transaction_with(Commit::default(), Rollback::default())
     }
 
     /// Starts a new diagnostic transaction, with the given operations for
@@ -359,15 +386,26 @@ impl Transaction<'_> {
     /// When the transaction is dropped, the state of `on_success` and
     /// `on_failure` determines what happens to the transaction:
     ///
-    /// **If no errors are raised in the `Transaction`**:
-    /// - `OnSuccess::Ignore`: the transaction is ignored **(default)**,
-    /// - `OnSuccess::Commit`: the transaction is committed,
+    /// **Commit:**
+    /// - `Commit::Never`: the transaction is never automatically committed,
+    /// - `Commit::OnSuccess`: the transaction is automatically committed if no
+    ///   errors are raised in the `Transaction`,
+    /// - `Commit::Always`: the transaction is committed when dropped
+    ///   **(default)**
     ///
-    /// **If an error is raised in the `Transaction`**:
-    /// - `OnFailure::Ignore`: the transaction is ignored **(default)**,
-    /// - `OnFailure::Rollback`: the transaction is rolled back,
+    /// **Rollback:**
+    /// - `Rollback::Never`: the transaction is never automatically rolled back
+    ///   **(default)**,
+    /// - `Rollback::OnFailure`: the transaction is automatically rolled back if
+    ///   one-or-more errors are raised in the `Transaction`,
+    /// - `Rollback::Always`: the transaction is rolled back when the
+    ///   transaction is dropped
+    ///
+    /// If either a call to [`Transaction::commit()`] or
+    /// [`Transaction::rollback()`] occurs before the transaction is dropped,
+    /// that call takes precedence.
     #[inline]
-    pub fn begin_transaction_with(&self, on_success: OnSuccess, on_failure: OnFailure) -> Transaction<'_> {
+    pub fn begin_transaction_with(&self, on_success: Commit, on_failure: Rollback) -> Transaction<'_> {
         Transaction {
             dcx: Arc::clone(&self.dcx),
             parent: TransactionParent::Transaction(self),
@@ -387,7 +425,7 @@ impl Transaction<'_> {
     where
         F: FnOnce(Transaction<'_>) -> R,
     {
-        self.in_transaction_with(OnSuccess::default(), OnFailure::default(), f)
+        self.in_transaction_with(Commit::default(), Rollback::default(), f)
     }
 
     /// Runs the given closure inside of a transaction and returns the result of
@@ -396,15 +434,26 @@ impl Transaction<'_> {
     /// When the transaction is dropped, the state of `on_success` and
     /// `on_failure` determines what happens to the transaction:
     ///
-    /// **If no errors are raised in the `Transaction`**:
-    /// - `OnSuccess::Ignore`: the transaction is ignored **(default)**,
-    /// - `OnSuccess::Commit`: the transaction is committed,
+    /// **Commit:**
+    /// - `Commit::Never`: the transaction is never automatically committed,
+    /// - `Commit::OnSuccess`: the transaction is automatically committed if no
+    ///   errors are raised in the `Transaction`,
+    /// - `Commit::Always`: the transaction is committed when dropped
+    ///   **(default)**
     ///
-    /// **If an error is raised in the `Transaction`**:
-    /// - `OnFailure::Ignore`: the transaction is ignored **(default)**,
-    /// - `OnFailure::Rollback`: the transaction is rolled back,
+    /// **Rollback:**
+    /// - `Rollback::Never`: the transaction is never automatically rolled back
+    ///   **(default)**,
+    /// - `Rollback::OnFailure`: the transaction is automatically rolled back if
+    ///   one-or-more errors are raised in the `Transaction`,
+    /// - `Rollback::Always`: the transaction is rolled back when the
+    ///   transaction is dropped
+    ///
+    /// If either a call to [`Transaction::commit()`] or
+    /// [`Transaction::rollback()`] occurs before the transaction is dropped,
+    /// that call takes precedence.
     #[inline]
-    pub fn in_transaction_with<F, R>(&self, on_success: OnSuccess, on_failure: OnFailure, f: F) -> R
+    pub fn in_transaction_with<F, R>(&self, on_success: Commit, on_failure: Rollback, f: F) -> R
     where
         F: FnOnce(Transaction<'_>) -> R,
     {
@@ -437,6 +486,19 @@ impl Transaction<'_> {
         self.emitted.iter().any(|diag| diag.severity() >= Severity::Error)
     }
 
+    /// Ensure that the transaction is untainted.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the transaction is tainted with one-or-more errors.
+    pub fn ensure_untainted(&self) -> Result<()> {
+        if self.is_tainted() {
+            Err(TaintedError(()).into())
+        } else {
+            Ok(())
+        }
+    }
+
     /// Emits the given diagnostic to the current transaction.
     ///
     /// # Note
@@ -463,10 +525,18 @@ impl Transaction<'_> {
 
 impl Drop for Transaction<'_> {
     fn drop(&mut self) {
-        if self.on_failure == OnFailure::Rollback && self.is_tainted() {
-            self.rollback();
-        } else if self.on_success == OnSuccess::Commit && !self.is_tainted() {
-            self.commit();
+        let is_tainted = self.is_tainted();
+
+        match self.on_failure {
+            Rollback::Always => self.rollback(),
+            Rollback::OnFailure if is_tainted => self.rollback(),
+            _ => {}
+        }
+
+        match self.on_success {
+            Commit::Always => self.commit(),
+            Commit::OnSuccess if !is_tainted => self.commit(),
+            _ => {}
         }
     }
 }

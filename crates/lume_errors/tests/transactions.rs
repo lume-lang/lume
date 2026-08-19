@@ -76,7 +76,7 @@ fn subtransactions_rollback_to_parent() {
 fn transaction_commit_on_drop() {
     let dcx = DiagCtx::new();
 
-    let transaction = dcx.begin_transaction_with(lume_errors::OnSuccess::Commit, lume_errors::OnFailure::Rollback);
+    let transaction = dcx.begin_transaction_with(lume_errors::Commit::OnSuccess, lume_errors::Rollback::OnFailure);
     transaction.emit(diagnostic!("note").with_severity(Severity::Note));
     assert_eq!(dcx.len(), 0);
 
@@ -90,7 +90,7 @@ fn transaction_commit_on_drop() {
 fn transaction_rollback_on_drop() {
     let dcx = DiagCtx::new();
 
-    let transaction = dcx.begin_transaction_with(lume_errors::OnSuccess::Commit, lume_errors::OnFailure::Rollback);
+    let transaction = dcx.begin_transaction_with(lume_errors::Commit::OnSuccess, lume_errors::Rollback::OnFailure);
     transaction.emit(diagnostic!("error").with_severity(Severity::Error));
     assert_eq!(dcx.len(), 0);
 
