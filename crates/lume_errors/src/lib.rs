@@ -1,6 +1,12 @@
+#[allow(unused_imports)]
+#[macro_use]
+extern crate lume_errors_derive;
+
 use std::fmt::Display;
 use std::ops::Range;
 use std::sync::Arc;
+
+pub use lume_errors_derive::Diagnostic;
 
 pub mod context;
 pub mod handler;

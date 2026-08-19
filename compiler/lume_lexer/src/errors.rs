@@ -1,7 +1,7 @@
 use std::ops::Range;
 use std::sync::Arc;
 
-use lume_errors_derive::Diagnostic;
+use lume_errors::Diagnostic;
 use lume_span::SourceFile;
 
 #[derive(Diagnostic, Debug)]

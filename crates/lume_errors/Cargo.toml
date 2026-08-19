@@ -5,6 +5,8 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+lume_errors_derive = { workspace = true }
+
 indexmap = { workspace = true }
 owo-colors = { workspace = true, features = ["supports-colors"] }
 terminal_size = { version = "^0.4", optional = true }

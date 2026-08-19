@@ -9,7 +9,6 @@ doctest = false
 
 [dependencies]
 lume_errors = { workspace = true }
-lume_errors_derive = { workspace = true }
 lume_span = { workspace = true }
 
 logos = { version = "=0.15.1" }
